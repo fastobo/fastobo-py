@@ -1,10 +1,9 @@
 include setup.*
 include Cargo.toml
 include COPYING
+include CHANGELOG.md
 include README.md
 
-recursive-include fastobo* Cargo.toml COPYING README.md CHANGELOG.md
-recursive-include fastobo* *.rs grammar.pest
-
-recursive-exclude fastobo.egg-info *
-recursive-exclude fastobo*/tests *
+recursive-include derive Cargo.toml *.rs
+recursive-include src *.rs
+recursive-include tests *.py *.obo

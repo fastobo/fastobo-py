@@ -18,5 +18,5 @@ url = "1.7.2"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
 
-fastobo = { path = "../fastobo" }
+fastobo = "0.1.0"
 fastobo-py-derive = { path = "./derive" }

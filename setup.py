@@ -9,7 +9,7 @@ setuptools.setup(
     setup_requires=["setuptools", "setuptools_rust"],
     rust_extensions=[rust.RustExtension(
         "fastobo",
-        path="fastobo-py/Cargo.toml",
+        path="Cargo.toml",
         binding=rust.Binding.PyO3,
         strip=rust.Strip.Debug
     )],

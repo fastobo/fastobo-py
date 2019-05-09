@@ -65,6 +65,11 @@ jobs:
     - env: PYTHON=python3.7
       <<: *test-python-osx
 
+deploy:
+  provider: script
+  script: ci/travis/deploy.sh
+  skip_cleanup: true
+
 notifications:
   email:
   - althonosdev@gmail.com

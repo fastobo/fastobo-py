@@ -13,8 +13,3 @@ fi
 
 log Building wheel
 $PYTHON setup.py sdist bdist_wheel
-
-# --- Deploy to PyPI ---------------------------------------------------------
-
-log Deploying wheel to PyPI
-twine upload --skip-existing dist/*.whl dist/*.tar.gz

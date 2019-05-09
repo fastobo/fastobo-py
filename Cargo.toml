@@ -3,7 +3,6 @@ name = "fastobo-py"
 version = "0.1.0"
 authors = ["Martin Larralde <martin.larralde@ens-paris-saclay.fr>"]
 publish = false
-workspace = ".."
 
 [lib]
 crate-type = ["cdylib"]

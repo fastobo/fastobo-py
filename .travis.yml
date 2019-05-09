@@ -11,11 +11,11 @@ git:
   depth: false
 
 stages:
-  - name: Linux
-  - name: OSX
+  - name: linux
+  - name: osx
 
 .test-python: &test-python
-  stage: Linux
+  stage: linux
   language: python
   cache:
     directories:
@@ -33,7 +33,7 @@ stages:
     - ci/travis/manylinux/after_success.sh
 
 .test-python-osx: &test-python-osx
-  stage: OSX
+  stage: osx
   os: osx
   language: generic
   cache:

@@ -1,0 +1,70 @@
+sudo: false
+dist: xenial
+
+env:
+  global:
+    - RUST_BACKTRACE=1
+    - PATH="$HOME/.cargo/bin:$PATH"
+    - PYTHON_SYS_EXECUTABLE="python3"
+
+git:
+  depth: false
+
+stages:
+  - name: Linux
+  - name: OSX
+
+.test-python: &test-python
+  stage: Linux
+  language: python
+  cache:
+    directories:
+      - $HOME/.cache/pip
+      - $TRAVIS_BUILD_DIR/target
+  services:
+    - docker
+  before_install:
+    - ci/travis/manylinux/before_install.sh
+  install:
+    - ci/travis/manylinux/install.sh
+  script:
+    - ci/travis/manylinux/script.sh
+  after_success:
+    - ci/travis/manylinux/after_success.sh
+
+.test-python-osx: &test-python-osx
+  stage: OSX
+  os: osx
+  language: generic
+  cache:
+    directories:
+      - $HOME/.cache/pip
+      - $TRAVIS_BUILD_DIR/target
+      - $HOME/Library/Caches/Homebrew
+  install:
+    - ci/travis/osx/install.sh
+  script:
+    - ci/travis/osx/script.sh
+  before_cache:
+    - ci/travis/osx/before_cache.sh
+  after_success:
+    - ci/travis/osx/after_success.sh
+
+jobs:
+  include:
+    # Linux
+    - python: 3.5
+      <<: *test-python
+    - python: 3.6
+      <<: *test-python
+    - python: 3.7
+      <<: *test-python
+    # OSX
+    - env: PYTHON=python3.6
+      <<: *test-python-osx
+    - env: PYTHON=python3.7
+      <<: *test-python-osx
+
+notifications:
+  email:
+  - althonosdev@gmail.com

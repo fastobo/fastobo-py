@@ -53,7 +53,7 @@ project_urls = dict(
 # -- Setup -------------------------------------------------------------------
 
 def setup(app):
-    changelog_src = os.path.join(project_dir, "fastobo-py", "CHANGELOG.md")
+    changelog_src = os.path.join(project_dir, "CHANGELOG.md")
     changelog_dst = os.path.join(docssrc_dir, "changes.md")
     shutil.copy(changelog_src, changelog_dst)
 

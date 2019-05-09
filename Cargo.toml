@@ -1,0 +1,22 @@
+[package]
+name = "fastobo-py"
+version = "0.1.0"
+authors = ["Martin Larralde <martin.larralde@ens-paris-saclay.fr>"]
+publish = false
+workspace = ".."
+
+[lib]
+crate-type = ["cdylib"]
+name = "fastobo_py"
+
+[dependencies]
+pyo3 = { git = "https://github.com/PyO3/pyo3" }
+pest = "2.1.1"
+libc = "0.2.53"
+url = "1.7.2"
+
+opaque_typedef = "0.0.5"
+opaque_typedef_macros = "0.0.5"
+
+fastobo = { path = "../fastobo" }
+fastobo-py-derive = { path = "./derive" }

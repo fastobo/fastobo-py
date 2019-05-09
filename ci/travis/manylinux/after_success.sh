@@ -18,4 +18,4 @@ docker exec -it manylinux sh /io/ci/travis/manylinux/_after_success.sh $CP
 # --- Deploy -----------------------------------------------------------------
 
 log Deploying wheel to PyPI
-twine upload --skip-existing dist/*.whl dist/*.tar.gz ;;
+twine upload --skip-existing dist/*.whl dist/*.tar.gz

@@ -25,6 +25,7 @@ pub fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::clause::IsCyclicClause>()?;
     m.add_class::<self::clause::IsReflexiveClause>()?;
     m.add_class::<self::clause::IsSymmetricClause>()?;
+    m.add_class::<self::clause::IsAsymmetricClause>()?;
     m.add_class::<self::clause::IsTransitiveClause>()?;
     m.add_class::<self::clause::IsFunctionalClause>()?;
     m.add_class::<self::clause::IsInverseFunctionalClause>()?;

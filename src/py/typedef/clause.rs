@@ -46,6 +46,7 @@ pub enum TypedefClause {
     IsCyclic(Py<IsCyclicClause>),
     IsReflexive(Py<IsReflexiveClause>),
     IsSymmetric(Py<IsSymmetricClause>),
+    IsAsymmetric(Py<IsAsymmetricClause>),
     IsTransitive(Py<IsTransitiveClause>),
     IsFunctional(Py<IsFunctionalClause>),
     IsInverseFunctional(Py<IsInverseFunctionalClause>),
@@ -129,6 +130,9 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
             IsSymmetric(b) =>
                 Py::new(py, IsSymmetricClause::new(py, b))
                     .map(TypedefClause::IsSymmetric),
+            IsAsymmetric(b) =>
+                Py::new(py, IsAsymmetricClause::new(py, b))
+                    .map(TypedefClause::IsAsymmetric),
             IsTransitive(b) =>
                 Py::new(py, IsTransitiveClause::new(py, b))
                     .map(TypedefClause::IsTransitive),
@@ -727,6 +731,26 @@ impl IsSymmetricClause {
 impl FromPy<IsSymmetricClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsSymmetricClause, _py: Python) -> Self {
         fastobo::ast::TypedefClause::IsSymmetric(clause.symmetric)
+    }
+}
+
+// --- IsAsymmetric -----------------------------------------------------------
+
+#[pyclass(extends=BaseTypedefClause)]
+#[derive(Clone, ClonePy, Debug)]
+pub struct IsAsymmetricClause {
+    symmetric: bool,
+}
+
+impl IsAsymmetricClause {
+    pub fn new(_py: Python, symmetric: bool) -> Self {
+        Self { symmetric }
+    }
+}
+
+impl FromPy<IsAsymmetricClause> for fastobo::ast::TypedefClause {
+    fn from_py(clause: IsAsymmetricClause, _py: Python) -> Self {
+        fastobo::ast::TypedefClause::IsAsymmetric(clause.symmetric)
     }
 }
 

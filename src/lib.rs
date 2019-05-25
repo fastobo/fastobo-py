@@ -14,6 +14,8 @@ extern crate opaque_typedef;
 #[macro_use]
 extern crate fastobo_py_derive;
 
+#[macro_use]
+pub mod macros;
 pub mod utils;
 pub mod py;
 pub mod pyfile;

@@ -59,3 +59,8 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
 
 #[pyclass(subclass)]
 pub struct BaseEntityFrame {}
+
+// ---
+
+#[pyclass(subclass)]
+pub struct BaseEntityClause {}

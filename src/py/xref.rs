@@ -31,6 +31,7 @@ use crate::utils::ClonePy;
 #[pymodule(xref)]
 fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::Xref>()?;
+    m.add_class::<self::XrefList>()?;
     Ok(())
 }
 

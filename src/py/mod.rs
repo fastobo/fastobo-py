@@ -78,6 +78,10 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///         stream that contains a serialized OBO document. *A binary
     ///         stream needs a ``read(x)`` method that return ``x`` bytes*.
     ///
+    /// Returns:
+    ///     `~fastobo.OboDoc`: the OBO document deserialzed into an Abstract
+    ///     Syntax Tree.
+    ///
     /// Raises:
     ///     TypeError: when the argument is not a `str` or a binary stream.
     ///     SyntaxError: when the document is not a valid OBO syntax.
@@ -85,6 +89,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///         raises any exception (which will be wrapped).
     ///
     /// Example:
+    ///     Use ``requests`` and ``fastobo`` to parse an ontology downloaded
+    ///     from the Berkeley BOP portal:
     ///     >>> import requests
     ///     >>> res = requests.get("http://ontologies.berkeleybop.org/pw.obo")
     ///     >>> doc = fastobo.load(res.raw)

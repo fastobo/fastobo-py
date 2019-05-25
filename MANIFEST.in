@@ -1,5 +1,6 @@
 include setup.*
 include Cargo.toml
+include Cargo.lock
 include COPYING
 include CHANGELOG.md
 include README.md

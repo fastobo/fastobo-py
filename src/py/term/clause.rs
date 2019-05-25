@@ -1,3 +1,7 @@
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
+use std::fmt::Write;
 use std::str::FromStr;
 
 use pyo3::AsPyPointer;
@@ -9,6 +13,7 @@ use pyo3::exceptions::TypeError;
 use pyo3::exceptions::ValueError;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
+use pyo3::class::basic::CompareOp;
 
 use fastobo::ast;
 use fastobo::share::Share;
@@ -147,9 +152,48 @@ impl IsAnonymousClause {
     }
 }
 
-impl FromPy<IsAnonymousClause> for fastobo::ast::TermClause {
-    fn from_py(clause: IsAnonymousClause, py: Python) -> Self {
+impl Display for IsAnonymousClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TermClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsAnonymousClause> for fastobo::ast::TermClause {
+    fn from(clause: IsAnonymousClause) -> Self {
         fastobo::ast::TermClause::IsAnonymous(clause.anonymous)
+    }
+}
+
+impl FromPy<IsAnonymousClause> for fastobo::ast::TermClause {
+    fn from_py(clause: IsAnonymousClause, _py: Python) -> Self {
+        Self::from(clause)
+    }
+}
+
+#[pymethods]
+impl IsAnonymousClause {
+
+    #[new]
+    fn __init__(obj: &PyRawObject, anonymous: bool) {
+        obj.init(Self::new(obj.py(), anonymous));
+    }
+
+    impl_raw_tag!("is_anonymous");
+    impl_raw_value!("{}", anonymous);
+}
+
+#[pyproto]
+impl PyObjectProtocol for IsAnonymousClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsAnonymousClause(self.anonymous))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.anonymous)
     }
 }
 
@@ -168,16 +212,34 @@ impl NameClause {
     }
 }
 
-impl FromPy<NameClause> for fastobo::ast::TermClause {
-    fn from_py(clause: NameClause, py: Python) -> Self {
+impl Display for NameClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TermClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<NameClause> for fastobo::ast::TermClause {
+    fn from(clause: NameClause) -> Self {
         fastobo::ast::TermClause::Name(clause.name)
+    }
+}
+
+impl FromPy<NameClause> for fastobo::ast::TermClause {
+    fn from_py(clause: NameClause, _py: Python) -> Self {
+        Self::from(clause)
     }
 }
 
 #[pymethods]
 impl NameClause {
-    #[getter]
+
+    #[new]
+    fn __init__(obj: &PyRawObject, name: String) {
+        obj.init(Self::new(obj.py(), fastobo::ast::UnquotedString::new(name)));
+    }
+
     /// `str`: the name of the current term.
+    #[getter]
     fn get_name(&self) -> PyResult<&str> {
         Ok(self.name.as_str())
     }
@@ -187,6 +249,24 @@ impl NameClause {
         self.name = fastobo::ast::UnquotedString::new(name);
         Ok(())
     }
+
+    impl_raw_tag!("name");
+    impl_raw_value!("{}", name);
+}
+
+#[pyproto]
+impl PyObjectProtocol for NameClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, NameClause(self.name))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.name)
+    }
 }
 
 // --- Namespace -------------------------------------------------------------
@@ -194,6 +274,7 @@ impl NameClause {
 #[pyclass(extends=BaseTermClause)]
 #[derive(Debug)]
 pub struct NamespaceClause {
+    #[pyo3(set)]
     namespace: Ident
 }
 
@@ -214,6 +295,14 @@ impl ClonePy for NamespaceClause {
     }
 }
 
+impl Display for NamespaceClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<NamespaceClause> for fastobo::ast::TermClause {
     fn from_py(clause: NamespaceClause, py: Python) -> Self {
         let ns = fastobo::ast::NamespaceIdent::from_py(clause.namespace, py);
@@ -223,13 +312,40 @@ impl FromPy<NamespaceClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl NamespaceClause {
+
+    #[new]
+    fn __init__(obj: &PyRawObject, namespace: Ident) {
+        obj.init(Self::new(obj.py(), namespace));
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: the ID of the namespace this term is part of.
     fn get_namespace(&self) -> PyResult<&Ident> {
         Ok(&self.namespace)
     }
+
+    impl_raw_tag!("namespace");
+    impl_raw_value!("{}", namespace);
 }
 
+#[pyproto]
+impl PyObjectProtocol for NamespaceClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let r = self.namespace.to_object(py).call_method0(py, "__repr__")?;
+        let fmt = PyString::new(py, "NamespaceClause({!r})").to_object(py);
+        fmt.call_method1(py, "format", (&self.namespace,))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.namespace)
+    }
+}
 
 // --- AltId -----------------------------------------------------------------
 
@@ -256,6 +372,14 @@ impl ClonePy for AltIdClause {
     }
 }
 
+impl Display for AltIdClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<AltIdClause> for fastobo::ast::TermClause {
     fn from_py(clause: AltIdClause, py: Python) -> Self {
         fastobo::ast::TermClause::AltId(clause.alt_id.into_py(py))
@@ -269,8 +393,25 @@ impl AltIdClause {
     fn get_alt_id(&self) -> PyResult<&Ident> {
         Ok(&self.alt_id)
     }
+
+    impl_raw_tag!("alt_id");
+    impl_raw_value!("{}", alt_id);
 }
 
+#[pyproto]
+impl PyObjectProtocol for AltIdClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, AltIdClause(self.alt_id))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.alt_id)
+    }
+}
 
 // --- Def -------------------------------------------------------------------
 
@@ -323,7 +464,6 @@ impl DefClause {
         let py = unsafe { Python::assume_gil_acquired() };
         Ok(self.xrefs.clone_py(py))
     }
-
 }
 
 // --- Comment ---------------------------------------------------------------

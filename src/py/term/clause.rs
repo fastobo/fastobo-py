@@ -388,6 +388,12 @@ impl FromPy<AltIdClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl AltIdClause {
+
+    #[new]
+    fn __init__(obj: &PyRawObject, alt_id: Ident) {
+        obj.init(Self::new(obj.py(), alt_id));
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: an alternative ID used to refer to this term.
     fn get_alt_id(&self) -> PyResult<&Ident> {
@@ -440,6 +446,14 @@ impl ClonePy for DefClause {
     }
 }
 
+impl Display for DefClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<DefClause> for fastobo::ast::TermClause {
     fn from_py(clause: DefClause, py: Python) -> Self {
         fastobo::ast::TermClause::Def(
@@ -466,6 +480,21 @@ impl DefClause {
     }
 }
 
+#[pyproto]
+impl PyObjectProtocol for DefClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, DefClause(self.definition, self.xrefs))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.definition && self.xrefs)
+    }
+}
+
 // --- Comment ---------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause)]
@@ -480,14 +509,32 @@ impl CommentClause {
     }
 }
 
+impl Display for CommentClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TermClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<CommentClause> for fastobo::ast::TermClause {
+    fn from(clause: CommentClause) -> Self {
+        fastobo::ast::TermClause::Comment(clause.comment)
+    }
+}
+
 impl FromPy<CommentClause> for fastobo::ast::TermClause {
     fn from_py(clause: CommentClause, _py: Python) -> Self {
-        fastobo::ast::TermClause::Comment(clause.comment)
+        Self::from(clause)
     }
 }
 
 #[pymethods]
 impl CommentClause {
+
+    #[new]
+    fn __init__(obj: &PyRawObject, comment: String) {
+        obj.init(Self::new(obj.py(), fastobo::ast::UnquotedString::new(comment)));
+    }
+
     #[getter]
     /// `str`: a comment relevant to this term.
     fn get_comment(&self) -> PyResult<&str> {
@@ -499,6 +546,24 @@ impl CommentClause {
         self.comment = fastobo::ast::UnquotedString::new(comment);
         Ok(())
     }
+
+    impl_raw_tag!("comment");
+    impl_raw_value!("{}", comment);
+}
+
+#[pyproto]
+impl PyObjectProtocol for CommentClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, CommentClause(self.comment))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.comment)
+    }
 }
 
 // --- Subset ----------------------------------------------------------------
@@ -506,6 +571,7 @@ impl CommentClause {
 #[pyclass(extends=BaseTermClause)]
 #[derive(Debug)]
 pub struct SubsetClause {
+    #[pyo3(set)]
     subset: Ident
 }
 
@@ -526,6 +592,14 @@ impl ClonePy for SubsetClause {
     }
 }
 
+impl Display for SubsetClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<SubsetClause> for fastobo::ast::TermClause {
     fn from_py(clause: SubsetClause, py: Python) -> Self {
         fastobo::ast::TermClause::Subset(clause.subset.into_py(py))
@@ -534,16 +608,34 @@ impl FromPy<SubsetClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl SubsetClause {
+
+    #[new]
+    fn __init__(obj: &PyRawObject, subset: Ident) {
+        obj.init(Self::new(obj.py(), subset));
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: the ID of the subset this term is part of.
     fn get_subset(&self) -> PyResult<&Ident> {
         Ok(&self.subset)
     }
 
-    #[setter]
-    fn set_subset(&mut self, subset: Ident) -> PyResult<()> {
-        self.subset = subset;
-        Ok(())
+    impl_raw_tag!("subset");
+    impl_raw_value!("{}", subset);
+}
+
+#[pyproto]
+impl PyObjectProtocol for SubsetClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, SubsetClause(self.subset))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.subset)
     }
 }
 
@@ -571,6 +663,14 @@ impl ClonePy for SynonymClause {
         Self {
             synonym: self.synonym.clone_py(py)
         }
+    }
+}
+
+impl Display for SynonymClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 

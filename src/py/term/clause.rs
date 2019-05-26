@@ -478,6 +478,9 @@ impl DefClause {
         let py = unsafe { Python::assume_gil_acquired() };
         Ok(self.xrefs.clone_py(py))
     }
+
+    impl_raw_tag!("def");
+    impl_raw_value!("{}", definition);
 }
 
 #[pyproto]
@@ -688,6 +691,9 @@ impl SynonymClause {
         let py = unsafe { Python::assume_gil_acquired() };
         Ok(self.synonym.clone_py(py))
     }
+
+    impl_raw_tag!("synonym");
+    impl_raw_value!("{}", synonym);
 }
 
 // --- Xref ------------------------------------------------------------------
@@ -757,6 +763,14 @@ impl XrefClause {
         self.xref = Xref::from_object(xref.py(), xref)?;
         Ok(())
     }
+
+    impl_raw_tag!("xref");
+
+    pub fn raw_value(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        Ok(self.xref.as_ref(py).to_string())
+    }
 }
 
 // --- Builtin ---------------------------------------------------------------
@@ -778,6 +792,12 @@ impl FromPy<BuiltinClause> for fastobo::ast::TermClause {
     fn from_py(clause: BuiltinClause, py: Python) -> Self {
         fastobo::ast::TermClause::Builtin(clause.builtin)
     }
+}
+
+#[pymethods]
+impl BuiltinClause {
+    impl_raw_tag!("builtin");
+    impl_raw_value!("{}", builtin);
 }
 
 // --- PropertyValue ---------------------------------------------------------
@@ -811,6 +831,12 @@ impl FromPy<PropertyValueClause> for fastobo::ast::TermClause {
     }
 }
 
+#[pymethods]
+impl PropertyValueClause {
+    impl_raw_tag!("property_value");
+    impl_raw_value!("{}", inner);
+}
+
 // --- IsA -------------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause)]
@@ -840,6 +866,12 @@ impl FromPy<IsAClause> for fastobo::ast::TermClause {
     fn from_py(clause: IsAClause, py: Python) -> fastobo::ast::TermClause {
         ast::TermClause::IsA(clause.id.into_py(py))
     }
+}
+
+#[pymethods]
+impl IsAClause {
+    impl_raw_tag!("is_a");
+    impl_raw_value!("{}", id);
 }
 
 // --- IntersectionOf --------------------------------------------------------
@@ -882,6 +914,19 @@ impl FromPy<IntersectionOfClause> for fastobo::ast::TermClause {
     }
 }
 
+#[pymethods]
+impl IntersectionOfClause {
+    impl_raw_tag!("intersection_of");
+
+    pub fn raw_value(&self) -> PyResult<String> {
+        if let Some(ref rel) = self.relation {
+            Ok(format!("{} {}", rel, &self.term))
+        } else {
+            Ok(format!("{}", &self.term))
+        }
+    }
+}
+
 // --- UnionOf ---------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause)]
@@ -911,6 +956,12 @@ impl FromPy<UnionOfClause> for fastobo::ast::TermClause {
     fn from_py(clause: UnionOfClause, py: Python) -> fastobo::ast::TermClause {
         ast::TermClause::UnionOf(clause.term.into_py(py))
     }
+}
+
+#[pymethods]
+impl UnionOfClause {
+    impl_raw_tag!("union_of");
+    impl_raw_value!("{}", term);
 }
 
 // --- EquivalentTo ----------------------------------------------------------
@@ -944,6 +995,12 @@ impl FromPy<EquivalentToClause> for fastobo::ast::TermClause {
     }
 }
 
+#[pymethods]
+impl EquivalentToClause {
+    impl_raw_tag!("equivalent_to");
+    impl_raw_value!("{}", term);
+}
+
 // --- DisjointFrom ----------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause)]
@@ -973,6 +1030,12 @@ impl FromPy<DisjointFromClause> for fastobo::ast::TermClause {
     fn from_py(clause: DisjointFromClause, py: Python) -> fastobo::ast::TermClause {
         ast::TermClause::DisjointFrom(clause.term.into_py(py))
     }
+}
+
+#[pymethods]
+impl DisjointFromClause {
+    impl_raw_tag!("disjoint_from");
+    impl_raw_value!("{}", term);
 }
 
 // --- Relationship ----------------------------------------------------------
@@ -1012,6 +1075,12 @@ impl FromPy<RelationshipClause> for fastobo::ast::TermClause {
     }
 }
 
+#[pymethods]
+impl RelationshipClause {
+    impl_raw_tag!("relationship");
+    impl_raw_value!("{} {}", relation, term);
+}
+
 // --- IsObsolete ------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause)]
@@ -1031,6 +1100,12 @@ impl FromPy<IsObsoleteClause> for fastobo::ast::TermClause {
     fn from_py(clause: IsObsoleteClause, py: Python) -> Self {
         fastobo::ast::TermClause::IsObsolete(clause.obsolete)
     }
+}
+
+#[pymethods]
+impl IsObsoleteClause {
+    impl_raw_tag!("is_obsolete");
+    impl_raw_value!("{}", obsolete);
 }
 
 // --- ReplacedBy ------------------------------------------------------------
@@ -1064,6 +1139,12 @@ impl FromPy<ReplacedByClause> for fastobo::ast::TermClause {
     }
 }
 
+#[pymethods]
+impl ReplacedByClause {
+    impl_raw_tag!("is_obsolete");
+    impl_raw_value!("{}", term);
+}
+
 // --- Consider --------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause)]
@@ -1095,6 +1176,12 @@ impl FromPy<ConsiderClause> for fastobo::ast::TermClause {
     }
 }
 
+#[pymethods]
+impl ConsiderClause {
+    impl_raw_tag!("consider");
+    impl_raw_value!("{}", term);
+}
+
 // --- CreatedBy -------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause)]
@@ -1115,6 +1202,11 @@ impl FromPy<CreatedByClause> for fastobo::ast::TermClause {
     }
 }
 
+#[pymethods]
+impl CreatedByClause {
+    impl_raw_tag!("created_by");
+    impl_raw_value!("{}", name);
+}
 
 // --- CreationDate ----------------------------------------------------------
 
@@ -1134,4 +1226,10 @@ impl FromPy<CreationDateClause> for fastobo::ast::TermClause {
     fn from_py(clause: CreationDateClause, py: Python) -> fastobo::ast::TermClause {
         fastobo::ast::TermClause::CreationDate(clause.date)
     }
+}
+
+#[pymethods]
+impl CreationDateClause {
+    impl_raw_tag!("creation_date");
+    impl_raw_value!("{}", date);
 }

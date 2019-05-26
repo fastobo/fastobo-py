@@ -124,6 +124,14 @@ impl ClonePy for Synonym {
     }
 }
 
+impl Display for Synonym {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::Synonym::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<fastobo::ast::Synonym> for Synonym {
     fn from_py(mut syn: fastobo::ast::Synonym, py: Python) -> Self {
         Self {

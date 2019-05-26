@@ -22,7 +22,7 @@ use fastobo::share::Redeem;
 
 use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
-use super::super::base::BaseClause;
+use super::super::abc::AbstractClause;
 use super::super::id::Ident;
 use super::super::pv::PropertyValue;
 use super::super::xref::Xref;
@@ -135,7 +135,7 @@ impl FromPy<fastobo::ast::TermClause> for TermClause {
 // --- Base ------------------------------------------------------------------
 
 /// A header clause, appearing in the OBO header frame.
-#[pyclass(extends=BaseClause)]
+#[pyclass(extends=AbstractClause)]
 pub struct BaseTermClause {}
 
 // --- IsAnonymous -----------------------------------------------------------

@@ -17,7 +17,7 @@ use fastobo::share::Redeem;
 
 use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
-use super::super::base::BaseClause;
+use super::super::abc::AbstractClause;
 use super::super::id::Ident;
 use super::super::pv::PropertyValue;
 use super::super::xref::Xref;
@@ -206,7 +206,7 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
 
 // --- Base ------------------------------------------------------------------
 
-#[pyclass(extends=BaseClause)]
+#[pyclass(extends=AbstractClause)]
 pub struct BaseTypedefClause {}
 
 // --- IsAnonymous -----------------------------------------------------------

@@ -23,11 +23,11 @@ use fastobo::share::Cow;
 use fastobo::share::Redeem;
 
 use super::clause::TypedefClause;
-use super::super::base::BaseEntityFrame;
+use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use crate::utils::ClonePy;
 
-#[pyclass(extends=BaseEntityFrame)]
+#[pyclass(extends=AbstractEntityFrame)]
 #[derive(Debug)]
 pub struct TypedefFrame {
     id: Ident,

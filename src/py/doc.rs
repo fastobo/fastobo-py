@@ -32,7 +32,7 @@ use crate::pyfile::PyFile;
 use super::header::frame::HeaderFrame;
 use super::term::frame::TermFrame;
 use super::typedef::frame::TypedefFrame;
-use super::base::BaseFrame;
+use super::abc::AbstractFrame;
 
 // --- Module export ---------------------------------------------------------
 
@@ -45,7 +45,7 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
 // --- Conversion Wrapper ----------------------------------------------------
 
 #[derive(ClonePy, Debug, PartialEq, PyWrapper)]
-#[wraps(BaseFrame)]
+#[wraps(AbstractFrame)]
 pub enum EntityFrame {
     Term(Py<TermFrame>),
     Typedef(Py<TypedefFrame>),

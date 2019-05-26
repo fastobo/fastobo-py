@@ -35,7 +35,7 @@ use pyo3::class::gc::PyVisit;
 use pyo3::type_object::PyTypeCreate;
 use pyo3::class::basic::CompareOp;
 
-use super::super::base::BaseClause;
+use super::super::abc::AbstractClause;
 use super::super::id::Url;
 use super::super::id::Ident;
 use super::super::id::IdentPrefix;
@@ -159,7 +159,7 @@ impl FromPy<HeaderClause> for fastobo::ast::HeaderClause {
 // --- Base ------------------------------------------------------------------
 
 /// A header clause, appearing in the OBO header frame.
-#[pyclass(extends=BaseClause)]
+#[pyclass(extends=AbstractClause)]
 pub struct BaseHeaderClause {}
 
 #[pymethods]

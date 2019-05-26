@@ -32,7 +32,7 @@ use crate::pyfile::PyFile;
 
 // ---------------------------------------------------------------------------
 
-pub mod base;
+pub mod abc;
 pub mod doc;
 pub mod header;
 pub mod id;
@@ -49,17 +49,20 @@ use self::id::PyInit_id;
 use self::syn::PyInit_syn;
 use self::pv::PyInit_pv;
 use self::xref::PyInit_xref;
-use self::base::PyInit_base;
+use self::abc::PyInit_abc;
 use self::doc::PyInit_doc;
 
 use self::doc::OboDoc;
 
 // --- Module export ---------------------------------------------------------
 
+/// The Faultless AST for Open Biomedical Ontologies.
+///
+///
 #[pymodule]
 fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
 
-    m.add_wrapped(pyo3::wrap_pymodule!(base))?;
+    m.add_wrapped(pyo3::wrap_pymodule!(abc))?;
     m.add_wrapped(pyo3::wrap_pymodule!(doc))?;
     m.add_wrapped(pyo3::wrap_pymodule!(header))?;
     m.add_wrapped(pyo3::wrap_pymodule!(id))?;

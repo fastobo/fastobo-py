@@ -34,23 +34,37 @@ use super::typedef::frame::TypedefFrame;
 
 // --- Module export ---------------------------------------------------------
 
-#[pymodule(base)]
+/// Base Classes defining common interfaces for classes in this library.
+///
+/// These base classes are here to define common methods and attributes shared
+/// by numerous classes in the ``fastobo`` submodules. Since Rust is a
+/// statically-typed language, all "subclasses" are known at compile-time, so
+/// creating new subclasses hoping to use them with the current classes (and
+/// in particular, collections such as `~fastobo.doc.OboDoc`) will not work,
+/// and is likely to cause an undefined behaviour.
+///
+#[pymodule(abc)]
 fn module(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<self::BaseFrame>()?;
-    m.add_class::<self::BaseEntityFrame>()?;
-    m.add_class::<self::BaseClause>()?;
+    m.add_class::<self::AbstractFrame>()?;
+    m.add_class::<self::AbstractEntityFrame>()?;
+    m.add_class::<self::AbstractClause>()?;
+    m.add_class::<self::AbstractEntityClause>()?;
     Ok(())
 }
 
 // ---
 
+/// A base
 #[pyclass(subclass)]
-pub struct BaseFrame {}
+pub struct AbstractFrame {}
 
-#[pyclass(extends=BaseFrame)]
-pub struct BaseEntityFrame {}
+#[pyclass(extends=AbstractFrame)]
+pub struct AbstractEntityFrame {}
 
 // ---
 
 #[pyclass(subclass)]
-pub struct BaseClause {}
+pub struct AbstractClause {}
+
+#[pyclass(extends=AbstractClause)]
+pub struct AbstractEntityClause {}

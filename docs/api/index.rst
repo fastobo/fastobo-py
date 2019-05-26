@@ -4,15 +4,15 @@ Library Reference
 .. toctree::
    :hidden:
 
-   base
    doc
+   abc
    header
-   id
-   instance
-   pv
-   syn
    term
    typedef
+   instance
+   id
+   pv
+   syn
    xref
 
 
@@ -41,16 +41,17 @@ Document (`fastobo.doc`)
     fastobo.doc.OboDoc
 
 
-Abstract Base Classes (`fastobo.base`)
+Abstract Base Classes (`fastobo.abc`)
 --------------------------------------
 
-.. currentmodule:: fastobo.base
+.. currentmodule:: fastobo.abc
 .. autosummary::
     :nosignatures:
 
-    fastobo.base.BaseClause
-    fastobo.base.BaseFrame
-    fastobo.base.BaseEntityFrame
+    fastobo.abc.AbstractClause
+    fastobo.abc.AbstractEntityClause
+    fastobo.abc.AbstractFrame
+    fastobo.abc.AbstractEntityFrame
 
 
 

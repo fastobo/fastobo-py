@@ -48,7 +48,7 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
 ///     ...     fastobo.id.PrefixedIdent('ISBN', '978-0-321-84268-8'),
 ///     ... )
 #[pyclass]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Xref {
     #[pyo3(set)]
     id: Ident,
@@ -182,7 +182,7 @@ impl PyObjectProtocol for Xref {
 // --- XrefList --------------------------------------------------------------
 
 #[pyclass]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct XrefList {
     xrefs: Vec<Py<Xref>>
 }
@@ -239,6 +239,9 @@ impl XrefList {
                     unsafe {
                         vec.push(Py::from_borrowed_ptr(i.as_ptr()));
                     }
+                } else {
+                    let ty = i.get_type().name();
+                    return TypeError::into(format!("expected Xref, found {}", ty));
                 }
             }
             Ok(obj.init(Self::new(obj.py(), vec)))

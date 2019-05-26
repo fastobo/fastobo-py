@@ -37,14 +37,14 @@
 .. |Docs| image:: https://img.shields.io/readthedocs/fastobo.svg?maxAge=3600&style=flat-square
    :target: https://fastobo.readthedocs.io/
 
-.. |Issues| image:: https://img.shields.io/github/issues/fastobo-py/fastobo.svg?style=flat-square&maxAge=600
+.. |Issues| image:: https://img.shields.io/github/issues/fastobo/fastobo-py.svg?style=flat-square&maxAge=600
    :target: https://github.com/fastobo/fastobo-py/issues
 
 About
 -----
 
 ``fastobo`` is a Rust library implementing a reliable parser for the OBO file format 1.4.
-This extension module exports idiomatic Python bindings that can be used to load, edit and 
+This extension module exports idiomatic Python bindings that can be used to load, edit and
 serialize ontologies in the OBO format.
 
 

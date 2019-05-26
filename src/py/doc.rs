@@ -30,7 +30,43 @@ use crate::error::Error;
 use crate::pyfile::PyFile;
 
 use super::header::frame::HeaderFrame;
-use super::entity::EntityFrame;
+use super::term::frame::TermFrame;
+use super::typedef::frame::TypedefFrame;
+use super::base::BaseFrame;
+
+// --- Module export ---------------------------------------------------------
+
+#[pymodule(doc)]
+fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<self::OboDoc>()?;
+    Ok(())
+}
+
+// --- Conversion Wrapper ----------------------------------------------------
+
+#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+#[wraps(BaseFrame)]
+pub enum EntityFrame {
+    Term(Py<TermFrame>),
+    Typedef(Py<TypedefFrame>),
+}
+
+impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
+    fn from_py(frame: fastobo::ast::EntityFrame, py: Python) -> Self {
+        match frame {
+            fastobo::ast::EntityFrame::Term(frame) =>
+                Py::new(py, TermFrame::from_py(frame, py))
+                    .map(EntityFrame::Term),
+            fastobo::ast::EntityFrame::Typedef(frame) =>
+                Py::new(py, TypedefFrame::from_py(frame, py))
+                    .map(EntityFrame::Typedef),
+            _ => unimplemented!(),
+        }.expect("could not allocate on Python heap")
+    }
+}
+
+
+// --- OBO document ----------------------------------------------------------
 
 /// The abstract syntax tree corresponding to an OBO document.
 #[pyclass(subclass)]

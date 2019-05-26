@@ -19,11 +19,12 @@ use pyo3::gc::PyTraverseError;
 use pyo3::class::gc::PyVisit;
 use pyo3::AsPyPointer;
 
+use super::super::base::BaseFrame;
 use super::HeaderClause;
 use super::BaseHeaderClause;
 use crate::utils::ClonePy;
 
-#[pyclass]
+#[pyclass(extends=BaseFrame)]
 #[derive(Debug)]
 pub struct HeaderFrame {
     clauses: Vec<HeaderClause>

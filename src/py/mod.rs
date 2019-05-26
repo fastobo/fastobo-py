@@ -32,7 +32,7 @@ use crate::pyfile::PyFile;
 
 // ---------------------------------------------------------------------------
 
-pub mod entity;
+pub mod base;
 pub mod doc;
 pub mod header;
 pub mod id;
@@ -49,6 +49,8 @@ use self::id::PyInit_id;
 use self::syn::PyInit_syn;
 use self::pv::PyInit_pv;
 use self::xref::PyInit_xref;
+use self::base::PyInit_base;
+use self::doc::PyInit_doc;
 
 use self::doc::OboDoc;
 
@@ -57,9 +59,8 @@ use self::doc::OboDoc;
 #[pymodule]
 fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
 
-    m.add_class::<self::entity::BaseEntityFrame>()?;
-    m.add_class::<self::doc::OboDoc>()?;
-
+    m.add_wrapped(pyo3::wrap_pymodule!(base))?;
+    m.add_wrapped(pyo3::wrap_pymodule!(doc))?;
     m.add_wrapped(pyo3::wrap_pymodule!(header))?;
     m.add_wrapped(pyo3::wrap_pymodule!(id))?;
     m.add_wrapped(pyo3::wrap_pymodule!(pv))?;
@@ -78,8 +79,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///         stream needs a ``read(x)`` method that return ``x`` bytes*.
     ///
     /// Returns:
-    ///     `~fastobo.OboDoc`: the OBO document deserialized into an Abstract
-    ///     Syntax Tree.
+    ///     `~fastobo.doc.OboDoc`: the OBO document deserialized into an
+    ///     Abstract Syntax Tree.
     ///
     /// Raises:
     ///     TypeError: when the argument is not a `str` or a binary stream.
@@ -123,8 +124,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     document (str): a string containing an OBO document.
     ///
     /// Returns:
-    ///     `~fastobo.OboDoc`: the OBO document deserialized into an Abstract
-    ///     Syntax Tree.
+    ///     `~fastobo.doc.OboDoc`: the OBO document deserialized into an
+    ///     Abstract Syntax Tree.
     ///
     /// Raises:
     ///     TypeError: when the argument is not a `str`.

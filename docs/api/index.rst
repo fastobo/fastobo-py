@@ -4,6 +4,8 @@ Library Reference
 .. toctree::
    :hidden:
 
+   base
+   doc
    header
    id
    instance
@@ -12,6 +14,10 @@ Library Reference
    term
    typedef
    xref
+
+
+.. currentmodule:: fastobo
+.. automodule:: fastobo
 
 
 Functions
@@ -24,6 +30,29 @@ Functions
 
 Data structures
 ^^^^^^^^^^^^^^^
+
+Document (`fastobo.doc`)
+------------------------
+
+.. currentmodule:: fastobo.doc
+.. autosummary::
+    :nosignatures:
+
+    fastobo.doc.OboDoc
+
+
+Abstract Base Classes (`fastobo.base`)
+--------------------------------------
+
+.. currentmodule:: fastobo.base
+.. autosummary::
+    :nosignatures:
+
+    fastobo.base.BaseClause
+    fastobo.base.BaseFrame
+    fastobo.base.BaseEntityFrame
+
+
 
 Identifier (`fastobo.id`)
 -------------------------

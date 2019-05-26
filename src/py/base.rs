@@ -32,35 +32,25 @@ use super::header::frame::HeaderFrame;
 use super::term::frame::TermFrame;
 use super::typedef::frame::TypedefFrame;
 
-// --- Conversion Wrapper ----------------------------------------------------
+// --- Module export ---------------------------------------------------------
 
-#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
-#[wraps(BaseEntityFrame)]
-pub enum EntityFrame {
-    Term(Py<TermFrame>),
-    Typedef(Py<TypedefFrame>),
-}
-
-impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
-    fn from_py(frame: fastobo::ast::EntityFrame, py: Python) -> Self {
-        match frame {
-            fastobo::ast::EntityFrame::Term(frame) =>
-                Py::new(py, TermFrame::from_py(frame, py))
-                    .map(EntityFrame::Term),
-            fastobo::ast::EntityFrame::Typedef(frame) =>
-                Py::new(py, TypedefFrame::from_py(frame, py))
-                    .map(EntityFrame::Typedef),
-            _ => unimplemented!(),
-        }.expect("could not allocate on Python heap")
-    }
+#[pymodule(base)]
+fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<self::BaseFrame>()?;
+    m.add_class::<self::BaseEntityFrame>()?;
+    m.add_class::<self::BaseClause>()?;
+    Ok(())
 }
 
 // ---
 
 #[pyclass(subclass)]
+pub struct BaseFrame {}
+
+#[pyclass(extends=BaseFrame)]
 pub struct BaseEntityFrame {}
 
 // ---
 
 #[pyclass(subclass)]
-pub struct BaseEntityClause {}
+pub struct BaseClause {}

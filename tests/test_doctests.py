@@ -41,6 +41,9 @@ def load_tests(loader, tests, ignore):
     globs = {
         "fastobo": fastobo,
         "datetime": datetime,
+        "ms": fastobo.load(os.path.realpath(
+            os.path.join(__file__, "..", "data", "ms.obo")
+        )),
     }
 
     if not sys.argv[0].endswith('green'):

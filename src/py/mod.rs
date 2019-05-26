@@ -69,8 +69,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(pyo3::wrap_pymodule!(xref))?;
 
     /// load(fh)
-    /// --
-    //
+    ///
     /// Load an OBO document from the given path or file handle.
     ///
     /// Arguments:
@@ -79,18 +78,19 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///         stream needs a ``read(x)`` method that return ``x`` bytes*.
     ///
     /// Returns:
-    ///     `~fastobo.OboDoc`: the OBO document deserialzed into an Abstract
+    ///     `~fastobo.OboDoc`: the OBO document deserialized into an Abstract
     ///     Syntax Tree.
     ///
     /// Raises:
     ///     TypeError: when the argument is not a `str` or a binary stream.
-    ///     SyntaxError: when the document is not a valid OBO syntax.
+    ///     SyntaxError: when the document is not in valid OBO syntax.
     ///     OSError: when an underlying OS error occurs, or if ``fh.read``
     ///         raises any exception (which will be wrapped).
     ///
     /// Example:
     ///     Use ``requests`` and ``fastobo`` to parse an ontology downloaded
     ///     from the Berkeley BOP portal:
+    ///
     ///     >>> import requests
     ///     >>> res = requests.get("http://ontologies.berkeleybop.org/pw.obo")
     ///     >>> doc = fastobo.load(res.raw)
@@ -116,16 +116,36 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     }
 
     /// loads(document)
-    /// --
     ///
     /// Load an OBO document from a string.
     ///
     /// Arguments:
     ///     document (str): a string containing an OBO document.
     ///
+    /// Returns:
+    ///     `~fastobo.OboDoc`: the OBO document deserialized into an Abstract
+    ///     Syntax Tree.
+    ///
     /// Raises:
     ///     TypeError: when the argument is not a `str`.
-    ///     SyntaxError: when the document is not a valid OBO syntax.
+    ///     SyntaxError: when the document is not in valid OBO syntax.
+    ///
+    /// Example:
+    ///     Use ``fastobo.loads`` to deserialize a literal OBO frame into the
+    ///     corresponding syntax tree:
+    ///
+    ///     >>> import textwrap
+    ///     >>> doc = fastobo.loads(textwrap.dedent(
+    ///     ...     """
+    ///     ...     [Term]
+    ///     ...     id: TST:001
+    ///     ...     name: test item
+    ///     ...     """
+    ///     ... )
+    ///     >>> doc[0].id
+    ///     PrefixedIdent("TST", "001")
+    ///     >>> doc[0][0]
+    ///     NameClause("test item")
     ///
     #[pyfn(m, "loads")]
     fn loads(py: Python, document: &str) -> PyResult<OboDoc> {

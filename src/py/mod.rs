@@ -141,11 +141,11 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     ...     id: TST:001
     ///     ...     name: test item
     ///     ...     """
-    ///     ... )
+    ///     ... ))
     ///     >>> doc[0].id
-    ///     PrefixedIdent("TST", "001")
+    ///     PrefixedIdent('TST', '001')
     ///     >>> doc[0][0]
-    ///     NameClause("test item")
+    ///     NameClause('test item')
     ///
     #[pyfn(m, "loads")]
     fn loads(py: Python, document: &str) -> PyResult<OboDoc> {

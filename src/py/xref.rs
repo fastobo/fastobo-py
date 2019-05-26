@@ -25,6 +25,7 @@ use pyo3::class::gc::PyVisit;
 
 use super::id::Ident;
 use crate::utils::ClonePy;
+use crate::utils::AsGILRef;
 
 // --- Module export ---------------------------------------------------------
 
@@ -137,13 +138,13 @@ impl Xref {
         ))
     }
 
-    /// Ident: the identifier of the reference.
+    /// `~fastobo.id.Ident`: the identifier of the reference.
     #[getter]
     fn get_id(&self) -> PyResult<&Ident> {
         Ok(&self.id)
     }
 
-    /// str or None: the description of the reference, if any.
+    /// `str` or `None`: the description of the reference, if any.
     #[getter]
     fn get_desc(&self) -> PyResult<Option<&str>> {
         match &self.desc {
@@ -181,6 +182,15 @@ impl PyObjectProtocol for Xref {
 
 // --- XrefList --------------------------------------------------------------
 
+/// A list of cross-references.
+///
+/// Example:
+///     >>> xrefs = ms[0][1].xrefs
+///     >>> print(xrefs)
+///     [PSI:MS]
+///     >>> xrefs[0]
+///     Xref(PrefixedIdent('PSI', 'MS'))
+///
 #[pyclass]
 #[derive(Debug, PartialEq)]
 pub struct XrefList {
@@ -278,6 +288,17 @@ impl PySequenceProtocol for XrefList {
             Ok(self.xrefs[index as usize].clone_ref(py))
         } else {
             IndexError::into("list index out of range")
+        }
+    }
+
+    fn __contains__(&self, item: &PyAny) -> PyResult<bool> {
+        if let Ok(xref) = item.downcast_ref::<Xref>() {
+            let py = item.py();
+            Ok(self.xrefs.iter().any(|x| x.as_gil_ref(py) == xref))
+        } else {
+            let ty = item.get_type().name();
+            let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);
+            TypeError::into(msg)
         }
     }
 }

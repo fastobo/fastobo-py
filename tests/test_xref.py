@@ -42,24 +42,23 @@ class TestXrefList(unittest.TestCase):
 
     type = fastobo.xref.XrefList
 
-    def test_init(self):
-        xref1 = fastobo.xref.Xref(
-            fastobo.id.UnprefixedIdent("fastobo")
-        )
-        xref2 = fastobo.xref.Xref(
-            fastobo.id.PrefixedIdent('ISBN', '0321842685')
-        )
+    def setUp(self):
+        id = fastobo.id.PrefixedIdent('ISBN', '0321842685')
+        desc = "Hacker's Delight (2nd Edition)"
+        self.x1 = fastobo.xref.Xref(id, desc)
+        self.x2 = fastobo.xref.Xref(fastobo.id.UnprefixedIdent("fastobo"))
 
+    def test_init(self):
         try:
             xref = self.type()
         except Exception:
             self.fail("could not create `XrefList` instance without argument")
         try:
-            xref = self.type([xref1, xref2])
+            xref = self.type([self.x1, self.x2])
         except Exception:
             self.fail("could not create `XrefList` instance from list")
         try:
-            xref = self.type(iter([xref1, xref2]))
+            xref = self.type(iter([self.x1, self.x2]))
         except Exception:
             self.fail("could not create `XrefList` instance from iterator")
 
@@ -69,23 +68,19 @@ class TestXrefList(unittest.TestCase):
         self.assertRaises(TypeError, self.type, ["abc", "def"])
 
     def test_str(self):
+        x1, x2 = self.x1, self.x2
+        self.assertEqual(str(self.type()), "[]")
+        self.assertEqual(str(self.type([x1])), '[{}]'.format(x1))
+        self.assertEqual(str(self.type([x1, x2])), '[{}, {}]'.format(x1, x2))
 
-        id = fastobo.id.PrefixedIdent('ISBN', '0321842685')
-        desc = "Hacker's Delight (2nd Edition)"
-        xref1 = fastobo.xref.Xref(id, desc)
-
-        id = fastobo.id.UnprefixedIdent("fastobo")
-        xref2 = fastobo.xref.Xref(id)
-
-        self.assertEqual(
-            str(self.type()),
-            "[]"
-        )
-        self.assertEqual(
-            str(self.type([xref1])),
-            '[ISBN:0321842685 "Hacker\'s Delight (2nd Edition)"]'
-        )
-        self.assertEqual(
-            str(self.type([xref1, xref2])),
-            '[ISBN:0321842685 "Hacker\'s Delight (2nd Edition)", fastobo]'
-        )
+    def test_contains(self):
+        x1, x2 = self.x1, self.x2
+        l1 = self.type()
+        self.assertNotIn(x1, l1)
+        self.assertNotIn(x2, l1)
+        l2 = self.type([x1])
+        self.assertIn(x1, l2)
+        self.assertNotIn(x2, l2)
+        l3 = self.type([x1, x2])
+        self.assertIn(x1, l3)
+        self.assertIn(x2, l3)

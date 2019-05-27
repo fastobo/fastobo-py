@@ -139,7 +139,7 @@ dependencies = [
  "opaque_typedef 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "opaque_typedef_macros 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "pest 2.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "pyo3 0.7.0-alpha.1 (git+https://github.com/PyO3/pyo3)",
+ "pyo3 0.7.0 (git+https://github.com/PyO3/pyo3)",
  "url 1.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -357,14 +357,14 @@ dependencies = [
 
 [[package]]
 name = "pyo3"
-version = "0.7.0-alpha.1"
-source = "git+https://github.com/PyO3/pyo3#a5a2059691eb02384ab60618b092b5b2b3e7f66c"
+version = "0.7.0"
+source = "git+https://github.com/PyO3/pyo3#ed52d57c6f349c360c90aaf53809bb6fb9f9fe81"
 dependencies = [
  "inventory 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.55 (registry+https://github.com/rust-lang/crates.io-index)",
  "mashup 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "pyo3cls 0.7.0-alpha.1 (git+https://github.com/PyO3/pyo3)",
+ "pyo3cls 0.7.0 (git+https://github.com/PyO3/pyo3)",
  "regex 1.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "spin 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "version_check 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -372,8 +372,8 @@ dependencies = [
 
 [[package]]
 name = "pyo3-derive-backend"
-version = "0.7.0-alpha.1"
-source = "git+https://github.com/PyO3/pyo3#a5a2059691eb02384ab60618b092b5b2b3e7f66c"
+version = "0.7.0"
+source = "git+https://github.com/PyO3/pyo3#ed52d57c6f349c360c90aaf53809bb6fb9f9fe81"
 dependencies = [
  "proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -382,11 +382,11 @@ dependencies = [
 
 [[package]]
 name = "pyo3cls"
-version = "0.7.0-alpha.1"
-source = "git+https://github.com/PyO3/pyo3#a5a2059691eb02384ab60618b092b5b2b3e7f66c"
+version = "0.7.0"
+source = "git+https://github.com/PyO3/pyo3#ed52d57c6f349c360c90aaf53809bb6fb9f9fe81"
 dependencies = [
  "proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)",
- "pyo3-derive-backend 0.7.0-alpha.1 (git+https://github.com/PyO3/pyo3)",
+ "pyo3-derive-backend 0.7.0 (git+https://github.com/PyO3/pyo3)",
  "quote 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.34 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -594,9 +594,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum proc-macro-hack 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2c725b36c99df7af7bf9324e9c999b9e37d92c8f8caf106d82e1d7953218d2d8"
 "checksum proc-macro-hack-impl 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2b753ad9ed99dd8efeaa7d2fb8453c8f6bc3e54b97966d35f1bc77ca6865254a"
 "checksum proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)" = "cf3d2011ab5c909338f7887f4fc896d35932e29146c12c8d01da6b22a80ba759"
-"checksum pyo3 0.7.0-alpha.1 (git+https://github.com/PyO3/pyo3)" = "<none>"
-"checksum pyo3-derive-backend 0.7.0-alpha.1 (git+https://github.com/PyO3/pyo3)" = "<none>"
-"checksum pyo3cls 0.7.0-alpha.1 (git+https://github.com/PyO3/pyo3)" = "<none>"
+"checksum pyo3 0.7.0 (git+https://github.com/PyO3/pyo3)" = "<none>"
+"checksum pyo3-derive-backend 0.7.0 (git+https://github.com/PyO3/pyo3)" = "<none>"
+"checksum pyo3cls 0.7.0 (git+https://github.com/PyO3/pyo3)" = "<none>"
 "checksum quote 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)" = "faf4799c5d274f3868a4aae320a0a182cbd2baee377b378f080e16a23e9d80db"
 "checksum regex 1.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "8f0a0bcab2fd7d1d7c54fa9eae6f43eddeb9ce2e7352f8518a814a4f65d60c58"
 "checksum regex-syntax 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)" = "dcfd8681eebe297b81d98498869d4aae052137651ad7b96822f09ceb690d0a96"

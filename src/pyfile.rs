@@ -1,11 +1,14 @@
 use std::io::Read;
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 use pyo3::prelude::*;
+use pyo3::PyErrValue;
 use pyo3::PyObject;
 use pyo3::AsPyPointer;
 use pyo3::PyDowncastError;
 use pyo3::types::PyBytes;
+use pyo3::exceptions::OSError;
 
 #[derive(Clone, Debug)]
 pub struct PyFile<'p> {
@@ -41,14 +44,37 @@ impl<'p> Read for PyFile<'p> {
         unsafe {
             let py = Python::assume_gil_acquired();
             let file = PyObject::from_borrowed_ptr(py, self.file);
-            let res = file.call_method1(py, "read", (buf.len(), ))
-                .unwrap(); // FIXME -> map as OS Error
-            let bytes = res
-                .extract::<&PyBytes>(py)
-                .unwrap();
-            let b = bytes.as_bytes();
-            (&mut buf[..b.len()]).copy_from_slice(b);
-            Ok(b.len())
+            match file.call_method1(py, "read", (buf.len(),)) {
+                Ok(obj) => {
+                    let bytes = obj.extract::<&PyBytes>(py)
+                        .expect("read() did not return bytes");
+                    let b = bytes.as_bytes();
+                    (&mut buf[..b.len()]).copy_from_slice(b);
+                    Ok(b.len())
+                }
+                Err(e) => {
+                    if e.is_instance::<OSError>(py) {
+                        if let PyErrValue::Value(obj) = e.pvalue {
+                            let code = obj.getattr(py, "errno").expect("no errno found");
+                            Err(std::io::Error::from_raw_os_error(
+                                code.extract::<i32>(py)
+                                .expect("errno is not an integer")
+                            ))
+                        } else {
+                            unreachable!()
+                        }
+                    } else {
+                        if let PyErrValue::Value(obj) = e.pvalue {
+                            Err(std::io::Error::new(
+                                std::io::ErrorKind::Other,
+                                "an error occurred"
+                            ))
+                        } else {
+                            unreachable!()
+                        }
+                    }
+                }
+            }
         }
 
     }

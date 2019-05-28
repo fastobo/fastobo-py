@@ -42,16 +42,9 @@ pub mod pv;
 pub mod syn;
 pub mod xref;
 
-use self::header::PyInit_header;
-use self::typedef::PyInit_typedef;
-use self::term::PyInit_term;
-use self::id::PyInit_id;
-use self::syn::PyInit_syn;
-use self::pv::PyInit_pv;
-use self::xref::PyInit_xref;
-use self::abc::PyInit_abc;
-use self::doc::PyInit_doc;
 
+
+use super::built;
 use self::doc::OboDoc;
 
 // --- Module export ---------------------------------------------------------
@@ -62,6 +55,16 @@ use self::doc::OboDoc;
 #[pymodule]
 fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
 
+    use self::header::PyInit_header;
+    use self::typedef::PyInit_typedef;
+    use self::term::PyInit_term;
+    use self::id::PyInit_id;
+    use self::syn::PyInit_syn;
+    use self::pv::PyInit_pv;
+    use self::xref::PyInit_xref;
+    use self::abc::PyInit_abc;
+    use self::doc::PyInit_doc;
+
     m.add_wrapped(pyo3::wrap_pymodule!(abc))?;
     m.add_wrapped(pyo3::wrap_pymodule!(doc))?;
     m.add_wrapped(pyo3::wrap_pymodule!(header))?;
@@ -71,6 +74,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(pyo3::wrap_pymodule!(term))?;
     m.add_wrapped(pyo3::wrap_pymodule!(typedef))?;
     m.add_wrapped(pyo3::wrap_pymodule!(xref))?;
+
+    m.add("__built__", pyo3_built!(py, built))?;
 
     /// load(fh)
     ///

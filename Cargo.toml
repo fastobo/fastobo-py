@@ -6,19 +6,22 @@ name = "fastobo-py"
 version = "0.1.0"
 authors = ["Martin Larralde <martin.larralde@ens-paris-saclay.fr>"]
 publish = false
+build = "src/build.rs"
 
 [lib]
 crate-type = ["cdylib"]
 name = "fastobo_py"
 
+[build-dependencies]
+built = "0.3.0"
+
 [dependencies]
-pyo3 = { git = "https://github.com/PyO3/pyo3" }
+pyo3 = "0.7.0"
+pyo3-built = "0.2.0"
 pest = "2.1.1"
 libc = "0.2.53"
 url = "1.7.2"
-
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
-
 fastobo = "0.3.0"
 fastobo-py-derive = { path = "./derive" }

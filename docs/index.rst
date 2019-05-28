@@ -11,19 +11,19 @@
 |Travis| |License| |Source| |PyPI| |Wheel| |Versions| |Implementation| |Changelog| |Docs| |Issues|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/fastobo.svg?style=flat-square&maxAge=300
-   :target: https://pypi.python.org/pypi/fastobo
+   :target: https://pypi.org/project/fastobo
 
 .. |Travis| image:: https://img.shields.io/travis/fastobo/fastobo-py.svg?style=flat-square&maxAge=3600
    :target: https://travis-ci.org/fastobo/fastobo-py/branches
 
 .. |Wheel| image:: https://img.shields.io/pypi/wheel/fastobo.svg?style=flat-square&maxAge=2678400
-   :target: https://pypi.python.org/pypi/fastobo
+   :target: https://pypi.org/project/fastobo
 
 .. |Versions| image:: https://img.shields.io/pypi/pyversions/fastobo.svg?style=flat-square&maxAge=300
    :target: https://travis-ci.org/fastobo/fastobo-py
 
 .. |Changelog| image:: https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square
-   :target: https://github.com/fastobo-py/fastobo/blob/master/CHANGELOG.md
+   :target: https://github.com/fastobo/fastobo-py/blob/master/CHANGELOG.md
 
 .. |License| image:: https://img.shields.io/pypi/l/fastobo.svg?style=flat-square&maxAge=300
    :target: https://choosealicense.com/licenses/mit/

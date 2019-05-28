@@ -9,4 +9,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 Initial release.
 
-[Unreleased]: https://github.com/althonos/fastobo/compare/40aa9b0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/77dd00c...HEAD

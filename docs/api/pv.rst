@@ -4,14 +4,14 @@ Identifier
 .. currentmodule:: fastobo.pv
 .. automodule:: fastobo.pv
 
-.. autoclass:: BasePropertyValue
+.. autoclass:: AbstractPropertyValue
    :members:
    :special-members:
 
-.. autoclass:: TypedPropertyValue(BasePropertyValue)
+.. autoclass:: LiteralPropertyValue(AbstractPropertyValue)
    :members:
    :special-members:
 
-.. autoclass:: IdentifiedPropertyValue(BasePropertyValue)
+.. autoclass:: ResourcePropertyValue(AbstractPropertyValue)
    :members:
    :special-members:

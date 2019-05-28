@@ -7,9 +7,9 @@ import fastobo
 
 
 
-class TestTypedPropertyValue(unittest.TestCase):
+class TestLiteralPropertyValue(unittest.TestCase):
 
-    type = fastobo.pv.TypedPropertyValue
+    type = fastobo.pv.LiteralPropertyValue
 
     def test_init(self):
         rel = fastobo.id.UnprefixedIdent("creation_date")
@@ -18,7 +18,7 @@ class TestTypedPropertyValue(unittest.TestCase):
         try:
             pv = self.type(rel, value, dt)
         except Exception:
-            self.fail("could not create `TypedPropertyValue` instance")
+            self.fail("could not create `LiteralPropertyValue` instance")
 
     def test_init_type_error(self):
         rel = fastobo.id.UnprefixedIdent("creation_date")
@@ -59,7 +59,7 @@ class TestTypedPropertyValue(unittest.TestCase):
         pv = self.type(rel, value, dt)
         self.assertEqual(
             repr(pv),
-            "TypedPropertyValue("
+            "LiteralPropertyValue("
             "UnprefixedIdent('creation_date'), "
             "'2019-04-08T23:21:05Z', "
             "PrefixedIdent('xsd', 'date'))"
@@ -67,9 +67,9 @@ class TestTypedPropertyValue(unittest.TestCase):
 
 
 
-class TestIdentifiedPropertyValue(unittest.TestCase):
+class TestResourcePropertyValue(unittest.TestCase):
 
-    type = fastobo.pv.IdentifiedPropertyValue
+    type = fastobo.pv.ResourcePropertyValue
 
     def test_init(self):
         rel = fastobo.id.UnprefixedIdent("derived_from")
@@ -77,7 +77,7 @@ class TestIdentifiedPropertyValue(unittest.TestCase):
         try:
             pv = self.type(rel, value)
         except Exception:
-            self.fail("could not create `IdentifiedPropertyValue` instance")
+            self.fail("could not create `ResourcePropertyValue` instance")
 
     def test_init_type_error(self):
         rel = fastobo.id.UnprefixedIdent("derived_from")
@@ -110,7 +110,7 @@ class TestIdentifiedPropertyValue(unittest.TestCase):
         pv = self.type(rel, value)
         self.assertEqual(
             repr(pv),
-            "IdentifiedPropertyValue("
+            "ResourcePropertyValue("
             "UnprefixedIdent('derived_from'), "
             "PrefixedIdent('MS', '1000031'))"
         )

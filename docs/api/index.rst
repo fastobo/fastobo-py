@@ -142,9 +142,9 @@ Property Value (`fastobo.pv`)
 .. autosummary::
    :nosignatures:
 
-   fastobo.pv.BasePropertyValue
-   fastobo.pv.TypedPropertyValue
-   fastobo.pv.IdentifiedPropertyValue
+   fastobo.pv.AbstractPropertyValue
+   fastobo.pv.LiteralPropertyValue
+   fastobo.pv.ResourcePropertyValue
 
 
 Synonym (`fastobo.syn`)

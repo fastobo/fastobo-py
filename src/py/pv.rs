@@ -24,26 +24,26 @@ use super::id::Ident;
 
 #[pymodule(pv)]
 fn module(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<self::BasePropertyValue>()?;
-    m.add_class::<self::TypedPropertyValue>()?;
-    m.add_class::<self::IdentifiedPropertyValue>()?;
+    m.add_class::<self::AbstractPropertyValue>()?;
+    m.add_class::<self::LiteralPropertyValue>()?;
+    m.add_class::<self::ResourcePropertyValue>()?;
     Ok(())
 }
 
 // --- Conversion Wrapper ----------------------------------------------------
 
 #[derive(ClonePy, Debug, PartialEq, PyWrapper)]
-#[wraps(BasePropertyValue)]
+#[wraps(AbstractPropertyValue)]
 pub enum PropertyValue {
-    Typed(Py<TypedPropertyValue>),
-    Identified(Py<IdentifiedPropertyValue>),
+    Literal(Py<LiteralPropertyValue>),
+    Resource(Py<ResourcePropertyValue>),
 }
 
 impl<'p> AsGILRef<'p, fastobo::ast::PropVal<'p>> for PropertyValue {
     fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PropVal<'p> {
         match self {
-            PropertyValue::Typed(pv) => pv.as_gil_ref(py).as_gil_ref(py),
-            PropertyValue::Identified(pv) => pv.as_gil_ref(py).as_gil_ref(py),
+            PropertyValue::Literal(pv) => pv.as_gil_ref(py).as_gil_ref(py),
+            PropertyValue::Resource(pv) => pv.as_gil_ref(py).as_gil_ref(py),
         }
     }
 }
@@ -58,12 +58,12 @@ impl Display for PropertyValue {
 impl FromPy<fastobo::ast::PropertyValue> for PropertyValue {
     fn from_py(pv: fastobo::ast::PropertyValue, py: Python) -> Self {
         match pv {
-            fastobo::ast::PropertyValue::Typed(r, d, ty) =>
-                Py::new(py, TypedPropertyValue::new(py, r, d, ty))
-                    .map(PropertyValue::Typed),
-            fastobo::ast::PropertyValue::Identified(r, v) =>
-                Py::new(py, IdentifiedPropertyValue::new(py, r, v))
-                    .map(PropertyValue::Identified),
+            fastobo::ast::PropertyValue::Literal(r, d, ty) =>
+                Py::new(py, LiteralPropertyValue::new(py, r, d, ty))
+                    .map(PropertyValue::Literal),
+            fastobo::ast::PropertyValue::Resource(r, v) =>
+                Py::new(py, ResourcePropertyValue::new(py, r, v))
+                    .map(PropertyValue::Resource),
         }.expect("could not allocate on Python heap")
     }
 }
@@ -71,9 +71,9 @@ impl FromPy<fastobo::ast::PropertyValue> for PropertyValue {
 impl FromPy<PropertyValue> for fastobo::ast::PropertyValue {
     fn from_py(pv: PropertyValue, py: Python) -> Self {
         match pv {
-            PropertyValue::Typed(t) =>
+            PropertyValue::Literal(t) =>
                 Self::from_py(t.as_ref(py).clone_py(py), py),
-            PropertyValue::Identified(i) =>
+            PropertyValue::Resource(i) =>
                 Self::from_py(i.as_ref(py).clone_py(py), py)
         }
     }
@@ -83,26 +83,26 @@ impl FromPy<PropertyValue> for fastobo::ast::PropertyValue {
 
 #[pyclass(subclass)]
 #[derive(Debug)]
-pub struct BasePropertyValue {}
+pub struct AbstractPropertyValue {}
 
-// --- Typed -----------------------------------------------------------------
+// --- Literal -----------------------------------------------------------------
 
-#[pyclass(extends=BasePropertyValue)]
+#[pyclass(extends=AbstractPropertyValue)]
 #[derive(Debug)]
-pub struct TypedPropertyValue {
+pub struct LiteralPropertyValue {
     relation: Ident,
     value: ast::QuotedString,
     datatype: Ident,
 }
 
-impl TypedPropertyValue {
+impl LiteralPropertyValue {
     pub fn new<R, V, D>(py: Python, relation: R, value: V, datatype: D) -> Self
     where
         R: IntoPy<Ident>,
         V: Into<fastobo::ast::QuotedString>,
         D: IntoPy<Ident>
     {
-        TypedPropertyValue {
+        LiteralPropertyValue {
             relation: relation.into_py(py),
             value: value.into(),
             datatype: datatype.into_py(py),
@@ -110,9 +110,9 @@ impl TypedPropertyValue {
     }
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::PropVal<'p>> for TypedPropertyValue  {
+impl<'p> AsGILRef<'p, fastobo::ast::PropVal<'p>> for LiteralPropertyValue  {
     fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PropVal<'p> {
-        fastobo::ast::PropVal::Typed(
+        fastobo::ast::PropVal::Literal(
             Cow::Borrowed(self.relation.as_gil_ref(py).into()),
             Cow::Borrowed(self.value.share()),
             Cow::Borrowed(self.datatype.as_gil_ref(py))
@@ -120,7 +120,7 @@ impl<'p> AsGILRef<'p, fastobo::ast::PropVal<'p>> for TypedPropertyValue  {
     }
 }
 
-impl ClonePy for TypedPropertyValue {
+impl ClonePy for LiteralPropertyValue {
     fn clone_py(&self, py: Python) -> Self {
         Self {
             relation: self.relation.clone_py(py),
@@ -130,16 +130,16 @@ impl ClonePy for TypedPropertyValue {
     }
 }
 
-impl Display for TypedPropertyValue {
+impl Display for LiteralPropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         self.as_gil_ref(gil.python()).fmt(f)
     }
 }
 
-impl FromPy<TypedPropertyValue> for fastobo::ast::PropertyValue {
-    fn from_py(pv: TypedPropertyValue, py: Python) -> Self {
-        fastobo::ast::PropertyValue::Typed(
+impl FromPy<LiteralPropertyValue> for fastobo::ast::PropertyValue {
+    fn from_py(pv: LiteralPropertyValue, py: Python) -> Self {
+        fastobo::ast::PropertyValue::Literal(
             pv.relation.into_py(py),
             pv.value,
             pv.datatype.into_py(py),
@@ -148,7 +148,7 @@ impl FromPy<TypedPropertyValue> for fastobo::ast::PropertyValue {
 }
 
 #[pymethods]
-impl TypedPropertyValue {
+impl LiteralPropertyValue {
     #[new]
     fn __init__(obj: &PyRawObject, relation: &PyAny , value: &PyAny, datatype: &PyAny) -> PyResult<()> {
         let r = relation.extract::<Ident>()?;
@@ -197,11 +197,11 @@ impl TypedPropertyValue {
 }
 
 #[pyproto]
-impl PyObjectProtocol for TypedPropertyValue {
+impl PyObjectProtocol for LiteralPropertyValue {
 
     fn __repr__(&self) -> PyResult<PyObject> {
         let py = unsafe { Python::assume_gil_acquired() };
-        let fmt = PyString::new(py, "TypedPropertyValue({!r}, {!r}, {!r})");
+        let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
         fmt.to_object(py).call_method1(py, "format", (
             self.relation.to_object(py),
             self.value.as_str(),
@@ -215,38 +215,38 @@ impl PyObjectProtocol for TypedPropertyValue {
     }
 }
 
-// --- Identified ------------------------------------------------------------
+// --- Resource ------------------------------------------------------------
 
-#[pyclass(extends=BasePropertyValue)]
+#[pyclass(extends=AbstractPropertyValue)]
 #[derive(Debug)]
-pub struct IdentifiedPropertyValue {
+pub struct ResourcePropertyValue {
     relation: Ident,
     value: Ident,
 }
 
-impl IdentifiedPropertyValue {
+impl ResourcePropertyValue {
     pub fn new<R, V>(py: Python, relation: R, value: V) -> Self
     where
         R: IntoPy<Ident>,
         V: IntoPy<Ident>,
     {
-        IdentifiedPropertyValue {
+        ResourcePropertyValue {
             relation: relation.into_py(py),
             value: value.into_py(py)
         }
     }
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::PropVal<'p>> for IdentifiedPropertyValue {
+impl<'p> AsGILRef<'p, fastobo::ast::PropVal<'p>> for ResourcePropertyValue {
     fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PropVal<'p> {
-        fastobo::ast::PropVal::Identified(
+        fastobo::ast::PropVal::Resource(
             Cow::Borrowed(self.relation.as_gil_ref(py).into()),
             Cow::Borrowed(self.value.as_gil_ref(py).into())
         )
     }
 }
 
-impl ClonePy for IdentifiedPropertyValue {
+impl ClonePy for ResourcePropertyValue {
     fn clone_py(&self, py: Python) -> Self {
         Self {
             relation: self.relation.clone_py(py),
@@ -255,16 +255,16 @@ impl ClonePy for IdentifiedPropertyValue {
     }
 }
 
-impl Display for IdentifiedPropertyValue {
+impl Display for ResourcePropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         self.as_gil_ref(gil.python()).fmt(f)
     }
 }
 
-impl FromPy<IdentifiedPropertyValue> for fastobo::ast::PropertyValue {
-    fn from_py(pv: IdentifiedPropertyValue, py: Python) -> Self {
-        fastobo::ast::PropertyValue::Identified(
+impl FromPy<ResourcePropertyValue> for fastobo::ast::PropertyValue {
+    fn from_py(pv: ResourcePropertyValue, py: Python) -> Self {
+        fastobo::ast::PropertyValue::Resource(
             pv.relation.into_py(py),
             pv.value.into_py(py),
         )
@@ -272,7 +272,7 @@ impl FromPy<IdentifiedPropertyValue> for fastobo::ast::PropertyValue {
 }
 
 #[pymethods]
-impl IdentifiedPropertyValue {
+impl ResourcePropertyValue {
     #[new]
     fn __init__(obj: &PyRawObject, relation: Ident, value: Ident) -> PyResult<()> {
         Ok(obj.init(Self::new(obj.py(), relation, value)))
@@ -302,10 +302,10 @@ impl IdentifiedPropertyValue {
 }
 
 #[pyproto]
-impl PyObjectProtocol for IdentifiedPropertyValue {
+impl PyObjectProtocol for ResourcePropertyValue {
     fn __repr__(&self) -> PyResult<PyObject> {
         let py = unsafe { Python::assume_gil_acquired() };
-        let fmt = PyString::new(py, "IdentifiedPropertyValue({!r}, {!r})");
+        let fmt = PyString::new(py, "ResourcePropertyValue({!r}, {!r})");
         fmt.to_object(py).call_method1(py, "format", (
             self.relation.to_object(py),
             self.value.to_object(py),

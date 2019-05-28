@@ -101,9 +101,10 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     from the Berkeley BOP portal:
     ///
     ///     >>> import requests
-    ///     >>> res = requests.get("http://ontologies.berkeleybop.org/pw.obo")
-    ///     >>> doc = fastobo.load(res.raw)
-    ///
+    ///     >>> url = "http://purl.obolibrary.org/obo/cmo.obo"
+    ///     >>> doc = fastobo.load(requests.get(url, stream=True).raw)
+    ///     >>> doc.header[2]
+    ///     OntologyClause('cmo.obo')
     #[pyfn(m, "load")]
     fn load(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
         if let Ok(s) = fh.downcast_ref::<PyString>() {

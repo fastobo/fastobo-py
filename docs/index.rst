@@ -55,6 +55,7 @@ Library
    :maxdepth: 2
 
    install
+   examples/index
    api/index
    changes
 

@@ -2,3 +2,5 @@ Sphinx
 recommonmark
 sphinx_bootstrap_theme
 fastobo
+ipykernel
+IPython

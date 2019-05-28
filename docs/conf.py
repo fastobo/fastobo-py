@@ -10,6 +10,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
+import fastobo
+import sphinx_bootstrap_theme
+import shutil
+import datetime
+import configparser
 import os
 import sys
 
@@ -20,12 +25,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__, project_dir)))
 
 # -- Imports -----------------------------------------------------------------
 
-import configparser
-import datetime
-import shutil
-import sphinx_bootstrap_theme
-
-import fastobo
 
 # -- Project information -----------------------------------------------------
 
@@ -59,6 +58,7 @@ def setup(app):
 
 # -- General configuration ---------------------------------------------------
 
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -75,7 +75,9 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "sphinx_bootstrap_theme",
-    "recommonmark"
+    "recommonmark",
+    "nbsphinx",
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

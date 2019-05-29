@@ -38,7 +38,7 @@ macro_rules! impl_repr {
 }
 
 macro_rules! impl_raw_value {
-    ($fmt:literal, $($attr:ident),*) => (
+    ($fmt:literal, $(self . $attr:ident),*) => (
         pub fn raw_value(&self) -> PyResult<String> {
            Ok(format!($fmt, $(self . $attr,)*))
         }

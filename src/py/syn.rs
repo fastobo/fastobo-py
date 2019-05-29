@@ -22,6 +22,7 @@ use pyo3::PyGCProtocol;
 use pyo3::PyObjectProtocol;
 use pyo3::gc::PyTraverseError;
 use pyo3::class::gc::PyVisit;
+use pyo3::class::basic::CompareOp;
 
 use super::id::Ident;
 use super::xref::XrefList;
@@ -105,7 +106,7 @@ impl ToPyObject for SynonymScope {
 // --- Synonym ---------------------------------------------------------------
 
 #[pyclass]
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Synonym {
     desc: fastobo::ast::QuotedString,
     scope: SynonymScope,
@@ -157,5 +158,20 @@ impl FromPy<Synonym> for fastobo::ast::Synonym {
             syn.ty.map(|ty| ty.into_py(py)),
             fastobo::ast::XrefList::from_py(syn.xrefs, py),
         )
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for Synonym {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, Synonym(self.desc, self.scope))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.desc && self.scope && self.ty && self.xrefs)
     }
 }

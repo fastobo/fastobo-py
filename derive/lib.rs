@@ -6,7 +6,9 @@ extern crate quote;
 
 use proc_macro::TokenStream;
 use syn::spanned::Spanned;
+use quote::quote;
 
+// ---
 
 #[proc_macro_derive(ClonePy)]
 pub fn clonepy_derive(input: TokenStream) -> TokenStream {
@@ -24,12 +26,12 @@ fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream 
     // Build clone_py for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote::quote!(#name(x) => #name(x.clone_py(py))));
+        variants.push(quote!(#name(x) => #name(x.clone_py(py))));
     }
 
     // Build clone implementation
     let name = &ast.ident;
-    let expanded = quote::quote! {
+    let expanded = quote! {
         #[automatically_derived]
         #[allow(unused)]
         impl ClonePy for #name {
@@ -51,7 +53,7 @@ fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream 
 fn clonepy_impl_struct(ast: &syn::DeriveInput, _en: &syn::DataStruct) -> TokenStream {
 
     let name = &ast.ident;
-    let expanded = quote::quote! {
+    let expanded = quote! {
         #[automatically_derived]
         impl ClonePy for #name {
             fn clone_py(&self, _py: Python) -> Self {
@@ -63,7 +65,7 @@ fn clonepy_impl_struct(ast: &syn::DeriveInput, _en: &syn::DataStruct) -> TokenSt
     TokenStream::from(expanded)
 }
 
-
+// ---
 
 #[proc_macro_derive(PyWrapper, attributes(wraps))]
 pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
@@ -92,12 +94,12 @@ fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream 
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote::quote!(#name(x) => x.as_ptr()));
+        variants.push(quote!(#name(x) => x.as_ptr()));
     }
 
     // Build clone implementation
     let name = &ast.ident;
-    let expanded = quote::quote! {
+    let expanded = quote! {
         #[automatically_derived]
         impl pyo3::AsPyPointer for #name {
             fn as_ptr(&self) -> *mut pyo3::ffi::PyObject {
@@ -119,12 +121,12 @@ fn topyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStre
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote::quote!(#name(x) => x.to_object(py)));
+        variants.push(quote!(#name(x) => x.to_object(py)));
     }
 
     // Build clone implementation
     let name = &ast.ident;
-    let expanded = quote::quote! {
+    let expanded = quote! {
         #[automatically_derived]
         impl pyo3::ToPyObject for #name {
             fn to_object(&self, py: Python) -> pyo3::PyObject {
@@ -145,12 +147,12 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote::quote!(#name(x) => x.into_object(py)));
+        variants.push(quote!(#name(x) => x.into_object(py)));
     }
 
     // Build clone implementation
     let name = &ast.ident;
-    let expanded = quote::quote! {
+    let expanded = quote! {
         #[automatically_derived]
         impl pyo3::IntoPyObject for #name {
             fn into_object(self, py: Python) -> pyo3::PyObject {
@@ -192,7 +194,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             path.segments.iter().next().unwrap().ident.span(),
         );
 
-        variants.push(quote::quote!(
+        variants.push(quote!(
             #lit => Ok(#name(pyo3::Py::from_borrowed_ptr(ob.as_ptr())))
         ));
     }
@@ -222,7 +224,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         &format!("expected {} instance, {{}} found", base),
         base.span()
     );
-    let expanded = quote::quote! {
+    let expanded = quote! {
         #[automatically_derived]
         impl<'source> pyo3::FromPyObject<'source> for #name {
             fn extract(ob: &'source pyo3::types::PyAny) -> pyo3::PyResult<Self> {
@@ -253,12 +255,12 @@ fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote::quote!(#name(x) => Self::from_py(x.as_ref(py).deref().clone_py(py), py)));
+        variants.push(quote!(#name(x) => Self::from_py(x.as_ref(py).deref().clone_py(py), py)));
     }
 
     // Build clone implementation
     let name = &ast.ident;
-    let expanded = quote::quote! {
+    let expanded = quote! {
         #[automatically_derived]
         impl pyo3::FromPy<&#name> for fastobo::ast::#name {
             fn from_py(obj: &#name, py: Python) -> Self {
@@ -274,40 +276,60 @@ fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-// fn pyobjectprotocol_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
-//
-//     let name = &ast.ident;
-//     let mut methods = Vec::new();
-//
-//     let unary: Vec<syn::Ident> = vec![
-//         syn::Ident::new("__repr__", syn::export::Span::call_site()),
-//         syn::Ident::new("__str__", syn::export::Span::call_site()),
-//     ];
-//
-//     for meth in unary.iter() {
-//         let mut variants = Vec::new();
-//         // Build clone for each variant
-//         for variant in &en.variants {
-//             let name = &variant.ident;
-//             variants.push(quote::quote!(#name(x) => x.#meth()));
-//         }
-//         methods.push(quote::quote!(
-//             fn #meth(&mut self) -> PyResult<PyObject> {
-//                 use self::#name::*;
-//                 match self {
-//                     #(#variants,)*
-//                 }
-//             }
-//         ));
-//     }
-//
-//     let expanded = quote::quote! {
-//         #[pyproto]
-//         #[automatically_derived]
-//         impl<'source> pyo3::PyObjectProtocol<'source> for #name {
-//             #(#methods)*
-//         }
-//     };
-//
-//     TokenStream::from(expanded)
-// }
+// ---
+
+#[proc_macro_derive(PyList)]
+pub fn pylist_derive(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    match &ast.data {
+        syn::Data::Struct(s) => pylist_impl_struct(&ast, &s),
+        _ => panic!("#[derive(PyList)] only supports structs"),
+    }
+}
+
+fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStream {
+
+
+    let mut field = None;   // the name of the Vec field
+    let mut elem = None;    // the type of Vec elements
+    match &st.fields {
+        syn::Fields::Named(n) => {
+            for f in n.named.iter() {
+                if let syn::Type::Path(p) = &f.ty {
+                    if let Some(c) = p.path.segments.first() {
+                        if c.value().ident == "Vec" {
+                            if let syn::PathArguments::AngleBracketed(g) = &c.value().arguments {
+                                if let Some(syn::GenericArgument::Type(t)) = g.args.first().map(|p| p.into_value()) {
+                                    elem = Some(t.clone());
+                                    field = Some(f.ident.clone())
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        _ => panic!("#[derive(PyList)] only supports struct with named fields"),
+    }
+
+    let name = &ast.ident;
+    let attr = field.expect("could not find a field with `Vec` type");
+    let ty = elem.expect("could not find a field with `Vec` type");
+
+    TokenStream::from(quote! {
+        #[pymethods]
+        impl #name {
+            /// append(self, object)
+            ///
+            /// Append object to the end of the list.
+            ///
+            /// Raises:
+            #[doc("")]
+            fn append(&mut self, object: &PyAny) -> PyResult<()> {
+                let item = #ty::extract(object)?;
+                self.#attr.push(item);
+                Ok(())
+            }
+        }
+    })
+}

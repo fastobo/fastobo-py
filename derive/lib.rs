@@ -289,7 +289,7 @@ pub fn pylist_derive(input: TokenStream) -> TokenStream {
 
 fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStream {
 
-
+    // Find the field with `Vec` type on the struct
     let mut field = None;   // the name of the Vec field
     let mut elem = None;    // the type of Vec elements
     match &st.fields {
@@ -312,10 +312,12 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
         _ => panic!("#[derive(PyList)] only supports struct with named fields"),
     }
 
+    // Get the arguments value.
     let name = &ast.ident;
     let attr = field.expect("could not find a field with `Vec` type");
     let ty = elem.expect("could not find a field with `Vec` type");
 
+    //
     TokenStream::from(quote! {
         #[pymethods]
         impl #name {
@@ -324,7 +326,9 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             /// Append object to the end of the list.
             ///
             /// Raises:
-            #[doc("")]
+            ///     TypeError: when the object is not of the right type for
+            ///         this container (see type-level documentation for the
+            ///         required type).
             fn append(&mut self, object: &PyAny) -> PyResult<()> {
                 let item = #ty::extract(object)?;
                 self.#attr.push(item);

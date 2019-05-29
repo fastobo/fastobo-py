@@ -28,7 +28,7 @@ use super::super::id::Ident;
 use crate::utils::ClonePy;
 
 #[pyclass(extends=AbstractEntityFrame)]
-#[derive(Debug)]
+#[derive(Debug, PyList)]
 pub struct TypedefFrame {
     id: Ident,
     clauses: Vec<TypedefClause>,

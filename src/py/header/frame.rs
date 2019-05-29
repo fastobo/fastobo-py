@@ -25,7 +25,7 @@ use super::BaseHeaderClause;
 use crate::utils::ClonePy;
 
 #[pyclass(extends=AbstractFrame)]
-#[derive(Debug)]
+#[derive(Debug, PyList)]
 pub struct HeaderFrame {
     clauses: Vec<HeaderClause>
 }

@@ -52,3 +52,12 @@ macro_rules! impl_raw_tag {
         }
     )
 }
+
+macro_rules! register {
+    ($py:ident, $m:ident, $cls:ident, $module:expr, $metacls:ident) => {
+        $py.import($module)?
+            .get(stringify!($metacls))?
+            .to_object($py)
+            .call_method1($py, "register", ($m.get(stringify!($cls))?,))?;
+    }
+}

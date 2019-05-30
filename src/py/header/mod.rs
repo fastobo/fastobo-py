@@ -7,7 +7,7 @@ use self::clause::*;
 use self::frame::*;
 
 #[pymodule(header)]
-pub fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::frame::HeaderFrame>()?;
     m.add_class::<self::clause::BaseHeaderClause>()?;
     m.add_class::<self::clause::FormatVersionClause>()?;
@@ -31,5 +31,8 @@ pub fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::clause::OntologyClause>()?;
     m.add_class::<self::clause::OwlAxiomsClause>()?;
     m.add_class::<self::clause::UnreservedClause>()?;
+
+    register!(py, m, HeaderFrame, "collections.abc", MutableSequence);
+
     Ok(())
 }

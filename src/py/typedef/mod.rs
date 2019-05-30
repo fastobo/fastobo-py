@@ -4,7 +4,7 @@ pub mod frame;
 use pyo3::prelude::*;
 
 #[pymodule(typedef)]
-pub fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::frame::TypedefFrame>()?;
     m.add_class::<self::clause::BaseTypedefClause>()?;
     m.add_class::<self::clause::IsAnonymousClause>()?;
@@ -48,5 +48,8 @@ pub fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::clause::ExpandExpressionToClause>()?;
     m.add_class::<self::clause::IsMetadataTagClause>()?;
     m.add_class::<self::clause::IsClassLevelClause>()?;
+
+    register!(py, m, TypedefFrame, "collections.abc", MutableSequence);
+
     Ok(())
 }

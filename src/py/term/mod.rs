@@ -4,7 +4,7 @@ pub mod frame;
 use pyo3::prelude::*;
 
 #[pymodule(term)]
-pub fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::frame::TermFrame>()?;
     m.add_class::<self::clause::BaseTermClause>()?;
     m.add_class::<self::clause::IsAnonymousClause>()?;
@@ -29,5 +29,8 @@ pub fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::clause::ConsiderClause>()?;
     m.add_class::<self::clause::CreatedByClause>()?;
     m.add_class::<self::clause::CreationDateClause>()?;
+
+    register!(py, m, TermFrame, "collections.abc", MutableSequence);
+
     Ok(())
 }

@@ -321,7 +321,9 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
     TokenStream::from(quote! {
         #[pymethods]
         impl #name {
+
             /// append(self, object)
+            /// --
             ///
             /// Append object to the end of the list.
             ///
@@ -330,10 +332,74 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             ///         this container (see type-level documentation for the
             ///         required type).
             fn append(&mut self, object: &PyAny) -> PyResult<()> {
-                let item = #ty::extract(object)?;
+                let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
                 self.#attr.push(item);
                 Ok(())
             }
+
+            /// clear(self)
+            /// --
+            ///
+            /// Remove all items from list.
+            fn clear(&mut self) {
+                self.#attr.clear();
+            }
+
+            /// copy(self)
+            /// --
+            ///
+            /// Return a shallow copy of the list.
+            fn copy(&self) -> Self {
+                let gil = Python::acquire_gil();
+                self.clone_py(gil.python())
+            }
+
+            /// count(self, value)
+            /// --
+            ///
+            /// Return number of occurrences of value.
+            ///
+            /// Raises:
+            ///     TypeError: when the object is not of the right type for
+            ///         this container (see type-level documentation for the
+            ///         required type).
+            fn count(&mut self, value: &PyAny) -> PyResult<usize> {
+                let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
+                Ok(self.#attr.iter().filter(|&x| *x == item).count())
+            }
+
+            // |  extend(self, iterable, /)
+            // |      Extend list by appending elements from the iterable.
+            // |
+            // |  index(self, value, start=0, stop=9223372036854775807, /)
+            // |      Return first index of value.
+            // |
+            // |      Raises ValueError if the value is not present.
+            // |
+            // |  insert(self, index, object, /)
+            // |      Insert object before index.
+            // |
+            // |  pop(self, index=-1, /)
+            // |      Remove and return item at index (default last).
+            // |
+            // |      Raises IndexError if list is empty or index is out of range.
+            // |
+            // |  remove(self, value, /)
+            // |      Remove first occurrence of value.
+            // |
+            // |      Raises ValueError if the value is not present.
+            // |
+
+            /// reverse(self, /)
+            /// --
+            ///
+            /// Reverse *IN PLACE*.
+            fn reverse(&mut self) {
+                self.#attr.reverse()
+            }
+
+            // |  sort(self, /, *, key=None, reverse=False)
+            // |      Stable sort *IN PLACE*.
         }
     })
 }

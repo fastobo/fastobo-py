@@ -48,7 +48,7 @@ use crate::utils::ClonePy;
 // --- Conversion Wrapper ----------------------------------------------------
 
 /// A thin wrapper for a reference to any possible `BaseHeaderClause` subclass.
-#[derive(ClonePy, Debug, PyWrapper)]
+#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
 #[wraps(BaseHeaderClause)]
 pub enum HeaderClause {
     FormatVersion(Py<FormatVersionClause>),

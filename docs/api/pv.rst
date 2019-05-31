@@ -1,5 +1,5 @@
-Identifier
-==========
+Property-Value
+==============
 
 .. currentmodule:: fastobo.pv
 .. automodule:: fastobo.pv

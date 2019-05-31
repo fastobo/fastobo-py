@@ -1,4 +1,4 @@
-#![recursion_limit="128"]
+#![recursion_limit="256"]
 
 extern crate proc_macro;
 extern crate syn;
@@ -337,7 +337,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                 Ok(())
             }
 
-            /// clear(self)
+            /// clear($self)
             /// --
             ///
             /// Remove all items from list.
@@ -345,7 +345,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                 self.#attr.clear();
             }
 
-            /// copy(self)
+            /// copy($self)
             /// --
             ///
             /// Return a shallow copy of the list.
@@ -354,7 +354,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                 self.clone_py(gil.python())
             }
 
-            /// count(self, value)
+            /// count($self, value)
             /// --
             ///
             /// Return number of occurrences of value.
@@ -364,11 +364,11 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             ///         this container (see type-level documentation for the
             ///         required type).
             fn count(&mut self, value: &PyAny) -> PyResult<usize> {
-                let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
+                let item = <#ty as pyo3::prelude::FromPyObject>::extract(value)?;
                 Ok(self.#attr.iter().filter(|&x| *x == item).count())
             }
 
-            // |  extend(self, iterable, /)
+            // |  extend($self, iterable, /)
             // |      Extend list by appending elements from the iterable.
             // |
             // |  index(self, value, start=0, stop=9223372036854775807, /)
@@ -376,13 +376,49 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             // |
             // |      Raises ValueError if the value is not present.
             // |
-            // |  insert(self, index, object, /)
-            // |      Insert object before index.
-            // |
-            // |  pop(self, index=-1, /)
-            // |      Remove and return item at index (default last).
-            // |
-            // |      Raises IndexError if list is empty or index is out of range.
+
+            /// insert($self, index, object, /)
+            /// --
+            ///
+            /// Insert `object` before `index`.
+            ///
+            /// If `index` is greater than the number of elements in the list,
+            /// `object` will be added at the end of the list.
+            fn insert(&mut self, mut index: isize, object: &PyAny) -> PyResult<()> {
+                let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
+                if index >= self.#attr.len() as isize {
+                    self.#attr.push(item);
+                } else {
+                    if index < 0 {
+                        index = index % self.#attr.len() as isize;
+                    }
+                    self.#attr.insert(index as usize, item);
+                }
+                Ok(())
+            }
+
+            /// pop($self, index=-1)
+            /// --
+            ///
+            /// Remove and return item at index (default last).
+            ///
+            /// Raises:
+            ///     IndexError: when list is empty or index is out of range.
+            #[args(index="-1")]
+            fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
+                // Wrap once to allow negative indexing
+                if index < 0 {
+                    index += self.#attr.len() as isize;
+                }
+                // Pop if the index is in vector bounds
+                if index >= 0 && index < self.#attr.len() as isize {
+                    Ok(self.#attr.remove(index as usize))
+                } else {
+                    IndexError::into("pop index out of range")
+                }
+            }
+
+
             // |
             // |  remove(self, value, /)
             // |      Remove first occurrence of value.
@@ -390,7 +426,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             // |      Raises ValueError if the value is not present.
             // |
 
-            /// reverse(self, /)
+            /// reverse($self, /)
             /// --
             ///
             /// Reverse *IN PLACE*.

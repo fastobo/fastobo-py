@@ -15,6 +15,7 @@ import sphinx_bootstrap_theme
 import shutil
 import datetime
 import configparser
+import inspect
 import os
 import sys
 
@@ -55,6 +56,18 @@ def setup(app):
     changelog_src = os.path.join(project_dir, "CHANGELOG.md")
     changelog_dst = os.path.join(docssrc_dir, "changes.md")
     shutil.copy(changelog_src, changelog_dst)
+
+    def inspector(app, what, name, obj, options, signature, return_annotation):
+
+        if signature is not None and return_annotation is not None:
+            return signature, return_annotation
+        try:
+            sig = inspect.signature(obj)
+            return str(sig), return_annotation
+        except (ValueError, TypeError):
+            return None, return_annotation
+
+    app.connect('autodoc-process-signature', inspector)
 
 # -- General configuration ---------------------------------------------------
 

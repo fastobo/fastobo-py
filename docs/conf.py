@@ -58,8 +58,7 @@ def setup(app):
     shutil.copy(changelog_src, changelog_dst)
 
     def inspector(app, what, name, obj, options, signature, return_annotation):
-
-        if signature is not None and return_annotation is not None:
+        if signature is not None:
             return signature, return_annotation
         try:
             sig = inspect.signature(obj)

@@ -78,13 +78,14 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("__built__", pyo3_built!(py, built))?;
 
     /// load(fh)
+    /// --
     ///
     /// Load an OBO document from the given path or file handle.
     ///
     /// Arguments:
     ///     fh (str or file-handle): the path to an OBO file, or a **binary**
     ///         stream that contains a serialized OBO document. *A binary
-    ///         stream needs a ``read(x)`` method that return ``x`` bytes*.
+    ///         stream needs a* ``read(x)`` *method returning* ``x`` *bytes*.
     ///
     /// Returns:
     ///     `~fastobo.doc.OboDoc`: the OBO document deserialized into an
@@ -126,6 +127,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     }
 
     /// loads(document)
+    /// --
     ///
     /// Load an OBO document from a string.
     ///

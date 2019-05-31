@@ -7,7 +7,11 @@ Abstract Base Classes
 Frame
 -----
 
-.. autoclass:: AbstractFrame
+.. autoclass:: AbstractFrame(collections.abc.MutableSeq)
+   :members:
+   :special-members:
+
+.. autoclass:: AbstractEntityFrame
    :members:
    :special-members:
 

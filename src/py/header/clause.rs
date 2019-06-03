@@ -158,42 +158,6 @@ impl FromPy<HeaderClause> for fastobo::ast::HeaderClause {
 #[pyclass(extends=AbstractClause, module="fastobo.header")]
 pub struct BaseHeaderClause {}
 
-#[pymethods]
-impl BaseHeaderClause {
-    /// Get the raw tag of the header clause.
-    ///
-    /// Returns:
-    ///     `str`: the header clause value as it was extracted from the OBO
-    ///     header, stripped from trailing qualifiers and comment.
-    ///
-    /// Example:
-    ///     >>> clause = fastobo.header.OntologyClause("test")
-    ///     >>> clause.raw_tag()
-    ///     'ontology'
-    ///     >>> str(clause)
-    ///     'ontology: test'
-    pub fn raw_tag(&self) -> PyResult<String> {
-        NotImplementedError::into("BaseHeaderClause.raw_tag")
-    }
-
-    /// Get the raw value of the header clause.
-    ///
-    /// Returns:
-    ///     `str`: the header clause value as it was extracted from the OBO
-    ///     header, stripped from trailing qualifiers and comment.
-    ///
-    /// Example:
-    ///     >>> dt = datetime.datetime(2019, 4, 29, 21, 52)
-    ///     >>> clause = fastobo.header.DateClause(dt)
-    ///     >>> clause.date
-    ///     datetime.datetime(2019, 4, 29, 21, 52)
-    ///     >>> clause.raw_value()
-    ///     '29:04:2019 21:52'
-    pub fn raw_value(&self) -> PyResult<String> {
-        NotImplementedError::into("BaseHeaderClause.raw_value")
-    }
-}
-
 // --- FormatVersion ---------------------------------------------------------
 
 /// A header clause indicating the format version of the OBO document.

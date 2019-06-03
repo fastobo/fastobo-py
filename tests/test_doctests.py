@@ -6,9 +6,8 @@ import os
 import sys
 import datetime
 import doctest
-import shutil
-import re
 import warnings
+import pprint
 import types
 
 import fastobo
@@ -41,6 +40,7 @@ def load_tests(loader, tests, ignore):
     globs = {
         "fastobo": fastobo,
         "datetime": datetime,
+        "pprint": pprint.pprint,
         "ms": fastobo.load(os.path.realpath(
             os.path.join(__file__, "..", "data", "ms.obo")
         )),

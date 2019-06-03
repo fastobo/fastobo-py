@@ -38,19 +38,25 @@ macro_rules! impl_repr {
 }
 
 macro_rules! impl_raw_value {
-    ($fmt:literal, $(self . $attr:ident),*) => (
-        pub fn raw_value(&self) -> PyResult<String> {
-           Ok(format!($fmt, $(self . $attr,)*))
+    ($cls:ty, $fmt:literal, $(self . $attr:ident),*) => (
+        #[pymethods]
+        impl $cls {
+            pub fn raw_value(&self) -> PyResult<String> {
+               Ok(format!($fmt, $(self . $attr,)*))
+            }
         }
     )
 }
 
 macro_rules! impl_raw_tag {
-    ($tag:literal) => (
-        pub fn raw_tag(&self) -> PyResult<&str> {
-           Ok($tag)
+    ($cls:ty, $tag:literal) => {
+        #[pymethods]
+        impl $cls {
+            pub fn raw_tag(&self) -> PyResult<&str> {
+                Ok($tag)
+            }
         }
-    )
+    };
 }
 
 macro_rules! register {

@@ -30,6 +30,7 @@ use crate::utils::ClonePy;
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.term")]
 #[derive(Debug, PyList)]
 pub struct TermFrame {
+    #[pyo3(set)]
     id: Ident,
     clauses: Vec<TermClause>,
 }
@@ -103,14 +104,9 @@ impl TermFrame {
     }
 
     #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the term frame.
     fn get_id(&self) -> PyResult<&Ident> {
         Ok(&self.id)
-    }
-
-    #[setter]
-    fn set_id(&mut self, ident: Ident) -> PyResult<()> {
-        self.id = ident;
-        Ok(())
     }
 }
 

@@ -152,10 +152,10 @@ impl IsAnonymousClause {
     fn __init__(obj: &PyRawObject, anonymous: bool) {
         obj.init(Self::new(obj.py(), anonymous));
     }
-
-    impl_raw_tag!("is_anonymous");
-    impl_raw_value!("{}", self.anonymous);
 }
+
+impl_raw_tag!(IsAnonymousClause, "is_anonymous");
+impl_raw_value!(IsAnonymousClause, "{}", self.anonymous);
 
 #[pyproto]
 impl PyObjectProtocol for IsAnonymousClause {
@@ -222,10 +222,10 @@ impl NameClause {
         self.name = fastobo::ast::UnquotedString::new(name);
         Ok(())
     }
-
-    impl_raw_tag!("name");
-    impl_raw_value!("{}", self.name);
 }
+
+impl_raw_tag!(NameClause, "name");
+impl_raw_value!(NameClause, "{}", self.name);
 
 #[pyproto]
 impl PyObjectProtocol for NameClause {
@@ -297,10 +297,10 @@ impl NamespaceClause {
     fn get_namespace(&self) -> PyResult<&Ident> {
         Ok(&self.namespace)
     }
-
-    impl_raw_tag!("namespace");
-    impl_raw_value!("{}", self.namespace);
 }
+
+impl_raw_tag!(NamespaceClause, "namespace");
+impl_raw_value!(NamespaceClause, "{}", self.namespace);
 
 #[pyproto]
 impl PyObjectProtocol for NamespaceClause {
@@ -375,10 +375,10 @@ impl AltIdClause {
     fn get_alt_id(&self) -> PyResult<&Ident> {
         Ok(&self.alt_id)
     }
-
-    impl_raw_tag!("alt_id");
-    impl_raw_value!("{}", self.alt_id);
 }
+
+impl_raw_tag!(AltIdClause, "alt_id");
+impl_raw_value!(AltIdClause, "{}", self.alt_id);
 
 #[pyproto]
 impl PyObjectProtocol for AltIdClause {
@@ -458,10 +458,10 @@ impl DefClause {
         let py = unsafe { Python::assume_gil_acquired() };
         Ok(self.xrefs.clone_py(py))
     }
-
-    impl_raw_tag!("def");
-    impl_raw_value!("{}", self.definition);
 }
+
+impl_raw_tag!(DefClause, "def");
+impl_raw_value!(DefClause, "{}", self.definition);
 
 #[pyproto]
 impl PyObjectProtocol for DefClause {
@@ -531,10 +531,10 @@ impl CommentClause {
         self.comment = fastobo::ast::UnquotedString::new(comment);
         Ok(())
     }
-
-    impl_raw_tag!("comment");
-    impl_raw_value!("{}", self.comment);
 }
+
+impl_raw_tag!(CommentClause, "comment");
+impl_raw_value!(CommentClause, "{}", self.comment);
 
 #[pyproto]
 impl PyObjectProtocol for CommentClause {
@@ -605,10 +605,10 @@ impl SubsetClause {
     fn get_subset(&self) -> PyResult<&Ident> {
         Ok(&self.subset)
     }
-
-    impl_raw_tag!("subset");
-    impl_raw_value!("{}", self.subset);
 }
+
+impl_raw_tag!(SubsetClause, "subset");
+impl_raw_value!(SubsetClause, "{}", self.subset);
 
 #[pyproto]
 impl PyObjectProtocol for SubsetClause {
@@ -680,10 +680,10 @@ impl SynonymClause {
         let py = unsafe { Python::assume_gil_acquired() };
         Ok(self.synonym.clone_py(py))
     }
-
-    impl_raw_tag!("synonym");
-    impl_raw_value!("{}", self.synonym);
 }
+
+impl_raw_tag!(SynonymClause, "synonym");
+impl_raw_value!(SynonymClause, "{}", self.synonym);
 
 #[pyproto]
 impl PyObjectProtocol for SynonymClause {
@@ -770,14 +770,14 @@ impl XrefClause {
         Ok(())
     }
 
-    impl_raw_tag!("xref");
-
     pub fn raw_value(&self) -> PyResult<String> {
         let gil = Python::acquire_gil();
         let py = gil.python();
         Ok(self.xref.as_ref(py).to_string())
     }
 }
+
+impl_raw_tag!(XrefClause, "xref");
 
 // --- Builtin ---------------------------------------------------------------
 
@@ -824,10 +824,10 @@ impl BuiltinClause {
     fn get_builtin(&self) -> bool {
         self.builtin
     }
-
-    impl_raw_tag!("builtin");
-    impl_raw_value!("{}", self.builtin);
 }
+
+impl_raw_tag!(BuiltinClause, "builtin");
+impl_raw_value!(BuiltinClause, "{}", self.builtin);
 
 #[pyproto]
 impl PyObjectProtocol for BuiltinClause {
@@ -877,11 +877,8 @@ impl FromPy<PropertyValueClause> for fastobo::ast::TermClause {
     }
 }
 
-#[pymethods]
-impl PropertyValueClause {
-    impl_raw_tag!("property_value");
-    impl_raw_value!("{}", self.inner);
-}
+impl_raw_tag!(PropertyValueClause, "property_value");
+impl_raw_value!(PropertyValueClause, "{}", self.inner);
 
 // --- IsA -------------------------------------------------------------------
 
@@ -937,10 +934,10 @@ impl IsAClause {
     fn get_term(&self) -> &Ident {
         &self.term
     }
-
-    impl_raw_tag!("is_a");
-    impl_raw_value!("{}", self.term);
 }
+
+impl_raw_tag!(IsAClause, "is_a");
+impl_raw_value!(IsAClause, "{}", self.term);
 
 #[pyproto]
 impl PyObjectProtocol for IsAClause {
@@ -1012,8 +1009,6 @@ impl IntersectionOfClause {
         self.relation.as_ref()
     }
 
-    impl_raw_tag!("intersection_of");
-
     pub fn raw_value(&self) -> PyResult<String> {
         if let Some(ref rel) = self.relation {
             Ok(format!("{} {}", rel, &self.term))
@@ -1022,6 +1017,8 @@ impl IntersectionOfClause {
         }
     }
 }
+
+impl_raw_tag!(IntersectionOfClause, "intersection_of");
 
 // --- UnionOf ---------------------------------------------------------------
 
@@ -1076,10 +1073,10 @@ impl UnionOfClause {
     fn get_term(&self) -> &Ident {
         &self.term
     }
-
-    impl_raw_tag!("union_of");
-    impl_raw_value!("{}", self.term);
 }
+
+impl_raw_tag!(UnionOfClause, "union_of");
+impl_raw_value!(UnionOfClause, "{}", self.term);
 
 #[pyproto]
 impl PyObjectProtocol for UnionOfClause {
@@ -1149,10 +1146,10 @@ impl EquivalentToClause {
     fn get_term(&self) -> &Ident {
         &self.term
     }
-
-    impl_raw_tag!("equivalent_to");
-    impl_raw_value!("{}", self.term);
 }
+
+impl_raw_tag!(EquivalentToClause, "equivalent_to");
+impl_raw_value!(EquivalentToClause, "{}", self.term);
 
 #[pyproto]
 impl PyObjectProtocol for EquivalentToClause {
@@ -1223,10 +1220,10 @@ impl DisjointFromClause {
     fn get_term(&self) -> &Ident {
         &self.term
     }
-
-    impl_raw_tag!("disjoint_from");
-    impl_raw_value!("{}", self.term);
 }
+
+impl_raw_tag!(DisjointFromClause, "disjoint_from");
+impl_raw_value!(DisjointFromClause, "{}", self.term);
 
 #[pyproto]
 impl PyObjectProtocol for DisjointFromClause {
@@ -1280,11 +1277,8 @@ impl FromPy<RelationshipClause> for fastobo::ast::TermClause {
     }
 }
 
-#[pymethods]
-impl RelationshipClause {
-    impl_raw_tag!("relationship");
-    impl_raw_value!("{} {}", self.relation, self.term);
-}
+impl_raw_tag!(RelationshipClause, "relationship");
+impl_raw_value!(RelationshipClause, "{} {}", self.relation, self.term);
 
 // --- IsObsolete ------------------------------------------------------------
 
@@ -1307,11 +1301,8 @@ impl FromPy<IsObsoleteClause> for fastobo::ast::TermClause {
     }
 }
 
-#[pymethods]
-impl IsObsoleteClause {
-    impl_raw_tag!("is_obsolete");
-    impl_raw_value!("{}", self.obsolete);
-}
+impl_raw_tag!(IsObsoleteClause, "is_obsolete");
+impl_raw_value!(IsObsoleteClause, "{}", self.obsolete);
 
 // --- ReplacedBy ------------------------------------------------------------
 
@@ -1346,11 +1337,8 @@ impl FromPy<ReplacedByClause> for fastobo::ast::TermClause {
     }
 }
 
-#[pymethods]
-impl ReplacedByClause {
-    impl_raw_tag!("is_obsolete");
-    impl_raw_value!("{}", self.term);
-}
+impl_raw_tag!(ReplacedByClause, "is_obsolete");
+impl_raw_value!(ReplacedByClause, "{}", self.term);
 
 // --- Consider --------------------------------------------------------------
 
@@ -1385,11 +1373,8 @@ impl FromPy<ConsiderClause> for fastobo::ast::TermClause {
     }
 }
 
-#[pymethods]
-impl ConsiderClause {
-    impl_raw_tag!("consider");
-    impl_raw_value!("{}", self.term);
-}
+impl_raw_tag!(ConsiderClause, "consider");
+impl_raw_value!(ConsiderClause, "{}", self.term);
 
 // --- CreatedBy -------------------------------------------------------------
 
@@ -1411,11 +1396,8 @@ impl FromPy<CreatedByClause> for fastobo::ast::TermClause {
     }
 }
 
-#[pymethods]
-impl CreatedByClause {
-    impl_raw_tag!("created_by");
-    impl_raw_value!("{}", self.name);
-}
+impl_raw_tag!(CreatedByClause, "created_by");
+impl_raw_value!(CreatedByClause, "{}", self.name);
 
 // --- CreationDate ----------------------------------------------------------
 
@@ -1437,8 +1419,5 @@ impl FromPy<CreationDateClause> for fastobo::ast::TermClause {
     }
 }
 
-#[pymethods]
-impl CreationDateClause {
-    impl_raw_tag!("creation_date");
-    impl_raw_value!("{}", self.date);
-}
+impl_raw_tag!(CreationDateClause, "creation_date");
+impl_raw_value!(CreationDateClause, "{}", self.date);

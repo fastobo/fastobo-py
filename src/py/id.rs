@@ -1,24 +1,24 @@
-use std::str::FromStr;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 use std::fmt::Write;
+use std::str::FromStr;
 
+use pyo3::class::basic::CompareOp;
+use pyo3::exceptions::TypeError;
+use pyo3::exceptions::ValueError;
+use pyo3::prelude::*;
+use pyo3::types::PyAny;
+use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
-use pyo3::prelude::*;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
-use pyo3::types::PyAny;
-use pyo3::types::PyString;
-use pyo3::class::basic::CompareOp;
 
 use fastobo::ast;
-use fastobo::share::Share;
 use fastobo::share::Cow;
 use fastobo::share::Redeem;
+use fastobo::share::Share;
 
 use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
@@ -33,6 +33,7 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::IdentPrefix>()?;
     m.add_class::<self::IdentLocal>()?;
     m.add_class::<self::Url>()?;
+    m.add("__name__", "fastobo.id")?;
     Ok(())
 }
 
@@ -93,15 +94,13 @@ impl Display for Ident {
 impl FromPy<fastobo::ast::Ident> for Ident {
     fn from_py(ident: fastobo::ast::Ident, py: Python) -> Self {
         match ident {
-            ast::Ident::Unprefixed(id) =>
-                Py::new(py, UnprefixedIdent::from_py(id, py))
-                    .map(Ident::Unprefixed),
-            ast::Ident::Prefixed(id) =>
-                Py::new(py, PrefixedIdent::from_py(id, py))
-                    .map(Ident::Prefixed),
-            ast::Ident::Url(id) =>
-                Py::new(py, Url::from_py(id, py))
-                    .map(Ident::Url)
+            ast::Ident::Unprefixed(id) => {
+                Py::new(py, UnprefixedIdent::from_py(id, py)).map(Ident::Unprefixed)
+            }
+            ast::Ident::Prefixed(id) => {
+                Py::new(py, PrefixedIdent::from_py(id, py)).map(Ident::Prefixed)
+            }
+            ast::Ident::Url(id) => Py::new(py, Url::from_py(id, py)).map(Ident::Url),
         }
         .expect("could not allocate on Python heap")
     }
@@ -136,7 +135,7 @@ impl_convert!(NamespaceIdent, Ident);
 // --- Base -------------------------------------------------------------------
 
 /// A sequence of character used to refer to an OBO entity.
-#[pyclass(subclass)]
+#[pyclass(subclass, module = "fastobo.id")]
 pub struct BaseIdent {}
 
 // --- PrefixedIdent ----------------------------------------------------------
@@ -152,7 +151,7 @@ pub struct BaseIdent {}
 ///     >>> str(ident)
 ///     'GO:0009637'
 ///
-#[pyclass(extends=BaseIdent)]
+#[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Debug)]
 pub struct PrefixedIdent {
     prefix: Py<IdentPrefix>,
@@ -199,8 +198,7 @@ impl PartialEq for PrefixedIdent {
         let py = gil.python();
 
         *self.prefix.as_ref(py) == *other.prefix.as_ref(py)
-        && *self.local.as_ref(py) == *other.local.as_ref(py)
-
+            && *self.local.as_ref(py) == *other.local.as_ref(py)
     }
 }
 
@@ -223,22 +221,18 @@ impl FromPy<PrefixedIdent> for ast::Ident {
 
 impl FromPy<ast::PrefixedIdent> for PrefixedIdent {
     fn from_py(id: ast::PrefixedIdent, py: Python) -> Self {
-
         let prefix = id.prefix().clone();
         let local = id.local().clone();
 
         Self::new(
-            Py::new(py, prefix.into())
-                .expect("could not allocate on Python heap"),
-            Py::new(py, local.into())
-                .expect("could not allocate on Python heap"),
+            Py::new(py, prefix.into()).expect("could not allocate on Python heap"),
+            Py::new(py, local.into()).expect("could not allocate on Python heap"),
         )
     }
 }
 
 #[pymethods]
 impl PrefixedIdent {
-
     /// Create a new `PrefixedIdent` instance.
     ///
     /// Arguments passed as `str` must be in unescaped form, otherwise double
@@ -250,7 +244,6 @@ impl PrefixedIdent {
     ///
     #[new]
     fn __init__(obj: &PyRawObject, prefix: &PyAny, local: &PyAny) -> PyResult<()> {
-
         let py = prefix.py();
 
         let p = if prefix.downcast_ref::<IdentPrefix>().is_ok() {
@@ -360,7 +353,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///     >>> print(ident.unescaped)
 ///     hello world
 ///
-#[pyclass(extends=BaseIdent)]
+#[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
@@ -475,12 +468,12 @@ impl PyObjectProtocol for UnprefixedIdent {
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
         if let Ok(u) = other.downcast_ref::<UnprefixedIdent>() {
             match op {
-                 CompareOp::Lt => Ok(self.inner < u.inner),
-                 CompareOp::Le => Ok(self.inner <= u.inner),
-                 CompareOp::Eq => Ok(self.inner == u.inner),
-                 CompareOp::Ne => Ok(self.inner != u.inner),
-                 CompareOp::Gt => Ok(self.inner > u.inner),
-                 CompareOp::Ge => Ok(self.inner >= u.inner),
+                CompareOp::Lt => Ok(self.inner < u.inner),
+                CompareOp::Le => Ok(self.inner <= u.inner),
+                CompareOp::Eq => Ok(self.inner == u.inner),
+                CompareOp::Ne => Ok(self.inner != u.inner),
+                CompareOp::Gt => Ok(self.inner > u.inner),
+                CompareOp::Ge => Ok(self.inner >= u.inner),
             }
         } else {
             match op {
@@ -512,11 +505,11 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///         ...
 ///     ValueError: invalid url: ...
 ///
-#[pyclass(extends=BaseIdent)]
+#[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
 #[opaque_typedef(derive(FromInner, IntoInner))]
-pub struct Url{
-    inner: url::Url
+pub struct Url {
+    inner: url::Url,
 }
 
 impl Url {
@@ -526,7 +519,7 @@ impl Url {
 }
 
 impl<'p> AsGILRef<'p, &'p url::Url> for Url {
-    fn as_gil_ref(&'p self, _py: Python<'p>) -> &'p url::Url{
+    fn as_gil_ref(&'p self, _py: Python<'p>) -> &'p url::Url {
         &self.inner
     }
 }
@@ -584,9 +577,7 @@ impl Url {
 #[pyproto]
 impl PyObjectProtocol for Url {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe {
-            Python::assume_gil_acquired()
-        };
+        let py = unsafe { Python::assume_gil_acquired() };
         let fmt = PyString::new(py, "Url({!r})").to_object(py);
         fmt.call_method1(py, "format", (self.inner.as_str(),))
     }
@@ -600,12 +591,12 @@ impl PyObjectProtocol for Url {
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
         if let Ok(u) = other.downcast_ref::<Url>() {
             match op {
-                 CompareOp::Lt => Ok(self.inner < u.inner),
-                 CompareOp::Le => Ok(self.inner <= u.inner),
-                 CompareOp::Eq => Ok(self.inner == u.inner),
-                 CompareOp::Ne => Ok(self.inner != u.inner),
-                 CompareOp::Gt => Ok(self.inner > u.inner),
-                 CompareOp::Ge => Ok(self.inner >= u.inner),
+                CompareOp::Lt => Ok(self.inner < u.inner),
+                CompareOp::Le => Ok(self.inner <= u.inner),
+                CompareOp::Eq => Ok(self.inner == u.inner),
+                CompareOp::Ne => Ok(self.inner != u.inner),
+                CompareOp::Gt => Ok(self.inner > u.inner),
+                CompareOp::Ge => Ok(self.inner >= u.inner),
             }
         } else {
             match op {
@@ -624,11 +615,11 @@ impl PyObjectProtocol for Url {
 // --- IdentPrefix -----------------------------------------------------------
 
 /// The prefix of a prefixed identifier.
-#[pyclass]
+#[pyclass(module = "fastobo.id")]
 #[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
 #[opaque_typedef(derive(FromInner, IntoInner, AsRefInner))]
 pub struct IdentPrefix {
-    inner: ast::IdentPrefix
+    inner: ast::IdentPrefix,
 }
 
 impl IdentPrefix {
@@ -652,7 +643,6 @@ impl Display for IdentPrefix {
 
 #[pymethods]
 impl IdentPrefix {
-
     /// Create a new `IdentPrefix` instance.
     ///
     /// Arguments:
@@ -692,7 +682,7 @@ impl PyObjectProtocol for IdentPrefix {
 // --- IdentLocal ------------------------------------------------------------
 
 /// The local component of a prefixed identifier.
-#[pyclass]
+#[pyclass(module = "fastobo.id")]
 #[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
 #[opaque_typedef(derive(FromInner, IntoInner))]
 pub struct IdentLocal {
@@ -720,7 +710,6 @@ impl Display for IdentLocal {
 
 #[pymethods]
 impl IdentLocal {
-
     /// Create a new `IdentLocal` instance.
     #[new]
     fn __init__(obj: &PyRawObject, value: String) -> PyResult<()> {

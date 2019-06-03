@@ -5,27 +5,27 @@ use std::rc::Rc;
 use std::str::FromStr;
 use std::string::ToString;
 
-use pyo3::prelude::*;
-use pyo3::PyTypeInfo;
-use pyo3::PyNativeType;
-use pyo3::AsPyPointer;
-use pyo3::types::PyAny;
-use pyo3::types::PyList;
-use pyo3::types::PyString;
-use pyo3::types::PyIterator;
-use pyo3::exceptions::RuntimeError;
+use pyo3::class::gc::PyVisit;
 use pyo3::exceptions::IndexError;
+use pyo3::exceptions::RuntimeError;
 use pyo3::exceptions::TypeError;
 use pyo3::exceptions::ValueError;
-use pyo3::PySequenceProtocol;
-use pyo3::PyGCProtocol;
-use pyo3::PyObjectProtocol;
 use pyo3::gc::PyTraverseError;
-use pyo3::class::gc::PyVisit;
+use pyo3::prelude::*;
+use pyo3::types::PyAny;
+use pyo3::types::PyIterator;
+use pyo3::types::PyList;
+use pyo3::types::PyString;
+use pyo3::AsPyPointer;
+use pyo3::PyGCProtocol;
+use pyo3::PyNativeType;
+use pyo3::PyObjectProtocol;
+use pyo3::PySequenceProtocol;
+use pyo3::PyTypeInfo;
 
 use super::id::Ident;
-use crate::utils::ClonePy;
 use crate::utils::AsGILRef;
+use crate::utils::ClonePy;
 
 // --- Module export ---------------------------------------------------------
 
@@ -33,6 +33,7 @@ use crate::utils::AsGILRef;
 fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::Xref>()?;
     m.add_class::<self::XrefList>()?;
+    m.add("__name__", "fastobo.xref")?;
     Ok(())
 }
 
@@ -48,12 +49,12 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
 ///     >>> xref = fastobo.xref.Xref(
 ///     ...     fastobo.id.PrefixedIdent('ISBN', '978-0-321-84268-8'),
 ///     ... )
-#[pyclass]
+#[pyclass(module = "fastobo.xref")]
 #[derive(Debug, PartialEq)]
 pub struct Xref {
     #[pyo3(set)]
     id: Ident,
-    desc: Option<fastobo::ast::QuotedString>
+    desc: Option<fastobo::ast::QuotedString>,
 }
 
 impl Xref {
@@ -82,7 +83,6 @@ impl Xref {
             TypeError::into(format!("expected Xref, found {}", ty))
         }
     }
-
 }
 
 impl ClonePy for Xref {
@@ -125,7 +125,6 @@ impl FromPy<Xref> for fastobo::ast::Xref {
 
 #[pymethods]
 impl Xref {
-
     /// Create a new `Xref` instance from an ID and an optional description.
     ///
     /// Arguments:
@@ -133,9 +132,11 @@ impl Xref {
     ///     desc (str, optional): an optional description for the reference.
     #[new]
     fn __init__(obj: &PyRawObject, id: Ident, desc: Option<String>) -> PyResult<()> {
-        Ok(obj.init(
-            Self::with_desc(obj.py(), id, desc.map(fastobo::ast::QuotedString::new))
-        ))
+        Ok(obj.init(Self::with_desc(
+            obj.py(),
+            id,
+            desc.map(fastobo::ast::QuotedString::new),
+        )))
     }
 
     /// `~fastobo.id.Ident`: the identifier of the reference.
@@ -149,7 +150,7 @@ impl Xref {
     fn get_desc(&self) -> PyResult<Option<&str>> {
         match &self.desc {
             Some(d) => Ok(Some(d.as_str())),
-            None => Ok(None)
+            None => Ok(None),
         }
     }
 
@@ -191,10 +192,10 @@ impl PyObjectProtocol for Xref {
 ///     >>> xrefs[0]
 ///     Xref(PrefixedIdent('PSI', 'MS'))
 ///
-#[pyclass]
+#[pyclass(module = "fastobo.xref")]
 #[derive(Debug, PartialEq)]
 pub struct XrefList {
-    xrefs: Vec<Py<Xref>>
+    xrefs: Vec<Py<Xref>>,
 }
 
 impl XrefList {
@@ -206,7 +207,7 @@ impl XrefList {
 impl ClonePy for XrefList {
     fn clone_py(&self, py: Python) -> Self {
         XrefList {
-            xrefs: self.xrefs.clone_py(py)
+            xrefs: self.xrefs.clone_py(py),
         }
     }
 }
@@ -223,8 +224,7 @@ impl FromPy<fastobo::ast::XrefList> for XrefList {
 
 impl FromPy<XrefList> for fastobo::ast::XrefList {
     fn from_py(list: XrefList, py: Python) -> Self {
-        list
-            .xrefs
+        list.xrefs
             .into_iter()
             .map(|xref| xref.as_ref(py).clone_py(py).into_py(py))
             .collect()

@@ -3,9 +3,6 @@ pub mod frame;
 
 use pyo3::prelude::*;
 
-use self::clause::*;
-use self::frame::*;
-
 #[pymodule(header)]
 pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::frame::HeaderFrame>()?;
@@ -33,6 +30,9 @@ pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::clause::UnreservedClause>()?;
 
     register!(py, m, HeaderFrame, "collections.abc", MutableSequence);
+
+    m.add("__package__", "fastobo")?;
+    m.add("__name__", "fastobo.header")?;
 
     Ok(())
 }

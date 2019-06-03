@@ -16,8 +16,8 @@ name = "fastobo_py"
 built = "0.3.0"
 
 [dependencies]
-pyo3 = "0.7.0"
-pyo3-built = "0.2.0"
+pyo3 = { git = "https://github.com/PyO3/pyo3" }
+# pyo3-built = "0.2.0"
 pest = "2.1.1"
 libc = "0.2.53"
 url = "1.7.2"

@@ -6,39 +6,40 @@ use std::rc::Rc;
 use std::str::FromStr;
 use std::string::ToString;
 
+use pyo3::class::gc::PyVisit;
+use pyo3::exceptions::IndexError;
+use pyo3::exceptions::RuntimeError;
+use pyo3::exceptions::TypeError;
+use pyo3::exceptions::ValueError;
+use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
-use pyo3::PyTypeInfo;
-use pyo3::PyNativeType;
 use pyo3::types::PyAny;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
-use pyo3::PySequenceProtocol;
 use pyo3::PyGCProtocol;
+use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
-use pyo3::gc::PyTraverseError;
-use pyo3::class::gc::PyVisit;
+use pyo3::PySequenceProtocol;
+use pyo3::PyTypeInfo;
 
 use fastobo::ast as obo;
 
-use crate::utils::AsGILRef;
-use crate::utils::ClonePy;
 use crate::error::Error;
 use crate::pyfile::PyFile;
+use crate::utils::AsGILRef;
+use crate::utils::ClonePy;
 
+use super::abc::AbstractFrame;
 use super::header::frame::HeaderFrame;
 use super::term::frame::TermFrame;
 use super::typedef::frame::TypedefFrame;
-use super::abc::AbstractFrame;
 
 // --- Module export ---------------------------------------------------------
 
 #[pymodule(doc)]
 fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::OboDoc>()?;
+    m.add("__name__", "fastobo.doc")?;
     Ok(())
 }
 
@@ -54,33 +55,33 @@ pub enum EntityFrame {
 impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
     fn from_py(frame: fastobo::ast::EntityFrame, py: Python) -> Self {
         match frame {
-            fastobo::ast::EntityFrame::Term(frame) =>
-                Py::new(py, TermFrame::from_py(frame, py))
-                    .map(EntityFrame::Term),
-            fastobo::ast::EntityFrame::Typedef(frame) =>
-                Py::new(py, TypedefFrame::from_py(frame, py))
-                    .map(EntityFrame::Typedef),
+            fastobo::ast::EntityFrame::Term(frame) => {
+                Py::new(py, TermFrame::from_py(frame, py)).map(EntityFrame::Term)
+            }
+            fastobo::ast::EntityFrame::Typedef(frame) => {
+                Py::new(py, TypedefFrame::from_py(frame, py)).map(EntityFrame::Typedef)
+            }
             _ => unimplemented!(),
-        }.expect("could not allocate on Python heap")
+        }
+        .expect("could not allocate on Python heap")
     }
 }
-
 
 // --- OBO document ----------------------------------------------------------
 
 /// The abstract syntax tree corresponding to an OBO document.
-#[pyclass(subclass)]
+#[pyclass(subclass, module = "fastobo.doc")]
 #[derive(Debug)]
 pub struct OboDoc {
     header: Py<HeaderFrame>,
-    entities: Vec<EntityFrame>
+    entities: Vec<EntityFrame>,
 }
 
 impl ClonePy for OboDoc {
     fn clone_py(&self, py: Python) -> Self {
         Self {
             header: self.header.clone_py(py),
-            entities: self.entities.clone_py(py)
+            entities: self.entities.clone_py(py),
         }
     }
 }
@@ -103,9 +104,8 @@ impl FromPy<obo::OboDoc> for OboDoc {
             .collect();
 
         Self {
-            header: Py::new(py, header)
-                .expect("could not move header to Python heap"),
-            entities
+            header: Py::new(py, header).expect("could not move header to Python heap"),
+            entities,
         }
     }
 }

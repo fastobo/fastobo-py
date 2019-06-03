@@ -2,32 +2,32 @@ use std::iter::FromIterator;
 use std::iter::IntoIterator;
 
 use fastobo::ast as obo;
+use pyo3::class::gc::PyVisit;
+use pyo3::exceptions::IndexError;
+use pyo3::exceptions::RuntimeError;
+use pyo3::exceptions::TypeError;
+use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
-use pyo3::PyTypeInfo;
-use pyo3::PyNativeType;
 use pyo3::types::PyAny;
+use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::types::PyIterator;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::TypeError;
-use pyo3::PySequenceProtocol;
-use pyo3::PyGCProtocol;
-use pyo3::PyObjectProtocol;
-use pyo3::gc::PyTraverseError;
-use pyo3::class::gc::PyVisit;
 use pyo3::AsPyPointer;
+use pyo3::PyGCProtocol;
+use pyo3::PyNativeType;
+use pyo3::PyObjectProtocol;
+use pyo3::PySequenceProtocol;
+use pyo3::PyTypeInfo;
 
 use super::super::abc::AbstractFrame;
-use super::HeaderClause;
-use super::BaseHeaderClause;
+use super::clause::BaseHeaderClause;
+use super::clause::HeaderClause;
 use crate::utils::ClonePy;
 
-#[pyclass(extends=AbstractFrame)]
+#[pyclass(extends=AbstractFrame, module="fastobo.header")]
 #[derive(Debug, PyList)]
 pub struct HeaderFrame {
-    clauses: Vec<HeaderClause>
+    clauses: Vec<HeaderClause>,
 }
 
 impl HeaderFrame {
@@ -39,7 +39,7 @@ impl HeaderFrame {
 impl ClonePy for HeaderFrame {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            clauses: self.clauses.clone_py(py)
+            clauses: self.clauses.clone_py(py),
         }
     }
 }
@@ -47,7 +47,7 @@ impl ClonePy for HeaderFrame {
 impl FromIterator<HeaderClause> for HeaderFrame {
     fn from_iter<T>(iter: T) -> Self
     where
-        T: IntoIterator<Item=HeaderClause>
+        T: IntoIterator<Item = HeaderClause>,
     {
         Self::new(iter.into_iter().collect())
     }
@@ -55,7 +55,8 @@ impl FromIterator<HeaderClause> for HeaderFrame {
 
 impl FromPy<obo::HeaderFrame> for HeaderFrame {
     fn from_py(frame: fastobo::ast::HeaderFrame, py: Python) -> Self {
-        frame.into_iter()
+        frame
+            .into_iter()
             .map(|clause| HeaderClause::from_py(clause, py))
             .collect()
     }
@@ -63,7 +64,8 @@ impl FromPy<obo::HeaderFrame> for HeaderFrame {
 
 impl FromPy<HeaderFrame> for obo::HeaderFrame {
     fn from_py(frame: HeaderFrame, py: Python) -> Self {
-        frame.clauses
+        frame
+            .clauses
             .into_iter()
             .map(|clause| obo::HeaderClause::from_py(clause, py))
             .collect()
@@ -114,10 +116,7 @@ impl PySequenceProtocol for HeaderFrame {
         Ok(self.clauses.len())
     }
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-
-        let py = unsafe {
-            Python::assume_gil_acquired()
-        };
+        let py = unsafe { Python::assume_gil_acquired() };
 
         if index < self.clauses.len() as isize {
             let item = &self.clauses[index as usize];
@@ -142,7 +141,6 @@ impl PySequenceProtocol for HeaderFrame {
         Ok(())
     }
     fn __concat__(&self, other: &PyAny) -> PyResult<Self> {
-
         let py = other.py();
 
         let iterator = PyIterator::from_object(py, other)?;

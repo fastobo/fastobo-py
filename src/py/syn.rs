@@ -5,24 +5,24 @@ use std::rc::Rc;
 use std::str::FromStr;
 use std::string::ToString;
 
-use pyo3::prelude::*;
-use pyo3::PyTypeInfo;
-use pyo3::PyNativeType;
-use pyo3::AsPyPointer;
-use pyo3::types::PyAny;
-use pyo3::types::PyList;
-use pyo3::types::PyString;
-use pyo3::types::PyIterator;
-use pyo3::exceptions::RuntimeError;
+use pyo3::class::basic::CompareOp;
+use pyo3::class::gc::PyVisit;
 use pyo3::exceptions::IndexError;
+use pyo3::exceptions::RuntimeError;
 use pyo3::exceptions::TypeError;
 use pyo3::exceptions::ValueError;
-use pyo3::PySequenceProtocol;
-use pyo3::PyGCProtocol;
-use pyo3::PyObjectProtocol;
 use pyo3::gc::PyTraverseError;
-use pyo3::class::gc::PyVisit;
-use pyo3::class::basic::CompareOp;
+use pyo3::prelude::*;
+use pyo3::types::PyAny;
+use pyo3::types::PyIterator;
+use pyo3::types::PyList;
+use pyo3::types::PyString;
+use pyo3::AsPyPointer;
+use pyo3::PyGCProtocol;
+use pyo3::PyNativeType;
+use pyo3::PyObjectProtocol;
+use pyo3::PySequenceProtocol;
+use pyo3::PyTypeInfo;
 
 use super::id::Ident;
 use super::xref::XrefList;
@@ -34,15 +34,16 @@ use crate::utils::ClonePy;
 fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::Synonym>()?;
     m.add_class::<self::SynonymScope>()?;
+    m.add("__name__", "fastobo.syn")?;
     Ok(())
 }
 
 // --- SynonymScope ----------------------------------------------------------
 
-#[pyclass] // FIXME(@althonos): probably not needed since it is not exposed.
+#[pyclass(module = "fastobo.syn")] // FIXME(@althonos): probably not needed since it is not exposed.
 #[derive(Clone, ClonePy, Debug, Eq, PartialEq)]
 pub struct SynonymScope {
-    inner: fastobo::ast::SynonymScope
+    inner: fastobo::ast::SynonymScope,
 }
 
 impl SynonymScope {
@@ -92,7 +93,7 @@ impl FromStr for SynonymScope {
             _ => ValueError::into(format!(
                 "expected 'EXACT', 'BROAD', 'NARROW' or 'RELATED', found {:?}",
                 s
-            ))
+            )),
         }
     }
 }
@@ -105,7 +106,7 @@ impl ToPyObject for SynonymScope {
 
 // --- Synonym ---------------------------------------------------------------
 
-#[pyclass]
+#[pyclass(module = "fastobo.syn")]
 #[derive(Debug, PartialEq)]
 pub struct Synonym {
     desc: fastobo::ast::QuotedString,
@@ -138,14 +139,12 @@ impl FromPy<fastobo::ast::Synonym> for Synonym {
         Self {
             desc: std::mem::replace(
                 syn.description_mut(),
-                fastobo::ast::QuotedString::new(String::new())
+                fastobo::ast::QuotedString::new(String::new()),
             ),
             scope: SynonymScope::new(syn.scope().clone()),
             ty: syn.ty().map(|id| id.clone().into_py(py)),
-            xrefs: std::mem::replace(
-                syn.xrefs_mut(),
-                fastobo::ast::XrefList::new(Vec::new())
-            ).into_py(py),
+            xrefs: std::mem::replace(syn.xrefs_mut(), fastobo::ast::XrefList::new(Vec::new()))
+                .into_py(py),
         }
     }
 }
@@ -172,6 +171,11 @@ impl PyObjectProtocol for Synonym {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.desc && self.scope && self.ty && self.xrefs)
+        impl_richmp!(
+            self,
+            other,
+            op,
+            self.desc && self.scope && self.ty && self.xrefs
+        )
     }
 }

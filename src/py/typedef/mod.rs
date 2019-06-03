@@ -51,5 +51,7 @@ pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
 
     register!(py, m, TypedefFrame, "collections.abc", MutableSequence);
 
+    m.add("__name__", "fastobo.typedef")?;
+
     Ok(())
 }

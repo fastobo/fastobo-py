@@ -4,30 +4,30 @@ use std::fmt::Result as FmtResult;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use pyo3::class::basic::CompareOp;
+use pyo3::exceptions::TypeError;
+use pyo3::exceptions::ValueError;
+use pyo3::prelude::*;
+use pyo3::types::PyAny;
+use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
-use pyo3::prelude::*;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
-use pyo3::types::PyAny;
-use pyo3::types::PyString;
-use pyo3::class::basic::CompareOp;
 
 use fastobo::ast;
-use fastobo::share::Share;
 use fastobo::share::Cow;
 use fastobo::share::Redeem;
+use fastobo::share::Share;
 
-use crate::utils::AsGILRef;
-use crate::utils::ClonePy;
 use super::super::abc::AbstractClause;
 use super::super::id::Ident;
 use super::super::pv::PropertyValue;
+use super::super::syn::Synonym;
 use super::super::xref::Xref;
 use super::super::xref::XrefList;
-use super::super::syn::Synonym;
+use crate::utils::AsGILRef;
+use crate::utils::ClonePy;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
@@ -55,96 +55,71 @@ pub enum TermClause {
     ReplacedBy(Py<ReplacedByClause>),
     Consider(Py<ConsiderClause>),
     CreatedBy(Py<CreatedByClause>),
-    CreationDate(Py<CreationDateClause>)
+    CreationDate(Py<CreationDateClause>),
 }
 
 impl FromPy<fastobo::ast::TermClause> for TermClause {
     fn from_py(clause: fastobo::ast::TermClause, py: Python) -> Self {
         use fastobo::ast::TermClause::*;
         match clause {
-            IsAnonymous(b) =>
-                Py::new(py, IsAnonymousClause::new(py, b))
-                    .map(TermClause::IsAnonymous),
-            Name(n) =>
-                Py::new(py, NameClause::new(py, n))
-                    .map(TermClause::Name),
-            Namespace(ns) =>
-                Py::new(py, NamespaceClause::new(py, ns))
-                    .map(TermClause::Namespace),
-            AltId(id) =>
-                Py::new(py, AltIdClause::new(py, id))
-                    .map(TermClause::AltId),
-            Def(desc, xrefs) =>
-                Py::new(py, DefClause::new(py, desc, xrefs))
-                    .map(TermClause::Def),
-            Comment(c) =>
-                Py::new(py, CommentClause::new(py, c))
-                    .map(TermClause::Comment),
-            Subset(s) =>
-                Py::new(py, SubsetClause::new(py, s))
-                    .map(TermClause::Subset),
-            Synonym(s) =>
-                Py::new(py, SynonymClause::new(py, s))
-                    .map(TermClause::Synonym),
-            Xref(x) =>
-                Py::new(py, XrefClause::new(py, x))
-                    .map(TermClause::Xref),
-            Builtin(b) =>
-                Py::new(py, BuiltinClause::new(py, b))
-                    .map(TermClause::Builtin),
-            PropertyValue(pv) =>
-                Py::new(py, PropertyValueClause::new(py, pv))
-                    .map(TermClause::PropertyValue),
-            IsA(id) =>
-                Py::new(py, IsAClause::new(py, id))
-                    .map(TermClause::IsA),
-            IntersectionOf(r, cls) =>
-                Py::new(py, IntersectionOfClause::new(py, r, cls))
-                    .map(TermClause::IntersectionOf),
-            UnionOf(cls) =>
-                Py::new(py, UnionOfClause::new(py, cls))
-                    .map(TermClause::UnionOf),
-            EquivalentTo(cls) =>
-                Py::new(py, EquivalentToClause::new(py, cls))
-                    .map(TermClause::EquivalentTo),
-            DisjointFrom(cls) =>
-                Py::new(py, DisjointFromClause::new(py, cls))
-                    .map(TermClause::DisjointFrom),
-            Relationship(r, id) =>
-                Py::new(py, RelationshipClause::new(py, r, id))
-                    .map(TermClause::Relationship),
-            IsObsolete(b) =>
-                Py::new(py, IsObsoleteClause::new(py, b))
-                    .map(TermClause::IsObsolete),
-            ReplacedBy(id) =>
-                Py::new(py, ReplacedByClause::new(py, id))
-                    .map(TermClause::ReplacedBy),
-            Consider(id) =>
-                Py::new(py, ConsiderClause::new(py, id))
-                    .map(TermClause::Consider),
-            CreatedBy(name) =>
-                Py::new(py, CreatedByClause::new(py, name))
-                    .map(TermClause::CreatedBy),
-            CreationDate(dt) =>
-                Py::new(py, CreationDateClause::new(py, dt))
-                    .map(TermClause::CreationDate),
-        }.expect("could not allocate memory for `TermClause` in Python heap")
+            IsAnonymous(b) => {
+                Py::new(py, IsAnonymousClause::new(py, b)).map(TermClause::IsAnonymous)
+            }
+            Name(n) => Py::new(py, NameClause::new(py, n)).map(TermClause::Name),
+            Namespace(ns) => Py::new(py, NamespaceClause::new(py, ns)).map(TermClause::Namespace),
+            AltId(id) => Py::new(py, AltIdClause::new(py, id)).map(TermClause::AltId),
+            Def(desc, xrefs) => Py::new(py, DefClause::new(py, desc, xrefs)).map(TermClause::Def),
+            Comment(c) => Py::new(py, CommentClause::new(py, c)).map(TermClause::Comment),
+            Subset(s) => Py::new(py, SubsetClause::new(py, s)).map(TermClause::Subset),
+            Synonym(s) => Py::new(py, SynonymClause::new(py, s)).map(TermClause::Synonym),
+            Xref(x) => Py::new(py, XrefClause::new(py, x)).map(TermClause::Xref),
+            Builtin(b) => Py::new(py, BuiltinClause::new(py, b)).map(TermClause::Builtin),
+            PropertyValue(pv) => {
+                Py::new(py, PropertyValueClause::new(py, pv)).map(TermClause::PropertyValue)
+            }
+            IsA(id) => Py::new(py, IsAClause::new(py, id)).map(TermClause::IsA),
+            IntersectionOf(r, cls) => {
+                Py::new(py, IntersectionOfClause::new(py, r, cls)).map(TermClause::IntersectionOf)
+            }
+            UnionOf(cls) => Py::new(py, UnionOfClause::new(py, cls)).map(TermClause::UnionOf),
+            EquivalentTo(cls) => {
+                Py::new(py, EquivalentToClause::new(py, cls)).map(TermClause::EquivalentTo)
+            }
+            DisjointFrom(cls) => {
+                Py::new(py, DisjointFromClause::new(py, cls)).map(TermClause::DisjointFrom)
+            }
+            Relationship(r, id) => {
+                Py::new(py, RelationshipClause::new(py, r, id)).map(TermClause::Relationship)
+            }
+            IsObsolete(b) => Py::new(py, IsObsoleteClause::new(py, b)).map(TermClause::IsObsolete),
+            ReplacedBy(id) => {
+                Py::new(py, ReplacedByClause::new(py, id)).map(TermClause::ReplacedBy)
+            }
+            Consider(id) => Py::new(py, ConsiderClause::new(py, id)).map(TermClause::Consider),
+            CreatedBy(name) => {
+                Py::new(py, CreatedByClause::new(py, name)).map(TermClause::CreatedBy)
+            }
+            CreationDate(dt) => {
+                Py::new(py, CreationDateClause::new(py, dt)).map(TermClause::CreationDate)
+            }
+        }
+        .expect("could not allocate memory for `TermClause` in Python heap")
     }
 }
 
 // --- Base ------------------------------------------------------------------
 
 /// A header clause, appearing in the OBO header frame.
-#[pyclass(extends=AbstractClause)]
+#[pyclass(extends=AbstractClause, module="fastobo.term")]
 pub struct BaseTermClause {}
 
 // --- IsAnonymous -----------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsAnonymousClause {
     #[pyo3(get, set)]
-    anonymous: bool
+    anonymous: bool,
 }
 
 impl IsAnonymousClause {
@@ -173,7 +148,6 @@ impl FromPy<IsAnonymousClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl IsAnonymousClause {
-
     #[new]
     fn __init__(obj: &PyRawObject, anonymous: bool) {
         obj.init(Self::new(obj.py(), anonymous));
@@ -198,10 +172,9 @@ impl PyObjectProtocol for IsAnonymousClause {
     }
 }
 
-
 // --- Name ------------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct NameClause {
     name: fastobo::ast::UnquotedString,
@@ -233,7 +206,6 @@ impl FromPy<NameClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl NameClause {
-
     #[new]
     fn __init__(obj: &PyRawObject, name: String) {
         obj.init(Self::new(obj.py(), fastobo::ast::UnquotedString::new(name)));
@@ -272,26 +244,28 @@ impl PyObjectProtocol for NameClause {
 
 // --- Namespace -------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct NamespaceClause {
     #[pyo3(set)]
-    namespace: Ident
+    namespace: Ident,
 }
 
 impl NamespaceClause {
     pub fn new<I>(py: Python, ns: I) -> Self
     where
-        I: IntoPy<Ident>
+        I: IntoPy<Ident>,
     {
-        Self { namespace: ns.into_py(py) }
+        Self {
+            namespace: ns.into_py(py),
+        }
     }
 }
 
 impl ClonePy for NamespaceClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            namespace: self.namespace.clone_py(py)
+            namespace: self.namespace.clone_py(py),
         }
     }
 }
@@ -313,7 +287,6 @@ impl FromPy<NamespaceClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl NamespaceClause {
-
     #[new]
     fn __init__(obj: &PyRawObject, namespace: Ident) {
         obj.init(Self::new(obj.py(), namespace));
@@ -350,7 +323,7 @@ impl PyObjectProtocol for NamespaceClause {
 
 // --- AltId -----------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct AltIdClause {
     #[pyo3(set)]
@@ -362,14 +335,16 @@ impl AltIdClause {
     where
         I: IntoPy<Ident>,
     {
-        Self { alt_id: id.into_py(py) }
+        Self {
+            alt_id: id.into_py(py),
+        }
     }
 }
 
 impl ClonePy for AltIdClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            alt_id: self.alt_id.clone_py(py)
+            alt_id: self.alt_id.clone_py(py),
         }
     }
 }
@@ -390,7 +365,6 @@ impl FromPy<AltIdClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl AltIdClause {
-
     #[new]
     fn __init__(obj: &PyRawObject, alt_id: Ident) {
         obj.init(Self::new(obj.py(), alt_id));
@@ -423,7 +397,7 @@ impl PyObjectProtocol for AltIdClause {
 
 // --- Def -------------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct DefClause {
     definition: fastobo::ast::QuotedString,
@@ -435,7 +409,10 @@ impl DefClause {
     where
         X: IntoPy<XrefList>,
     {
-        Self { definition, xrefs: xrefs.into_py(py) }
+        Self {
+            definition,
+            xrefs: xrefs.into_py(py),
+        }
     }
 }
 
@@ -443,7 +420,7 @@ impl ClonePy for DefClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
             definition: self.definition.clone(),
-            xrefs: self.xrefs.clone_py(py)
+            xrefs: self.xrefs.clone_py(py),
         }
     }
 }
@@ -458,16 +435,12 @@ impl Display for DefClause {
 
 impl FromPy<DefClause> for fastobo::ast::TermClause {
     fn from_py(clause: DefClause, py: Python) -> Self {
-        fastobo::ast::TermClause::Def(
-            clause.definition,
-            clause.xrefs.into_py(py)
-        )
+        fastobo::ast::TermClause::Def(clause.definition, clause.xrefs.into_py(py))
     }
 }
 
 #[pymethods]
 impl DefClause {
-
     #[getter]
     /// `str`: a textual definition for this term.
     fn get_definition(&self) -> PyResult<&str> {
@@ -507,10 +480,10 @@ impl PyObjectProtocol for DefClause {
 
 // --- Comment ---------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct CommentClause {
-    comment: fastobo::ast::UnquotedString
+    comment: fastobo::ast::UnquotedString,
 }
 
 impl CommentClause {
@@ -539,10 +512,12 @@ impl FromPy<CommentClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl CommentClause {
-
     #[new]
     fn __init__(obj: &PyRawObject, comment: String) {
-        obj.init(Self::new(obj.py(), fastobo::ast::UnquotedString::new(comment)));
+        obj.init(Self::new(
+            obj.py(),
+            fastobo::ast::UnquotedString::new(comment),
+        ));
     }
 
     #[getter]
@@ -578,26 +553,28 @@ impl PyObjectProtocol for CommentClause {
 
 // --- Subset ----------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct SubsetClause {
     #[pyo3(set)]
-    subset: Ident
+    subset: Ident,
 }
 
 impl SubsetClause {
     pub fn new<I>(py: Python, subset: I) -> Self
     where
-        I: IntoPy<Ident>
+        I: IntoPy<Ident>,
     {
-        Self { subset: subset.into_py(py) }
+        Self {
+            subset: subset.into_py(py),
+        }
     }
 }
 
 impl ClonePy for SubsetClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            subset: self.subset.clone_py(py)
+            subset: self.subset.clone_py(py),
         }
     }
 }
@@ -618,7 +595,6 @@ impl FromPy<SubsetClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl SubsetClause {
-
     #[new]
     fn __init__(obj: &PyRawObject, subset: Ident) {
         obj.init(Self::new(obj.py(), subset));
@@ -651,7 +627,7 @@ impl PyObjectProtocol for SubsetClause {
 
 // --- Synonym ---------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct SynonymClause {
     synonym: Synonym,
@@ -663,7 +639,7 @@ impl SynonymClause {
         S: IntoPy<Synonym>,
     {
         Self {
-            synonym: synonym.into_py(py)
+            synonym: synonym.into_py(py),
         }
     }
 }
@@ -671,7 +647,7 @@ impl SynonymClause {
 impl ClonePy for SynonymClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            synonym: self.synonym.clone_py(py)
+            synonym: self.synonym.clone_py(py),
         }
     }
 }
@@ -716,10 +692,7 @@ impl PyObjectProtocol for SynonymClause {
         let py = gil.python();
 
         let fmt = PyString::new(py, "SynonymClause({!r})").to_object(py);
-        fmt.call_method1(
-            py, "format",
-            (self.synonym.__repr__()?,)
-        )
+        fmt.call_method1(py, "format", (self.synonym.__repr__()?,))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -733,10 +706,10 @@ impl PyObjectProtocol for SynonymClause {
 
 // --- Xref ------------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct XrefClause {
-    xref: Py<Xref>
+    xref: Py<Xref>,
 }
 
 impl XrefClause {
@@ -751,16 +724,14 @@ impl XrefClause {
 impl ClonePy for XrefClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            xref: self.xref.clone_py(py)
+            xref: self.xref.clone_py(py),
         }
     }
 }
 
 impl FromPy<XrefClause> for fastobo::ast::TermClause {
     fn from_py(clause: XrefClause, py: Python) -> Self {
-        fastobo::ast::TermClause::Xref(
-            clause.xref.as_ref(py).clone_py(py).into_py(py)
-        )
+        fastobo::ast::TermClause::Xref(clause.xref.as_ref(py).clone_py(py).into_py(py))
     }
 }
 
@@ -774,7 +745,7 @@ impl FromPy<Xref> for XrefClause {
     fn from_py(xref: Xref, py: Python) -> Self {
         Self {
             xref: Py::new(py, xref)
-                .expect("could not allocate memory on Python heap for XrefClause")
+                .expect("could not allocate memory on Python heap for XrefClause"),
         }
     }
 }
@@ -810,11 +781,11 @@ impl XrefClause {
 
 // --- Builtin ---------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct BuiltinClause {
     #[pyo3(set)]
-    builtin: bool
+    builtin: bool,
 }
 
 impl BuiltinClause {
@@ -843,7 +814,6 @@ impl FromPy<BuiltinClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl BuiltinClause {
-
     #[new]
     fn __init__(obj: &PyRawObject, builtin: bool) {
         obj.init(Self::new(obj.py(), builtin));
@@ -876,7 +846,7 @@ impl PyObjectProtocol for BuiltinClause {
 
 // --- PropertyValue ---------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct PropertyValueClause {
     inner: PropertyValue,
@@ -885,16 +855,18 @@ pub struct PropertyValueClause {
 impl PropertyValueClause {
     pub fn new<P>(py: Python, property_value: P) -> Self
     where
-        P: IntoPy<PropertyValue>
+        P: IntoPy<PropertyValue>,
     {
-        Self { inner: property_value.into_py(py) }
+        Self {
+            inner: property_value.into_py(py),
+        }
     }
 }
 
 impl ClonePy for PropertyValueClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            inner: self.inner.clone_py(py)
+            inner: self.inner.clone_py(py),
         }
     }
 }
@@ -913,26 +885,28 @@ impl PropertyValueClause {
 
 // --- IsA -------------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct IsAClause {
     #[pyo3(set)]
-    term: Ident
+    term: Ident,
 }
 
 impl IsAClause {
     pub fn new<I>(py: Python, term: I) -> Self
     where
-        I: IntoPy<Ident>
+        I: IntoPy<Ident>,
     {
-        Self { term: term.into_py(py) }
+        Self {
+            term: term.into_py(py),
+        }
     }
 }
 
 impl ClonePy for IsAClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py)
+            term: self.term.clone_py(py),
         }
     }
 }
@@ -985,7 +959,7 @@ impl PyObjectProtocol for IsAClause {
 
 // --- IntersectionOf --------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct IntersectionOfClause {
     relation: Option<Ident>,
@@ -1000,7 +974,7 @@ impl IntersectionOfClause {
     {
         Self {
             relation: relation.map(|id| id.into_py(py)),
-            term: class.into_py(py)
+            term: class.into_py(py),
         }
     }
 }
@@ -1026,14 +1000,13 @@ impl FromPy<IntersectionOfClause> for fastobo::ast::TermClause {
     fn from_py(clause: IntersectionOfClause, py: Python) -> fastobo::ast::TermClause {
         ast::TermClause::IntersectionOf(
             clause.relation.map(|id| id.into_py(py)),
-            clause.term.into_py(py)
+            clause.term.into_py(py),
         )
     }
 }
 
 #[pymethods]
 impl IntersectionOfClause {
-
     #[getter]
     fn get_relation(&self) -> Option<&Ident> {
         self.relation.as_ref()
@@ -1052,7 +1025,7 @@ impl IntersectionOfClause {
 
 // --- UnionOf ---------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct UnionOfClause {
     term: Ident,
@@ -1061,16 +1034,18 @@ pub struct UnionOfClause {
 impl UnionOfClause {
     pub fn new<I>(py: Python, term: I) -> Self
     where
-        I: IntoPy<Ident>
+        I: IntoPy<Ident>,
     {
-        Self { term: term.into_py(py) }
+        Self {
+            term: term.into_py(py),
+        }
     }
 }
 
 impl ClonePy for UnionOfClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py)
+            term: self.term.clone_py(py),
         }
     }
 }
@@ -1123,7 +1098,7 @@ impl PyObjectProtocol for UnionOfClause {
 
 // --- EquivalentTo ----------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct EquivalentToClause {
     term: Ident,
@@ -1132,16 +1107,18 @@ pub struct EquivalentToClause {
 impl EquivalentToClause {
     pub fn new<I>(py: Python, term: I) -> Self
     where
-        I: IntoPy<Ident>
+        I: IntoPy<Ident>,
     {
-        Self { term: term.into_py(py) }
+        Self {
+            term: term.into_py(py),
+        }
     }
 }
 
 impl ClonePy for EquivalentToClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py)
+            term: self.term.clone_py(py),
         }
     }
 }
@@ -1192,10 +1169,9 @@ impl PyObjectProtocol for EquivalentToClause {
     }
 }
 
-
 // --- DisjointFrom ----------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct DisjointFromClause {
     #[pyo3(set)]
@@ -1205,9 +1181,11 @@ pub struct DisjointFromClause {
 impl DisjointFromClause {
     pub fn new<I>(py: Python, term: I) -> Self
     where
-        I: IntoPy<Ident>
+        I: IntoPy<Ident>,
     {
-        Self { term: term.into_py(py) }
+        Self {
+            term: term.into_py(py),
+        }
     }
 }
 
@@ -1267,11 +1245,11 @@ impl PyObjectProtocol for DisjointFromClause {
 
 // --- Relationship ----------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct RelationshipClause {
     relation: Ident,
-    term: Ident
+    term: Ident,
 }
 
 impl RelationshipClause {
@@ -1280,7 +1258,10 @@ impl RelationshipClause {
         R: IntoPy<Ident>,
         T: IntoPy<Ident>,
     {
-        Self { relation: relation.into_py(py), term: term.into_py(py) }
+        Self {
+            relation: relation.into_py(py),
+            term: term.into_py(py),
+        }
     }
 }
 
@@ -1288,17 +1269,14 @@ impl ClonePy for RelationshipClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
             relation: self.relation.clone_py(py),
-            term: self.term.clone_py(py)
+            term: self.term.clone_py(py),
         }
     }
 }
 
 impl FromPy<RelationshipClause> for fastobo::ast::TermClause {
     fn from_py(clause: RelationshipClause, py: Python) -> fastobo::ast::TermClause {
-        ast::TermClause::Relationship(
-            clause.relation.into_py(py),
-            clause.term.into_py(py)
-        )
+        ast::TermClause::Relationship(clause.relation.into_py(py), clause.term.into_py(py))
     }
 }
 
@@ -1310,11 +1288,11 @@ impl RelationshipClause {
 
 // --- IsObsolete ------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsObsoleteClause {
     #[pyo3(get, set)]
-    obsolete: bool
+    obsolete: bool,
 }
 
 impl IsObsoleteClause {
@@ -1337,7 +1315,7 @@ impl IsObsoleteClause {
 
 // --- ReplacedBy ------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct ReplacedByClause {
     term: Ident,
@@ -1346,16 +1324,18 @@ pub struct ReplacedByClause {
 impl ReplacedByClause {
     pub fn new<I>(py: Python, term: I) -> Self
     where
-        I: IntoPy<Ident>
+        I: IntoPy<Ident>,
     {
-        Self { term: term.into_py(py) }
+        Self {
+            term: term.into_py(py),
+        }
     }
 }
 
 impl ClonePy for ReplacedByClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py)
+            term: self.term.clone_py(py),
         }
     }
 }
@@ -1374,7 +1354,7 @@ impl ReplacedByClause {
 
 // --- Consider --------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct ConsiderClause {
     term: Ident,
@@ -1383,16 +1363,18 @@ pub struct ConsiderClause {
 impl ConsiderClause {
     pub fn new<I>(py: Python, term: I) -> Self
     where
-        I: IntoPy<Ident>
+        I: IntoPy<Ident>,
     {
-        Self { term: term.into_py(py) }
+        Self {
+            term: term.into_py(py),
+        }
     }
 }
 
 impl ClonePy for ConsiderClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py)
+            term: self.term.clone_py(py),
         }
     }
 }
@@ -1411,10 +1393,10 @@ impl ConsiderClause {
 
 // --- CreatedBy -------------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct CreatedByClause {
-    name: fastobo::ast::UnquotedString
+    name: fastobo::ast::UnquotedString,
 }
 
 impl CreatedByClause {
@@ -1437,7 +1419,7 @@ impl CreatedByClause {
 
 // --- CreationDate ----------------------------------------------------------
 
-#[pyclass(extends=BaseTermClause)]
+#[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct CreationDateClause {
     date: fastobo::ast::IsoDateTime,

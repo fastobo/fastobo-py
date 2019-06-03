@@ -32,5 +32,7 @@ pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
 
     register!(py, m, TermFrame, "collections.abc", MutableSequence);
 
+    m.add("__name__", "fastobo.term")?;
+
     Ok(())
 }

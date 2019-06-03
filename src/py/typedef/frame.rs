@@ -4,30 +4,30 @@ use std::fmt::Result as FmtResult;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use pyo3::exceptions::IndexError;
+use pyo3::exceptions::TypeError;
+use pyo3::exceptions::ValueError;
+use pyo3::prelude::*;
+use pyo3::types::PyAny;
+use pyo3::types::PyIterator;
+use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
-use pyo3::prelude::*;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
-use pyo3::types::PyAny;
-use pyo3::types::PyIterator;
-use pyo3::types::PyString;
 
 use fastobo::ast;
-use fastobo::share::Share;
 use fastobo::share::Cow;
 use fastobo::share::Redeem;
+use fastobo::share::Share;
 
-use super::clause::TypedefClause;
 use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
+use super::clause::TypedefClause;
 use crate::utils::ClonePy;
 
-#[pyclass(extends=AbstractEntityFrame)]
+#[pyclass(extends=AbstractEntityFrame, module="fastobo.typedef")]
 #[derive(Debug, PyList)]
 pub struct TypedefFrame {
     id: Ident,
@@ -68,7 +68,7 @@ impl FromPy<fastobo::ast::TypedefFrame> for TypedefFrame {
             frame
                 .into_iter()
                 .map(|line| TypedefClause::from_py(line.into_inner(), py))
-                .collect()
+                .collect(),
         )
     }
 }
@@ -82,7 +82,7 @@ impl FromPy<TypedefFrame> for fastobo::ast::TypedefFrame {
                 .iter()
                 .map(|f| fastobo::ast::TypedefClause::from_py(f, py))
                 .map(fastobo::ast::Line::from)
-                .collect()
+                .collect(),
         )
     }
 }
@@ -95,7 +95,6 @@ impl FromPy<TypedefFrame> for fastobo::ast::EntityFrame {
 
 #[pymethods]
 impl TypedefFrame {
-
     // FIXME: should accept any iterable.
     #[new]
     fn __init__(obj: &PyRawObject, id: Ident, clauses: Option<Vec<TypedefClause>>) -> PyResult<()> {
@@ -135,10 +134,7 @@ impl PySequenceProtocol for TypedefFrame {
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-
-        let py = unsafe {
-            Python::assume_gil_acquired()
-        };
+        let py = unsafe { Python::assume_gil_acquired() };
 
         if index < self.clauses.len() as isize {
             let item = &self.clauses[index as usize];
@@ -166,7 +162,6 @@ impl PySequenceProtocol for TypedefFrame {
     }
 
     fn __concat__(&self, other: &PyAny) -> PyResult<Self> {
-
         let py = other.py();
 
         let iterator = PyIterator::from_object(py, other)?;

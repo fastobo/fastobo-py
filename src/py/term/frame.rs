@@ -4,34 +4,34 @@ use std::fmt::Result as FmtResult;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use pyo3::exceptions::IndexError;
+use pyo3::exceptions::TypeError;
+use pyo3::exceptions::ValueError;
+use pyo3::prelude::*;
+use pyo3::types::PyAny;
+use pyo3::types::PyIterator;
+use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
-use pyo3::prelude::*;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
-use pyo3::types::PyAny;
-use pyo3::types::PyIterator;
-use pyo3::types::PyString;
 
 use fastobo::ast;
-use fastobo::share::Share;
 use fastobo::share::Cow;
 use fastobo::share::Redeem;
+use fastobo::share::Share;
 
-use super::clause::TermClause;
 use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
+use super::clause::TermClause;
 use crate::utils::ClonePy;
 
-#[pyclass(extends=AbstractEntityFrame)]
+#[pyclass(extends=AbstractEntityFrame, module="fastobo.term")]
 #[derive(Debug, PyList)]
 pub struct TermFrame {
     id: Ident,
-    clauses: Vec<TermClause>
+    clauses: Vec<TermClause>,
 }
 
 impl TermFrame {
@@ -69,7 +69,7 @@ impl FromPy<fastobo::ast::TermFrame> for TermFrame {
             frame
                 .into_iter()
                 .map(|line| TermClause::from_py(line.into_inner(), py))
-                .collect()
+                .collect(),
         )
     }
 }
@@ -83,7 +83,7 @@ impl FromPy<TermFrame> for fastobo::ast::TermFrame {
                 .iter()
                 .map(|f| fastobo::ast::TermClause::from_py(f, py))
                 .map(fastobo::ast::Line::from)
-                .collect()
+                .collect(),
         )
     }
 }
@@ -96,7 +96,6 @@ impl FromPy<TermFrame> for fastobo::ast::EntityFrame {
 
 #[pymethods]
 impl TermFrame {
-
     // FIXME: should accept any iterable.
     #[new]
     fn __init__(obj: &PyRawObject, id: Ident, clauses: Option<Vec<TermClause>>) -> PyResult<()> {
@@ -131,16 +130,12 @@ impl PyObjectProtocol for TermFrame {
 
 #[pyproto]
 impl PySequenceProtocol for TermFrame {
-
     fn __len__(&self) -> PyResult<usize> {
         Ok(self.clauses.len())
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-
-        let py = unsafe {
-            Python::assume_gil_acquired()
-        };
+        let py = unsafe { Python::assume_gil_acquired() };
 
         if index < self.clauses.len() as isize {
             let item = &self.clauses[index as usize];
@@ -168,7 +163,6 @@ impl PySequenceProtocol for TermFrame {
     }
 
     fn __concat__(&self, other: &PyAny) -> PyResult<Self> {
-
         let py = other.py();
 
         let iterator = PyIterator::from_object(py, other)?;

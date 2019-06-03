@@ -5,28 +5,28 @@ use std::rc::Rc;
 use std::str::FromStr;
 use std::string::ToString;
 
+use pyo3::class::gc::PyVisit;
+use pyo3::exceptions::IndexError;
+use pyo3::exceptions::RuntimeError;
+use pyo3::exceptions::TypeError;
+use pyo3::exceptions::ValueError;
+use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
-use pyo3::PyTypeInfo;
-use pyo3::PyNativeType;
 use pyo3::types::PyAny;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
-use pyo3::PySequenceProtocol;
 use pyo3::PyGCProtocol;
+use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
-use pyo3::gc::PyTraverseError;
-use pyo3::class::gc::PyVisit;
+use pyo3::PySequenceProtocol;
+use pyo3::PyTypeInfo;
 
 use fastobo::ast as obo;
 
-use crate::utils::AsGILRef;
-use crate::utils::ClonePy;
 use crate::error::Error;
 use crate::pyfile::PyFile;
+use crate::utils::AsGILRef;
+use crate::utils::ClonePy;
 
 use super::header::frame::HeaderFrame;
 use super::term::frame::TermFrame;
@@ -49,22 +49,23 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::AbstractEntityFrame>()?;
     m.add_class::<self::AbstractClause>()?;
     m.add_class::<self::AbstractEntityClause>()?;
+    m.add("__name__", "fastobo.abc")?;
     Ok(())
 }
 
 // ---
 
 /// A base
-#[pyclass(subclass)]
+#[pyclass(subclass, module = "fastobo.abc")]
 pub struct AbstractFrame {}
 
-#[pyclass(extends=AbstractFrame)]
+#[pyclass(extends=AbstractFrame, module="fastobo.abc")]
 pub struct AbstractEntityFrame {}
 
 // ---
 
-#[pyclass(subclass)]
+#[pyclass(subclass, module = "fastobo.abc")]
 pub struct AbstractClause {}
 
-#[pyclass(extends=AbstractClause)]
+#[pyclass(extends=AbstractClause, module="fastobo.abc")]
 pub struct AbstractEntityClause {}

@@ -1,12 +1,12 @@
-#![recursion_limit="256"]
+#![recursion_limit = "256"]
 
 extern crate proc_macro;
-extern crate syn;
 extern crate quote;
+extern crate syn;
 
 use proc_macro::TokenStream;
-use syn::spanned::Spanned;
 use quote::quote;
+use syn::spanned::Spanned;
 
 // ---
 
@@ -51,7 +51,6 @@ fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream 
 }
 
 fn clonepy_impl_struct(ast: &syn::DeriveInput, _en: &syn::DataStruct) -> TokenStream {
-
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
@@ -80,7 +79,7 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(aspyptr_impl_enum(&ast, &e));
         output.extend(frompy_impl_enum(&ast, &e));
-        // output.extend(pyobjectprotocol_impl_enum(&ast, &e))
+    // output.extend(pyobjectprotocol_impl_enum(&ast, &e))
     } else {
         panic!("only supports enums");
     }
@@ -199,7 +198,8 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         ));
     }
 
-    let meta = ast.attrs
+    let meta = ast
+        .attrs
         .iter()
         .find(|attr| attr.path.is_ident(syn::Ident::new("wraps", attr.span())))
         .expect("could not find #[wraps] attribute")
@@ -210,7 +210,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         syn::Meta::List(l) => match l.nested.iter().next().unwrap() {
             syn::NestedMeta::Meta(syn::Meta::Word(w)) => w.clone(),
             _ => panic!("#[wraps] argument must be a class ident"),
-        }
+        },
         _ => panic!("#[wraps] argument must be a class ident"),
     };
 
@@ -218,11 +218,11 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     let name = &ast.ident;
     let err_sub = syn::LitStr::new(
         &format!("subclassing {} is not supported", base),
-        base.span()
+        base.span(),
     );
     let err_ty = syn::LitStr::new(
         &format!("expected {} instance, {{}} found", base),
-        base.span()
+        base.span(),
     );
     let expanded = quote! {
         #[automatically_derived]
@@ -288,10 +288,9 @@ pub fn pylist_derive(input: TokenStream) -> TokenStream {
 }
 
 fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStream {
-
     // Find the field with `Vec` type on the struct
-    let mut field = None;   // the name of the Vec field
-    let mut elem = None;    // the type of Vec elements
+    let mut field = None; // the name of the Vec field
+    let mut elem = None; // the type of Vec elements
     match &st.fields {
         syn::Fields::Named(n) => {
             for f in n.named.iter() {
@@ -299,7 +298,9 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                     if let Some(c) = p.path.segments.first() {
                         if c.value().ident == "Vec" {
                             if let syn::PathArguments::AngleBracketed(g) = &c.value().arguments {
-                                if let Some(syn::GenericArgument::Type(t)) = g.args.first().map(|p| p.into_value()) {
+                                if let Some(syn::GenericArgument::Type(t)) =
+                                    g.args.first().map(|p| p.into_value())
+                                {
                                     elem = Some(t.clone());
                                     field = Some(f.ident.clone())
                                 }

@@ -4,10 +4,10 @@ use std::path::Path;
 use pest::error::ErrorVariant;
 use pest::error::InputLocation;
 use pest::error::LineColLocation;
-use pyo3::PyErr;
 use pyo3::exceptions::OSError;
-use pyo3::exceptions::SyntaxError;
 use pyo3::exceptions::RuntimeError;
+use pyo3::exceptions::SyntaxError;
+use pyo3::PyErr;
 
 use fastobo::parser::Rule;
 
@@ -72,7 +72,6 @@ impl PestError {
     }
 }
 
-
 /// A wrapper to convert `fastobo::error::Error` into a `PyErr`.
 pub struct Error(fastobo::error::Error);
 
@@ -91,7 +90,6 @@ impl From<fastobo::error::Error> for Error {
 impl From<Error> for PyErr {
     fn from(err: Error) -> Self {
         match err.0 {
-
             fastobo::error::Error::ParserError { error } => {
                 // SUPER UNSAFE: check the struct as not changed when
                 //               updating! Using private fields is out of
@@ -107,8 +105,7 @@ impl From<Error> for PyErr {
             }
 
             fastobo::error::Error::IOError { error } => {
-                let desc = <std::io::Error as std::error::Error>::description(&error)
-                    .to_string();
+                let desc = <std::io::Error as std::error::Error>::description(&error).to_string();
                 match error.raw_os_error() {
                     Some(code) => OSError::py_err((code, desc)),
                     None => OSError::py_err((desc,)),
@@ -116,7 +113,6 @@ impl From<Error> for PyErr {
             }
 
             _ => RuntimeError::py_err("todo"),
-
         }
     }
 }

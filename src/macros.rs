@@ -59,5 +59,25 @@ macro_rules! register {
             .get(stringify!($metacls))?
             .to_object($py)
             .call_method1($py, "register", ($m.get(stringify!($cls))?,))?;
-    }
+    };
+}
+
+macro_rules! add_submodule {
+    ($py:ident, $sup:ident, $sub:ident) => {{
+        use super::*;
+        use pyo3::AsPyPointer;
+
+        let func = $crate::pyo3::wrap_pymodule!($sub);
+        let module = func($py);
+
+        module
+            .extract::<&pyo3::types::PyModule>($py)?
+            .add("__package__", $sup.get("__package__")?)?;
+
+        $sup.add(stringify!($sub), module.clone_ref($py))?;
+        $py.import("sys")?
+            .get("modules")?
+            .downcast_mut::<pyo3::types::PyDict>()?
+            .set_item(concat!("fastobo.", stringify!($sub)), module)?;
+    }};
 }

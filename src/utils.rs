@@ -1,12 +1,12 @@
 use std::ops::Deref;
 
+use pyo3::ffi::PyObject;
 use pyo3::AsPyPointer;
 use pyo3::AsPyRef;
-use pyo3::Python;
 use pyo3::Py;
-use pyo3::PyTypeInfo;
 use pyo3::PyRef;
-use pyo3::ffi::PyObject;
+use pyo3::PyTypeInfo;
+use pyo3::Python;
 
 // ---
 
@@ -31,7 +31,7 @@ where
 
 impl<T> ClonePy for Option<T>
 where
-    T: ClonePy
+    T: ClonePy,
 {
     fn clone_py(&self, py: Python) -> Self {
         self.as_ref().map(|x| x.clone_py(py))

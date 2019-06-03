@@ -231,7 +231,12 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
                 use self::#name::*;
                 use pyo3::AsPyPointer;
 
-                let ty = ob.get_type().name();
+                let qualname = ob.get_type().name();
+                let ty = match qualname.rfind('.') {
+                    Some(idx) => &qualname[idx+1..],
+                    None => &qualname,
+                };
+
                 if ob.py().is_instance::<#base, _>(ob)? {
                     unsafe {
                         match ty.as_ref() {

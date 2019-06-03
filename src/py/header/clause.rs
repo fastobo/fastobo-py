@@ -167,11 +167,11 @@ impl BaseHeaderClause {
     ///     header, stripped from trailing qualifiers and comment.
     ///
     /// Example:
-    ///     >>> clause = fastobo.header.Ontology("test")
+    ///     >>> clause = fastobo.header.OntologyClause("test")
     ///     >>> clause.raw_tag()
-    ///     "ontology"
+    ///     'ontology'
     ///     >>> str(clause)
-    ///     "ontology: test"
+    ///     'ontology: test'
     pub fn raw_tag(&self) -> PyResult<String> {
         NotImplementedError::into("BaseHeaderClause.raw_tag")
     }
@@ -183,11 +183,11 @@ impl BaseHeaderClause {
     ///     header, stripped from trailing qualifiers and comment.
     ///
     /// Example:
-    ///     >>> dt = datetime(2019, 4, 29, 21, 52)
-    ///     >>> ident = fastobo.header.DateClause(dt)
-    ///     >>> dt.date
-    ///     datetime(2019, 4, 29, 21, 52)
-    ///     >>> dt.raw_value()
+    ///     >>> dt = datetime.datetime(2019, 4, 29, 21, 52)
+    ///     >>> clause = fastobo.header.DateClause(dt)
+    ///     >>> clause.date
+    ///     datetime.datetime(2019, 4, 29, 21, 52)
+    ///     >>> clause.raw_value()
     ///     '29:04:2019 21:52'
     pub fn raw_value(&self) -> PyResult<String> {
         NotImplementedError::into("BaseHeaderClause.raw_value")

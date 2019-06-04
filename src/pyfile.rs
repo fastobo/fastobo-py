@@ -16,9 +16,8 @@ use pyo3::PyDowncastError;
 use pyo3::PyErrValue;
 use pyo3::PyObject;
 
-// #[derive(Debug)]
 pub struct PyFile<'p> {
-    file: *mut pyo3::ffi::PyObject,
+    file: pyo3::PyObject,
     py: Python<'p>,
     err: Option<PyErr>,
 }
@@ -33,9 +32,9 @@ impl<'p> PyFile<'p> {
             let res = file.call_method1(py, "read", (0,))?;
             if py.is_instance::<PyBytes, PyObject>(&res).unwrap_or(false) {
                 Ok(PyFile {
-                    file: obj.as_ptr(),
+                    file,
+                    py,
                     err: None,
-                    py: py,
                 })
             } else {
                 let ty = res.as_ref(py).get_type().name().to_string();
@@ -52,8 +51,7 @@ impl<'p> PyFile<'p> {
 impl<'p> Read for PyFile<'p> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
         unsafe {
-            let file = PyObject::from_borrowed_ptr(self.py, self.file);
-            match file.call_method1(self.py, "read", (buf.len(),)) {
+            match self.file.call_method1(self.py, "read", (buf.len(),)) {
                 Ok(obj) => {
                     // Check `fh.read` returned bytes, else raise a `TypeError`.
                     if let Ok(bytes) = obj.extract::<&PyBytes>(self.py) {

@@ -16,11 +16,11 @@ use pyo3::PyDowncastError;
 use pyo3::PyErrValue;
 use pyo3::PyObject;
 
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct PyFile<'p> {
     file: *mut pyo3::ffi::PyObject,
+    py: Python<'p>,
     err: Option<PyErr>,
-    __data: PhantomData<&'p PyObject>,
 }
 
 impl<'p> PyFile<'p> {
@@ -35,7 +35,7 @@ impl<'p> PyFile<'p> {
                 Ok(PyFile {
                     file: obj.as_ptr(),
                     err: None,
-                    __data: PhantomData,
+                    py: py,
                 })
             } else {
                 let ty = res.as_ref(py).get_type().name().to_string();
@@ -52,17 +52,16 @@ impl<'p> PyFile<'p> {
 impl<'p> Read for PyFile<'p> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
         unsafe {
-            let py = Python::assume_gil_acquired();
-            let file = PyObject::from_borrowed_ptr(py, self.file);
-            match file.call_method1(py, "read", (buf.len(),)) {
+            let file = PyObject::from_borrowed_ptr(self.py, self.file);
+            match file.call_method1(self.py, "read", (buf.len(),)) {
                 Ok(obj) => {
                     // Check `fh.read` returned bytes, else raise a `TypeError`.
-                    if let Ok(bytes) = obj.extract::<&PyBytes>(py) {
+                    if let Ok(bytes) = obj.extract::<&PyBytes>(self.py) {
                         let b = bytes.as_bytes();
                         (&mut buf[..b.len()]).copy_from_slice(b);
                         Ok(b.len())
                     } else {
-                        let ty = obj.as_ref(py).get_type().name().to_string();
+                        let ty = obj.as_ref(self.py).get_type().name().to_string();
                         let msg = format!("expected bytes, found {}", ty);
                         self.err = Some(TypeError::py_err(msg));
                         Err(IoError::new(
@@ -74,10 +73,10 @@ impl<'p> Read for PyFile<'p> {
                 Err(e) => {
                     // Attempt to transmute the Python OSError to an actual
                     // Rust `std::io::Error` using `from_raw_os_error`.
-                    if e.is_instance::<OSError>(py) {
+                    if e.is_instance::<OSError>(self.py) {
                         if let PyErrValue::Value(obj) = &e.pvalue {
-                            if let Ok(code) = obj.getattr(py, "errno") {
-                                if let Ok(n) = code.extract::<i32>(py) {
+                            if let Ok(code) = obj.getattr(self.py, "errno") {
+                                if let Ok(n) = code.extract::<i32>(self.py) {
                                     return Err(IoError::from_raw_os_error(n));
                                 }
                             }

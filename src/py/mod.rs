@@ -3,6 +3,7 @@
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
+use std::io::BufReader;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::string::ToString;
@@ -93,8 +94,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     /// Raises:
     ///     TypeError: when the argument is not a `str` or a binary stream.
     ///     SyntaxError: when the document is not in valid OBO syntax.
-    ///     OSError: when an underlying OS error occurs, or if ``fh.read``
-    ///         raises any exception (which will be wrapped).
+    ///     OSError: when an underlying OS error occurs.
+    ///     *other*: any exception raised by ``fh.read``.
     ///
     /// Example:
     ///     Use ``requests`` and ``fastobo`` to parse an ontology downloaded
@@ -113,14 +114,34 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
                 Ok(doc) => Ok(doc.into_py(py)),
                 Err(e) => Error::from(e).into(),
             }
-        } else if let Ok(f) = PyFile::from_object(fh.py(), fh) {
-            let mut bufreader = std::io::BufReader::new(f);
-            match obo::OboDoc::from_stream(&mut bufreader) {
-                Ok(doc) => Ok(doc.into_py(py)),
-                Err(e) => Error::from(e).into(),
-            }
         } else {
-            pyo3::exceptions::TypeError::into("expected path or file handle")
+            match PyFile::from_object(fh.py(), fh) {
+                // Object is a binary file-handle: attempt to parse the
+                // document and return an `OboDoc` object.
+                Ok(f) => {
+                    let mut bufreader = std::io::BufReader::new(f);
+                    match obo::OboDoc::from_stream(&mut bufreader) {
+                        Ok(doc) => Ok(doc.into_py(py)),
+                        Err(e) => bufreader
+                            .into_inner()
+                            .into_err()
+                            .unwrap_or_else(|| Error::from(e).into())
+                            .into(),
+                    }
+                }
+                // Object is not a binary file-handle: wrap the inner error
+                // into a `TypeError` and raise that error.
+                Err(inner) => {
+                    let msg = "expected path or binary file handle";
+                    let err = TypeError::py_err(msg).to_object(py);
+                    err.call_method1(
+                        py,
+                        "__setattr__",
+                        ("__cause__".to_object(py), inner.to_object(py)),
+                    )?;
+                    Err(PyErr::from_instance(err.as_ref(py).as_ref()))
+                }
+            }
         }
     }
 

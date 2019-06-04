@@ -20,7 +20,7 @@ use fastobo::share::Cow;
 use fastobo::share::Redeem;
 use fastobo::share::Share;
 
-use super::super::abc::AbstractClause;
+use super::super::abc::AbstractEntityClause;
 use super::super::id::Ident;
 use super::super::pv::PropertyValue;
 use super::super::syn::Synonym;
@@ -110,7 +110,7 @@ impl FromPy<fastobo::ast::TermClause> for TermClause {
 // --- Base ------------------------------------------------------------------
 
 /// A header clause, appearing in the OBO header frame.
-#[pyclass(extends=AbstractClause, module="fastobo.term")]
+#[pyclass(extends=AbstractEntityClause, module="fastobo.term")]
 pub struct BaseTermClause {}
 
 // --- IsAnonymous -----------------------------------------------------------

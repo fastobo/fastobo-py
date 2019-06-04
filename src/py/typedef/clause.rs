@@ -15,7 +15,7 @@ use fastobo::share::Cow;
 use fastobo::share::Redeem;
 use fastobo::share::Share;
 
-use super::super::abc::AbstractClause;
+use super::super::abc::AbstractEntityClause;
 use super::super::id::Ident;
 use super::super::pv::PropertyValue;
 use super::super::syn::Synonym;
@@ -178,7 +178,7 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
 
 // --- Base ------------------------------------------------------------------
 
-#[pyclass(extends=AbstractClause)]
+#[pyclass(extends=AbstractEntityClause)]
 pub struct BaseTypedefClause {}
 
 // --- IsAnonymous -----------------------------------------------------------

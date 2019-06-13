@@ -11,7 +11,7 @@ use pyo3::PyErr;
 
 use fastobo::parser::Rule;
 
-/// Exact copy of `pest::error::Error` to access privat fields.
+/// Exact copy of `pest::error::Error` to access private fields.
 struct PestError {
     /// Variant of the error
     pub variant: ErrorVariant<Rule>,
@@ -81,6 +81,12 @@ impl From<Error> for fastobo::error::Error {
     }
 }
 
+impl From<fastobo::error::SyntaxError> for Error {
+    fn from(err: fastobo::error::SyntaxError) -> Self {
+        Self(fastobo::error::Error::from(err))
+    }
+}
+
 impl From<fastobo::error::Error> for Error {
     fn from(err: fastobo::error::Error) -> Self {
         Self(err)
@@ -90,18 +96,25 @@ impl From<fastobo::error::Error> for Error {
 impl From<Error> for PyErr {
     fn from(err: Error) -> Self {
         match err.0 {
-            fastobo::error::Error::ParserError { error } => {
-                // SUPER UNSAFE: check the struct as not changed when
-                //               updating! Using private fields is out of
-                //               semver so any update is dangerous.
-                let pe: PestError = unsafe { std::mem::transmute(error) };
-                let msg = pe.message();
-                let path = pe.path.unwrap_or(String::from("<stdin>"));
-                let (l, c) = match pe.line_col {
-                    LineColLocation::Pos((l, c)) => (l, c),
-                    LineColLocation::Span((l, c), _) => (l, c),
-                };
-                SyntaxError::py_err((msg, (path, l, c, pe.line)))
+            fastobo::error::Error::SyntaxError { error } => {
+                match error {
+                    fastobo::error::SyntaxError::ParserError { error } => {
+                        // SUPER UNSAFE: check the struct has not changed when
+                        //               updating! Using private fields is out of
+                        //               semver so any update is dangerous.
+                        let pe: PestError = unsafe { std::mem::transmute(error) };
+                        let msg = pe.message();
+                        let path = pe.path.unwrap_or(String::from("<stdin>"));
+                        let (l, c) = match pe.line_col {
+                            LineColLocation::Pos((l, c)) => (l, c),
+                            LineColLocation::Span((l, c), _) => (l, c),
+                        };
+                        SyntaxError::py_err((msg, (path, l, c, pe.line)))
+                    }
+                    fastobo::error::SyntaxError::UnexpectedRule { expected, actual } => {
+                        RuntimeError::py_err("unexpected rule")
+                    }
+                }
             }
 
             fastobo::error::Error::IOError { error } => {

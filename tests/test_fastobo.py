@@ -31,3 +31,7 @@ class TestLoad(unittest.TestCase):
         with open(MS, 'rb') as f:
             f.read = read
             self.assertRaises(RuntimeError, fastobo.load, f)
+
+    def test_syntax_error(self):
+
+        self.assertRaises(SyntaxError, fastobo.loads, "hello there")

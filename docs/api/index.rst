@@ -79,6 +79,7 @@ Header (`fastobo.header`)
 
    fastobo.header.HeaderFrame
    fastobo.header.BaseHeaderClause
+
    fastobo.header.FormatVersionClause
    fastobo.header.DataVersionClause
    fastobo.header.DateClause
@@ -111,28 +112,82 @@ Term (`fastobo.term`)
 
    fastobo.term.TermFrame
    fastobo.term.BaseTermClause
-   fastobo.term.IsAnonymousClause
-   fastobo.term.NameClause
-   fastobo.term.NamespaceClause
+
    fastobo.term.AltIdClause
-   fastobo.term.DefClause
-   fastobo.term.CommentClause
-   fastobo.term.SubsetClause
-   fastobo.term.SynonymClause
-   fastobo.term.XrefClause
    fastobo.term.BuiltinClause
-   fastobo.term.PropertyValueClause
-   fastobo.term.IsAClause
-   fastobo.term.IntersectionOfClause
-   fastobo.term.UnionOfClause
-   fastobo.term.EquivalentToClause
-   fastobo.term.DisjointFromClause
-   fastobo.term.RelationshipClause
-   fastobo.term.IsObsoleteClause
-   fastobo.term.ReplacedByClause
+   fastobo.term.CommentClause
    fastobo.term.ConsiderClause
    fastobo.term.CreatedByClause
    fastobo.term.CreationDateClause
+   fastobo.term.DefClause
+   fastobo.term.DisjointFromClause
+   fastobo.term.EquivalentToClause
+   fastobo.term.IntersectionOfClause
+   fastobo.term.IsAClause
+   fastobo.term.IsAnonymousClause
+   fastobo.term.IsObsoleteClause
+   fastobo.term.NameClause
+   fastobo.term.NamespaceClause
+   fastobo.term.PropertyValueClause
+   fastobo.term.RelationshipClause
+   fastobo.term.ReplacedByClause
+   fastobo.term.SubsetClause
+   fastobo.term.SynonymClause
+   fastobo.term.UnionOfClause
+   fastobo.term.XrefClause
+
+
+Typedef (`fastobo.typedef`)
+---------------------------
+
+.. currentmodule:: fastobo.typedef
+.. autosummary::
+   :nosignatures:
+
+   fastobo.typedef.TypedefFrame
+   fastobo.typedef.BaseTypedefClause
+
+   fastobo.typedef.AltIdClause
+   fastobo.typedef.BuiltinClause
+   fastobo.typedef.CommentClause
+   fastobo.typedef.ConsiderClause
+   fastobo.typedef.CreatedByClause
+   fastobo.typedef.CreationDateClause
+   fastobo.typedef.DefClause
+   fastobo.typedef.DisjointFromClause
+   fastobo.typedef.DisjointOverClause
+   fastobo.typedef.DomainClause
+   fastobo.typedef.EquivalentToChainClause
+   fastobo.typedef.EquivalentToClause
+   fastobo.typedef.ExpandAssertionToClause
+   fastobo.typedef.ExpandExpressionToClause
+   fastobo.typedef.HoldsOverChainClause
+   fastobo.typedef.IntersectionOfClause
+   fastobo.typedef.InverseOfClause
+   fastobo.typedef.IsAClause
+   fastobo.typedef.IsAnonymousClause
+   fastobo.typedef.IsAntiSymmetricClause
+   fastobo.typedef.IsAsymmetricClause
+   fastobo.typedef.IsClassLevelClause
+   fastobo.typedef.IsCyclicClause
+   fastobo.typedef.IsFunctionalClause
+   fastobo.typedef.IsInverseFunctionalClause
+   fastobo.typedef.IsMetadataTagClause
+   fastobo.typedef.IsObsoleteClause
+   fastobo.typedef.IsReflexiveClause
+   fastobo.typedef.IsSymmetricClause
+   fastobo.typedef.IsTransitiveClause
+   fastobo.typedef.NameClause
+   fastobo.typedef.NamespaceClause
+   fastobo.typedef.PropertyValueClause
+   fastobo.typedef.RangeClause
+   fastobo.typedef.RelationshipClause
+   fastobo.typedef.ReplacedByClause
+   fastobo.typedef.SubsetClause
+   fastobo.typedef.SynonymClause
+   fastobo.typedef.TransitiveOverClause
+   fastobo.typedef.UnionOfClause
+   fastobo.typedef.XrefClause
 
 
 Property Value (`fastobo.pv`)

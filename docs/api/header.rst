@@ -7,14 +7,14 @@ Frame
 .. currentmodule:: fastobo.header
 .. automodule:: fastobo.header
 
-.. autoclass:: HeaderFrame(EntityFrame)
+.. autoclass:: HeaderFrame(AbstractFrame)
    :members:
 
 
 Clauses
 -------
 
-.. autoclass:: BaseHeaderClause
+.. autoclass:: BaseHeaderClause(AbstractClause)
    :members:
 
 

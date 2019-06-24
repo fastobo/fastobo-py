@@ -11,7 +11,7 @@ Frame
    :members:
    :special-members:
 
-.. autoclass:: AbstractEntityFrame
+.. autoclass:: AbstractEntityFrame(AbstractFrame)
    :members:
    :special-members:
 
@@ -22,6 +22,6 @@ Clauses
    :members:
    :special-members:
 
-.. autoclass:: AbstractEntityClause
+.. autoclass:: AbstractEntityClause(AbstractClause)
    :members:
    :special-members:

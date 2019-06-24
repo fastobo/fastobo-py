@@ -1020,6 +1020,22 @@ impl IntersectionOfClause {
 
 impl_raw_tag!(IntersectionOfClause, "intersection_of");
 
+#[pyproto]
+impl PyObjectProtocol for IntersectionOfClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        // TODO
+        impl_repr!(self, IntersectionOfClause(self.relation, self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.relation && self.term)
+    }
+}
+
 // --- UnionOf ---------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
@@ -1337,7 +1353,7 @@ impl FromPy<ReplacedByClause> for fastobo::ast::TermClause {
     }
 }
 
-impl_raw_tag!(ReplacedByClause, "is_obsolete");
+impl_raw_tag!(ReplacedByClause, "replaced_by");
 impl_raw_value!(ReplacedByClause, "{}", self.term);
 
 // --- Consider --------------------------------------------------------------

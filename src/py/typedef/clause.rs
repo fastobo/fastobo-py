@@ -1,5 +1,10 @@
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
+use std::fmt::Write;
 use std::str::FromStr;
 
+use pyo3::class::basic::CompareOp;
 use pyo3::exceptions::TypeError;
 use pyo3::exceptions::ValueError;
 use pyo3::prelude::*;
@@ -196,9 +201,47 @@ impl IsAnonymousClause {
     }
 }
 
+impl Display for IsAnonymousClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsAnonymousClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsAnonymousClause) -> Self {
+        fastobo::ast::TypedefClause::IsAnonymous(clause.anonymous)
+    }
+}
+
 impl FromPy<IsAnonymousClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsAnonymousClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::IsAnonymous(clause.anonymous)
+    }
+}
+
+#[pymethods]
+impl IsAnonymousClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, anonymous: bool) {
+        obj.init(Self::new(obj.py(), anonymous));
+    }
+}
+
+impl_raw_tag!(IsAnonymousClause, "is_anonymous");
+impl_raw_value!(IsAnonymousClause, "{}", self.anonymous);
+
+#[pyproto]
+impl PyObjectProtocol for IsAnonymousClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsAnonymousClause(self.anonymous))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.anonymous)
     }
 }
 
@@ -216,9 +259,59 @@ impl NameClause {
     }
 }
 
+impl Display for NameClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<NameClause> for fastobo::ast::TypedefClause {
+    fn from(clause: NameClause) -> Self {
+        fastobo::ast::TypedefClause::Name(clause.name)
+    }
+}
+
 impl FromPy<NameClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: NameClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::Name(clause.name)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl NameClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, name: String) {
+        obj.init(Self::new(obj.py(), fastobo::ast::UnquotedString::new(name)));
+    }
+
+    /// `str`: the name of the current term.
+    #[getter]
+    fn get_name(&self) -> PyResult<&str> {
+        Ok(self.name.as_str())
+    }
+
+    #[setter]
+    fn set_name(&mut self, name: String) -> PyResult<()> {
+        self.name = fastobo::ast::UnquotedString::new(name);
+        Ok(())
+    }
+}
+
+impl_raw_tag!(NameClause, "name");
+impl_raw_value!(NameClause, "{}", self.name);
+
+#[pyproto]
+impl PyObjectProtocol for NameClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, NameClause(self.name))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.name)
     }
 }
 
@@ -227,6 +320,7 @@ impl FromPy<NameClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct NamespaceClause {
+    #[pyo3(set)]
     namespace: Ident,
 }
 
@@ -249,10 +343,54 @@ impl ClonePy for NamespaceClause {
     }
 }
 
+impl Display for NamespaceClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<NamespaceClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: NamespaceClause, py: Python) -> Self {
         let ns = fastobo::ast::NamespaceIdent::from_py(clause.namespace, py);
         fastobo::ast::TypedefClause::Namespace(ns)
+    }
+}
+
+#[pymethods]
+impl NamespaceClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, namespace: Ident) {
+        obj.init(Self::new(obj.py(), namespace));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the ID of the namespace this term is part of.
+    fn get_namespace(&self) -> PyResult<&Ident> {
+        Ok(&self.namespace)
+    }
+}
+
+impl_raw_tag!(NamespaceClause, "namespace");
+impl_raw_value!(NamespaceClause, "{}", self.namespace);
+
+#[pyproto]
+impl PyObjectProtocol for NamespaceClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let r = self.namespace.to_object(py).call_method0(py, "__repr__")?;
+        let fmt = PyString::new(py, "NamespaceClause({!r})").to_object(py);
+        fmt.call_method1(py, "format", (&self.namespace,))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.namespace)
     }
 }
 
@@ -261,29 +399,70 @@ impl FromPy<NamespaceClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct AltIdClause {
-    id: Ident,
+    #[pyo3(set)]
+    alt_id: Ident,
 }
 
 impl AltIdClause {
-    pub fn new<I>(py: Python, id: I) -> Self
+    pub fn new<I>(py: Python, alt_id: I) -> Self
     where
         I: IntoPy<Ident>,
     {
-        Self { id: id.into_py(py) }
+        Self { alt_id: alt_id.into_py(py) }
     }
 }
 
 impl ClonePy for AltIdClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            id: self.id.clone_py(py),
+            alt_id: self.alt_id.clone_py(py),
         }
+    }
+}
+
+impl Display for AltIdClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
 impl FromPy<AltIdClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: AltIdClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::AltId(clause.id.into_py(py))
+        fastobo::ast::TypedefClause::AltId(clause.alt_id.into_py(py))
+    }
+}
+
+#[pymethods]
+impl AltIdClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, alt_id: Ident) {
+        obj.init(Self::new(obj.py(), alt_id));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: an alternative ID used to refer to this term.
+    fn get_alt_id(&self) -> PyResult<&Ident> {
+        Ok(&self.alt_id)
+    }
+}
+
+impl_raw_tag!(AltIdClause, "alt_id");
+impl_raw_value!(AltIdClause, "{}", self.alt_id);
+
+#[pyproto]
+impl PyObjectProtocol for AltIdClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, AltIdClause(self.alt_id))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.alt_id)
     }
 }
 
@@ -317,9 +496,56 @@ impl ClonePy for DefClause {
     }
 }
 
+impl Display for DefClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<DefClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: DefClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::Def(clause.definition, clause.xrefs.into_py(py))
+    }
+}
+
+#[pymethods]
+impl DefClause {
+    #[getter]
+    /// `str`: a textual definition for this term.
+    fn get_definition(&self) -> PyResult<&str> {
+        Ok(&self.definition.as_str())
+    }
+
+    #[setter]
+    fn set_definition(&mut self, definition: String) {
+        self.definition = fastobo::ast::QuotedString::new(definition);
+    }
+
+    #[getter]
+    /// `~fastobo.xrefs.XrefList`: a list of xrefs supporting the definition.
+    fn get_xrefs(&self) -> PyResult<XrefList> {
+        let py = unsafe { Python::assume_gil_acquired() };
+        Ok(self.xrefs.clone_py(py))
+    }
+}
+
+impl_raw_tag!(DefClause, "def");
+impl_raw_value!(DefClause, "{}", self.definition);
+
+#[pyproto]
+impl PyObjectProtocol for DefClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, DefClause(self.definition, self.xrefs))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.definition && self.xrefs)
     }
 }
 
@@ -337,9 +563,62 @@ impl CommentClause {
     }
 }
 
+impl Display for CommentClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<CommentClause> for fastobo::ast::TypedefClause {
+    fn from(clause: CommentClause) -> Self {
+        fastobo::ast::TypedefClause::Comment(clause.comment)
+    }
+}
+
 impl FromPy<CommentClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: CommentClause, _py: Python) -> Self {
         fastobo::ast::TypedefClause::Comment(clause.comment)
+    }
+}
+
+#[pymethods]
+impl CommentClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, comment: String) {
+        obj.init(Self::new(
+            obj.py(),
+            fastobo::ast::UnquotedString::new(comment),
+        ));
+    }
+
+    #[getter]
+    /// `str`: a comment relevant to this term.
+    fn get_comment(&self) -> PyResult<&str> {
+        Ok(self.comment.as_str())
+    }
+
+    #[setter]
+    fn set_comment(&mut self, comment: String) -> PyResult<()> {
+        self.comment = fastobo::ast::UnquotedString::new(comment);
+        Ok(())
+    }
+}
+
+impl_raw_tag!(CommentClause, "comment");
+impl_raw_value!(CommentClause, "{}", self.comment);
+
+#[pyproto]
+impl PyObjectProtocol for CommentClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, CommentClause(self.comment))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.comment)
     }
 }
 
@@ -348,6 +627,7 @@ impl FromPy<CommentClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct SubsetClause {
+    #[pyo3(set)]
     subset: Ident,
 }
 
@@ -370,9 +650,49 @@ impl ClonePy for SubsetClause {
     }
 }
 
+impl Display for SubsetClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<SubsetClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: SubsetClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::Subset(clause.subset.into_py(py))
+    }
+}
+
+#[pymethods]
+impl SubsetClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, subset: Ident) {
+        obj.init(Self::new(obj.py(), subset));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the ID of the subset this term is part of.
+    fn get_subset(&self) -> PyResult<&Ident> {
+        Ok(&self.subset)
+    }
+}
+
+impl_raw_tag!(SubsetClause, "subset");
+impl_raw_value!(SubsetClause, "{}", self.subset);
+
+#[pyproto]
+impl PyObjectProtocol for SubsetClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, SubsetClause(self.subset))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.subset)
     }
 }
 
@@ -403,9 +723,55 @@ impl ClonePy for SynonymClause {
     }
 }
 
+impl Display for SynonymClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<SynonymClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: SynonymClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::Synonym(clause.synonym.into_py(py))
+    }
+}
+
+#[pymethods]
+impl SynonymClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, synonym: &Synonym) {
+        let s = synonym.clone_py(obj.py());
+        obj.init(Self::new(obj.py(), s));
+    }
+
+    #[getter]
+    /// `~fastobo.syn.Synonym`: a possible synonym for this term.
+    fn get_synonym(&self) -> PyResult<Synonym> {
+        let py = unsafe { Python::assume_gil_acquired() };
+        Ok(self.synonym.clone_py(py))
+    }
+}
+
+impl_raw_tag!(SynonymClause, "synonym");
+impl_raw_value!(SynonymClause, "{}", self.synonym);
+
+#[pyproto]
+impl PyObjectProtocol for SynonymClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+
+        let fmt = PyString::new(py, "SynonymClause({!r})").to_object(py);
+        fmt.call_method1(py, "format", (self.synonym.__repr__()?,))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.synonym)
     }
 }
 
@@ -473,7 +839,15 @@ impl XrefClause {
         self.xref = Xref::from_object(xref.py(), xref)?;
         Ok(())
     }
+
+    pub fn raw_value(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        Ok(self.xref.as_ref(py).to_string())
+    }
 }
+
+impl_raw_tag!(XrefClause, "xref");
 
 // --- PropertyValue ---------------------------------------------------------
 
@@ -508,11 +882,15 @@ impl FromPy<PropertyValueClause> for fastobo::ast::TypedefClause {
     }
 }
 
+impl_raw_tag!(PropertyValueClause, "property_value");
+impl_raw_value!(PropertyValueClause, "{}", self.inner);
+
 // --- Domain ----------------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct DomainClause {
+    #[pyo3(set)]
     domain: Ident,
 }
 
@@ -535,9 +913,49 @@ impl ClonePy for DomainClause {
     }
 }
 
+impl Display for DomainClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<DomainClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: DomainClause, py: Python) -> fastobo::ast::TypedefClause {
         ast::TypedefClause::Domain(clause.domain.into_py(py))
+    }
+}
+
+#[pymethods]
+impl DomainClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, domain: Ident) {
+        obj.init(Self::new(obj.py(), domain));
+    }
+
+    /// `~fastobo.id.Ident`: the identifier of the domain of the typedef.
+    #[getter]
+    fn get_domain(&self) -> &Ident {
+        &self.domain
+    }
+}
+
+impl_raw_tag!(DomainClause, "domain");
+impl_raw_value!(DomainClause, "{}", self.domain);
+
+#[pyproto]
+impl PyObjectProtocol for DomainClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, DomainClause(self.domain))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.domain)
     }
 }
 
@@ -568,9 +986,49 @@ impl ClonePy for RangeClause {
     }
 }
 
+impl Display for RangeClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<RangeClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: RangeClause, py: Python) -> fastobo::ast::TypedefClause {
         ast::TypedefClause::Range(clause.range.into_py(py))
+    }
+}
+
+#[pymethods]
+impl RangeClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, range: Ident) {
+        obj.init(Self::new(obj.py(), range));
+    }
+
+    /// `~fastobo.id.Ident`: the identifier of the range of the typedef.
+    #[getter]
+    fn get_range(&self) -> &Ident {
+        &self.range
+    }
+}
+
+impl_raw_tag!(RangeClause, "range");
+impl_raw_value!(RangeClause, "{}", self.range);
+
+#[pyproto]
+impl PyObjectProtocol for RangeClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, RangeClause(self.range))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.range)
     }
 }
 
@@ -588,9 +1046,53 @@ impl BuiltinClause {
     }
 }
 
+impl Display for BuiltinClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<BuiltinClause> for fastobo::ast::TypedefClause {
+    fn from(clause: BuiltinClause) -> Self {
+        fastobo::ast::TypedefClause::Builtin(clause.builtin)
+    }
+}
+
 impl FromPy<BuiltinClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: BuiltinClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::Builtin(clause.builtin)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl BuiltinClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, builtin: bool) {
+        obj.init(Self::new(obj.py(), builtin));
+    }
+
+    /// `bool`: ``True`` if the typedef is built in the OBO format.
+    #[getter]
+    fn get_builtin(&self) -> bool {
+        self.builtin
+    }
+}
+
+impl_raw_tag!(BuiltinClause, "builtin");
+impl_raw_value!(BuiltinClause, "{}", self.builtin);
+
+#[pyproto]
+impl PyObjectProtocol for BuiltinClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, BuiltinClause(self.builtin))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.builtin)
     }
 }
 
@@ -599,7 +1101,9 @@ impl FromPy<BuiltinClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct HoldsOverChainClause {
+    #[pyo3(set)]
     first: Ident,
+    #[pyo3(set)]
     last: Ident,
 }
 
@@ -625,6 +1129,14 @@ impl ClonePy for HoldsOverChainClause {
     }
 }
 
+impl Display for HoldsOverChainClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<HoldsOverChainClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: HoldsOverChainClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::HoldsOverChain(
@@ -634,11 +1146,50 @@ impl FromPy<HoldsOverChainClause> for fastobo::ast::TypedefClause {
     }
 }
 
+#[pymethods]
+impl HoldsOverChainClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, first: Ident, last: Ident) {
+        obj.init(Self::new(obj.py(), first, last));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the first relation of the chain.
+    fn get_first(&self) -> &Ident {
+        &self.first
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the last relation of the chain.
+    fn get_last(&self) -> &Ident {
+        &self.last
+    }
+}
+
+impl_raw_tag!(HoldsOverChainClause, "holds_over_chain");
+impl_raw_value!(HoldsOverChainClause, "{} {}", self.first, self.last);
+
+#[pyproto]
+impl PyObjectProtocol for HoldsOverChainClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, HoldsOverChainClause(self.first, self.last))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.first && self.last)
+    }
+}
+
 // --- IsAntiSymmetric -------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsAntiSymmetricClause {
+    #[pyo3(set)]
     anti_symmetric: bool,
 }
 
@@ -648,9 +1199,52 @@ impl IsAntiSymmetricClause {
     }
 }
 
+impl Display for IsAntiSymmetricClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsAntiSymmetricClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsAntiSymmetricClause) -> Self {
+        fastobo::ast::TypedefClause::IsAntiSymmetric(clause.anti_symmetric)
+    }
+}
+
 impl FromPy<IsAntiSymmetricClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsAntiSymmetricClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::IsAntiSymmetric(clause.anti_symmetric)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl IsAntiSymmetricClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, anti_symmetric: bool) {
+        obj.init(Self::new(obj.py(), anti_symmetric));
+    }
+
+    #[getter]
+    fn get_anti_symmetric(&self) -> bool {
+        self.anti_symmetric
+    }
+}
+
+impl_raw_tag!(IsAntiSymmetricClause, "is_anti_symmetric");
+impl_raw_value!(IsAntiSymmetricClause, "{}", self.anti_symmetric);
+
+#[pyproto]
+impl PyObjectProtocol for IsAntiSymmetricClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsAntiSymmetricClause(self.anti_symmetric))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.anti_symmetric)
     }
 }
 
@@ -659,6 +1253,7 @@ impl FromPy<IsAntiSymmetricClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsCyclicClause {
+    #[pyo3(set)]
     cyclic: bool,
 }
 
@@ -668,9 +1263,52 @@ impl IsCyclicClause {
     }
 }
 
+impl Display for IsCyclicClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsCyclicClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsCyclicClause) -> Self {
+        fastobo::ast::TypedefClause::IsCyclic(clause.cyclic)
+    }
+}
+
 impl FromPy<IsCyclicClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsCyclicClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::IsCyclic(clause.cyclic)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl IsCyclicClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, cyclic: bool) {
+        obj.init(Self::new(obj.py(), cyclic));
+    }
+
+    #[getter]
+    fn get_cyclic(&self) -> bool {
+        self.cyclic
+    }
+}
+
+impl_raw_tag!(IsCyclicClause, "is_cyclic");
+impl_raw_value!(IsCyclicClause, "{}", self.cyclic);
+
+#[pyproto]
+impl PyObjectProtocol for IsCyclicClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsCyclicClause(self.cyclic))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.cyclic)
     }
 }
 
@@ -679,6 +1317,7 @@ impl FromPy<IsCyclicClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsReflexiveClause {
+    #[pyo3(set)]
     reflexive: bool,
 }
 
@@ -688,9 +1327,52 @@ impl IsReflexiveClause {
     }
 }
 
+impl Display for IsReflexiveClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsReflexiveClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsReflexiveClause) -> Self {
+        fastobo::ast::TypedefClause::IsReflexive(clause.reflexive)
+    }
+}
+
 impl FromPy<IsReflexiveClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsReflexiveClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::IsReflexive(clause.reflexive)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl IsReflexiveClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, reflexive: bool) {
+        obj.init(Self::new(obj.py(), reflexive));
+    }
+
+    #[getter]
+    fn get_reflexive(&self) -> bool {
+        self.reflexive
+    }
+}
+
+impl_raw_tag!(IsReflexiveClause, "is_reflexive");
+impl_raw_value!(IsReflexiveClause, "{}", self.reflexive);
+
+#[pyproto]
+impl PyObjectProtocol for IsReflexiveClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsReflexiveClause(self.reflexive))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.reflexive)
     }
 }
 
@@ -708,9 +1390,52 @@ impl IsSymmetricClause {
     }
 }
 
+impl Display for IsSymmetricClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsSymmetricClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsSymmetricClause) -> Self {
+        fastobo::ast::TypedefClause::IsSymmetric(clause.symmetric)
+    }
+}
+
 impl FromPy<IsSymmetricClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsSymmetricClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::IsSymmetric(clause.symmetric)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl IsSymmetricClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, symmetric: bool) {
+        obj.init(Self::new(obj.py(), symmetric));
+    }
+
+    #[getter]
+    fn get_symmetric(&self) -> bool {
+        self.symmetric
+    }
+}
+
+impl_raw_tag!(IsSymmetricClause, "is_symmetric");
+impl_raw_value!(IsSymmetricClause, "{}", self.symmetric);
+
+#[pyproto]
+impl PyObjectProtocol for IsSymmetricClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsSymmetricClause(self.symmetric))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.symmetric)
     }
 }
 
@@ -719,18 +1444,62 @@ impl FromPy<IsSymmetricClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsAsymmetricClause {
-    symmetric: bool,
+    #[pyo3(set)]
+    asymmetric: bool,
 }
 
 impl IsAsymmetricClause {
-    pub fn new(_py: Python, symmetric: bool) -> Self {
-        Self { symmetric }
+    pub fn new(_py: Python, asymmetric: bool) -> Self {
+        Self { asymmetric }
+    }
+}
+
+impl Display for IsAsymmetricClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsAsymmetricClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsAsymmetricClause) -> Self {
+        fastobo::ast::TypedefClause::IsAsymmetric(clause.asymmetric)
     }
 }
 
 impl FromPy<IsAsymmetricClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsAsymmetricClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::IsAsymmetric(clause.symmetric)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl IsAsymmetricClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, asymmetric: bool) {
+        obj.init(Self::new(obj.py(), asymmetric));
+    }
+
+    #[getter]
+    fn get_asymmetric(&self) -> bool {
+        self.asymmetric
+    }
+}
+
+impl_raw_tag!(IsAsymmetricClause, "is_asymmetric");
+impl_raw_value!(IsAsymmetricClause, "{}", self.asymmetric);
+
+#[pyproto]
+impl PyObjectProtocol for IsAsymmetricClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsAsymmetricClause(self.asymmetric))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.asymmetric)
     }
 }
 
@@ -739,6 +1508,7 @@ impl FromPy<IsAsymmetricClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsTransitiveClause {
+    #[pyo3(set)]
     transitive: bool,
 }
 
@@ -748,9 +1518,52 @@ impl IsTransitiveClause {
     }
 }
 
+impl Display for IsTransitiveClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsTransitiveClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsTransitiveClause) -> Self {
+        fastobo::ast::TypedefClause::IsTransitive(clause.transitive)
+    }
+}
+
 impl FromPy<IsTransitiveClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsTransitiveClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::IsTransitive(clause.transitive)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl IsTransitiveClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, transitive: bool) {
+        obj.init(Self::new(obj.py(), transitive));
+    }
+
+    #[getter]
+    fn get_transitive(&self) -> bool {
+        self.transitive
+    }
+}
+
+impl_raw_tag!(IsTransitiveClause, "is_transitive");
+impl_raw_value!(IsTransitiveClause, "{}", self.transitive);
+
+#[pyproto]
+impl PyObjectProtocol for IsTransitiveClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsTransitiveClause(self.transitive))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.transitive)
     }
 }
 
@@ -768,9 +1581,52 @@ impl IsFunctionalClause {
     }
 }
 
+impl Display for IsFunctionalClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsFunctionalClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsFunctionalClause) -> Self {
+        fastobo::ast::TypedefClause::IsFunctional(clause.functional)
+    }
+}
+
 impl FromPy<IsFunctionalClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsFunctionalClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::IsFunctional(clause.functional)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl IsFunctionalClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, functional: bool) {
+        obj.init(Self::new(obj.py(), functional));
+    }
+
+    #[getter]
+    fn get_functional(&self) -> bool {
+        self.functional
+    }
+}
+
+impl_raw_tag!(IsFunctionalClause, "is_functional");
+impl_raw_value!(IsFunctionalClause, "{}", self.functional);
+
+#[pyproto]
+impl PyObjectProtocol for IsFunctionalClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsFunctionalClause(self.functional))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.functional)
     }
 }
 
@@ -788,9 +1644,52 @@ impl IsInverseFunctionalClause {
     }
 }
 
+impl Display for IsInverseFunctionalClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsInverseFunctionalClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsInverseFunctionalClause) -> Self {
+        fastobo::ast::TypedefClause::IsInverseFunctional(clause.inverse_functional)
+    }
+}
+
 impl FromPy<IsInverseFunctionalClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsInverseFunctionalClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::IsInverseFunctional(clause.inverse_functional)
+        fastobo::ast::TypedefClause::from(clause)
+    }
+}
+
+#[pymethods]
+impl IsInverseFunctionalClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, inverse_functional: bool) {
+        obj.init(Self::new(obj.py(), inverse_functional));
+    }
+
+    #[getter]
+    fn get_inverse_functional(&self) -> bool {
+        self.inverse_functional
+    }
+}
+
+impl_raw_tag!(IsInverseFunctionalClause, "is_inverse_functional");
+impl_raw_value!(IsInverseFunctionalClause, "{}", self.inverse_functional);
+
+#[pyproto]
+impl PyObjectProtocol for IsInverseFunctionalClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsInverseFunctionalClause(self.inverse_functional))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.inverse_functional)
     }
 }
 
@@ -799,29 +1698,70 @@ impl FromPy<IsInverseFunctionalClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct IsAClause {
-    id: Ident,
+    #[pyo3(set)]
+    typedef: Ident,
 }
 
 impl IsAClause {
-    pub fn new<I>(py: Python, id: I) -> Self
+    pub fn new<I>(py: Python, typedef: I) -> Self
     where
         I: IntoPy<Ident>,
     {
-        Self { id: id.into_py(py) }
+        Self { typedef: typedef.into_py(py) }
+    }
+}
+
+impl Display for IsAClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
 impl ClonePy for IsAClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            id: self.id.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
     }
 }
 
 impl FromPy<IsAClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsAClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::IsA(clause.id.into_py(py))
+        ast::TypedefClause::IsA(clause.typedef.into_py(py))
+    }
+}
+
+#[pymethods]
+impl IsAClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, typedef: Ident) {
+        obj.init(Self::new(obj.py(), typedef));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the parent term.
+    fn get_typedef(&self) -> &Ident {
+        &self.typedef
+    }
+}
+
+impl_raw_tag!(IsAClause, "is_a");
+impl_raw_value!(IsAClause, "{}", self.typedef);
+
+#[pyproto]
+impl PyObjectProtocol for IsAClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsAClause(self.typedef))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.typedef)
     }
 }
 
@@ -830,6 +1770,7 @@ impl FromPy<IsAClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct IntersectionOfClause {
+    #[pyo3(set)]
     relation: Ident,
 }
 
@@ -852,42 +1793,101 @@ impl ClonePy for IntersectionOfClause {
     }
 }
 
+impl Display for IntersectionOfClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<IntersectionOfClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IntersectionOfClause, py: Python) -> fastobo::ast::TypedefClause {
         ast::TypedefClause::IntersectionOf(clause.relation.into_py(py))
     }
 }
 
+#[pymethods]
+impl IntersectionOfClause {
+    #[getter]
+    fn get_relation(&self) -> &Ident {
+        &self.relation
+    }
+}
+
+impl_raw_tag!(IntersectionOfClause, "intersection_of");
+impl_raw_value!(IntersectionOfClause, "{}", self.relation);
+
 // --- UnionOf ---------------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct UnionOfClause {
-    term: Ident,
+    typedef: Ident,
+}
+
+impl UnionOfClause {
+    pub fn new<I>(py: Python, typedef: I) -> Self
+    where
+        I: IntoPy<Ident>,
+    {
+        Self {
+            typedef: typedef.into_py(py),
+        }
+    }
 }
 
 impl ClonePy for UnionOfClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
     }
 }
 
-impl UnionOfClause {
-    pub fn new<I>(py: Python, term: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            term: term.into_py(py),
-        }
+impl Display for UnionOfClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
 impl FromPy<UnionOfClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: UnionOfClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::UnionOf(clause.term.into_py(py))
+        ast::TypedefClause::UnionOf(clause.typedef.into_py(py))
+    }
+}
+
+#[pymethods]
+impl UnionOfClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, typedef: Ident) {
+        obj.init(Self::new(obj.py(), typedef));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the member typedef.
+    fn get_term(&self) -> &Ident {
+        &self.typedef
+    }
+}
+
+impl_raw_tag!(UnionOfClause, "union_of");
+impl_raw_value!(UnionOfClause, "{}", self.typedef);
+
+#[pyproto]
+impl PyObjectProtocol for UnionOfClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, UnionOfClause(self.typedef))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.typedef)
     }
 }
 
@@ -896,16 +1896,17 @@ impl FromPy<UnionOfClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct EquivalentToClause {
-    term: Ident,
+    #[pyo3(set)]
+    typedef: Ident,
 }
 
 impl EquivalentToClause {
-    pub fn new<I>(py: Python, term: I) -> Self
+    pub fn new<I>(py: Python, typedef: I) -> Self
     where
         I: IntoPy<Ident>,
     {
         Self {
-            term: term.into_py(py),
+            typedef: typedef.into_py(py),
         }
     }
 }
@@ -913,32 +1914,73 @@ impl EquivalentToClause {
 impl ClonePy for EquivalentToClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
+    }
+}
+
+impl Display for EquivalentToClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
 impl FromPy<EquivalentToClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: EquivalentToClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::EquivalentTo(clause.term.into_py(py))
+        ast::TypedefClause::EquivalentTo(clause.typedef.into_py(py))
     }
 }
+
+#[pymethods]
+impl EquivalentToClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, id: Ident) {
+        obj.init(Self::new(obj.py(), id));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the equivalent typedef.
+    fn get_typedef(&self) -> &Ident {
+        &self.typedef
+    }
+}
+
+impl_raw_tag!(EquivalentToClause, "equivalent_to");
+impl_raw_value!(EquivalentToClause, "{}", self.typedef);
+
+#[pyproto]
+impl PyObjectProtocol for EquivalentToClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, EquivalentToClause(self.typedef))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.typedef)
+    }
+}
+
 
 // --- DisjointFrom ----------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct DisjointFromClause {
-    term: Ident,
+    typedef: Ident,
 }
 
 impl DisjointFromClause {
-    pub fn new<I>(py: Python, term: I) -> Self
+    pub fn new<I>(py: Python, typedef: I) -> Self
     where
         I: IntoPy<Ident>,
     {
         Self {
-            term: term.into_py(py),
+            typedef: typedef.into_py(py),
         }
     }
 }
@@ -946,22 +1988,64 @@ impl DisjointFromClause {
 impl ClonePy for DisjointFromClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
+    }
+}
+
+impl Display for DisjointFromClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
 impl FromPy<DisjointFromClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: DisjointFromClause, py: Python) -> Self {
-        ast::TypedefClause::DisjointFrom(clause.term.into_py(py))
+        ast::TypedefClause::DisjointFrom(clause.typedef.into_py(py))
     }
 }
+
+#[pymethods]
+impl DisjointFromClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, typedef: Ident) {
+        obj.init(Self::new(obj.py(), typedef));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the disjoint typedef.
+    fn get_typedef(&self) -> &Ident {
+        &self.typedef
+    }
+}
+
+impl_raw_tag!(DisjointFromClause, "disjoint_from");
+impl_raw_value!(DisjointFromClause, "{}", self.typedef);
+
+#[pyproto]
+impl PyObjectProtocol for DisjointFromClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, DisjointFromClause(self.typedef))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.typedef)
+    }
+}
+
 
 // --- InverseOf -------------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct InverseOfClause {
+    #[pyo3(set)]
     relation: Ident,
 }
 
@@ -984,9 +2068,49 @@ impl ClonePy for InverseOfClause {
     }
 }
 
+impl Display for InverseOfClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<InverseOfClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: InverseOfClause, py: Python) -> Self {
         ast::TypedefClause::InverseOf(clause.relation.into_py(py))
+    }
+}
+
+#[pymethods]
+impl InverseOfClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, relation: Ident) {
+        obj.init(Self::new(obj.py(), relation));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the inverse relationship.
+    fn get_relation(&self) -> &Ident {
+        &self.relation
+    }
+}
+
+impl_raw_tag!(InverseOfClause, "inverse_of");
+impl_raw_value!(InverseOfClause, "{}", self.relation);
+
+#[pyproto]
+impl PyObjectProtocol for InverseOfClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, InverseOfClause(self.relation))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.relation)
     }
 }
 
@@ -1017,9 +2141,49 @@ impl ClonePy for TransitiveOverClause {
     }
 }
 
+impl Display for TransitiveOverClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<TransitiveOverClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: TransitiveOverClause, py: Python) -> Self {
         ast::TypedefClause::TransitiveOver(clause.relation.into_py(py))
+    }
+}
+
+#[pymethods]
+impl TransitiveOverClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, relation: Ident) {
+        obj.init(Self::new(obj.py(), relation));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the transitive relationship.
+    fn get_relation(&self) -> &Ident {
+        &self.relation
+    }
+}
+
+impl_raw_tag!(TransitiveOverClause, "transitive_over");
+impl_raw_value!(TransitiveOverClause, "{}", self.relation);
+
+#[pyproto]
+impl PyObjectProtocol for TransitiveOverClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, TransitiveOverClause(self.relation))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.relation)
     }
 }
 
@@ -1028,7 +2192,9 @@ impl FromPy<TransitiveOverClause> for fastobo::ast::TypedefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct EquivalentToChainClause {
+    #[pyo3(set)]
     first: Ident,
+    #[pyo3(set)]
     last: Ident,
 }
 
@@ -1054,12 +2220,58 @@ impl ClonePy for EquivalentToChainClause {
     }
 }
 
+impl Display for EquivalentToChainClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<EquivalentToChainClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: EquivalentToChainClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::EquivalentToChain(
             clause.first.into_py(py),
             clause.last.into_py(py),
         )
+    }
+}
+
+#[pymethods]
+impl EquivalentToChainClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, first: Ident, last: Ident) {
+        obj.init(Self::new(obj.py(), first, last));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the first relation of the chain.
+    fn get_first(&self) -> &Ident {
+        &self.first
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the last relation of the chain.
+    fn get_last(&self) -> &Ident {
+        &self.last
+    }
+}
+
+impl_raw_tag!(EquivalentToChainClause, "equivalent_to_chain");
+impl_raw_value!(EquivalentToChainClause, "{} {}", self.first, self.last);
+
+#[pyproto]
+impl PyObjectProtocol for EquivalentToChainClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, EquivalentToChainClause(self.first, self.last))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.first && self.last)
     }
 }
 
@@ -1090,9 +2302,49 @@ impl ClonePy for DisjointOverClause {
     }
 }
 
+impl Display for DisjointOverClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<DisjointOverClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: DisjointOverClause, py: Python) -> Self {
         ast::TypedefClause::DisjointOver(clause.relation.into_py(py))
+    }
+}
+
+#[pymethods]
+impl DisjointOverClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, relation: Ident) {
+        obj.init(Self::new(obj.py(), relation));
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the disjoint relationship.
+    fn get_relation(&self) -> &Ident {
+        &self.relation
+    }
+}
+
+impl_raw_tag!(DisjointOverClause, "disjoint_over");
+impl_raw_value!(DisjointOverClause, "{}", self.relation);
+
+#[pyproto]
+impl PyObjectProtocol for DisjointOverClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, DisjointOverClause(self.relation))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.relation)
     }
 }
 
@@ -1127,11 +2379,22 @@ impl ClonePy for RelationshipClause {
     }
 }
 
+impl Display for RelationshipClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<RelationshipClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: RelationshipClause, py: Python) -> fastobo::ast::TypedefClause {
         ast::TypedefClause::Relationship(clause.relation.into_py(py), clause.term.into_py(py))
     }
 }
+
+impl_raw_tag!(RelationshipClause, "relationship");
+impl_raw_value!(RelationshipClause, "{} {}", self.relation, self.term);
 
 // --- IsObsolete ------------------------------------------------------------
 
@@ -1154,21 +2417,24 @@ impl FromPy<IsObsoleteClause> for fastobo::ast::TypedefClause {
     }
 }
 
+impl_raw_tag!(IsObsoleteClause, "is_obsolete");
+impl_raw_value!(IsObsoleteClause, "{}", self.obsolete);
+
 // --- ReplacedBy ------------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct ReplacedByClause {
-    term: Ident,
+    relation: Ident,
 }
 
 impl ReplacedByClause {
-    pub fn new<I>(py: Python, term: I) -> Self
+    pub fn new<I>(py: Python, relation: I) -> Self
     where
         I: IntoPy<Ident>,
     {
         Self {
-            term: term.into_py(py),
+            relation: relation.into_py(py),
         }
     }
 }
@@ -1176,32 +2442,35 @@ impl ReplacedByClause {
 impl ClonePy for ReplacedByClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py),
+            relation: self.relation.clone_py(py),
         }
     }
 }
 
 impl FromPy<ReplacedByClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ReplacedByClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::ReplacedBy(clause.term.into_py(py))
+        ast::TypedefClause::ReplacedBy(clause.relation.into_py(py))
     }
 }
+
+impl_raw_tag!(ReplacedByClause, "replaced_by");
+impl_raw_value!(ReplacedByClause, "{}", self.relation);
 
 // --- Consider --------------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct ConsiderClause {
-    term: Ident,
+    relation: Ident,
 }
 
 impl ConsiderClause {
-    pub fn new<I>(py: Python, term: I) -> Self
+    pub fn new<I>(py: Python, relation: I) -> Self
     where
         I: IntoPy<Ident>,
     {
         Self {
-            term: term.into_py(py),
+            relation: relation.into_py(py),
         }
     }
 }
@@ -1209,16 +2478,19 @@ impl ConsiderClause {
 impl ClonePy for ConsiderClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            term: self.term.clone_py(py),
+            relation: self.relation.clone_py(py),
         }
     }
 }
 
 impl FromPy<ConsiderClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ConsiderClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::Consider(clause.term.into_py(py))
+        ast::TypedefClause::Consider(clause.relation.into_py(py))
     }
 }
+
+impl_raw_tag!(ConsiderClause, "consider");
+impl_raw_value!(ConsiderClause, "{}", self.relation);
 
 // --- CreatedBy -------------------------------------------------------------
 
@@ -1240,6 +2512,9 @@ impl FromPy<CreatedByClause> for fastobo::ast::TypedefClause {
     }
 }
 
+impl_raw_tag!(CreatedByClause, "created_by");
+impl_raw_value!(CreatedByClause, "{}", self.name);
+
 // --- CreationDate ----------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -1259,6 +2534,9 @@ impl FromPy<CreationDateClause> for fastobo::ast::TypedefClause {
         fastobo::ast::TypedefClause::CreationDate(clause.date)
     }
 }
+
+impl_raw_tag!(CreationDateClause, "creation_date");
+impl_raw_value!(CreationDateClause, "{}", self.date);
 
 // --- ExpandAssertionTo -----------------------------------------------------
 
@@ -1293,6 +2571,18 @@ impl ClonePy for ExpandAssertionToClause {
 impl FromPy<ExpandAssertionToClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ExpandAssertionToClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::ExpandAssertionTo(clause.description, clause.xrefs.into_py(py))
+    }
+}
+
+impl_raw_tag!(ExpandAssertionToClause, "expand_assertion_to");
+
+#[pymethods]
+impl ExpandAssertionToClause {
+    pub fn raw_value(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let xrefs = fastobo::ast::XrefList::from_py(self.xrefs.clone_py(py), py);
+        Ok(format!("{} {}", self.description, xrefs))
     }
 }
 
@@ -1335,6 +2625,18 @@ impl FromPy<ExpandExpressionToClause> for fastobo::ast::TypedefClause {
     }
 }
 
+impl_raw_tag!(ExpandExpressionToClause, "expand_expression_to");
+
+#[pymethods]
+impl ExpandExpressionToClause {
+    pub fn raw_value(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let xrefs = fastobo::ast::XrefList::from_py(self.xrefs.clone_py(py), py);
+        Ok(format!("{} {}", self.description, xrefs))
+    }
+}
+
 // --- IsMetadataTag ---------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -1355,6 +2657,9 @@ impl FromPy<IsMetadataTagClause> for fastobo::ast::TypedefClause {
     }
 }
 
+impl_raw_tag!(IsMetadataTagClause, "is_metadata_tag");
+impl_raw_value!(IsMetadataTagClause, "{}", self.metadata_tag);
+
 // --- IsClassLevel ----------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -1374,3 +2679,6 @@ impl FromPy<IsClassLevelClause> for fastobo::ast::TypedefClause {
         fastobo::ast::TypedefClause::IsClassLevel(clause.class_level)
     }
 }
+
+impl_raw_tag!(IsClassLevelClause, "is_class_level");
+impl_raw_value!(IsClassLevelClause, "{}", self.class_level);

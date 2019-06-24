@@ -27,6 +27,7 @@ use pyo3::PyTypeInfo;
 use super::id::Ident;
 use super::xref::XrefList;
 use crate::utils::ClonePy;
+use crate::utils::AsGILRef;
 
 // --- Module export ---------------------------------------------------------
 
@@ -112,7 +113,7 @@ pub struct Synonym {
     desc: fastobo::ast::QuotedString,
     scope: SynonymScope,
     ty: Option<Ident>,
-    xrefs: XrefList,
+    xrefs: Py<XrefList>,
 }
 
 impl ClonePy for Synonym {
@@ -143,8 +144,11 @@ impl FromPy<fastobo::ast::Synonym> for Synonym {
             ),
             scope: SynonymScope::new(syn.scope().clone()),
             ty: syn.ty().map(|id| id.clone().into_py(py)),
-            xrefs: std::mem::replace(syn.xrefs_mut(), fastobo::ast::XrefList::new(Vec::new()))
-                .into_py(py),
+            xrefs:
+                Py::new(py,
+                    std::mem::replace(syn.xrefs_mut(), fastobo::ast::XrefList::new(Vec::new()))
+                        .into_py(py)
+                ).unwrap(),
         }
     }
 }
@@ -155,8 +159,58 @@ impl FromPy<Synonym> for fastobo::ast::Synonym {
             syn.desc,
             syn.scope.inner,
             syn.ty.map(|ty| ty.into_py(py)),
-            fastobo::ast::XrefList::from_py(syn.xrefs, py),
+            fastobo::ast::XrefList::from_py(
+                syn.xrefs.as_gil_ref(py).clone_py(py), py)
         )
+    }
+}
+
+#[pymethods]
+impl Synonym {
+    #[getter]
+    pub fn get_desc(&self) -> PyResult<String> {
+        Ok(self.desc.as_str().to_owned())
+    }
+
+    #[setter]
+    pub fn set_desc(&mut self, desc: String) -> PyResult<()> {
+        self.desc = fastobo::ast::QuotedString::new(desc);
+        Ok(())
+    }
+
+    #[getter]
+    pub fn get_scope(&self) -> PyResult<String> {
+        Ok(self.scope.to_string())
+    }
+
+    #[setter]
+    pub fn set_scope(&mut self, scope: &str) -> PyResult<()> {
+        self.scope = scope.parse()?;
+        Ok(())
+    }
+
+    #[getter]
+    pub fn get_type(&self) -> PyResult<Option<&Ident>> {
+        Ok(self.ty.as_ref())
+    }
+
+    #[setter]
+    pub fn set_type(&mut self, ty: Option<Ident>) -> PyResult<()> {
+        self.ty = ty;
+        Ok(())
+    }
+
+    #[getter]
+    pub fn get_xrefs(&self) -> PyResult<Py<XrefList>> {
+        let py = unsafe { Python::assume_gil_acquired() };
+        Ok(self.xrefs.clone_ref(py))
+    }
+
+    #[setter]
+    pub fn set_xrefs(&mut self, xrefs: &XrefList) -> PyResult<()> {
+        let py = unsafe { Python::assume_gil_acquired() };
+        self.xrefs = Py::new(py, xrefs.clone_py(py))?;
+        Ok(())
     }
 }
 

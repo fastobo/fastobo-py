@@ -701,7 +701,7 @@ impl PyObjectProtocol for SubsetClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct SynonymClause {
-    synonym: Synonym,
+    synonym: Py<Synonym>,
 }
 
 impl SynonymClause {
@@ -710,7 +710,7 @@ impl SynonymClause {
         S: IntoPy<Synonym>,
     {
         Self {
-            synonym: synonym.into_py(py),
+            synonym: Py::new(py, synonym.into_py(py)).unwrap(),
         }
     }
 }
@@ -733,7 +733,9 @@ impl Display for SynonymClause {
 
 impl FromPy<SynonymClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: SynonymClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::Synonym(clause.synonym.into_py(py))
+        fastobo::ast::TypedefClause::Synonym(
+            clause.synonym.as_gil_ref(py).clone_py(py).into_py(py)
+        )
     }
 }
 
@@ -747,23 +749,23 @@ impl SynonymClause {
 
     #[getter]
     /// `~fastobo.syn.Synonym`: a possible synonym for this term.
-    fn get_synonym(&self) -> PyResult<Synonym> {
+    fn get_synonym(&self) -> PyResult<Py<Synonym>> {
         let py = unsafe { Python::assume_gil_acquired() };
         Ok(self.synonym.clone_py(py))
+    }
+
+    fn raw_value(&self) -> PyResult<String> {
+        let py = unsafe { Python::assume_gil_acquired() };
+        Ok(format!("{}", self.synonym.as_gil_ref(py)))
     }
 }
 
 impl_raw_tag!(SynonymClause, "synonym");
-impl_raw_value!(SynonymClause, "{}", self.synonym);
 
 #[pyproto]
 impl PyObjectProtocol for SynonymClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
-        let fmt = PyString::new(py, "SynonymClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.synonym.__repr__()?,))
+        impl_repr!(self, SynonymClause(self.synonym))
     }
 
     fn __str__(&self) -> PyResult<String> {

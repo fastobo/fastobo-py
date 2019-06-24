@@ -15,3 +15,10 @@ to learn how to install Rust on your machine.
 Installation is supported through pip::
 
   $ pip install fastobo --user
+
+Note that this will install a static library that have been built with most
+feature flags disabled for compatibility purposes. If you wish to build the
+optimized library from source, with all feature flags enabled, make rust to
+have Rust installed, and run::
+
+  $ RUSTFLAGS="-Ctarget-cpu=native" pip install fastobo --user --no-binary :all:

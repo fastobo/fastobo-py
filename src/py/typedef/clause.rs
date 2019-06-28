@@ -878,14 +878,55 @@ impl ClonePy for PropertyValueClause {
     }
 }
 
+impl Display for PropertyValueClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<PropertyValueClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: PropertyValueClause, py: Python) -> ast::TypedefClause {
         ast::TypedefClause::PropertyValue(clause.inner.into_py(py))
     }
 }
 
+#[pymethods]
+impl PropertyValueClause {
+    #[new]
+    pub fn __init__(obj: &PyRawObject, pv: PropertyValue) {
+        obj.init(Self::new(obj.py(), pv));
+    }
+
+    #[getter]
+    pub fn property_value(&self) -> &PropertyValue {
+        &self.inner
+    }
+
+    #[setter]
+    pub fn set_property_value(&mut self, pv: PropertyValue)  {
+        self.inner = pv;
+    }
+}
+
 impl_raw_tag!(PropertyValueClause, "property_value");
 impl_raw_value!(PropertyValueClause, "{}", self.inner);
+
+#[pyproto]
+impl PyObjectProtocol for PropertyValueClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, PropertyValueClause(self.inner))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.inner)
+    }
+}
 
 // --- Domain ----------------------------------------------------------------
 

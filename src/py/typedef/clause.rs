@@ -802,6 +802,14 @@ impl ClonePy for XrefClause {
     }
 }
 
+impl Display for XrefClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<XrefClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: XrefClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::Xref(clause.xref.as_ref(py).clone_py(py).into_py(py))
@@ -882,7 +890,7 @@ impl Display for PropertyValueClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
@@ -2490,6 +2498,14 @@ impl ClonePy for ReplacedByClause {
     }
 }
 
+impl Display for ReplacedByClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<ReplacedByClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ReplacedByClause, py: Python) -> fastobo::ast::TypedefClause {
         ast::TypedefClause::ReplacedBy(clause.relation.into_py(py))
@@ -2526,6 +2542,14 @@ impl ClonePy for ConsiderClause {
     }
 }
 
+impl Display for ConsiderClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<ConsiderClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ConsiderClause, py: Python) -> fastobo::ast::TypedefClause {
         ast::TypedefClause::Consider(clause.relation.into_py(py))
@@ -2549,9 +2573,21 @@ impl CreatedByClause {
     }
 }
 
-impl FromPy<CreatedByClause> for fastobo::ast::TypedefClause {
-    fn from_py(clause: CreatedByClause, py: Python) -> fastobo::ast::TypedefClause {
+impl Display for CreatedByClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<CreatedByClause> for fastobo::ast::TypedefClause {
+    fn from(clause: CreatedByClause) -> Self {
         fastobo::ast::TypedefClause::CreatedBy(clause.name)
+    }
+}
+
+impl FromPy<CreatedByClause> for fastobo::ast::TypedefClause {
+    fn from_py(clause: CreatedByClause, _py: Python) -> fastobo::ast::TypedefClause {
+        Self::from(clause)
     }
 }
 
@@ -2572,9 +2608,21 @@ impl CreationDateClause {
     }
 }
 
-impl FromPy<CreationDateClause> for fastobo::ast::TypedefClause {
-    fn from_py(clause: CreationDateClause, py: Python) -> fastobo::ast::TypedefClause {
+impl Display for CreationDateClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<CreationDateClause> for fastobo::ast::TypedefClause {
+    fn from(clause: CreationDateClause) -> Self {
         fastobo::ast::TypedefClause::CreationDate(clause.date)
+    }
+}
+
+impl FromPy<CreationDateClause> for fastobo::ast::TypedefClause {
+    fn from_py(clause: CreationDateClause, _py: Python) -> Self {
+        Self::from(clause)
     }
 }
 
@@ -2608,6 +2656,14 @@ impl ClonePy for ExpandAssertionToClause {
             description: self.description.clone(),
             xrefs: self.xrefs.clone_py(py),
         }
+    }
+}
+
+impl Display for ExpandAssertionToClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
@@ -2659,6 +2715,14 @@ impl ClonePy for ExpandExpressionToClause {
     }
 }
 
+impl Display for ExpandExpressionToClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<ExpandExpressionToClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ExpandExpressionToClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::ExpandExpressionTo(
@@ -2694,9 +2758,21 @@ impl IsMetadataTagClause {
     }
 }
 
-impl FromPy<IsMetadataTagClause> for fastobo::ast::TypedefClause {
-    fn from_py(clause: IsMetadataTagClause, py: Python) -> Self {
+impl Display for IsMetadataTagClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsMetadataTagClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsMetadataTagClause) -> Self {
         fastobo::ast::TypedefClause::IsMetadataTag(clause.metadata_tag)
+    }
+}
+
+impl FromPy<IsMetadataTagClause> for fastobo::ast::TypedefClause {
+    fn from_py(clause: IsMetadataTagClause, _py: Python) -> Self {
+        Self::from(clause)
     }
 }
 
@@ -2717,9 +2793,21 @@ impl IsClassLevelClause {
     }
 }
 
-impl FromPy<IsClassLevelClause> for fastobo::ast::TypedefClause {
-    fn from_py(clause: IsClassLevelClause, py: Python) -> Self {
+impl Display for IsClassLevelClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsClassLevelClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsClassLevelClause) -> Self {
         fastobo::ast::TypedefClause::IsClassLevel(clause.class_level)
+    }
+}
+
+impl FromPy<IsClassLevelClause> for fastobo::ast::TypedefClause {
+    fn from_py(clause: IsClassLevelClause, _py: Python) -> Self {
+        Self::from(clause)
     }
 }
 

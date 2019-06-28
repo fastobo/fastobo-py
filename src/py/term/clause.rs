@@ -731,6 +731,14 @@ impl ClonePy for XrefClause {
     }
 }
 
+impl Display for XrefClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<XrefClause> for fastobo::ast::TermClause {
     fn from_py(clause: XrefClause, py: Python) -> Self {
         fastobo::ast::TermClause::Xref(clause.xref.as_ref(py).clone_py(py).into_py(py))
@@ -1330,6 +1338,14 @@ impl ClonePy for RelationshipClause {
     }
 }
 
+impl Display for RelationshipClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<RelationshipClause> for fastobo::ast::TermClause {
     fn from_py(clause: RelationshipClause, py: Python) -> fastobo::ast::TermClause {
         ast::TermClause::Relationship(clause.relation.into_py(py), clause.term.into_py(py))
@@ -1354,9 +1370,21 @@ impl IsObsoleteClause {
     }
 }
 
-impl FromPy<IsObsoleteClause> for fastobo::ast::TermClause {
-    fn from_py(clause: IsObsoleteClause, py: Python) -> Self {
+impl Display for IsObsoleteClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TermClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsObsoleteClause> for fastobo::ast::TermClause {
+    fn from(clause: IsObsoleteClause) -> Self {
         fastobo::ast::TermClause::IsObsolete(clause.obsolete)
+    }
+}
+
+impl FromPy<IsObsoleteClause> for fastobo::ast::TermClause {
+    fn from_py(clause: IsObsoleteClause, _py: Python) -> Self {
+        fastobo::ast::TermClause::from(clause)
     }
 }
 
@@ -1387,6 +1415,14 @@ impl ClonePy for ReplacedByClause {
         Self {
             term: self.term.clone_py(py),
         }
+    }
+}
+
+impl Display for ReplacedByClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
@@ -1426,6 +1462,14 @@ impl ClonePy for ConsiderClause {
     }
 }
 
+impl Display for ConsiderClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<ConsiderClause> for fastobo::ast::TermClause {
     fn from_py(clause: ConsiderClause, py: Python) -> fastobo::ast::TermClause {
         ast::TermClause::Consider(clause.term.into_py(py))
@@ -1449,9 +1493,23 @@ impl CreatedByClause {
     }
 }
 
-impl FromPy<CreatedByClause> for fastobo::ast::TermClause {
-    fn from_py(clause: CreatedByClause, py: Python) -> fastobo::ast::TermClause {
+impl Display for CreatedByClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
+impl From<CreatedByClause> for fastobo::ast::TermClause {
+    fn from(clause: CreatedByClause) -> Self {
         fastobo::ast::TermClause::CreatedBy(clause.name)
+    }
+}
+
+impl FromPy<CreatedByClause> for fastobo::ast::TermClause {
+    fn from_py(clause: CreatedByClause, _py: Python) -> fastobo::ast::TermClause {
+        Self::from(clause)
     }
 }
 
@@ -1469,6 +1527,14 @@ pub struct CreationDateClause {
 impl CreationDateClause {
     pub fn new(_py: Python, date: fastobo::ast::IsoDateTime) -> Self {
         Self { date }
+    }
+}
+
+impl Display for CreationDateClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 

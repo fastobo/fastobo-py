@@ -1216,6 +1216,12 @@ impl TreatXrefsAsEquivalentClause {
     }
 }
 
+impl Display for TreatXrefsAsEquivalentClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        obo::HeaderClause::from(self.clone()).fmt(f)
+    }
+}
+
 impl From<TreatXrefsAsEquivalentClause> for obo::HeaderClause {
     fn from(clause: TreatXrefsAsEquivalentClause) -> Self {
         obo::HeaderClause::TreatXrefsAsEquivalent(clause.idspace.into())
@@ -1240,6 +1246,21 @@ impl TreatXrefsAsEquivalentClause {
 
 impl_raw_tag!(TreatXrefsAsEquivalentClause, "treat-xrefs-as-equivalent");
 impl_raw_value!(TreatXrefsAsEquivalentClause, "{}", self.idspace);
+
+#[pyproto]
+impl PyObjectProtocol for TreatXrefsAsEquivalentClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, TreatXrefsAsEquivalentClause(self.idspace))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.idspace)
+    }
+}
 
 // --- TreatXrefsAsGenusDifferentiaClause ------------------------------------
 
@@ -1276,6 +1297,14 @@ impl ClonePy for TreatXrefsAsGenusDifferentiaClause {
     }
 }
 
+impl Display for TreatXrefsAsGenusDifferentiaClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<TreatXrefsAsGenusDifferentiaClause> for obo::HeaderClause {
     fn from_py(clause: TreatXrefsAsGenusDifferentiaClause, py: Python) -> Self {
         obo::HeaderClause::TreatXrefsAsGenusDifferentia(
@@ -1307,6 +1336,21 @@ impl_raw_value!(
     self.relation,
     self.filler
 );
+
+#[pyproto]
+impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, TreatXrefsAsGenusDifferentiaClause(self.idspace, self.relation, self.filler))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.idspace && self.relation && self.filler)
+    }
+}
 
 // --- TreatXrefsAsReverseGenusDifferentiaClause -----------------------------
 
@@ -1343,6 +1387,14 @@ impl ClonePy for TreatXrefsAsReverseGenusDifferentiaClause {
     }
 }
 
+impl Display for TreatXrefsAsReverseGenusDifferentiaClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+    }
+}
+
 impl FromPy<TreatXrefsAsReverseGenusDifferentiaClause> for obo::HeaderClause {
     fn from_py(clause: TreatXrefsAsReverseGenusDifferentiaClause, py: Python) -> Self {
         obo::HeaderClause::TreatXrefsAsReverseGenusDifferentia(
@@ -1375,6 +1427,21 @@ impl_raw_value!(
     self.filler
 );
 
+#[pyproto]
+impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, TreatXrefsAsReverseGenusDifferentiaClause(self.idspace, self.relation, self.filler))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.idspace && self.relation && self.filler)
+    }
+}
+
 // --- TreatXrefsAsRelationshipClause ----------------------------------------
 
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
@@ -1403,6 +1470,14 @@ impl ClonePy for TreatXrefsAsRelationshipClause {
             idspace: self.idspace.clone_py(py),
             relation: self.relation.clone_py(py),
         }
+    }
+}
+
+impl Display for TreatXrefsAsRelationshipClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
@@ -1435,6 +1510,21 @@ impl_raw_value!(
     self.idspace,
     self.relation
 );
+
+#[pyproto]
+impl PyObjectProtocol for TreatXrefsAsRelationshipClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, TreatXrefsAsRelationshipClause(self.idspace, self.relation))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.idspace && self.relation)
+    }
+}
 
 // --- TreatXrefsAsIsA -------------------------------------------------------
 
@@ -1490,8 +1580,16 @@ impl_raw_value!(TreatXrefsAsIsAClause, "{}", self.idspace);
 
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsIsAClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, TreatXrefsAsIsAClause(self.idspace))
+    }
+
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.idspace)
     }
 }
 
@@ -1511,6 +1609,12 @@ impl TreatXrefsAsHasSubclassClause {
         Self {
             idspace: idspace.into(),
         }
+    }
+}
+
+impl Display for TreatXrefsAsHasSubclassClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::HeaderClause::from(self.clone()).fmt(f)
     }
 }
 
@@ -1542,10 +1646,15 @@ impl_raw_value!(TreatXrefsAsHasSubclassClause, "{}", self.idspace);
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsHasSubclassClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "OwlAxiomsClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.idspace.as_gil_ref(py).as_str(),))
+        impl_repr!(self, TreatXrefsAsHasSubclassClause(self.idspace))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.idspace)
     }
 }
 
@@ -1573,6 +1682,14 @@ impl ClonePy for PropertyValueClause {
         Self {
             inner: self.inner.clone_py(py),
         }
+    }
+}
+
+impl Display for PropertyValueClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        fastobo::ast::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
     }
 }
 
@@ -1604,6 +1721,21 @@ impl PropertyValueClause {
 
 impl_raw_tag!(PropertyValueClause, "property_value");
 impl_raw_value!(PropertyValueClause, "{}", self.inner);
+
+#[pyproto]
+impl PyObjectProtocol for PropertyValueClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, PropertyValueClause(self.inner))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.inner)
+    }
+}
 
 // --- Remark ----------------------------------------------------------------
 

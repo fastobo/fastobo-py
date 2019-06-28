@@ -789,6 +789,21 @@ impl XrefClause {
 
 impl_raw_tag!(XrefClause, "xref");
 
+#[pyproto]
+impl PyObjectProtocol for XrefClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, XrefClause(self.xref))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.xref)
+    }
+}
+
 // --- Builtin ---------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
@@ -1355,6 +1370,21 @@ impl FromPy<RelationshipClause> for fastobo::ast::TermClause {
 impl_raw_tag!(RelationshipClause, "relationship");
 impl_raw_value!(RelationshipClause, "{} {}", self.relation, self.term);
 
+#[pyproto]
+impl PyObjectProtocol for RelationshipClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, RelationshipClause(self.relation, self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.relation && self.term)
+    }
+}
+
 // --- IsObsolete ------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
@@ -1390,6 +1420,21 @@ impl FromPy<IsObsoleteClause> for fastobo::ast::TermClause {
 
 impl_raw_tag!(IsObsoleteClause, "is_obsolete");
 impl_raw_value!(IsObsoleteClause, "{}", self.obsolete);
+
+#[pyproto]
+impl PyObjectProtocol for IsObsoleteClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsObsoleteClause(self.obsolete))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.obsolete)
+    }
+}
 
 // --- ReplacedBy ------------------------------------------------------------
 
@@ -1435,6 +1480,21 @@ impl FromPy<ReplacedByClause> for fastobo::ast::TermClause {
 impl_raw_tag!(ReplacedByClause, "replaced_by");
 impl_raw_value!(ReplacedByClause, "{}", self.term);
 
+#[pyproto]
+impl PyObjectProtocol for ReplacedByClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, ReplacedByClause(self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.term)
+    }
+}
+
 // --- Consider --------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
@@ -1479,6 +1539,21 @@ impl FromPy<ConsiderClause> for fastobo::ast::TermClause {
 impl_raw_tag!(ConsiderClause, "consider");
 impl_raw_value!(ConsiderClause, "{}", self.term);
 
+#[pyproto]
+impl PyObjectProtocol for ConsiderClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, ConsiderClause(self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.term)
+    }
+}
+
 // --- CreatedBy -------------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
@@ -1516,6 +1591,21 @@ impl FromPy<CreatedByClause> for fastobo::ast::TermClause {
 impl_raw_tag!(CreatedByClause, "created_by");
 impl_raw_value!(CreatedByClause, "{}", self.name);
 
+#[pyproto]
+impl PyObjectProtocol for CreatedByClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, CreatedByClause(self.name))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.name)
+    }
+}
+
 // --- CreationDate ----------------------------------------------------------
 
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
@@ -1546,3 +1636,19 @@ impl FromPy<CreationDateClause> for fastobo::ast::TermClause {
 
 impl_raw_tag!(CreationDateClause, "creation_date");
 impl_raw_value!(CreationDateClause, "{}", self.date);
+
+#[pyproto]
+impl PyObjectProtocol for CreationDateClause {
+    // TODO
+    // fn __repr__(&self) -> PyResult<PyObject> {
+    //     impl_repr!(self, CreationDateClause(self.date))
+    // }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.date)
+    }
+}

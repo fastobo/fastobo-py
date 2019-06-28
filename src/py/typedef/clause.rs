@@ -859,6 +859,21 @@ impl XrefClause {
 
 impl_raw_tag!(XrefClause, "xref");
 
+#[pyproto]
+impl PyObjectProtocol for XrefClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, XrefClause(self.xref))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.xref)
+    }
+}
+
 // --- PropertyValue ---------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -1869,6 +1884,21 @@ impl IntersectionOfClause {
 impl_raw_tag!(IntersectionOfClause, "intersection_of");
 impl_raw_value!(IntersectionOfClause, "{}", self.relation);
 
+#[pyproto]
+impl PyObjectProtocol for IntersectionOfClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IntersectionOfClause(self.relation))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.relation)
+    }
+}
+
 // --- UnionOf ---------------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -2016,7 +2046,6 @@ impl PyObjectProtocol for EquivalentToClause {
     }
 }
 
-
 // --- DisjointFrom ----------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -2089,7 +2118,6 @@ impl PyObjectProtocol for DisjointFromClause {
         impl_richmp!(self, other, op, self.typedef)
     }
 }
-
 
 // --- InverseOf -------------------------------------------------------------
 
@@ -2447,6 +2475,21 @@ impl FromPy<RelationshipClause> for fastobo::ast::TypedefClause {
 impl_raw_tag!(RelationshipClause, "relationship");
 impl_raw_value!(RelationshipClause, "{} {}", self.relation, self.term);
 
+#[pyproto]
+impl PyObjectProtocol for RelationshipClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, RelationshipClause(self.relation, self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.relation && self.term)
+    }
+}
+
 // --- IsObsolete ------------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -2462,14 +2505,41 @@ impl IsObsoleteClause {
     }
 }
 
-impl FromPy<IsObsoleteClause> for fastobo::ast::TypedefClause {
-    fn from_py(clause: IsObsoleteClause, py: Python) -> Self {
+impl Display for IsObsoleteClause {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        fastobo::ast::TypedefClause::from(self.clone()).fmt(f)
+    }
+}
+
+impl From<IsObsoleteClause> for fastobo::ast::TypedefClause {
+    fn from(clause: IsObsoleteClause) -> Self {
         fastobo::ast::TypedefClause::IsObsolete(clause.obsolete)
+    }
+}
+
+impl FromPy<IsObsoleteClause> for fastobo::ast::TypedefClause {
+    fn from_py(clause: IsObsoleteClause, _py: Python) -> Self {
+        fastobo::ast::TypedefClause::from(clause)
     }
 }
 
 impl_raw_tag!(IsObsoleteClause, "is_obsolete");
 impl_raw_value!(IsObsoleteClause, "{}", self.obsolete);
+
+#[pyproto]
+impl PyObjectProtocol for IsObsoleteClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsObsoleteClause(self.obsolete))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.obsolete)
+    }
+}
 
 // --- ReplacedBy ------------------------------------------------------------
 
@@ -2515,6 +2585,21 @@ impl FromPy<ReplacedByClause> for fastobo::ast::TypedefClause {
 impl_raw_tag!(ReplacedByClause, "replaced_by");
 impl_raw_value!(ReplacedByClause, "{}", self.relation);
 
+#[pyproto]
+impl PyObjectProtocol for ReplacedByClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, ReplacedByClause(self.relation))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.relation)
+    }
+}
+
 // --- Consider --------------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -2559,6 +2644,21 @@ impl FromPy<ConsiderClause> for fastobo::ast::TypedefClause {
 impl_raw_tag!(ConsiderClause, "consider");
 impl_raw_value!(ConsiderClause, "{}", self.relation);
 
+#[pyproto]
+impl PyObjectProtocol for ConsiderClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, ConsiderClause(self.relation))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.relation)
+    }
+}
+
 // --- CreatedBy -------------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -2594,6 +2694,21 @@ impl FromPy<CreatedByClause> for fastobo::ast::TypedefClause {
 impl_raw_tag!(CreatedByClause, "created_by");
 impl_raw_value!(CreatedByClause, "{}", self.name);
 
+#[pyproto]
+impl PyObjectProtocol for CreatedByClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, CreatedByClause(self.name))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.name)
+    }
+}
+
 // --- CreationDate ----------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -2628,6 +2743,22 @@ impl FromPy<CreationDateClause> for fastobo::ast::TypedefClause {
 
 impl_raw_tag!(CreationDateClause, "creation_date");
 impl_raw_value!(CreationDateClause, "{}", self.date);
+
+#[pyproto]
+impl PyObjectProtocol for CreationDateClause {
+    // TODO
+    // fn __repr__(&self) -> PyResult<PyObject> {
+    //     impl_repr!(self, CreationDateClause(self.date))
+    // }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.date)
+    }
+}
 
 // --- ExpandAssertionTo -----------------------------------------------------
 
@@ -2673,8 +2804,6 @@ impl FromPy<ExpandAssertionToClause> for fastobo::ast::TypedefClause {
     }
 }
 
-impl_raw_tag!(ExpandAssertionToClause, "expand_assertion_to");
-
 #[pymethods]
 impl ExpandAssertionToClause {
     pub fn raw_value(&self) -> PyResult<String> {
@@ -2684,6 +2813,8 @@ impl ExpandAssertionToClause {
         Ok(format!("{} {}", self.description, xrefs))
     }
 }
+
+impl_raw_tag!(ExpandAssertionToClause, "expand_assertion_to");
 
 // --- ExpandExpressionTo ----------------------------------------------------
 
@@ -2732,8 +2863,6 @@ impl FromPy<ExpandExpressionToClause> for fastobo::ast::TypedefClause {
     }
 }
 
-impl_raw_tag!(ExpandExpressionToClause, "expand_expression_to");
-
 #[pymethods]
 impl ExpandExpressionToClause {
     pub fn raw_value(&self) -> PyResult<String> {
@@ -2743,6 +2872,8 @@ impl ExpandExpressionToClause {
         Ok(format!("{} {}", self.description, xrefs))
     }
 }
+
+impl_raw_tag!(ExpandExpressionToClause, "expand_expression_to");
 
 // --- IsMetadataTag ---------------------------------------------------------
 
@@ -2779,6 +2910,21 @@ impl FromPy<IsMetadataTagClause> for fastobo::ast::TypedefClause {
 impl_raw_tag!(IsMetadataTagClause, "is_metadata_tag");
 impl_raw_value!(IsMetadataTagClause, "{}", self.metadata_tag);
 
+#[pyproto]
+impl PyObjectProtocol for IsMetadataTagClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsMetadataTagClause(self.metadata_tag))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.metadata_tag)
+    }
+}
+
 // --- IsClassLevel ----------------------------------------------------------
 
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
@@ -2813,3 +2959,18 @@ impl FromPy<IsClassLevelClause> for fastobo::ast::TypedefClause {
 
 impl_raw_tag!(IsClassLevelClause, "is_class_level");
 impl_raw_value!(IsClassLevelClause, "{}", self.class_level);
+
+#[pyproto]
+impl PyObjectProtocol for IsClassLevelClause {
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsClassLevelClause(self.class_level))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richmp!(self, other, op, self.class_level)
+    }
+}

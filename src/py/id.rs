@@ -641,6 +641,12 @@ impl Display for IdentPrefix {
     }
 }
 
+impl ToPyObject for IdentPrefix {
+    fn to_object(&self, py: pyo3::Python<'_>) -> PyObject {
+        self.inner.to_string().to_object(py)
+    }
+}
+
 #[pymethods]
 impl IdentPrefix {
     /// Create a new `IdentPrefix` instance.

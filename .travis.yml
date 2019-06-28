@@ -69,6 +69,10 @@ deploy:
   provider: script
   script: ci/travis/deploy.sh
   skip_cleanup: true
+  on:
+    tags: true
+    branch: master
+    repo: fastobo/fastobo-py
 
 notifications:
   email:

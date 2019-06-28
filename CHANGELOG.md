@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.1.1...HEAD
+
+
+## [0.1.1] - 2019-06-28
+
+[0.1.1]: https://github.com/fastobo/fastobo/compare/v0.1.1...v0.1.0
+
+### Fixed
+- PyPI release not being uploaded because of older development release.
+
 
 ## [0.1.0] - 2019-06-28
 

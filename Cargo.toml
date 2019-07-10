@@ -23,5 +23,5 @@ libc = "0.2.59"
 url = "1.7.2"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
-fastobo = "0.4.3"
+fastobo = "0.4.4"
 fastobo-py-derive = { path = "./derive" }

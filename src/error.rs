@@ -125,7 +125,7 @@ impl From<Error> for PyErr {
                 }
             }
 
-            _ => RuntimeError::py_err("todo"),
+            other => RuntimeError::py_err(format!("{}", other)),
         }
     }
 }

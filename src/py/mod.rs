@@ -26,6 +26,7 @@ use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast as obo;
+use fastobo_graphs::FromGraph;
 
 use crate::error::Error;
 use crate::pyfile::PyFile;
@@ -98,12 +99,12 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     *other*: any exception raised by ``fh.read``.
     ///
     /// Example:
-    ///     Use ``requests`` and ``fastobo`` to parse an ontology downloaded
+    ///     Use ``urllib`` and ``fastobo`` to parse an ontology downloaded
     ///     from the Berkeley BOP portal:
     ///
-    ///     >>> import requests
+    ///     >>> from urllib.request import urlopen
     ///     >>> url = "http://purl.obolibrary.org/obo/cmo.obo"
-    ///     >>> doc = fastobo.load(requests.get(url, stream=True).raw)
+    ///     >>> doc = fastobo.load(urlopen(url))
     ///     >>> doc.header[2]
     ///     OntologyClause('cmo.obo')
     #[pyfn(m, "load")]
@@ -183,6 +184,79 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
         match fastobo::ast::OboDoc::from_str(document) {
             Ok(doc) => Ok(doc.into_py(py)),
             Err(e) => Error::from(e).into(),
+        }
+    }
+
+    /// load_graph(fh)
+    /// --
+    ///
+    /// Load an OBO graph from the given path or file handle.
+    ///
+    /// Arguments:
+    ///     fh (str or file-handle): the path to an OBO graph file, or a
+    ///         **binary** stream that contains a serialized OBO document.
+    ///         *A binary stream needs a* ``read(x)`` *method returning*
+    ///         ``x`` *bytes*.
+    ///
+    /// Returns:
+    ///     `~fastobo.doc.OboDoc`: the first graph of the OBO graph
+    ///     converted to an OBO document.
+    ///
+    /// Raises:
+    ///     TypeError: when the argument is not a `str` or a binary stream.
+    ///     SyntaxError: when the document is not in valid OBO syntax.
+    ///     OSError: when an underlying OS error occurs.
+    ///     *other*: any exception raised by ``fh.read``.
+    ///
+    /// Example:
+    ///     Use ``urllib`` and ``fastobo`` to parse an ontology downloaded
+    ///     from the Berkeley BOP portal:
+    ///
+    ///     >>> from urllib.request import urlopen
+    ///     >>> url = "http://purl.obolibrary.org/obo/pato.json"
+    ///     >>> doc = fastobo.load_graph(urlopen(url))
+    ///     >>> doc[4]
+    ///     TermFrame(Url('http://purl.obolibrary.org/obo/PATO_0000000'))
+    #[pyfn(m, "load_graph")]
+    fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
+        if let Ok(s) = fh.downcast_ref::<PyString>() {
+            let path = s.to_string()?;
+            match fastobo_graphs::from_file(path.as_ref()) {
+                Err(e) => Err(RuntimeError::py_err(format!("{}", e))),
+                Ok(doc) => {
+                    let graph = doc.graphs.into_iter().next().unwrap();
+                    Ok(obo::OboDoc::from_graph(graph).into_py(py))
+                }
+            }
+        } else {
+            match PyFile::from_object(fh.py(), fh) {
+                // Object is a binary file-handle: attempt to parse the
+                // document and return an `OboDoc` object.
+                Ok(mut f) => {
+                    match fastobo_graphs::from_reader(&mut f) {
+                        Ok(doc) => {
+                            let graph = doc.graphs.into_iter().next().unwrap();
+                            Ok(obo::OboDoc::from_graph(graph).into_py(py))
+                        }
+                        Err(e) => f
+                            .into_err()
+                            .unwrap_or_else(|| RuntimeError::py_err(format!("{}", e)))
+                            .into(),
+                    }
+                }
+                // Object is not a binary file-handle: wrap the inner error
+                // into a `TypeError` and raise that error.
+                Err(inner) => {
+                    let msg = "expected path or binary file handle";
+                    let err = TypeError::py_err(msg).to_object(py);
+                    err.call_method1(
+                        py,
+                        "__setattr__",
+                        ("__cause__".to_object(py), inner.to_object(py)),
+                    )?;
+                    Err(PyErr::from_instance(err.as_ref(py).as_ref()))
+                }
+            }
         }
     }
 

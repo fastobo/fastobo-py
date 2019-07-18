@@ -26,7 +26,9 @@ use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast as obo;
+use fastobo::visit::VisitMut;
 use fastobo_graphs::FromGraph;
+use fastobo_graphs::model::GraphDocument;
 
 use crate::error::Error;
 use crate::pyfile::PyFile;
@@ -219,30 +221,20 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     TermFrame(Url('http://purl.obolibrary.org/obo/PATO_0000000'))
     #[pyfn(m, "load_graph")]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
-        if let Ok(s) = fh.downcast_ref::<PyString>() {
+        // Parse the source graph document.
+        let doc: GraphDocument = if let Ok(s) = fh.downcast_ref::<PyString>() {
             let path = s.to_string()?;
-            match fastobo_graphs::from_file(path.as_ref()) {
-                Err(e) => Err(RuntimeError::py_err(format!("{}", e))),
-                Ok(doc) => {
-                    let graph = doc.graphs.into_iter().next().unwrap();
-                    Ok(obo::OboDoc::from_graph(graph).into_py(py))
-                }
-            }
+            fastobo_graphs::from_file(path.as_ref())
+                .map_err(|e| RuntimeError::py_err(e.to_string()))?
         } else {
             match PyFile::from_object(fh.py(), fh) {
                 // Object is a binary file-handle: attempt to parse the
                 // document and return an `OboDoc` object.
                 Ok(mut f) => {
-                    match fastobo_graphs::from_reader(&mut f) {
-                        Ok(doc) => {
-                            let graph = doc.graphs.into_iter().next().unwrap();
-                            Ok(obo::OboDoc::from_graph(graph).into_py(py))
-                        }
-                        Err(e) => f
+                    fastobo_graphs::from_reader(&mut f)
+                        .map_err(|e| f
                             .into_err()
-                            .unwrap_or_else(|| RuntimeError::py_err(format!("{}", e)))
-                            .into(),
-                    }
+                            .unwrap_or_else(|| RuntimeError::py_err(e.to_string())))?
                 }
                 // Object is not a binary file-handle: wrap the inner error
                 // into a `TypeError` and raise that error.
@@ -254,10 +246,21 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
                         "__setattr__",
                         ("__cause__".to_object(py), inner.to_object(py)),
                     )?;
-                    Err(PyErr::from_instance(err.as_ref(py).as_ref()))
+                    return Err(PyErr::from_instance(err.as_ref(py).as_ref()));
                 }
             }
-        }
+        };
+
+        // Convert the graph to an OBO document
+        let graph = doc.graphs.into_iter().next().unwrap();
+        let mut doc = obo::OboDoc::from_graph(graph)
+            .map_err(|e| RuntimeError::py_err(e.to_string()))?;
+
+        // Shrink IDs in OBO document
+        // fastobo::visit::IdCompactor::new().visit_doc(&mut doc);
+
+        // Convert the OBO document to a Python handle
+        Ok(OboDoc::from_py(doc, py))
     }
 
     Ok(())

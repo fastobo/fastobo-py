@@ -170,6 +170,11 @@ impl OboDoc {
     ///     xref: MassBank:EA281701
     ///     <BLANKLINE>
     ///
+    /// See Also:
+    ///     The `Translation of Identifiers
+    ///     <http://owlcollab.github.io/oboformat/doc/obo-syntax.html#5.9>`_
+    ///     section of the OBO format version 1.4 specification.
+    ///
     fn compact_ids(&self) -> PyResult<Self> {
         let py = unsafe { Python::assume_gil_acquired() };
         let mut doc = obo::OboDoc::from_py(self.clone_py(py), py);
@@ -181,6 +186,10 @@ impl OboDoc {
     /// --
     ///
     /// Create a semantically equivalent OBO document with IRI identifiers.
+    ///
+    /// The OBO specification describes how to perform an URI decompaction
+    /// using either ID spaces declared in the document header, builtin ID
+    /// spaces, or a default rule using the `purl.obolibrary.org` domain.
     ///
     /// Example:
     ///     >>> doc = fastobo.loads(textwrap.dedent(
@@ -198,6 +207,11 @@ impl OboDoc {
     ///     id: http://purl.obolibrary.org/obo/CHEBI_27958
     ///     xref: http://www.massbank.jp/jsp/FwdRecord.jsp?id=EA281701
     ///     <BLANKLINE>
+    ///
+    /// See Also:
+    ///     The `Translation of Identifiers
+    ///     <http://owlcollab.github.io/oboformat/doc/obo-syntax.html#5.9>`_
+    ///     section of the OBO format version 1.4 specification.
     ///
     fn decompact_ids(&self) -> PyResult<Self> {
         let py = unsafe { Python::assume_gil_acquired() };

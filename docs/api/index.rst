@@ -27,6 +27,8 @@ Functions
 
 .. autofunction:: fastobo.loads
 
+.. autofunction:: fastobo.load_graph
+
 
 Data structures
 ^^^^^^^^^^^^^^^

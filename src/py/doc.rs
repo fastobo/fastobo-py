@@ -71,7 +71,7 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
 
 /// The abstract syntax tree corresponding to an OBO document.
 #[pyclass(subclass, module = "fastobo.doc")]
-#[derive(Debug)]
+#[derive(Debug, PyList)]
 pub struct OboDoc {
     header: Py<HeaderFrame>,
     entities: Vec<EntityFrame>,
@@ -124,8 +124,7 @@ impl FromPy<OboDoc> for fastobo::ast::OboDoc {
 #[pymethods]
 impl OboDoc {
     #[getter]
-    fn get_header(&self) -> PyResult<Py<HeaderFrame>> {
-        let py = unsafe { Python::assume_gil_acquired() };
+    fn get_header<'py>(&self, py: Python<'py>) -> PyResult<Py<HeaderFrame>> {
         Ok(self.header.clone_ref(py))
     }
 

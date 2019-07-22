@@ -525,8 +525,7 @@ impl DefClause {
 
     #[getter]
     /// `~fastobo.xrefs.XrefList`: a list of xrefs supporting the definition.
-    fn get_xrefs(&self) -> PyResult<XrefList> {
-        let py = unsafe { Python::assume_gil_acquired() };
+    fn get_xrefs<'py>(&self, py: Python<'py>) -> PyResult<XrefList> {
         Ok(self.xrefs.clone_py(py))
     }
 }
@@ -749,8 +748,7 @@ impl SynonymClause {
 
     #[getter]
     /// `~fastobo.syn.Synonym`: a possible synonym for this term.
-    fn get_synonym(&self) -> PyResult<Py<Synonym>> {
-        let py = unsafe { Python::assume_gil_acquired() };
+    fn get_synonym<'py>(&self, py: Python<'py>) -> PyResult<Py<Synonym>> {
         Ok(self.synonym.clone_py(py))
     }
 
@@ -839,8 +837,7 @@ impl XrefClause {
     }
 
     #[getter]
-    fn get_xref(&self) -> PyResult<Py<Xref>> {
-        let py = unsafe { Python::assume_gil_acquired() };
+    fn get_xref<'py>(&self, py: Python<'py>) -> PyResult<Py<Xref>> {
         Ok(self.xref.clone_ref(py))
     }
 

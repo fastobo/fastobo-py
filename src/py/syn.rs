@@ -201,8 +201,7 @@ impl Synonym {
     }
 
     #[getter]
-    pub fn get_xrefs(&self) -> PyResult<Py<XrefList>> {
-        let py = unsafe { Python::assume_gil_acquired() };
+    pub fn get_xrefs<'py>(&self, py: Python<'py>) -> PyResult<Py<XrefList>> {
         Ok(self.xrefs.clone_ref(py))
     }
 

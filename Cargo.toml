@@ -25,5 +25,5 @@ opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
 
 fastobo = "0.5.0"
-fastobo-graphs = { git = "https://github.com/fastobo/fastobo-graphs"}
+fastobo-graphs = { git = "https://github.com/fastobo/fastobo-graphs" }
 fastobo-py-derive = { path = "./derive" }

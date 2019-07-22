@@ -8,6 +8,7 @@ import datetime
 import doctest
 import warnings
 import pprint
+import textwrap
 import types
 
 import fastobo
@@ -40,6 +41,7 @@ def load_tests(loader, tests, ignore):
     globs = {
         "fastobo": fastobo,
         "datetime": datetime,
+        "textwrap": textwrap,
         "pprint": pprint.pprint,
         "ms": fastobo.load(os.path.realpath(
             os.path.join(__file__, "..", "data", "ms.obo")

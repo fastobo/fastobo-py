@@ -112,6 +112,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc = fastobo.load(urlopen(url))
     ///     >>> doc.header[2]
     ///     OntologyClause('cmo.obo')
+    ///
     #[pyfn(m, "load")]
     fn load(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
         if let Ok(s) = fh.downcast_ref::<PyString>() {
@@ -171,7 +172,6 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     Use ``fastobo.loads`` to deserialize a literal OBO frame into the
     ///     corresponding syntax tree:
     ///
-    ///     >>> import textwrap
     ///     >>> doc = fastobo.loads(textwrap.dedent(
     ///     ...     """
     ///     ...     [Term]
@@ -195,9 +195,10 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     /// load_graph(fh)
     /// --
     ///
-    /// Load an OBO graph from the given path or file handle. Both JSON and
-    /// YAML formats are supported. *Actually, since YAML is a superset of
-    /// JSON, all graphs are in YAML format...*
+    /// Load an OBO graph from the given path or file handle.
+    ///
+    /// Both JSON and YAML formats are supported. *Actually, since YAML is a
+    /// superset of JSON, all graphs are in YAML format.*
     ///
     /// Arguments:
     ///     fh (str or file-handle): the path to an OBO graph file, or a
@@ -225,6 +226,13 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc = fastobo.load_graph(urlopen(url))
     ///     >>> doc[4]
     ///     TermFrame(Url('http://purl.obolibrary.org/obo/PATO_0000000'))
+    ///
+    /// Note:
+    ///     OBO graphs only contains URL identifiers, and deserializing one
+    ///     will not compact this function automatically. Consider using the
+    ///     `~fastobo.doc.OboDoc.compact_ids` method if that is the expected
+    ///     result.
+    ///
     #[pyfn(m, "load_graph")]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
         // Parse the source graph document.
@@ -259,11 +267,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
 
         // Convert the graph to an OBO document
         let graph = doc.graphs.into_iter().next().unwrap();
-        let mut doc = obo::OboDoc::from_graph(graph)
+        let doc = obo::OboDoc::from_graph(graph)
             .map_err(|e| RuntimeError::py_err(e.to_string()))?;
-
-        // Shrink IDs in OBO document
-        // fastobo::visit::IdCompactor::new().visit_doc(&mut doc);
 
         // Convert the OBO document to a Python handle
         Ok(OboDoc::from_py(doc, py))

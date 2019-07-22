@@ -23,6 +23,7 @@ use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast as obo;
+use fastobo::visit::VisitMut;
 
 use crate::error::Error;
 use crate::pyfile::PyFile;
@@ -64,7 +65,7 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
                 Py::new(py, TypedefFrame::from_py(frame, py)).map(EntityFrame::Typedef)
             }
             fastobo::ast::EntityFrame::Instance(frame) => {
-            Py::new(py, InstanceFrame::from_py(frame, py)).map(EntityFrame::Instance)
+                Py::new(py, InstanceFrame::from_py(frame, py)).map(EntityFrame::Instance)
             },
         }
         .expect("could not allocate on Python heap")
@@ -127,6 +128,7 @@ impl FromPy<OboDoc> for fastobo::ast::OboDoc {
 
 #[pymethods]
 impl OboDoc {
+    /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.
     #[getter]
     fn get_header<'py>(&self, py: Python<'py>) -> PyResult<Py<HeaderFrame>> {
         Ok(self.header.clone_ref(py))
@@ -137,6 +139,71 @@ impl OboDoc {
         let py = unsafe { Python::assume_gil_acquired() };
         self.header = Py::new(py, header.clone_py(py))?;
         Ok(())
+    }
+
+    /// compact_ids(self, /)
+    /// --
+    ///
+    /// Create a semantically equivalent OBO document with compact identifiers.
+    ///
+    /// The OBO specification describes how to perform an URI decompaction
+    /// using either ID spaces declared in the document header, builtin ID
+    /// spaces, or a default rule using the `purl.obolibrary.org` domain.
+    /// By applying the reverse operation, a new ontology can be created with
+    /// compact identifiers. Some URLs may not have a compact representation
+    /// if they don't correspond to any decompaction rule.
+    ///
+    /// Example:
+    ///     >>> doc = fastobo.loads(textwrap.dedent(
+    ///     ...     """
+    ///     ...     idspace: MassBank http://www.massbank.jp/jsp/FwdRecord.jsp?id=
+    ///     ...
+    ///     ...     [Term]
+    ///     ...     id: http://purl.obolibrary.org/obo/CHEBI_27958
+    ///     ...     xref: http://www.massbank.jp/jsp/FwdRecord.jsp?id=EA281701
+    ///     ...     """
+    ///     ... ))
+    ///     >>> compact_doc = doc.compact_ids()
+    ///     >>> print(compact_doc[0])
+    ///     [Term]
+    ///     id: CHEBI:27958
+    ///     xref: MassBank:EA281701
+    ///     <BLANKLINE>
+    ///
+    fn compact_ids(&self) -> PyResult<Self> {
+        let py = unsafe { Python::assume_gil_acquired() };
+        let mut doc = obo::OboDoc::from_py(self.clone_py(py), py);
+        fastobo::visit::IdCompactor::new().visit_doc(&mut doc);
+        Ok(doc.into_py(py))
+    }
+
+    /// decompact_ids(self, /)
+    /// --
+    ///
+    /// Create a semantically equivalent OBO document with IRI identifiers.
+    ///
+    /// Example:
+    ///     >>> doc = fastobo.loads(textwrap.dedent(
+    ///     ...     """
+    ///     ...     idspace: MassBank http://www.massbank.jp/jsp/FwdRecord.jsp?id=
+    ///     ...
+    ///     ...     [Term]
+    ///     ...     id: CHEBI:27958
+    ///     ...     xref: MassBank:EA281701
+    ///     ...     """
+    ///     ... ))
+    ///     >>> url_doc = doc.decompact_ids()
+    ///     >>> print(url_doc[0])
+    ///     [Term]
+    ///     id: http://purl.obolibrary.org/obo/CHEBI_27958
+    ///     xref: http://www.massbank.jp/jsp/FwdRecord.jsp?id=EA281701
+    ///     <BLANKLINE>
+    ///
+    fn decompact_ids(&self) -> PyResult<Self> {
+        let py = unsafe { Python::assume_gil_acquired() };
+        let mut doc = obo::OboDoc::from_py(self.clone_py(py), py);
+        fastobo::visit::IdDecompactor::new().visit_doc(&mut doc);
+        Ok(doc.into_py(py))
     }
 }
 

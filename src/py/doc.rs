@@ -33,6 +33,7 @@ use super::abc::AbstractFrame;
 use super::header::frame::HeaderFrame;
 use super::term::frame::TermFrame;
 use super::typedef::frame::TypedefFrame;
+use super::instance::frame::InstanceFrame;
 
 // --- Module export ---------------------------------------------------------
 
@@ -50,6 +51,7 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
 pub enum EntityFrame {
     Term(Py<TermFrame>),
     Typedef(Py<TypedefFrame>),
+    Instance(Py<InstanceFrame>),
 }
 
 impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
@@ -61,7 +63,9 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
             fastobo::ast::EntityFrame::Typedef(frame) => {
                 Py::new(py, TypedefFrame::from_py(frame, py)).map(EntityFrame::Typedef)
             }
-            _ => unimplemented!(),
+            fastobo::ast::EntityFrame::Instance(frame) => {
+            Py::new(py, InstanceFrame::from_py(frame, py)).map(EntityFrame::Instance)
+            },
         }
         .expect("could not allocate on Python heap")
     }

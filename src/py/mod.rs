@@ -41,6 +41,7 @@ pub mod abc;
 pub mod doc;
 pub mod header;
 pub mod id;
+pub mod instance;
 pub mod pv;
 pub mod syn;
 pub mod term;
@@ -61,6 +62,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     use self::doc::PyInit_doc;
     use self::header::PyInit_header;
     use self::id::PyInit_id;
+    use self::instance::PyInit_instance;
     use self::pv::PyInit_pv;
     use self::syn::PyInit_syn;
     use self::term::PyInit_term;
@@ -74,6 +76,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     add_submodule!(py, m, doc);
     add_submodule!(py, m, header);
     add_submodule!(py, m, id);
+    add_submodule!(py, m, instance);
     add_submodule!(py, m, pv);
     add_submodule!(py, m, syn);
     add_submodule!(py, m, term);
@@ -192,7 +195,9 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     /// load_graph(fh)
     /// --
     ///
-    /// Load an OBO graph from the given path or file handle.
+    /// Load an OBO graph from the given path or file handle. Both JSON and
+    /// YAML formats are supported. *Actually, since YAML is a superset of
+    /// JSON, all graphs are in YAML format...*
     ///
     /// Arguments:
     ///     fh (str or file-handle): the path to an OBO graph file, or a
@@ -202,7 +207,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///
     /// Returns:
     ///     `~fastobo.doc.OboDoc`: the first graph of the OBO graph
-    ///     converted to an OBO document.
+    ///     converted to an OBO document. The schema allows for more than
+    ///     one graph but this is never really used.
     ///
     /// Raises:
     ///     TypeError: when the argument is not a `str` or a binary stream.

@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.2.1...HEAD
+
+
+## [v0.2.1] - 2019-07-23
+
+[v0.2.1]: https://github.com/fastobo/fastobo/compare/v0.2.0...v0.2.1
 
 ### Changed
 - Updated to `fastobo` [v0.6.0](https://github.com/fastobo/fastobo/blob/master/CHANGELOG.md#v060-2019-07-23).
@@ -16,9 +21,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Parser now accepts ISO 8601 dates with fractional second.
 
 
-## [0.2.0] - 2019-07-22
+## [v0.2.0] - 2019-07-22
 
-[0.2.0]: https://github.com/fastobo/fastobo/compare/v0.1.1...v0.2.0
+[v0.2.0]: https://github.com/fastobo/fastobo/compare/v0.1.1...v0.2.0
 
 ### Changed
 - Updated to `fastobo` [v0.5.0](https://github.com/fastobo/fastobo/blob/master/CHANGELOG.md#v050---2019-07-15).
@@ -30,16 +35,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   equivalent OBO document with compacted/decompacted identifiers.
 
 
-## [0.1.1] - 2019-06-28
+## [v0.1.1] - 2019-06-28
 
-[0.1.1]: https://github.com/fastobo/fastobo/compare/v0.1.0...v0.1.1
+[v0.1.1]: https://github.com/fastobo/fastobo/compare/v0.1.0...v0.1.1
 
 ### Fixed
 - PyPI release not being uploaded because of older development release.
 
 
-## [0.1.0] - 2019-06-28
+## [v0.1.0] - 2019-06-28
 
-[0.1.0]: https://github.com/fastobo/fastobo/compare/77dd00c...v0.1.0
+[v0.1.0]: https://github.com/fastobo/fastobo/compare/77dd00c...v0.1.0
 
 Initial release.

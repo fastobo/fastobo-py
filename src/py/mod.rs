@@ -224,7 +224,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> from urllib.request import urlopen
     ///     >>> url = "http://purl.obolibrary.org/obo/pato.json"
     ///     >>> doc = fastobo.load_graph(urlopen(url))
-    ///     >>> doc[4]
+    ///     >>> doc[3]
     ///     TermFrame(Url('http://purl.obolibrary.org/obo/PATO_0000000'))
     ///
     /// Note:

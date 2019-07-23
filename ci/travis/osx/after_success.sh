@@ -11,5 +11,7 @@ fi
 
 # --- Wheels -----------------------------------------------------------------
 
-log Building wheel
-$PYTHON setup.py sdist bdist_wheel
+if [ ! -z "$TRAVIS_TAG" ]; then
+  log Building wheel
+  $PYTHON setup.py sdist bdist_wheel
+fi

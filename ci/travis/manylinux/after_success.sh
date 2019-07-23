@@ -11,6 +11,8 @@ fi
 
 # --- Wheels -----------------------------------------------------------------
 
-log Building wheel
-CP=cp$(echo $TRAVIS_PYTHON_VERSION | sed 's/\.//')
-docker exec -it manylinux sh /io/ci/travis/manylinux/_after_success.sh $CP
+if [ ! -z "$TRAVIS_TAG" ]; then
+  log Building wheel
+  CP=cp$(echo $TRAVIS_PYTHON_VERSION | sed 's/\.//')
+  docker exec -it manylinux sh /io/ci/travis/manylinux/_after_success.sh $CP
+fi

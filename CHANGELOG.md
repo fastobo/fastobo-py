@@ -9,13 +9,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 [Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.2.0...HEAD
 
+### Changed
+- Updated to `fastobo` [v0.6.0](https://github.com/fastobo/fastobo/blob/master/CHANGELOG.md#v060-2019-07-23).
+
+### Fixed
+- Parser now accepts ISO 8601 dates with fractional second.
+
 
 ## [0.2.0] - 2019-07-22
 
 [0.2.0]: https://github.com/fastobo/fastobo/compare/v0.1.1...v0.2.0
 
 ### Changed
-- Updated to `fastobo` [v0.5.0](https://github.com/fastobo/fastobo/blob/master/CHANGELOG.md).
+- Updated to `fastobo` [v0.5.0](https://github.com/fastobo/fastobo/blob/master/CHANGELOG.md#v050---2019-07-15).
 
 ### Added
 - Support for OBO graph deserialization using `fastobo-graphs`.

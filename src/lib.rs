@@ -12,7 +12,7 @@ extern crate url;
 extern crate opaque_typedef_macros;
 extern crate opaque_typedef;
 #[macro_use]
-extern crate fastobo_py_derive;
+extern crate fastobo_py_derive_internal;
 extern crate fastobo_graphs;
 
 #[macro_use]

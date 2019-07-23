@@ -1,5 +1,5 @@
 [package]
-name = "fastobo-py-derive"
+name = "fastobo-py-derive-internal"
 version = "0.2.0"
 authors = ["Martin Larralde <martin.larralde@ens-cachan.fr>"]
 edition = "2018"

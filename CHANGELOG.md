@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.2.2...HEAD
+
+
+## [v0.2.2] - 2019-07-24
+
+[v0.2.2]: https://github.com/fastobo/fastobo/compare/v0.2.1...v0.2.2
+
+### Changed
+- Updated to `fastobo` [v0.6.1](https://github.com/fastobo/fastobo/blob/master/CHANGELOG.md#v061-2019-07-24).
+- Updated to `url` v2.0.0.
 
 
 ## [v0.2.1] - 2019-07-23

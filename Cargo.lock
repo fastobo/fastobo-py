@@ -180,7 +180,7 @@ dependencies = [
 [[package]]
 name = "fastobo-graphs"
 version = "0.1.0"
-source = "git+https://github.com/fastobo/fastobo-graphs#d51827787b4674ae2e130296ed45d4ecd4b4b771"
+source = "git+https://github.com/fastobo/fastobo-graphs#177659f6e90ca264aaf57b67f432fe02eafe5901"
 dependencies = [
  "err-derive 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "fastobo 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -191,12 +191,12 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "built 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fastobo 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fastobo-graphs 0.1.0 (git+https://github.com/fastobo/fastobo-graphs)",
- "fastobo-py-derive-internal 0.2.1",
+ "fastobo-py-derive-internal 0.2.2",
  "libc 0.2.60 (registry+https://github.com/rust-lang/crates.io-index)",
  "opaque_typedef 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "opaque_typedef_macros 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -207,7 +207,7 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py-derive-internal"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "quote 0.6.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.42 (registry+https://github.com/rust-lang/crates.io-index)",

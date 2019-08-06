@@ -20,7 +20,7 @@ pyo3 = { git = "https://github.com/PyO3/pyo3" }
 # pyo3-built = "0.2.0"
 pest = "2.1.1"
 libc = "0.2.59"
-url = "2.0.0"
+url = "2.1.0"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
 

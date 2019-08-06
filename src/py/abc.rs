@@ -25,7 +25,6 @@ use pyo3::PyTypeInfo;
 use fastobo::ast as obo;
 
 use crate::error::Error;
-use crate::pyfile::PyFile;
 use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 

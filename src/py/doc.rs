@@ -26,7 +26,6 @@ use fastobo::ast as obo;
 use fastobo::visit::VisitMut;
 
 use crate::error::Error;
-use crate::pyfile::PyFile;
 use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 

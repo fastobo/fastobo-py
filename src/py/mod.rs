@@ -28,10 +28,12 @@ use pyo3::PyTypeInfo;
 use fastobo::ast as obo;
 use fastobo::visit::VisitMut;
 use fastobo_graphs::FromGraph;
+use fastobo_graphs::IntoGraph;
 use fastobo_graphs::model::GraphDocument;
 
 use crate::error::Error;
-use crate::pyfile::PyFile;
+use crate::pyfile::PyFileRead;
+use crate::pyfile::PyFileWrite;
 use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
@@ -117,17 +119,17 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     fn load(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
         if let Ok(s) = fh.downcast_ref::<PyString>() {
             let path = s.to_string()?;
-            match obo::OboDoc::from_file(path.as_ref()) {
+            match fastobo::from_file(path.as_ref()) {
                 Ok(doc) => Ok(doc.into_py(py)),
                 Err(e) => Error::from(e).into(),
             }
         } else {
-            match PyFile::from_object(fh.py(), fh) {
+            match PyFileRead::from_object(fh.py(), fh) {
                 // Object is a binary file-handle: attempt to parse the
                 // document and return an `OboDoc` object.
                 Ok(f) => {
                     let mut bufreader = std::io::BufReader::new(f);
-                    match obo::OboDoc::from_stream(&mut bufreader) {
+                    match fastobo::from_reader(&mut bufreader) {
                         Ok(doc) => Ok(doc.into_py(py)),
                         Err(e) => bufreader
                             .into_inner()
@@ -241,7 +243,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
             fastobo_graphs::from_file(path.as_ref())
                 .map_err(|e| RuntimeError::py_err(e.to_string()))?
         } else {
-            match PyFile::from_object(fh.py(), fh) {
+            match PyFileRead::from_object(fh.py(), fh) {
                 // Object is a binary file-handle: attempt to parse the
                 // document and return an `OboDoc` object.
                 Ok(mut f) => {
@@ -272,6 +274,49 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
 
         // Convert the OBO document to a Python handle
         Ok(OboDoc::from_py(doc, py))
+    }
+
+    /// dump_graph(obj, fh)
+    /// --
+    ///
+    /// Dump an OBO graph into the given writer or file handle.
+    #[pyfn(m, "dump_graph")]
+    fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
+        // Convert OBO document to OBO JSON.
+        let doc = obo::OboDoc::from_py(obj.clone_py(py), py).into_graph()
+            .map_err(|e| RuntimeError::py_err(e.to_string()))?;
+        // Write the document
+        if let Ok(s) = fh.downcast_ref::<PyString>() {
+            // Write into a file if given a path as a string.
+            let path = s.to_string()?;
+            fastobo_graphs::to_file(path.as_ref(), &doc)
+                .map_err(|e| RuntimeError::py_err(e.to_string()))
+        } else {
+            // Write into the handle if given a writable file.
+            match PyFileWrite::from_object(fh.py(), fh) {
+                // Object is a binary file-handle: attempt to parse the
+                // document and return an `OboDoc` object.
+                Ok(mut f) => {
+                    unimplemented!()
+                    // fastobo_graphs::from_reader(&mut f)
+                    //     .map_err(|e| f
+                    //         .into_err()
+                    //         .unwrap_or_else(|| RuntimeError::py_err(e.to_string())))?
+                }
+                // Object is not a binary file-handle: wrap the inner error
+                // into a `TypeError` and raise that error.
+                Err(inner) => {
+                    let msg = "expected path or binary file handle";
+                    let err = TypeError::py_err(msg).to_object(py);
+                    err.call_method1(
+                        py,
+                        "__setattr__",
+                        ("__cause__".to_object(py), inner.to_object(py)),
+                    )?;
+                    return Err(PyErr::from_instance(err.as_ref(py).as_ref()));
+                }
+            }
+        }
     }
 
     Ok(())

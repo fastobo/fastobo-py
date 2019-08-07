@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::io::Error as IoError;
 use std::io::Read;
+use std::io::Write;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -16,14 +17,41 @@ use pyo3::PyDowncastError;
 use pyo3::PyErrValue;
 use pyo3::PyObject;
 
-pub struct PyFile<'p> {
+// ---------------------------------------------------------------------------
+
+macro_rules! transmute_error {
+    ($self:ident, $e:ident, $msg:expr) => ({
+        // Attempt to transmute the Python OSError to an actual
+        // Rust `std::io::Error` using `from_raw_os_error`.
+        if $e.is_instance::<OSError>($self.py) {
+            if let PyErrValue::Value(obj) = &$e.pvalue {
+                if let Ok(code) = obj.getattr($self.py, "errno") {
+                    if let Ok(n) = code.extract::<i32>($self.py) {
+                        return Err(IoError::from_raw_os_error(n));
+                    }
+                }
+            }
+        }
+
+        // if the conversion is not possible for any reason we fail
+        // silently, wrapping the Python error, and returning a
+        // generic Rust error instead.
+        $self.err = Some($e);
+        Err(IoError::new(std::io::ErrorKind::Other, $msg))
+    })
+}
+
+// ---------------------------------------------------------------------------
+
+/// A wrapper around a readable Python file.
+pub struct PyFileRead<'p> {
     file: pyo3::PyObject,
     py: Python<'p>,
     err: Option<PyErr>,
 }
 
-impl<'p> PyFile<'p> {
-    pub fn from_object<T>(py: Python<'p>, obj: &T) -> PyResult<PyFile<'p>>
+impl<'p> PyFileRead<'p> {
+    pub fn from_object<T>(py: Python<'p>, obj: &T) -> PyResult<PyFileRead<'p>>
     where
         T: AsPyPointer,
     {
@@ -31,7 +59,7 @@ impl<'p> PyFile<'p> {
             let file = PyObject::from_borrowed_ptr(py, obj.as_ptr());
             let res = file.call_method1(py, "read", (0,))?;
             if py.is_instance::<PyBytes, PyObject>(&res).unwrap_or(false) {
-                Ok(PyFile {
+                Ok(PyFileRead {
                     file,
                     py,
                     err: None,
@@ -48,7 +76,7 @@ impl<'p> PyFile<'p> {
     }
 }
 
-impl<'p> Read for PyFile<'p> {
+impl<'p> Read for PyFileRead<'p> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
         unsafe {
             match self.file.call_method1(self.py, "read", (buf.len(),)) {
@@ -68,26 +96,70 @@ impl<'p> Read for PyFile<'p> {
                         ))
                     }
                 }
-                Err(e) => {
-                    // Attempt to transmute the Python OSError to an actual
-                    // Rust `std::io::Error` using `from_raw_os_error`.
-                    if e.is_instance::<OSError>(self.py) {
-                        if let PyErrValue::Value(obj) = &e.pvalue {
-                            if let Ok(code) = obj.getattr(self.py, "errno") {
-                                if let Ok(n) = code.extract::<i32>(self.py) {
-                                    return Err(IoError::from_raw_os_error(n));
-                                }
-                            }
-                        }
-                    }
+                Err(e) => transmute_error!(self, e, "read method failed")
+            }
+        }
+    }
+}
 
-                    // if the conversion is not possible for any reason we fail
-                    // silently, wrapping the Python error, and returning a
-                    // generic Rust error instead.
-                    self.err = Some(e);
-                    Err(IoError::new(std::io::ErrorKind::Other, "fh.read failed"))
+// ---------------------------------------------------------------------------
+
+/// A wrapper around a writable Python file.
+pub struct PyFileWrite<'p> {
+    file: pyo3::PyObject,
+    py: Python<'p>,
+    err: Option<PyErr>,
+}
+
+impl<'p> PyFileWrite<'p> {
+    pub fn from_object<T>(py: Python<'p>, obj: &T) -> PyResult<PyFileWrite<'p>>
+    where
+        T: AsPyPointer,
+    {
+        // FIXME
+        unsafe {
+            let file = PyObject::from_borrowed_ptr(py, obj.as_ptr());
+            file.call_method1(py, "write", (0, PyBytes::new(py, b"")))
+                .map(|_| PyFileWrite {
+                    file,
+                    py,
+                    err: None,
+                })
+        }
+    }
+
+    pub fn into_err(self) -> Option<PyErr> {
+        self.err
+    }
+}
+
+impl<'p> Write for PyFileWrite<'p> {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, IoError> {
+        let bytes = PyBytes::new(self.py, buf);
+        match self.file.call_method1(self.py, "write", (bytes,)) {
+            Ok(obj) => {
+                // unimplemented!()
+                // Check `fh.write` returned int, else raise a `TypeError`.
+                if let Ok(len) = usize::extract(&obj.as_ref(self.py)) {
+                    Ok(len)
+                } else {
+                    let ty = obj.as_ref(self.py).get_type().name().to_string();
+                    let msg = format!("expected int, found {}", ty);
+                    self.err = Some(TypeError::py_err(msg));
+                    Err(IoError::new(
+                        std::io::ErrorKind::Other,
+                        "write method did not return int",
+                    ))
                 }
             }
+            Err(e) => transmute_error!(self, e, "write method failed"),
+        }
+    }
+
+    fn flush(&mut self) -> Result<(), IoError> {
+        match self.file.call_method0(self.py, "flush") {
+            Ok(_) => Ok(()),
+            Err(e) => transmute_error!(self, e, "flush method failed"),
         }
     }
 }

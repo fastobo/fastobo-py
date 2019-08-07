@@ -16,7 +16,7 @@ name = "fastobo_py"
 built = "0.3.1"
 
 [dependencies]
-pyo3 = { git = "https://github.com/PyO3/pyo3" }
+pyo3 = { git = "https://github.com/PyO3/pyo3", features = ["unsound-subclass"] }
 # pyo3-built = "0.2.0"
 pest = "2.1.1"
 libc = "0.2.59"
@@ -24,6 +24,6 @@ url = "2.0.0"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
 
-fastobo = "0.6.0"
-fastobo-graphs = { git = "https://github.com/fastobo/fastobo-graphs" }
+fastobo = "0.7.0"
+fastobo-graphs = "0.1.0"
 fastobo-py-derive-internal = { path = "./derive" }

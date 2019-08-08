@@ -152,11 +152,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "fastobo"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "err-derive 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "fastobo-derive-internal 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fastobo-derive-internal 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fastobo-syntax 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "memchr 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "opaque_typedef 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -168,7 +168,7 @@ dependencies = [
 
 [[package]]
 name = "fastobo-derive-internal"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "darling 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -179,11 +179,11 @@ dependencies = [
 
 [[package]]
 name = "fastobo-graphs"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "err-derive 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "fastobo 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fastobo 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "mashup 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.98 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.40 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -192,12 +192,12 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "built 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "fastobo 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "fastobo-graphs 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "fastobo-py-derive-internal 0.2.2",
+ "fastobo 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fastobo-graphs 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fastobo-py-derive-internal 0.3.0",
  "libc 0.2.60 (registry+https://github.com/rust-lang/crates.io-index)",
  "opaque_typedef 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "opaque_typedef_macros 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -208,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py-derive-internal"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "quote 0.6.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.43 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -864,9 +864,9 @@ dependencies = [
 "checksum dtoa 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)" = "ea57b42383d091c85abcc2706240b94ab2a8fa1fc81c10ff23c4de06e2a90b5e"
 "checksum err-derive 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "3d8ff65eb6c2fc68e76557239d16f5698fd56603925b89856d3f0f7105fd4543"
 "checksum fake-simd 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
-"checksum fastobo 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d97bd9c828413e252ebbeaae190e9224e61903e32c4737a2818982d8b3a72bbc"
-"checksum fastobo-derive-internal 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1d7fe0f52b8d5c78981061e224056e14a4fe53e22453aba9b7cf687ed8f18977"
-"checksum fastobo-graphs 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "396c38d3046c3d54f03ce5744fc8807770277be19d25e9ca7814b66e13ae22c8"
+"checksum fastobo 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)" = "3e0441ea4e48bdbb47df077eb802025a40ba4766ed0873c34dc3ab8fa06c8d4e"
+"checksum fastobo-derive-internal 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)" = "34d9de80af26852544692e439067143130b5e7a1f862c45eb7d0c8eb3226b1da"
+"checksum fastobo-graphs 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "5ec23cfedb0211343bd3a2c316cd85b6cb04c758e5619d96d26af2ab715766d8"
 "checksum fastobo-syntax 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "bccff634d27f19eb17d86d713bb913d9d29ce5848f849ac2eb95f0450d578166"
 "checksum fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "2fad85553e09a6f881f739c29f0b00b0f01357c743266d478b68951ce23285f3"
 "checksum generic-array 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)" = "c68f0274ae0e023facc3c97b2e00f076be70e254bc851d972503b328db79b2ec"

@@ -227,7 +227,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> url = "http://purl.obolibrary.org/obo/pato.json"
     ///     >>> doc = fastobo.load_graph(urlopen(url))
     ///     >>> doc[3]
-    ///     TermFrame(Url('http://purl.obolibrary.org/obo/PATO_0000000'))
+    ///     TermFrame(PrefixedIdent('PATO', '0000000'))
     ///
     /// Note:
     ///     OBO graphs only contains URL identifiers, and deserializing one

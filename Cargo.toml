@@ -3,7 +3,7 @@ members = ["derive"]
 
 [package]
 name = "fastobo-py"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Martin Larralde <martin.larralde@ens-paris-saclay.fr>"]
 publish = false
 build = "src/build.rs"

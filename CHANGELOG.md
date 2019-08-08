@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.3.1...HEAD
+
+
+## [v0.3.1] - 2019-08-08
+
+[v0.3.1]: https://github.com/fastobo/fastobo/compare/v0.3.0...v0.3.1
+
+### Fixed
+- `PyFile.write` calling `write` with two arguments causing duck typing check
+  to fail all the time in `dump_graph`.
 
 
 ## [v0.3.0] - 2019-08-08

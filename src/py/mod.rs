@@ -32,6 +32,7 @@ use fastobo_graphs::IntoGraph;
 use fastobo_graphs::model::GraphDocument;
 
 use crate::error::Error;
+use crate::error::GraphError;
 use crate::pyfile::PyFileRead;
 use crate::pyfile::PyFileWrite;
 use crate::utils::AsGILRef;
@@ -72,7 +73,6 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     use self::xref::PyInit_xref;
 
     m.add("__package__", "fastobo")?;
-    // m.add("__built__", pyo3_built!(py, built))?;
 
     add_submodule!(py, m, abc);
     add_submodule!(py, m, doc);
@@ -211,11 +211,13 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     /// Returns:
     ///     `~fastobo.doc.OboDoc`: the first graph of the OBO graph
     ///     converted to an OBO document. The schema allows for more than
-    ///     one graph but this is never really used.
+    ///     one graph but this is only used when merging imports into the
+    ///     same document.
     ///
     /// Raises:
     ///     TypeError: when the argument is not a `str` or a binary stream.
-    ///     SyntaxError: when the document is not in valid OBO syntax.
+    ///     ValueError: when the JSON is not a valid OBO Graph.
+    ///     SyntaxError: when the document contains invalid OBO identifiers.
     ///     OSError: when an underlying OS error occurs.
     ///     *other*: any exception raised by ``fh.read``.
     ///
@@ -229,19 +231,13 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc[3]
     ///     TermFrame(PrefixedIdent('PATO', '0000000'))
     ///
-    /// Note:
-    ///     OBO graphs only contains URL identifiers, and deserializing one
-    ///     will not compact this function automatically. Consider using the
-    ///     `~fastobo.doc.OboDoc.compact_ids` method if that is the expected
-    ///     result.
-    ///
     #[pyfn(m, "load_graph")]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
         // Parse the source graph document.
         let doc: GraphDocument = if let Ok(s) = fh.downcast_ref::<PyString>() {
             let path = s.to_string()?;
             fastobo_graphs::from_file(path.as_ref())
-                .map_err(|e| RuntimeError::py_err(e.to_string()))?
+                .map_err(|e| PyErr::from(GraphError::from(e)))?
         } else {
             match PyFileRead::from_object(fh.py(), fh) {
                 // Object is a binary file-handle: attempt to parse the
@@ -250,7 +246,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
                     fastobo_graphs::from_reader(&mut f)
                         .map_err(|e| f
                             .into_err()
-                            .unwrap_or_else(|| RuntimeError::py_err(e.to_string())))?
+                            .unwrap_or_else(|| GraphError::from(e).into())
+                        )?
                 }
                 // Object is not a binary file-handle: wrap the inner error
                 // into a `TypeError` and raise that error.
@@ -269,20 +266,41 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
 
         // Convert the graph to an OBO document
         let graph = doc.graphs.into_iter().next().unwrap();
-        let doc = obo::OboDoc::from_graph(graph)
-            .map_err(|e| RuntimeError::py_err(e.to_string()))?;
+        let doc = obo::OboDoc::from_graph(graph).map_err(GraphError::from)?;
 
         // Convert the OBO document to a Python handle
         Ok(OboDoc::from_py(doc, py))
     }
 
-    /// dump_graph(obj, fh)
+    /// dump_graph(doc, fh)
     /// --
     ///
-    /// Dump an OBO graph into the given writer or file handle.
+    /// Dump an OBO graph into the given writer or file handle, serialized
+    /// into a compact JSON representation.
+    ///
+    /// Arguments:
+    ///     fh (str or file-handle): the path to a file, or a writable
+    ///         **binary** stream to write the serialized graph into.
+    ///         *A binary stream needs a* ``write(b)`` *method that accepts
+    ///         binary strings*.
+    ///     doc (`~fastobo.doc.OboDoc`): the OBO document to be converted
+    ///         into an OBO Graph.
+    ///
+    /// Raises:
+    ///     TypeError: when the argument have invalid types.
+    ///     ValueError: when the JSON serialization fails.
+    ///     OSError: when an underlying OS error occurs.
+    ///     *other*: any exception raised by ``fh.read``.
+    ///
+    /// Example:
+    ///     Use ``fastobo`` to convert an OBO file into an OBO graph:
+    ///
+    ///     >>> doc = fastobo.load("tests/data/plana.obo")
+    ///     >>> fastobo.dump_graph(doc, "tests/data/plana.json")
+    ///
     #[pyfn(m, "dump_graph")]
     fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
-        // Convert OBO document to OBO JSON.
+        // Convert OBO document to an OBO Graph document.
         let doc = obo::OboDoc::from_py(obj.clone_py(py), py).into_graph()
             .map_err(|e| RuntimeError::py_err(e.to_string()))?;
         // Write the document
@@ -290,18 +308,18 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
             // Write into a file if given a path as a string.
             let path = s.to_string()?;
             fastobo_graphs::to_file(path.as_ref(), &doc)
-                .map_err(|e| RuntimeError::py_err(e.to_string()))
+                .map_err(|e| PyErr::from(GraphError::from(e)))
         } else {
             // Write into the handle if given a writable file.
             match PyFileWrite::from_object(fh.py(), fh) {
-                // Object is a binary file-handle: attempt to parse the
-                // document and return an `OboDoc` object.
+                // Object is a binary file-handle: attempt to write the
+                // `GraphDocument` to the file handle.
                 Ok(mut f) => {
-                    unimplemented!()
-                    // fastobo_graphs::from_reader(&mut f)
-                    //     .map_err(|e| f
-                    //         .into_err()
-                    //         .unwrap_or_else(|| RuntimeError::py_err(e.to_string())))?
+                    fastobo_graphs::to_writer(&mut f, &doc)
+                        .map_err(|e| f
+                            .into_err()
+                            .unwrap_or_else(|| GraphError::from(e).into())
+                        )
                 }
                 // Object is not a binary file-handle: wrap the inner error
                 // into a `TypeError` and raise that error.

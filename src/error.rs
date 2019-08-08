@@ -7,6 +7,7 @@ use pest::error::LineColLocation;
 use pyo3::exceptions::OSError;
 use pyo3::exceptions::RuntimeError;
 use pyo3::exceptions::SyntaxError;
+use pyo3::exceptions::ValueError;
 use pyo3::PyErr;
 
 use fastobo::parser::Rule;
@@ -133,5 +134,32 @@ impl From<Error> for PyErr {
 impl<T> Into<pyo3::PyResult<T>> for Error {
     fn into(self) -> pyo3::PyResult<T> {
         Err(pyo3::PyErr::from(self))
+    }
+}
+
+/// A wrapper to convert `fastobo_graphs::error::Error` into a `PyErr`.
+pub struct GraphError(fastobo_graphs::error::Error);
+
+impl From<fastobo_graphs::error::Error> for GraphError {
+    fn from(e: fastobo_graphs::error::Error) -> Self {
+        GraphError(e)
+    }
+}
+
+impl From<GraphError> for PyErr {
+    fn from(err: GraphError) -> Self {
+        match err.0 {
+            fastobo_graphs::error::Error::OboSyntaxError(error) => {
+                Error::from(error).into()
+            }
+            fastobo_graphs::error::Error::IOError(error) => {
+                let desc = <std::io::Error as std::error::Error>::description(&error).to_string();
+                match error.raw_os_error() {
+                    Some(code) => OSError::py_err((code, desc)),
+                    None => OSError::py_err((desc,)),
+                }
+            }
+            other => ValueError::py_err(other.to_string()),
+        }
     }
 }

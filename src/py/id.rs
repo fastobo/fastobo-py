@@ -337,6 +337,34 @@ impl PyObjectProtocol for PrefixedIdent {
         let py = unsafe { Python::assume_gil_acquired() };
         Ok(self.as_gil_ref(py).to_string())
     }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
+        let py = other.py();
+        if let Ok(r) = other.downcast_ref::<PrefixedIdent>() {
+            let lp = &*self.prefix.as_ref(py);
+            let ll = &*self.local.as_ref(py);
+            let rp = &*r.prefix.as_ref(py);
+            let rl = &*r.local.as_ref(py);
+            match op {
+                CompareOp::Eq => Ok((lp, ll) == (rp, rl)),
+                CompareOp::Ne => Ok((lp, ll) != (rp, rl)),
+                CompareOp::Lt => Ok((lp, ll) < (rp, rl)),
+                CompareOp::Le => Ok((lp, ll) <= (rp, rl)),
+                CompareOp::Gt => Ok((lp, ll) > (rp, rl)),
+                CompareOp::Ge => Ok((lp, ll) >= (rp, rl)),
+            }
+        } else {
+            match op {
+                CompareOp::Eq => Ok(false),
+                CompareOp::Ne => Ok(true),
+                _ => {
+                    let n = other.get_type().name();
+                    let msg = format!("expected PrefixedIdent, found {}", n);
+                    TypeError::into(msg)
+                }
+            }
+        }
+    }
 }
 
 // --- UnprefixedIdent --------------------------------------------------------
@@ -504,7 +532,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///     ValueError: invalid url: ...
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd)]
 #[opaque_typedef(derive(FromInner, IntoInner))]
 pub struct Url {
     inner: url::Url,
@@ -587,14 +615,14 @@ impl PyObjectProtocol for Url {
 
     /// Compare to another `Url` or `str` instance.
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-        if let Ok(u) = other.downcast_ref::<Url>() {
+        if let Ok(url) = other.downcast_ref::<Url>() {
             match op {
-                CompareOp::Lt => Ok(self.inner < u.inner),
-                CompareOp::Le => Ok(self.inner <= u.inner),
-                CompareOp::Eq => Ok(self.inner == u.inner),
-                CompareOp::Ne => Ok(self.inner != u.inner),
-                CompareOp::Gt => Ok(self.inner > u.inner),
-                CompareOp::Ge => Ok(self.inner >= u.inner),
+                CompareOp::Lt => Ok(self < url),
+                CompareOp::Le => Ok(self <= url),
+                CompareOp::Eq => Ok(self == url),
+                CompareOp::Ne => Ok(self != url),
+                CompareOp::Gt => Ok(self > url),
+                CompareOp::Ge => Ok(self >= url),
             }
         } else {
             match op {
@@ -614,7 +642,7 @@ impl PyObjectProtocol for Url {
 
 /// The prefix of a prefixed identifier.
 #[pyclass(module = "fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd)]
 #[opaque_typedef(derive(FromInner, IntoInner, AsRefInner))]
 pub struct IdentPrefix {
     inner: ast::IdentPrefix,
@@ -687,7 +715,7 @@ impl PyObjectProtocol for IdentPrefix {
 
 /// The local component of a prefixed identifier.
 #[pyclass(module = "fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd)]
 #[opaque_typedef(derive(FromInner, IntoInner))]
 pub struct IdentLocal {
     inner: ast::IdentLocal,

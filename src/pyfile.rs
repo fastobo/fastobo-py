@@ -119,7 +119,7 @@ impl<'p> PyFileWrite<'p> {
         // FIXME
         unsafe {
             let file = PyObject::from_borrowed_ptr(py, obj.as_ptr());
-            file.call_method1(py, "write", (0, PyBytes::new(py, b"")))
+            file.call_method1(py, "write", (PyBytes::new(py, b""),))
                 .map(|_| PyFileWrite {
                     file,
                     py,

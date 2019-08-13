@@ -18,7 +18,7 @@ built = "0.3.1"
 [dependencies]
 pyo3 = { git = "https://github.com/PyO3/pyo3", features = ["unsound-subclass"] }
 pest = "2.1.1"
-libc = "0.2.59"
+libc = "0.2.61"
 url = "2.0.0"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"

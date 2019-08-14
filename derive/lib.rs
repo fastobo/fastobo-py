@@ -201,14 +201,14 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     let meta = ast
         .attrs
         .iter()
-        .find(|attr| attr.path.is_ident(syn::Ident::new("wraps", attr.span())))
+        .find(|attr| attr.path.is_ident(&syn::Ident::new("wraps", attr.span())))
         .expect("could not find #[wraps] attribute")
         .parse_meta()
         .expect("could not parse #[wraps] argument");
 
     let base = match meta {
         syn::Meta::List(l) => match l.nested.iter().next().unwrap() {
-            syn::NestedMeta::Meta(syn::Meta::Word(w)) => w.clone(),
+            syn::NestedMeta::Meta(syn::Meta::Path(p)) => p.clone(),
             _ => panic!("#[wraps] argument must be a class ident"),
         },
         _ => panic!("#[wraps] argument must be a class ident"),
@@ -217,11 +217,11 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     // Build FromPyObject implementation
     let name = &ast.ident;
     let err_sub = syn::LitStr::new(
-        &format!("subclassing {} is not supported", base),
+        &format!("subclassing {:?} is not supported", base),
         base.span(),
     );
     let err_ty = syn::LitStr::new(
-        &format!("expected {} instance, {{}} found", base),
+        &format!("expected {:?} instance, {{}} found", base),
         base.span(),
     );
     let expanded = quote! {
@@ -301,11 +301,9 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             for f in n.named.iter() {
                 if let syn::Type::Path(p) = &f.ty {
                     if let Some(c) = p.path.segments.first() {
-                        if c.value().ident == "Vec" {
-                            if let syn::PathArguments::AngleBracketed(g) = &c.value().arguments {
-                                if let Some(syn::GenericArgument::Type(t)) =
-                                    g.args.first().map(|p| p.into_value())
-                                {
+                        if c.ident == "Vec" {
+                            if let syn::PathArguments::AngleBracketed(g) = &c.arguments {
+                                if let Some(syn::GenericArgument::Type(t)) = g.args.first() {
                                     elem = Some(t.clone());
                                     field = Some(f.ident.clone())
                                 }

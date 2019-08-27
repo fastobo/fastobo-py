@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 name = "fastobo_py"
 
 [build-dependencies]
-built = "0.3.1"
+built = "0.3.2"
 
 [dependencies]
 pyo3 = { git = "https://github.com/PyO3/pyo3", features = ["unsound-subclass"] }

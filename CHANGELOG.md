@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 [Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.3.1...HEAD
 
+### Added
+- Added BOSC 2019 poster reference to `README.md`.
+
 
 ## [v0.3.1] - 2019-08-08
 

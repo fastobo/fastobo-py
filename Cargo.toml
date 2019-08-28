@@ -24,5 +24,5 @@ opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
 
 fastobo = "0.7.0"
-fastobo-graphs = "0.1.1"
+fastobo-graphs = "0.1.2"
 fastobo-py-derive-internal = { path = "./derive" }

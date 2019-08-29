@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.3.2...HEAD
+
+
+## [v0.3.2] - 2019-08-29
+
+[v0.3.2]: https://github.com/fastobo/fastobo/compare/v0.3.1...v0.3.2
 
 ### Added
 - Added BOSC 2019 poster reference to `README.md`.
+- Added `__richcmp__` implementation to `fastobo.id.PrefixedIdent`.
+
+### Changed
+- Bumped Rust dependencies to latest PyO3 version.
 
 
 ## [v0.3.1] - 2019-08-08

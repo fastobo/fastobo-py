@@ -146,15 +146,15 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote!(#name(x) => x.into_object(py)));
+        variants.push(quote!(#name(x) => pyo3::IntoPy::into_py(x, py)));
     }
 
     // Build clone implementation
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
-        impl pyo3::IntoPyObject for #name {
-            fn into_object(self, py: Python) -> pyo3::PyObject {
+        impl pyo3::IntoPy<pyo3::PyObject> for #name {
+            fn into_py(self, py: Python) -> pyo3::PyObject {
                 use self::#name::*;
                 match self {
                     #(#variants,)*

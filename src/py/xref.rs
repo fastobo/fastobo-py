@@ -233,7 +233,11 @@ impl FromPy<XrefList> for fastobo::ast::XrefList {
 
 impl ToPyObject for XrefList {
     fn to_object(&self, py: Python) -> PyObject {
-        PyList::new(py, &self.xrefs).into_object(py)
+        let list = self.xrefs
+            .iter()
+            .map(|xref| xref.clone_py(py))
+            .collect();
+        IntoPy::into_py(XrefList::new(py, list), py)
     }
 }
 

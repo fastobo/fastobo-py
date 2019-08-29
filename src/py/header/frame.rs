@@ -74,7 +74,7 @@ impl FromPy<HeaderFrame> for obo::HeaderFrame {
 
 impl ToPyObject for HeaderFrame {
     fn to_object(&self, py: Python) -> PyObject {
-        PyList::new(py, &self.clauses).into_object(py)
+        IntoPy::into_py(PyList::new(py, &self.clauses), py)
     }
 }
 

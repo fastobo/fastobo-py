@@ -3,8 +3,8 @@
 
 extern crate fastobo;
 extern crate pyo3;
-// #[macro_use]
-// extern crate pyo3_built;
+#[macro_use]
+extern crate pyo3_built;
 extern crate libc;
 extern crate pest;
 extern crate url;

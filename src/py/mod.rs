@@ -73,6 +73,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     use self::xref::PyInit_xref;
 
     m.add("__package__", "fastobo")?;
+    m.add("__build__", pyo3_built!(py, built))?;
 
     add_submodule!(py, m, abc);
     add_submodule!(py, m, doc);

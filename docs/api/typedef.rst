@@ -1,6 +1,10 @@
 Typedef
 =======
 
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+
 Frame
 -----
 
@@ -15,206 +19,206 @@ Frame
 Clauses
 -------
 
-..autoclass:: AltIdClause(BaseTypedefClause)
+.. autoclass:: AltIdClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: BuiltinClause(BaseTypedefClause)
+.. autoclass:: BuiltinClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: CommentClause(BaseTypedefClause)
+.. autoclass:: CommentClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: ConsiderClause(BaseTypedefClause)
+.. autoclass:: ConsiderClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: CreatedByClause(BaseTypedefClause)
+.. autoclass:: CreatedByClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: CreationDateClause(BaseTypedefClause)
+.. autoclass:: CreationDateClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: DefClause(BaseTypedefClause)
+.. autoclass:: DefClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: DisjointFromClause(BaseTypedefClause)
+.. autoclass:: DisjointFromClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: DisjointOverClause(BaseTypedefClause)
+.. autoclass:: DisjointOverClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: DomainClause(BaseTypedefClause)
+.. autoclass:: DomainClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: EquivalentToChainClause(BaseTypedefClause)
+.. autoclass:: EquivalentToChainClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: EquivalentToClause(BaseTypedefClause)
+.. autoclass:: EquivalentToClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: ExpandAssertionToClause(BaseTypedefClause)
+.. autoclass:: ExpandAssertionToClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: ExpandExpressionToClause(BaseTypedefClause)
+.. autoclass:: ExpandExpressionToClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: HoldsOverChainClause(BaseTypedefClause)
+.. autoclass:: HoldsOverChainClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IntersectionOfClause(BaseTypedefClause)
+.. autoclass:: IntersectionOfClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: InverseOfClause(BaseTypedefClause)
+.. autoclass:: InverseOfClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsAClause(BaseTypedefClause)
+.. autoclass:: IsAClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsAnonymousClause(BaseTypedefClause)
+.. autoclass:: IsAnonymousClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsAntiSymmetricClause(BaseTypedefClause)
+.. autoclass:: IsAntiSymmetricClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsAsymmetricClause(BaseTypedefClause)
+.. autoclass:: IsAsymmetricClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsClassLevelClause(BaseTypedefClause)
+.. autoclass:: IsClassLevelClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsCyclicClause(BaseTypedefClause)
+.. autoclass:: IsCyclicClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsFunctionalClause(BaseTypedefClause)
+.. autoclass:: IsFunctionalClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsInverseFunctionalClause(BaseTypedefClause)
+.. autoclass:: IsInverseFunctionalClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsMetadataTagClause(BaseTypedefClause)
+.. autoclass:: IsMetadataTagClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsObsoleteClause(BaseTypedefClause)
+.. autoclass:: IsObsoleteClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsReflexiveClause(BaseTypedefClause)
+.. autoclass:: IsReflexiveClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsSymmetricClause(BaseTypedefClause)
+.. autoclass:: IsSymmetricClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: IsTransitiveClause(BaseTypedefClause)
+.. autoclass:: IsTransitiveClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: NameClause(BaseTypedefClause)
+.. autoclass:: NameClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: NamespaceClause(BaseTypedefClause)
+.. autoclass:: NamespaceClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: PropertyValueClause(BaseTypedefClause)
+.. autoclass:: PropertyValueClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: RangeClause(BaseTypedefClause)
+.. autoclass:: RangeClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: RelationshipClause(BaseTypedefClause)
+.. autoclass:: RelationshipClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: ReplacedByClause(BaseTypedefClause)
+.. autoclass:: ReplacedByClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: SubsetClause(BaseTypedefClause)
+.. autoclass:: SubsetClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: SynonymClause(BaseTypedefClause)
+.. autoclass:: SynonymClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: TransitiveOverClause(BaseTypedefClause)
+.. autoclass:: TransitiveOverClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: UnionOfClause(BaseTypedefClause)
+.. autoclass:: UnionOfClause(BaseTypedefClause)
   :members:
   :special-members:
 
 
-..autoclass:: XrefClause(BaseTypedefClause)
+.. autoclass:: XrefClause(BaseTypedefClause)
   :members:
   :special-members:

@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.3.3...HEAD
+
+
+## [v0.3.3] - 2019-09-10
+
+[v0.3.3]: https://github.com/fastobo/fastobo/compare/v0.3.2...v0.3.3
+
+### Changed
+- Use stable PyO3 release (`v0.8.0`).
+- Add back `__build__` attribute to check build variables.
 
 
 ## [v0.3.2] - 2019-08-29

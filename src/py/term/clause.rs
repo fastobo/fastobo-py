@@ -441,6 +441,16 @@ impl FromPy<DefClause> for fastobo::ast::TermClause {
 
 #[pymethods]
 impl DefClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, definition: String, xrefs: Option<&PyAny>) -> PyResult<()> {
+        let def = fastobo::ast::QuotedString::new(definition);
+        let list = match xrefs {
+            Some(x) => XrefList::collect(obj.py(), x)?,
+            None => XrefList::new(obj.py(), Vec::new()),
+        };
+        Ok(obj.init(Self::new(obj.py(), def, list)))
+    }
+
     #[getter]
     /// `str`: a textual definition for this term.
     fn get_definition(&self) -> PyResult<&str> {

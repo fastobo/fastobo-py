@@ -217,11 +217,11 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     // Build FromPyObject implementation
     let name = &ast.ident;
     let err_sub = syn::LitStr::new(
-        &format!("subclassing {:?} is not supported", base),
+        &format!("subclassing {} is not supported", quote!(#base)),
         base.span(),
     );
     let err_ty = syn::LitStr::new(
-        &format!("expected {:?} instance, {{}} found", base),
+        &format!("expected {} instance, {{}} found", quote!(#base)),
         base.span(),
     );
     let expanded = quote! {
@@ -245,7 +245,10 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
                         }
                     }
                 } else {
-                    pyo3::exceptions::TypeError::into(#err_ty)
+                    pyo3::exceptions::TypeError::into(format!(
+                        #err_ty,
+                        ob.get_type().name(),
+                    ))
                 }
             }
         }

@@ -113,7 +113,7 @@ pub struct Synonym {
     desc: fastobo::ast::QuotedString,
     scope: SynonymScope,
     ty: Option<Ident>,
-    xrefs: Py<XrefList>,
+    xrefs: XrefList,
 }
 
 impl ClonePy for Synonym {
@@ -144,11 +144,9 @@ impl FromPy<fastobo::ast::Synonym> for Synonym {
             ),
             scope: SynonymScope::new(syn.scope().clone()),
             ty: syn.ty().map(|id| id.clone().into_py(py)),
-            xrefs:
-                Py::new(py,
-                    std::mem::replace(syn.xrefs_mut(), fastobo::ast::XrefList::new(Vec::new()))
-                        .into_py(py)
-                ).unwrap(),
+            xrefs: std::mem::replace(
+                syn.xrefs_mut(), fastobo::ast::XrefList::new(Vec::new())
+            ).into_py(py)
         }
     }
 }
@@ -159,14 +157,37 @@ impl FromPy<Synonym> for fastobo::ast::Synonym {
             syn.desc,
             syn.scope.inner,
             syn.ty.map(|ty| ty.into_py(py)),
-            fastobo::ast::XrefList::from_py(
-                syn.xrefs.as_gil_ref(py).clone_py(py), py)
+            fastobo::ast::XrefList::from_py(syn.xrefs, py)
         )
     }
 }
 
 #[pymethods]
 impl Synonym {
+
+    #[new]
+    pub fn __init__(
+        obj: &PyRawObject,
+        desc: String,
+        scope: &str,
+        ty: Option<Ident>,
+        xrefs: Option<&PyAny>
+    ) -> PyResult<()> {
+        let list = match xrefs {
+            Some(x) => XrefList::collect(obj.py(), x)?,
+            None => XrefList::new(obj.py(), Vec::new()),
+        };
+
+        let synonym = Self {
+            desc: fastobo::ast::QuotedString::new(desc),
+            scope: SynonymScope::from_str(scope)?,
+            xrefs: list,
+            ty,
+        };
+
+        Ok(obj.init(synonym))
+    }
+
     #[getter]
     pub fn get_desc(&self) -> PyResult<String> {
         Ok(self.desc.as_str().to_owned())
@@ -201,14 +222,14 @@ impl Synonym {
     }
 
     #[getter]
-    pub fn get_xrefs<'py>(&self, py: Python<'py>) -> PyResult<Py<XrefList>> {
-        Ok(self.xrefs.clone_ref(py))
+    pub fn get_xrefs<'py>(&self, py: Python<'py>) -> PyResult<XrefList> {
+        Ok(self.xrefs.clone_py(py))
     }
 
     #[setter]
     pub fn set_xrefs(&mut self, xrefs: &XrefList) -> PyResult<()> {
         let py = unsafe { Python::assume_gil_acquired() };
-        self.xrefs = Py::new(py, xrefs.clone_py(py))?;
+        self.xrefs = xrefs.clone_py(py);
         Ok(())
     }
 }

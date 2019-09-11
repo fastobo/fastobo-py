@@ -199,8 +199,26 @@ pub struct XrefList {
 }
 
 impl XrefList {
-    fn new(_py: Python, xrefs: Vec<Py<Xref>>) -> Self {
+    /// Create a new `XrefList` from a vector of Xrefs.
+    pub fn new(_py: Python, xrefs: Vec<Py<Xref>>) -> Self {
         Self { xrefs }
+    }
+
+    /// Create a new `XrefList` from a `PyIterator`.
+    pub fn collect(py: Python, xrefs: &PyAny) -> PyResult<Self> {
+        let mut vec = Vec::new();
+        for item in PyIterator::from_object(py, xrefs)? {
+            let i = item?;
+            if Xref::is_exact_instance(i) {
+                unsafe {
+                    vec.push(Py::from_borrowed_ptr(i.as_ptr()));
+                }
+            } else {
+                let ty = i.get_type().name();
+                return TypeError::into(format!("expected Xref, found {}", ty));
+            }
+        }
+        Ok(Self { xrefs: vec })
     }
 }
 
@@ -246,19 +264,7 @@ impl XrefList {
     #[new]
     fn __init__(obj: &PyRawObject, xrefs: Option<&PyAny>) -> PyResult<()> {
         if let Some(x) = xrefs {
-            let mut vec = Vec::new();
-            for item in PyIterator::from_object(x.py(), x)? {
-                let i = item?;
-                if Xref::is_exact_instance(i) {
-                    unsafe {
-                        vec.push(Py::from_borrowed_ptr(i.as_ptr()));
-                    }
-                } else {
-                    let ty = i.get_type().name();
-                    return TypeError::into(format!("expected Xref, found {}", ty));
-                }
-            }
-            Ok(obj.init(Self::new(obj.py(), vec)))
+            Ok(obj.init(Self::collect(obj.py(), x)?))
         } else {
             Ok(obj.init(Self::new(obj.py(), Vec::new())))
         }
@@ -270,7 +276,7 @@ impl PyObjectProtocol for XrefList {
     fn __repr__(&self) -> PyResult<PyObject> {
         let py = unsafe { Python::assume_gil_acquired() };
         let fmt = PyString::new(py, "XrefList({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.to_object(py),))
+        fmt.call_method1(py, "format", (&self.xrefs.to_object(py),))
     }
 
     fn __str__(&self) -> PyResult<String> {

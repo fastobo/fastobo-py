@@ -34,6 +34,40 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::IdentLocal>()?;
     m.add_class::<self::Url>()?;
     m.add("__name__", "fastobo.id")?;
+
+
+    /// parse(s)
+    /// --
+    ///
+    /// Parse a string into an OBO identifier.
+    ///
+    /// Arguments:
+    ///     s (str): the string representation of an OBO identifier
+    ///
+    /// Returns:
+    ///     `~fastobo.id.BaseIdent`: the appropriate concrete subclass that
+    ///     can store the given identifier.
+    ///
+    /// Raises:
+    ///     ValueError: when the string could not be parsed as a valid OBO
+    ///         identifier.
+    ///
+    /// Example:
+    ///     >>> fastobo.id.parse("MS:1000031")
+    ///     PrefixedIdent('MS', '1000031')
+    ///     >>> fastobo.id.parse("part_of")
+    ///     UnprefixedIdent('part_of')
+    ///     >>> fastobo.id.parse("http://purl.obolibrary.org/obo/IAO_0000231")
+    ///     Url('http://purl.obolibrary.org/obo/IAO_0000231')
+    ///
+    #[pyfn(m, "parse")]
+    fn parse(py: Python, s: &str) -> PyResult<Ident> {
+        fastobo::ast::Ident::from_str(s)
+            .or(ValueError::into("could not parse identifier"))
+            .map(|ident| Ident::from_py(ident, py))
+    }
+
+
     Ok(())
 }
 

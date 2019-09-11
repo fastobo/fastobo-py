@@ -3,6 +3,7 @@ Library Reference
 
 .. toctree::
    :hidden:
+   :maxdepth: 2
 
    doc
    abc
@@ -21,20 +22,37 @@ Library Reference
 
 
 Functions
-^^^^^^^^^
+---------
+
+``fastobo.load``
+^^^^^^^^^^^^^^^^
 
 .. autofunction:: fastobo.load
 
+
+``fastobo.loads``
+^^^^^^^^^^^^^^^^^
+
 .. autofunction:: fastobo.loads
+
+
+``fastobo.load_graph``
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: fastobo.load_graph
 
 
+``fastobo.id.parse``
+^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: fastobo.id.parse
+
+
 Data structures
-^^^^^^^^^^^^^^^
+---------------
 
 Document (`fastobo.doc`)
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: fastobo.doc
 .. autosummary::
@@ -44,7 +62,7 @@ Document (`fastobo.doc`)
 
 
 Abstract Base Classes (`fastobo.abc`)
---------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: fastobo.abc
 .. autosummary::
@@ -58,7 +76,7 @@ Abstract Base Classes (`fastobo.abc`)
 
 
 Identifier (`fastobo.id`)
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: fastobo.id
 .. autosummary::
@@ -73,7 +91,7 @@ Identifier (`fastobo.id`)
 
 
 Header (`fastobo.header`)
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: fastobo.header
 .. autosummary::
@@ -106,7 +124,7 @@ Header (`fastobo.header`)
 
 
 Term (`fastobo.term`)
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: fastobo.term
 .. autosummary::
@@ -140,7 +158,7 @@ Term (`fastobo.term`)
 
 
 Typedef (`fastobo.typedef`)
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: fastobo.typedef
 .. autosummary::
@@ -193,7 +211,7 @@ Typedef (`fastobo.typedef`)
 
 
 Property Value (`fastobo.pv`)
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: fastobo.pv
 .. autosummary::
@@ -205,7 +223,7 @@ Property Value (`fastobo.pv`)
 
 
 Synonym (`fastobo.syn`)
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: fastobo.syn
 .. autosummary::
@@ -216,7 +234,7 @@ Synonym (`fastobo.syn`)
 
 
 Xref (`fastobo.xref`)
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 .. currentmodule:: fastobo.xref
 .. autosummary::

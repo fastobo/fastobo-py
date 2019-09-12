@@ -4,6 +4,6 @@
 
 # --- Launch manylinux container ---------------------------------------------
 
-IMG="quay.io/pypa/manylinux1_x86_64"
+IMG="pypywheels/manylinux2010-pypy_x86_64"
 log Launching 'manylinux' docker container
 docker run -d -e TERM=$TERM -v $TRAVIS_BUILD_DIR:/io --name manylinux --rm -it $IMG sh

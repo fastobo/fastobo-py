@@ -59,6 +59,8 @@ jobs:
       <<: *test-python
     - python: 3.7
       <<: *test-python
+    - python: pypy3
+      <<: *test-python
     # OSX
     - env: PYTHON=python3.6
       <<: *test-python-osx

@@ -8,8 +8,13 @@ if [ "$PYTHON" = "python3.7" ]; then
   log Updating Python to v${PYTHON#python}
   brew unlink python
   brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/python.rb
+elif [ "$PYTHON" = "pypy3" ]; then
+  log Installing PyPy3
+  brew unlink python
+  brew install pypy3
+  ln -s /usr/local/bin/pypy3 /usr/local/bin/python3
 else
-  log Using Python ${PYTHON#python}
+  log Using Python v${PYTHON#python}
 fi
 
 
@@ -25,18 +30,15 @@ log Installing Python requirements
 $PYTHON -m pip install -r "$TRAVIS_BUILD_DIR/ci/requirements.txt"
 
 
-# --- Setup sccache ----------------------------------------------------------
+# --- Setup cargo-cache ------------------------------------------------------
 
-LATEST=$(cargo search sccache | grep sccache | cut -f2 -d"\"")
-LOCAL=$(sccache --version 2>/dev/null | cut -f2 -d" " || echo "none")
+LATEST=$(cargo search cargo-cache | head -n1 | cut -f2 -d"\"")
+LOCAL=$(cargo cache --version 2>/dev/null | cut -d" " -f2 || echo "none")
 
 if [ "$LATEST" != "$LOCAL" ]; then
-	log Downloading sccache v$LATEST
-  URL="https://github.com/mozilla/sccache/releases/download/${LATEST}/sccache-${LATEST}-x86_64-apple-darwin.tar.gz"
-	curl -SsL $URL | tar xzv -C /tmp
-	mkdir -p "$HOME/.cargo/bin"
-	mv "/tmp/sccache-${LATEST}-x86_64-apple-darwin/sccache" "$HOME/.cargo/bin/sccache"
-	chmod +x "$HOME/.cargo/bin/sccache"
+        log Installing cargo-cache v$LATEST
+        cargo install -f cargo-cache --root "$HOME/.cargo"
 else
-	log Using cached sccache v$LOCAL
+        log Using cached cargo-cache v$LOCAL
 fi
+

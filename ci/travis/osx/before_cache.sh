@@ -6,3 +6,8 @@
 # --- Cleanup Homebrew cache -------------------------------------------------
 
 brew cleanup
+
+
+# --- Cleanup Rust cache -----------------------------------------------------
+
+cargo cache -a

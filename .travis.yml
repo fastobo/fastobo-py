@@ -5,6 +5,7 @@ env:
   global:
     - RUST_BACKTRACE=1
     - PATH="$HOME/.cargo/bin:$PATH"
+    - PYTHON_SYS_EXECUTABLE="python3"
 
 git:
   depth: false
@@ -37,6 +38,7 @@ stages:
   language: generic
   cache:
     directories:
+      - $HOME/.cargo/bin
       - $HOME/.cache/pip
       - $TRAVIS_BUILD_DIR/target
       - $HOME/Library/Caches/Homebrew
@@ -64,6 +66,8 @@ jobs:
     - env: PYTHON=python3.6
       <<: *test-python-osx
     - env: PYTHON=python3.7
+      <<: *test-python-osx
+    - env: PYTHON=pypy3
       <<: *test-python-osx
 
 deploy:

@@ -122,7 +122,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
             let path = s.to_string()?;
             match fastobo::from_file(path.as_ref()) {
                 Ok(doc) => Ok(doc.into_py(py)),
-                Err(e) => Error::from(e).into(),
+                Err(e) => Error::from(e).with_path(path).into(),
             }
         } else {
             match PyFileRead::from_object(fh.py(), fh) {

@@ -4,6 +4,7 @@ use std::path::Path;
 use pest::error::ErrorVariant;
 use pest::error::InputLocation;
 use pest::error::LineColLocation;
+use pyo3::exceptions::FileNotFoundError;
 use pyo3::exceptions::OSError;
 use pyo3::exceptions::RuntimeError;
 use pyo3::exceptions::SyntaxError;
@@ -74,29 +75,45 @@ impl PestError {
 }
 
 /// A wrapper to convert `fastobo::error::Error` into a `PyErr`.
-pub struct Error(fastobo::error::Error);
+pub struct Error {
+    err: fastobo::error::Error,
+    path: Option<String>,
+}
+
+impl Error {
+    pub fn with_path<S: Into<String>>(mut self, path: S) -> Self {
+        self.path = Some(path.into());
+        self
+    }
+}
 
 impl From<Error> for fastobo::error::Error {
-    fn from(err: Error) -> Self {
-        err.0
+    fn from(error: Error) -> Self {
+        error.err
     }
 }
 
 impl From<fastobo::error::SyntaxError> for Error {
     fn from(err: fastobo::error::SyntaxError) -> Self {
-        Self(fastobo::error::Error::from(err))
+        Self {
+            err: fastobo::error::Error::from(err),
+            path: None
+        }
     }
 }
 
 impl From<fastobo::error::Error> for Error {
     fn from(err: fastobo::error::Error) -> Self {
-        Self(err)
+        Self {
+            err,
+            path: None
+        }
     }
 }
 
 impl From<Error> for PyErr {
-    fn from(err: Error) -> Self {
-        match err.0 {
+    fn from(error: Error) -> Self {
+        match error.err {
             fastobo::error::Error::SyntaxError { error } => {
                 match error {
                     fastobo::error::SyntaxError::ParserError { error } => {
@@ -118,11 +135,12 @@ impl From<Error> for PyErr {
                 }
             }
 
-            fastobo::error::Error::IOError { error } => {
-                let desc = <std::io::Error as std::error::Error>::description(&error).to_string();
-                match error.raw_os_error() {
-                    Some(code) => OSError::py_err((code, desc)),
-                    None => OSError::py_err((desc,)),
+            fastobo::error::Error::IOError { error: ioerror } => {
+                let desc = <std::io::Error as std::error::Error>::description(&ioerror).to_string();
+                match ioerror.raw_os_error() {
+                    Some(2) => FileNotFoundError::py_err((2, desc, error.path)),
+                    Some(code) => OSError::py_err((code, desc, error.path)),
+                    None => OSError::py_err((desc,))
                 }
             }
 

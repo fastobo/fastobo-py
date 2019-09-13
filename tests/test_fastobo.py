@@ -10,7 +10,7 @@ MS = os.path.realpath(os.path.join(__file__, "..", "data", "ms.obo"))
 
 class TestLoad(unittest.TestCase):
 
-    @unittest.expectedFailure
+    @unittest.skipIf(platform.python_implementation() == 'CPython', 'language-level bug')
     def test_file_not_found(self):
         self.assertRaises(FileNotFoundError, fastobo.load, "abcdef")
 

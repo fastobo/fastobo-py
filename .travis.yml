@@ -5,7 +5,6 @@ env:
   global:
     - RUST_BACKTRACE=1
     - PATH="$HOME/.cargo/bin:$PATH"
-    - PYTHON_SYS_EXECUTABLE="python3"
 
 git:
   depth: false

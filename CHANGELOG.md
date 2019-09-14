@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.4.0...HEAD
+
+
+## [v0.4.0] - 2019-09-14
+
+[v0.4.0]: https://github.com/fastobo/fastobo/compare/v0.3.3...v0.4.0
+
+### Added 
+- `__init__` implementation for `fastobo.term.DefClause`
+- `__init__` implementation for `fastobo.syn.Synonym`
+- Precompiled wheels for PyPy3 on OSX and Linux.
+
+### Fixed
+- `XrefList.__repr__` implementation entering infinite recursion.
+- Derive macros generating weird error messages for some `TypeError`s.
+- Enabled `extension-module` feature of `pyo3` to allow static linking to Python interpreter.
+- Inconsistent error-chaining in Python causing issues with `try/except` blocks.
 
 
 ## [v0.3.3] - 2019-09-10

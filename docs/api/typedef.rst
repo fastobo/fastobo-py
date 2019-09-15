@@ -23,7 +23,7 @@ Clauses
 -------
 
 ``BaseTypedefClause``
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: BaseTypedefClause(AbstractEntityClause)
    :members:

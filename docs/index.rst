@@ -13,8 +13,11 @@
 .. |PyPI| image:: https://img.shields.io/pypi/v/fastobo.svg?style=flat-square&maxAge=300
    :target: https://pypi.org/project/fastobo
 
-.. |Travis| image:: https://img.shields.io/travis/fastobo/fastobo-py.svg?style=flat-square&maxAge=3600
+.. |Travis| image:: https://img.shields.io/travis/fastobo/fastobo-py.svg?logo=travis&style=flat-square&maxAge=3600
    :target: https://travis-ci.org/fastobo/fastobo-py/branches
+
+.. |AppVeyor| image:: https://img.shields.io/appveyor/ci/althonos/fastobo-py/master?logo=appveyor&style=flat-square&maxAge=600
+   :target: https://ci.appveyor.com/project/althonos/fastobo-py
 
 .. |Wheel| image:: https://img.shields.io/pypi/wheel/fastobo.svg?style=flat-square&maxAge=2678400
    :target: https://pypi.org/project/fastobo

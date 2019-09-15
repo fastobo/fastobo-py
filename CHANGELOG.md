@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.4.1] - 2019-09-15
 
-[v0.4.1]: https://github.com/fastobo/fastobo/compare/v0.4.0...v0.4.1
+[v0.4.1]: https://github.com/fastobo/fastobo-py/compare/v0.4.0...v0.4.1
 
 ### Added
 - Precompiled wheels for CPython 3.5, 3.6 and 3.7 on Windows x86-64.
@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.4.0] - 2019-09-14
 
-[v0.4.0]: https://github.com/fastobo/fastobo/compare/v0.3.3...v0.4.0
+[v0.4.0]: https://github.com/fastobo/fastobo-py/compare/v0.3.3...v0.4.0
 
 ### Added 
 - `__init__` implementation for `fastobo.term.DefClause`
@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.3.3] - 2019-09-10
 
-[v0.3.3]: https://github.com/fastobo/fastobo/compare/v0.3.2...v0.3.3
+[v0.3.3]: https://github.com/fastobo/fastobo-py/compare/v0.3.2...v0.3.3
 
 ### Changed
 - Use stable PyO3 release (`v0.8.0`).
@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.3.2] - 2019-08-29
 
-[v0.3.2]: https://github.com/fastobo/fastobo/compare/v0.3.1...v0.3.2
+[v0.3.2]: https://github.com/fastobo/fastobo-py/compare/v0.3.1...v0.3.2
 
 ### Added
 - Added BOSC 2019 poster reference to `README.md`.
@@ -57,7 +57,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.3.1] - 2019-08-08
 
-[v0.3.1]: https://github.com/fastobo/fastobo/compare/v0.3.0...v0.3.1
+[v0.3.1]: https://github.com/fastobo/fastobo-py/compare/v0.3.0...v0.3.1
 
 ### Fixed
 - `PyFile.write` calling `write` with two arguments causing duck typing check
@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.3.0] - 2019-08-08
 
-[v0.3.0]: https://github.com/fastobo/fastobo/compare/v0.2.2...v0.3.0
+[v0.3.0]: https://github.com/fastobo/fastobo-py/compare/v0.2.2...v0.3.0
 
 ### Added
 - `load_graph` and `dump_graph` functions to read and write OBO JSON files.
@@ -77,7 +77,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.2.2] - 2019-07-24
 
-[v0.2.2]: https://github.com/fastobo/fastobo/compare/v0.2.1...v0.2.2
+[v0.2.2]: https://github.com/fastobo/fastobo-py/compare/v0.2.1...v0.2.2
 
 ### Changed
 - Updated to `fastobo` [v0.6.1](https://github.com/fastobo/fastobo/blob/master/CHANGELOG.md#v061---2019-07-24).
@@ -86,7 +86,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.2.1] - 2019-07-23
 
-[v0.2.1]: https://github.com/fastobo/fastobo/compare/v0.2.0...v0.2.1
+[v0.2.1]: https://github.com/fastobo/fastobo-py/compare/v0.2.0...v0.2.1
 
 ### Changed
 - Updated to `fastobo` [v0.6.0](https://github.com/fastobo/fastobo/blob/master/CHANGELOG.md#v060---2019-07-23).
@@ -97,7 +97,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.2.0] - 2019-07-22
 
-[v0.2.0]: https://github.com/fastobo/fastobo/compare/v0.1.1...v0.2.0
+[v0.2.0]: https://github.com/fastobo/fastobo-py/compare/v0.1.1...v0.2.0
 
 ### Changed
 - Updated to `fastobo` [v0.5.0](https://github.com/fastobo/fastobo/blob/master/CHANGELOG.md#v050---2019-07-15).
@@ -111,7 +111,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.1.1] - 2019-06-28
 
-[v0.1.1]: https://github.com/fastobo/fastobo/compare/v0.1.0...v0.1.1
+[v0.1.1]: https://github.com/fastobo/fastobo-py/compare/v0.1.0...v0.1.1
 
 ### Fixed
 - PyPI release not being uploaded because of older development release.
@@ -119,6 +119,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.1.0] - 2019-06-28
 
-[v0.1.0]: https://github.com/fastobo/fastobo/compare/77dd00c...v0.1.0
+[v0.1.0]: https://github.com/fastobo/fastobo-py/compare/77dd00c...v0.1.0
 
 Initial release.

@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.4.1...HEAD
+
+
+## [v0.4.1] - 2019-09-15
+
+[v0.4.1]: https://github.com/fastobo/fastobo/compare/v0.4.0...v0.4.1
+
+### Added
+- Precompiled wheels for CPython 3.5, 3.6 and 3.7 on Windows x86-64.
 
 
 ## [v0.4.0] - 2019-09-14

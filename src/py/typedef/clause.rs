@@ -9,6 +9,7 @@ use pyo3::exceptions::TypeError;
 use pyo3::exceptions::ValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
+use pyo3::types::PyDateTime;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
@@ -2661,12 +2662,12 @@ impl PyObjectProtocol for ConsiderClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct CreatedByClause {
-    name: fastobo::ast::UnquotedString,
+    creator: fastobo::ast::UnquotedString,
 }
 
 impl CreatedByClause {
-    pub fn new(_py: Python, name: fastobo::ast::UnquotedString) -> Self {
-        Self { name }
+    pub fn new(_py: Python, creator: fastobo::ast::UnquotedString) -> Self {
+        Self { creator }
     }
 }
 
@@ -2678,7 +2679,7 @@ impl Display for CreatedByClause {
 
 impl From<CreatedByClause> for fastobo::ast::TypedefClause {
     fn from(clause: CreatedByClause) -> Self {
-        fastobo::ast::TypedefClause::CreatedBy(clause.name)
+        fastobo::ast::TypedefClause::CreatedBy(clause.creator)
     }
 }
 
@@ -2689,12 +2690,31 @@ impl FromPy<CreatedByClause> for fastobo::ast::TypedefClause {
 }
 
 impl_raw_tag!(CreatedByClause, "created_by");
-impl_raw_value!(CreatedByClause, "{}", self.name);
+impl_raw_value!(CreatedByClause, "{}", self.creator);
+
+#[pymethods]
+impl CreatedByClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, creator: String) -> PyResult<()> {
+        Ok(obj.init(Self::new(obj.py(), fastobo::ast::UnquotedString::new(creator))))
+    }
+
+    #[getter]
+    fn get_creator(&self) -> &str {
+        self.creator.as_str()
+    }
+
+    #[setter]
+    fn set_creator(&mut self, creator: String) -> PyResult<()> {
+        self.creator = fastobo::ast::UnquotedString::new(creator);
+        Ok(())
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for CreatedByClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CreatedByClause(self.name))
+        impl_repr!(self, CreatedByClause(self.creator))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2702,7 +2722,7 @@ impl PyObjectProtocol for CreatedByClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.name)
+        impl_richmp!(self, other, op, self.creator)
     }
 }
 
@@ -2740,6 +2760,25 @@ impl FromPy<CreationDateClause> for fastobo::ast::TypedefClause {
 
 impl_raw_tag!(CreationDateClause, "creation_date");
 impl_raw_value!(CreationDateClause, "{}", self.date);
+
+#[pymethods]
+impl CreationDateClause {
+    #[getter]
+    /// `datetime.datetime`: the date and time this entity was created.
+    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDateTime> {
+        PyDateTime::new(
+            py,
+            self.date.year() as i32,
+            self.date.month(),
+            self.date.day(),
+            self.date.hour(),
+            self.date.minute(),
+            self.date.second(),
+            self.date.fraction().map(|f| (f*1000.0) as u32).unwrap_or(0),
+            None,
+        )
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for CreationDateClause {

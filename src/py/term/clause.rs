@@ -1334,18 +1334,20 @@ impl PyObjectProtocol for DisjointFromClause {
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct RelationshipClause {
-    relation: Ident,
+    #[pyo3(set)]
+    typedef: Ident,
+    #[pyo3(set)]
     term: Ident,
 }
 
 impl RelationshipClause {
-    pub fn new<R, T>(py: Python, relation: R, term: T) -> Self
+    pub fn new<R, T>(py: Python, typedef: R, term: T) -> Self
     where
         R: IntoPy<Ident>,
         T: IntoPy<Ident>,
     {
         Self {
-            relation: relation.into_py(py),
+            typedef: typedef.into_py(py),
             term: term.into_py(py),
         }
     }
@@ -1354,7 +1356,7 @@ impl RelationshipClause {
 impl ClonePy for RelationshipClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            relation: self.relation.clone_py(py),
+            typedef: self.typedef.clone_py(py),
             term: self.term.clone_py(py),
         }
     }
@@ -1370,17 +1372,35 @@ impl Display for RelationshipClause {
 
 impl FromPy<RelationshipClause> for fastobo::ast::TermClause {
     fn from_py(clause: RelationshipClause, py: Python) -> fastobo::ast::TermClause {
-        ast::TermClause::Relationship(clause.relation.into_py(py), clause.term.into_py(py))
+        ast::TermClause::Relationship(clause.typedef.into_py(py), clause.term.into_py(py))
     }
 }
 
 impl_raw_tag!(RelationshipClause, "relationship");
-impl_raw_value!(RelationshipClause, "{} {}", self.relation, self.term);
+impl_raw_value!(RelationshipClause, "{} {}", self.typedef, self.term);
+
+#[pymethods]
+impl RelationshipClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, typedef: Ident, term: Ident) -> PyResult<()> {
+        Ok(obj.init(Self::new(obj.py(), typedef, term)))
+    }
+
+    #[getter]
+    fn get_typedef<'py>(&self, py: Python<'py>) -> PyResult<Ident> {
+        Ok(self.typedef.clone_py(py))
+    }
+
+    #[getter]
+    fn get_term<'py>(&self, py: Python<'py>) -> PyResult<Ident> {
+        Ok(self.term.clone_py(py))
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for RelationshipClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, RelationshipClause(self.relation, self.term))
+        impl_repr!(self, RelationshipClause(self.typedef, self.term))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1388,7 +1408,7 @@ impl PyObjectProtocol for RelationshipClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.relation && self.term)
+        impl_richmp!(self, other, op, self.typedef && self.term)
     }
 }
 

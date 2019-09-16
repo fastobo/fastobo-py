@@ -1217,13 +1217,13 @@ impl HoldsOverChainClause {
     }
 
     #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the first relation of the chain.
+    /// `~fastobo.id.Ident`: the identifier of the first typedef of the chain.
     fn get_first(&self) -> &Ident {
         &self.first
     }
 
     #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the last relation of the chain.
+    /// `~fastobo.id.Ident`: the identifier of the last typedef of the chain.
     fn get_last(&self) -> &Ident {
         &self.last
     }
@@ -1834,16 +1834,16 @@ impl PyObjectProtocol for IsAClause {
 #[derive(Debug)]
 pub struct IntersectionOfClause {
     #[pyo3(set)]
-    relation: Ident,
+    typedef: Ident,
 }
 
 impl IntersectionOfClause {
-    pub fn new<R>(py: Python, relation: R) -> Self
+    pub fn new<R>(py: Python, typedef: R) -> Self
     where
         R: IntoPy<Ident>,
     {
         Self {
-            relation: relation.into_py(py),
+            typedef: typedef.into_py(py),
         }
     }
 }
@@ -1851,7 +1851,7 @@ impl IntersectionOfClause {
 impl ClonePy for IntersectionOfClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            relation: self.relation.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
     }
 }
@@ -1866,25 +1866,25 @@ impl Display for IntersectionOfClause {
 
 impl FromPy<IntersectionOfClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IntersectionOfClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::IntersectionOf(clause.relation.into_py(py))
+        ast::TypedefClause::IntersectionOf(clause.typedef.into_py(py))
     }
 }
 
 #[pymethods]
 impl IntersectionOfClause {
     #[getter]
-    fn get_relation(&self) -> &Ident {
-        &self.relation
+    fn get_typedef(&self) -> &Ident {
+        &self.typedef
     }
 }
 
 impl_raw_tag!(IntersectionOfClause, "intersection_of");
-impl_raw_value!(IntersectionOfClause, "{}", self.relation);
+impl_raw_value!(IntersectionOfClause, "{}", self.typedef);
 
 #[pyproto]
 impl PyObjectProtocol for IntersectionOfClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IntersectionOfClause(self.relation))
+        impl_repr!(self, IntersectionOfClause(self.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1892,7 +1892,7 @@ impl PyObjectProtocol for IntersectionOfClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.relation)
+        impl_richmp!(self, other, op, self.typedef)
     }
 }
 
@@ -2122,16 +2122,16 @@ impl PyObjectProtocol for DisjointFromClause {
 #[derive(Debug)]
 pub struct InverseOfClause {
     #[pyo3(set)]
-    relation: Ident,
+    typedef: Ident,
 }
 
 impl InverseOfClause {
-    pub fn new<R>(py: Python, relation: R) -> Self
+    pub fn new<R>(py: Python, typedef: R) -> Self
     where
         R: IntoPy<Ident>,
     {
         Self {
-            relation: relation.into_py(py),
+            typedef: typedef.into_py(py),
         }
     }
 }
@@ -2139,7 +2139,7 @@ impl InverseOfClause {
 impl ClonePy for InverseOfClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            relation: self.relation.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
     }
 }
@@ -2154,31 +2154,31 @@ impl Display for InverseOfClause {
 
 impl FromPy<InverseOfClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: InverseOfClause, py: Python) -> Self {
-        ast::TypedefClause::InverseOf(clause.relation.into_py(py))
+        ast::TypedefClause::InverseOf(clause.typedef.into_py(py))
     }
 }
 
 #[pymethods]
 impl InverseOfClause {
     #[new]
-    fn __init__(obj: &PyRawObject, relation: Ident) {
-        obj.init(Self::new(obj.py(), relation));
+    fn __init__(obj: &PyRawObject, typedef: Ident) {
+        obj.init(Self::new(obj.py(), typedef));
     }
 
     #[getter]
     /// `~fastobo.id.Ident`: the identifier of the inverse relationship.
-    fn get_relation(&self) -> &Ident {
-        &self.relation
+    fn get_typedef(&self) -> &Ident {
+        &self.typedef
     }
 }
 
 impl_raw_tag!(InverseOfClause, "inverse_of");
-impl_raw_value!(InverseOfClause, "{}", self.relation);
+impl_raw_value!(InverseOfClause, "{}", self.typedef);
 
 #[pyproto]
 impl PyObjectProtocol for InverseOfClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, InverseOfClause(self.relation))
+        impl_repr!(self, InverseOfClause(self.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2186,7 +2186,7 @@ impl PyObjectProtocol for InverseOfClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.relation)
+        impl_richmp!(self, other, op, self.typedef)
     }
 }
 
@@ -2195,16 +2195,16 @@ impl PyObjectProtocol for InverseOfClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct TransitiveOverClause {
-    relation: Ident,
+    typedef: Ident,
 }
 
 impl TransitiveOverClause {
-    pub fn new<R>(py: Python, relation: R) -> Self
+    pub fn new<R>(py: Python, typedef: R) -> Self
     where
         R: IntoPy<Ident>,
     {
         Self {
-            relation: relation.into_py(py),
+            typedef: typedef.into_py(py),
         }
     }
 }
@@ -2212,7 +2212,7 @@ impl TransitiveOverClause {
 impl ClonePy for TransitiveOverClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            relation: self.relation.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
     }
 }
@@ -2227,31 +2227,31 @@ impl Display for TransitiveOverClause {
 
 impl FromPy<TransitiveOverClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: TransitiveOverClause, py: Python) -> Self {
-        ast::TypedefClause::TransitiveOver(clause.relation.into_py(py))
+        ast::TypedefClause::TransitiveOver(clause.typedef.into_py(py))
     }
 }
 
 #[pymethods]
 impl TransitiveOverClause {
     #[new]
-    fn __init__(obj: &PyRawObject, relation: Ident) {
-        obj.init(Self::new(obj.py(), relation));
+    fn __init__(obj: &PyRawObject, typedef: Ident) {
+        obj.init(Self::new(obj.py(), typedef));
     }
 
     #[getter]
     /// `~fastobo.id.Ident`: the identifier of the transitive relationship.
-    fn get_relation(&self) -> &Ident {
-        &self.relation
+    fn get_typedef(&self) -> &Ident {
+        &self.typedef
     }
 }
 
 impl_raw_tag!(TransitiveOverClause, "transitive_over");
-impl_raw_value!(TransitiveOverClause, "{}", self.relation);
+impl_raw_value!(TransitiveOverClause, "{}", self.typedef);
 
 #[pyproto]
 impl PyObjectProtocol for TransitiveOverClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TransitiveOverClause(self.relation))
+        impl_repr!(self, TransitiveOverClause(self.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2259,7 +2259,7 @@ impl PyObjectProtocol for TransitiveOverClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.relation)
+        impl_richmp!(self, other, op, self.typedef)
     }
 }
 
@@ -2321,13 +2321,13 @@ impl EquivalentToChainClause {
     }
 
     #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the first relation of the chain.
+    /// `~fastobo.id.Ident`: the identifier of the first typedef of the chain.
     fn get_first(&self) -> &Ident {
         &self.first
     }
 
     #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the last relation of the chain.
+    /// `~fastobo.id.Ident`: the identifier of the last typedef of the chain.
     fn get_last(&self) -> &Ident {
         &self.last
     }
@@ -2356,16 +2356,16 @@ impl PyObjectProtocol for EquivalentToChainClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct DisjointOverClause {
-    relation: Ident,
+    typedef: Ident,
 }
 
 impl DisjointOverClause {
-    pub fn new<R>(py: Python, relation: R) -> Self
+    pub fn new<R>(py: Python, typedef: R) -> Self
     where
         R: IntoPy<Ident>,
     {
         Self {
-            relation: relation.into_py(py),
+            typedef: typedef.into_py(py),
         }
     }
 }
@@ -2373,7 +2373,7 @@ impl DisjointOverClause {
 impl ClonePy for DisjointOverClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            relation: self.relation.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
     }
 }
@@ -2388,31 +2388,31 @@ impl Display for DisjointOverClause {
 
 impl FromPy<DisjointOverClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: DisjointOverClause, py: Python) -> Self {
-        ast::TypedefClause::DisjointOver(clause.relation.into_py(py))
+        ast::TypedefClause::DisjointOver(clause.typedef.into_py(py))
     }
 }
 
 #[pymethods]
 impl DisjointOverClause {
     #[new]
-    fn __init__(obj: &PyRawObject, relation: Ident) {
-        obj.init(Self::new(obj.py(), relation));
+    fn __init__(obj: &PyRawObject, typedef: Ident) {
+        obj.init(Self::new(obj.py(), typedef));
     }
 
     #[getter]
     /// `~fastobo.id.Ident`: the identifier of the disjoint relationship.
-    fn get_relation(&self) -> &Ident {
-        &self.relation
+    fn get_typedef(&self) -> &Ident {
+        &self.typedef
     }
 }
 
 impl_raw_tag!(DisjointOverClause, "disjoint_over");
-impl_raw_value!(DisjointOverClause, "{}", self.relation);
+impl_raw_value!(DisjointOverClause, "{}", self.typedef);
 
 #[pyproto]
 impl PyObjectProtocol for DisjointOverClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DisjointOverClause(self.relation))
+        impl_repr!(self, DisjointOverClause(self.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2420,7 +2420,7 @@ impl PyObjectProtocol for DisjointOverClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.relation)
+        impl_richmp!(self, other, op, self.typedef)
     }
 }
 
@@ -2429,18 +2429,18 @@ impl PyObjectProtocol for DisjointOverClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct RelationshipClause {
-    relation: Ident,
+    typedef: Ident,
     term: Ident,
 }
 
 impl RelationshipClause {
-    pub fn new<R, T>(py: Python, relation: R, term: T) -> Self
+    pub fn new<R, T>(py: Python, typedef: R, term: T) -> Self
     where
         R: IntoPy<Ident>,
         T: IntoPy<Ident>,
     {
         Self {
-            relation: relation.into_py(py),
+            typedef: typedef.into_py(py),
             term: term.into_py(py),
         }
     }
@@ -2449,7 +2449,7 @@ impl RelationshipClause {
 impl ClonePy for RelationshipClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            relation: self.relation.clone_py(py),
+            typedef: self.typedef.clone_py(py),
             term: self.term.clone_py(py),
         }
     }
@@ -2465,17 +2465,17 @@ impl Display for RelationshipClause {
 
 impl FromPy<RelationshipClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: RelationshipClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::Relationship(clause.relation.into_py(py), clause.term.into_py(py))
+        ast::TypedefClause::Relationship(clause.typedef.into_py(py), clause.term.into_py(py))
     }
 }
 
 impl_raw_tag!(RelationshipClause, "relationship");
-impl_raw_value!(RelationshipClause, "{} {}", self.relation, self.term);
+impl_raw_value!(RelationshipClause, "{} {}", self.typedef, self.term);
 
 #[pyproto]
 impl PyObjectProtocol for RelationshipClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, RelationshipClause(self.relation, self.term))
+        impl_repr!(self, RelationshipClause(self.typedef, self.term))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2483,7 +2483,7 @@ impl PyObjectProtocol for RelationshipClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.relation && self.term)
+        impl_richmp!(self, other, op, self.typedef && self.term)
     }
 }
 
@@ -2543,16 +2543,16 @@ impl PyObjectProtocol for IsObsoleteClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct ReplacedByClause {
-    relation: Ident,
+    typedef: Ident,
 }
 
 impl ReplacedByClause {
-    pub fn new<I>(py: Python, relation: I) -> Self
+    pub fn new<I>(py: Python, typedef: I) -> Self
     where
         I: IntoPy<Ident>,
     {
         Self {
-            relation: relation.into_py(py),
+            typedef: typedef.into_py(py),
         }
     }
 }
@@ -2560,7 +2560,7 @@ impl ReplacedByClause {
 impl ClonePy for ReplacedByClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            relation: self.relation.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
     }
 }
@@ -2575,17 +2575,17 @@ impl Display for ReplacedByClause {
 
 impl FromPy<ReplacedByClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ReplacedByClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::ReplacedBy(clause.relation.into_py(py))
+        ast::TypedefClause::ReplacedBy(clause.typedef.into_py(py))
     }
 }
 
 impl_raw_tag!(ReplacedByClause, "replaced_by");
-impl_raw_value!(ReplacedByClause, "{}", self.relation);
+impl_raw_value!(ReplacedByClause, "{}", self.typedef);
 
 #[pyproto]
 impl PyObjectProtocol for ReplacedByClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ReplacedByClause(self.relation))
+        impl_repr!(self, ReplacedByClause(self.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2593,7 +2593,7 @@ impl PyObjectProtocol for ReplacedByClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.relation)
+        impl_richmp!(self, other, op, self.typedef)
     }
 }
 
@@ -2602,16 +2602,16 @@ impl PyObjectProtocol for ReplacedByClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct ConsiderClause {
-    relation: Ident,
+    typedef: Ident,
 }
 
 impl ConsiderClause {
-    pub fn new<I>(py: Python, relation: I) -> Self
+    pub fn new<I>(py: Python, typedef: I) -> Self
     where
         I: IntoPy<Ident>,
     {
         Self {
-            relation: relation.into_py(py),
+            typedef: typedef.into_py(py),
         }
     }
 }
@@ -2619,7 +2619,7 @@ impl ConsiderClause {
 impl ClonePy for ConsiderClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            relation: self.relation.clone_py(py),
+            typedef: self.typedef.clone_py(py),
         }
     }
 }
@@ -2634,17 +2634,17 @@ impl Display for ConsiderClause {
 
 impl FromPy<ConsiderClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ConsiderClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::Consider(clause.relation.into_py(py))
+        ast::TypedefClause::Consider(clause.typedef.into_py(py))
     }
 }
 
 impl_raw_tag!(ConsiderClause, "consider");
-impl_raw_value!(ConsiderClause, "{}", self.relation);
+impl_raw_value!(ConsiderClause, "{}", self.typedef);
 
 #[pyproto]
 impl PyObjectProtocol for ConsiderClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ConsiderClause(self.relation))
+        impl_repr!(self, ConsiderClause(self.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2652,7 +2652,7 @@ impl PyObjectProtocol for ConsiderClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.relation)
+        impl_richmp!(self, other, op, self.typedef)
     }
 }
 

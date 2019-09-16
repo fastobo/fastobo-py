@@ -9,6 +9,7 @@ use pyo3::exceptions::TypeError;
 use pyo3::exceptions::ValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
+use pyo3::types::PyDateTime;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
@@ -213,8 +214,8 @@ impl NameClause {
 
     /// `str`: the name of the current term.
     #[getter]
-    fn get_name(&self) -> PyResult<&str> {
-        Ok(self.name.as_str())
+    fn get_name(&self) -> &str {
+        self.name.as_str()
     }
 
     #[setter]
@@ -294,8 +295,8 @@ impl NamespaceClause {
 
     #[getter]
     /// `~fastobo.id.Ident`: the ID of the namespace this term is part of.
-    fn get_namespace(&self) -> PyResult<&Ident> {
-        Ok(&self.namespace)
+    fn get_namespace(&self) -> &Ident {
+        &self.namespace
     }
 }
 
@@ -372,8 +373,8 @@ impl AltIdClause {
 
     #[getter]
     /// `~fastobo.id.Ident`: an alternative ID used to refer to this term.
-    fn get_alt_id(&self) -> PyResult<&Ident> {
-        Ok(&self.alt_id)
+    fn get_alt_id(&self) -> &Ident {
+        &self.alt_id
     }
 }
 
@@ -453,8 +454,8 @@ impl DefClause {
 
     #[getter]
     /// `str`: a textual definition for this term.
-    fn get_definition(&self) -> PyResult<&str> {
-        Ok(&self.definition.as_str())
+    fn get_definition(&self) -> &str {
+        &self.definition.as_str()
     }
 
     #[setter]
@@ -464,8 +465,8 @@ impl DefClause {
 
     #[getter]
     /// `~fastobo.xrefs.XrefList`: a list of xrefs supporting the definition.
-    fn get_xrefs<'py>(&self, py: Python<'py>) -> PyResult<XrefList> {
-        Ok(self.xrefs.clone_py(py))
+    fn get_xrefs<'py>(&self, py: Python<'py>) -> XrefList {
+        self.xrefs.clone_py(py)
     }
 }
 
@@ -531,8 +532,8 @@ impl CommentClause {
 
     #[getter]
     /// `str`: a comment relevant to this term.
-    fn get_comment(&self) -> PyResult<&str> {
-        Ok(self.comment.as_str())
+    fn get_comment(&self) -> &str {
+        self.comment.as_str()
     }
 
     #[setter]
@@ -611,8 +612,8 @@ impl SubsetClause {
 
     #[getter]
     /// `~fastobo.id.Ident`: the ID of the subset this term is part of.
-    fn get_subset(&self) -> PyResult<&Ident> {
-        Ok(&self.subset)
+    fn get_subset(&self) -> &Ident {
+        &self.subset
     }
 }
 
@@ -689,8 +690,8 @@ impl SynonymClause {
 
     #[getter]
     /// `~fastobo.syn.Synonym`: a possible synonym for this term.
-    fn get_synonym<'py>(&self, py: Python<'py>) -> PyResult<Py<Synonym>> {
-        Ok(self.synonym.clone_py(py))
+    fn get_synonym<'py>(&self, py: Python<'py>) -> Py<Synonym> {
+        self.synonym.clone_py(py)
     }
 
     fn raw_value(&self) -> PyResult<String> {
@@ -777,8 +778,8 @@ impl XrefClause {
 
     #[getter]
     /// `~fastobo.xref.Xref`: a cross-reference relevant to this term.
-    fn get_xref<'py>(&self, py: Python<'py>) -> PyResult<Py<Xref>> {
-        Ok(self.xref.clone_ref(py))
+    fn get_xref<'py>(&self, py: Python<'py>) -> Py<Xref> {
+        self.xref.clone_ref(py)
     }
 
     #[setter]
@@ -1032,18 +1033,18 @@ impl PyObjectProtocol for IsAClause {
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct IntersectionOfClause {
-    relation: Option<Ident>,
+    typedef: Option<Ident>,
     term: Ident,
 }
 
 impl IntersectionOfClause {
-    pub fn new<R, C>(py: Python, relation: Option<R>, class: C) -> Self
+    pub fn new<R, C>(py: Python, typedef: Option<R>, class: C) -> Self
     where
         R: IntoPy<Ident>,
         C: IntoPy<Ident>,
     {
         Self {
-            relation: relation.map(|id| id.into_py(py)),
+            typedef: typedef.map(|id| id.into_py(py)),
             term: class.into_py(py),
         }
     }
@@ -1052,7 +1053,7 @@ impl IntersectionOfClause {
 impl ClonePy for IntersectionOfClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            relation: self.relation.clone_py(py),
+            typedef: self.typedef.clone_py(py),
             term: self.term.clone_py(py),
         }
     }
@@ -1069,7 +1070,7 @@ impl Display for IntersectionOfClause {
 impl FromPy<IntersectionOfClause> for fastobo::ast::TermClause {
     fn from_py(clause: IntersectionOfClause, py: Python) -> fastobo::ast::TermClause {
         ast::TermClause::IntersectionOf(
-            clause.relation.map(|id| id.into_py(py)),
+            clause.typedef.map(|id| id.into_py(py)),
             clause.term.into_py(py),
         )
     }
@@ -1078,12 +1079,17 @@ impl FromPy<IntersectionOfClause> for fastobo::ast::TermClause {
 #[pymethods]
 impl IntersectionOfClause {
     #[getter]
-    fn get_relation(&self) -> Option<&Ident> {
-        self.relation.as_ref()
+    fn get_term(&self) -> &Ident {
+        &self.term
+    }
+
+    #[getter]
+    fn get_typedef(&self) -> Option<&Ident> {
+        self.typedef.as_ref()
     }
 
     pub fn raw_value(&self) -> PyResult<String> {
-        if let Some(ref rel) = self.relation {
+        if let Some(ref rel) = self.typedef {
             Ok(format!("{} {}", rel, &self.term))
         } else {
             Ok(format!("{}", &self.term))
@@ -1097,7 +1103,7 @@ impl_raw_tag!(IntersectionOfClause, "intersection_of");
 impl PyObjectProtocol for IntersectionOfClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         // TODO
-        impl_repr!(self, IntersectionOfClause(self.relation, self.term))
+        impl_repr!(self, IntersectionOfClause(self.typedef, self.term))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1105,7 +1111,7 @@ impl PyObjectProtocol for IntersectionOfClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.relation && self.term)
+        impl_richmp!(self, other, op, self.typedef && self.term)
     }
 }
 
@@ -1507,6 +1513,14 @@ impl FromPy<ReplacedByClause> for fastobo::ast::TermClause {
 impl_raw_tag!(ReplacedByClause, "replaced_by");
 impl_raw_value!(ReplacedByClause, "{}", self.term);
 
+#[pymethods]
+impl ReplacedByClause {
+    #[getter]
+    fn get_term(&self) -> &Ident {
+        &self.term
+    }
+}
+
 #[pyproto]
 impl PyObjectProtocol for ReplacedByClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1566,6 +1580,14 @@ impl FromPy<ConsiderClause> for fastobo::ast::TermClause {
 impl_raw_tag!(ConsiderClause, "consider");
 impl_raw_value!(ConsiderClause, "{}", self.term);
 
+#[pymethods]
+impl ConsiderClause {
+    #[getter]
+    fn get_term(&self) -> &Ident {
+        &self.term
+    }
+}
+
 #[pyproto]
 impl PyObjectProtocol for ConsiderClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1586,12 +1608,12 @@ impl PyObjectProtocol for ConsiderClause {
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct CreatedByClause {
-    name: fastobo::ast::UnquotedString,
+    creator: fastobo::ast::UnquotedString,
 }
 
 impl CreatedByClause {
-    pub fn new(_py: Python, name: fastobo::ast::UnquotedString) -> Self {
-        Self { name }
+    pub fn new(_py: Python, creator: fastobo::ast::UnquotedString) -> Self {
+        Self { creator }
     }
 }
 
@@ -1605,7 +1627,7 @@ impl Display for CreatedByClause {
 
 impl From<CreatedByClause> for fastobo::ast::TermClause {
     fn from(clause: CreatedByClause) -> Self {
-        fastobo::ast::TermClause::CreatedBy(clause.name)
+        fastobo::ast::TermClause::CreatedBy(clause.creator)
     }
 }
 
@@ -1616,12 +1638,31 @@ impl FromPy<CreatedByClause> for fastobo::ast::TermClause {
 }
 
 impl_raw_tag!(CreatedByClause, "created_by");
-impl_raw_value!(CreatedByClause, "{}", self.name);
+impl_raw_value!(CreatedByClause, "{}", self.creator);
+
+#[pymethods]
+impl CreatedByClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, creator: String) -> PyResult<()> {
+        Ok(obj.init(Self::new(obj.py(), fastobo::ast::UnquotedString::new(creator))))
+    }
+
+    #[getter]
+    fn get_creator(&self) -> &str {
+        self.creator.as_str()
+    }
+
+    #[setter]
+    fn set_creator(&mut self, creator: String) -> PyResult<()> {
+        self.creator = fastobo::ast::UnquotedString::new(creator);
+        Ok(())
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for CreatedByClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CreatedByClause(self.name))
+        impl_repr!(self, CreatedByClause(self.creator))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1629,7 +1670,7 @@ impl PyObjectProtocol for CreatedByClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.name)
+        impl_richmp!(self, other, op, self.creator)
     }
 }
 
@@ -1663,6 +1704,25 @@ impl FromPy<CreationDateClause> for fastobo::ast::TermClause {
 
 impl_raw_tag!(CreationDateClause, "creation_date");
 impl_raw_value!(CreationDateClause, "{}", self.date);
+
+#[pymethods]
+impl CreationDateClause {
+    #[getter]
+    /// `datetime.datetime`: the date and time this entity was created.
+    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDateTime> {
+        PyDateTime::new(
+            py,
+            self.date.year() as i32,
+            self.date.month(),
+            self.date.day(),
+            self.date.hour(),
+            self.date.minute(),
+            self.date.second(),
+            self.date.fraction().map(|f| (f*1000.0) as u32).unwrap_or(0),
+            None,
+        )
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for CreationDateClause {

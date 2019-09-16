@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.4.2...HEAD
+
+
+## [v0.4.2] - 2019-09-16
+
+[v0.4.2]: https://github.com/fastobo/fastobo-py/compare/v0.4.1...v0.4.2
+
+### Added
+- Getters for `IsClassLevelClause` and `IsMetadataTag` in `fastobo.typedef`
+- Getters for `RelationshipClause` in `fastobo.term`
+
+### Changed
+- Inconsistent naming for `PropertyValueClause` between `fastobo.header`
+  and other submodules.
+
+### Fixed
+- Bug with `fastobo.header.ImportClause.reference` returning the whole clause
+  serialization instead.
 
 
 ## [v0.4.1] - 2019-09-15

@@ -1,4 +1,4 @@
-version: '0.4.1-rev{build}'
+version: '0.4.2-rev{build}'
 clone_depth: 5
 environment:
   TARGET: x86_64-pc-windows-msvc

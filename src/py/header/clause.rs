@@ -613,7 +613,7 @@ impl ImportClause {
     #[getter]
     /// `str`: a reference to a document to import.
     fn get_reference(&self) -> PyResult<String> {
-        Ok(self.to_string()) // FIXME ?
+        Ok(self.reference.to_string()) // FIXME ?
     }
 }
 
@@ -1699,12 +1699,12 @@ impl PropertyValueClause {
     }
 
     #[getter]
-    fn get_property(&self) -> PyResult<&PropertyValue> {
+    fn get_property_value(&self) -> PyResult<&PropertyValue> {
         Ok(&self.inner)
     }
 
     #[setter]
-    fn set_property(&mut self, property: PropertyValue) -> PyResult<()> {
+    fn set_property_value(&mut self, property: PropertyValue) -> PyResult<()> {
         self.inner = property;
         Ok(())
     }

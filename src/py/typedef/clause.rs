@@ -2877,6 +2877,7 @@ impl_raw_tag!(ExpandExpressionToClause, "expand_expression_to");
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsMetadataTagClause {
+    #[pyo3(get, set)]
     metadata_tag: bool,
 }
 
@@ -2927,6 +2928,7 @@ impl PyObjectProtocol for IsMetadataTagClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsClassLevelClause {
+    #[pyo3(get, set)]
     class_level: bool,
 }
 

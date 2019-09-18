@@ -92,6 +92,34 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     /// --
     ///
     /// Iterate over the frames contained in an OBO document.
+    ///
+    /// The header frame can be accessed with the ``header`` method of the
+    /// returned object. Entity frames are yielded one after like any Python
+    /// iterator. See the *Examples* section.
+    ///
+    /// Arguments:
+    ///     fh (str or file-handle): the path to an OBO file, or a **binary**
+    ///         stream that contains a serialized OBO document. *A binary
+    ///         stream needs a* ``read(x)`` *method returning* ``x`` *bytes*.
+    ///
+    /// Raises:
+    ///     TypeError: when the argument is not a `str` or a binary stream.
+    ///     SyntaxError: when the document is not in valid OBO syntax.
+    ///     OSError: when an underlying OS error occurs.
+    ///     *other*: any exception raised by ``fh.read``.
+    ///
+    /// Example:
+    ///     Use ``fastobo.iter`` to load an ontology frame-by-frame, even
+    ///     a larger one:
+    ///
+    ///     >>> reader = fastobo.iter('tests/data/ms.obo')
+    ///     >>> reader.header()
+    ///     HeaderFrame([...])
+    ///     >>> next(reader)
+    ///     TermFrame(PrefixedIdent('MS', '0000000'))
+    ///     >>> list(reader)
+    ///     [TermFrame(PrefixedIdent('MS', '1000001')), ...]
+    ///
     #[pyfn(m, "iter")]
     fn iter(py: Python, fh: &PyAny) -> PyResult<FrameReader> {
         if let Ok(s) = fh.downcast_ref::<PyString>() {

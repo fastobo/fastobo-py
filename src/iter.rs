@@ -21,6 +21,7 @@ use pyo3::AsPyPointer;
 use pyo3::PyGCProtocol;
 
 use crate::error::Error;
+use crate::py::header::frame::HeaderFrame;
 use crate::py::doc::EntityFrame;
 use crate::transmute_file_error;
 
@@ -139,8 +140,10 @@ impl Handle for BufReader<PyFileGILRead> {
 
 // ---------------------------------------------------------------------------
 
+// FIXME: May cause memory leaks.
 /// An iterator over the frames of an OBO document.
-/// FIXME: May cause memory leaks.
+///
+/// See help(fastobo.iter) for more information.
 #[pyclass(module = "fastobo")]
 pub struct FrameReader {
     inner: fastobo::parser::FrameReader<Box<dyn Handle>>,
@@ -170,6 +173,13 @@ impl FrameReader {
             Ok(inner) => Self::new(Box::new(BufReader::new(inner))),
             Err(e) => Err(e),
         }
+    }
+}
+
+#[pymethods]
+impl FrameReader {
+    fn header<'py>(&self, py: Python<'py>) -> HeaderFrame {
+        self.inner.header().clone().into_py(py)
     }
 }
 

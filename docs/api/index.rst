@@ -24,6 +24,12 @@ Library Reference
 Functions
 ---------
 
+``fastobo.iter``
+^^^^^^^^^^^^^^^^
+
+.. autofunction:: fastobo.iter
+
+
 ``fastobo.load``
 ^^^^^^^^^^^^^^^^
 

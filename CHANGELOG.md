@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.0...HEAD
+
+
+## [v0.5.0] - 2019-09-18
+
+[v0.5.0]: https://github.com/fastobo/fastobo-py/compare/v0.4.2...v0.5.0
+
+### Added
+- `fastobo.iter` function to iterate over the entity frames of an OBO document.
+- `From<std::io::Error>` impl for `Error`
+
+### Changed
+- `OboDoc` cannot be subclassed anymore.
 
 
 ## [v0.4.2] - 2019-09-16

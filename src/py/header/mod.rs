@@ -28,6 +28,7 @@ pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::clause::OntologyClause>()?;
     m.add_class::<self::clause::OwlAxiomsClause>()?;
     m.add_class::<self::clause::UnreservedClause>()?;
+    m.add_class::<self::clause::NamespaceIdRuleClause>()?;
 
     register!(py, m, HeaderFrame, "collections.abc", MutableSequence);
 

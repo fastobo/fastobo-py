@@ -1039,7 +1039,7 @@ impl NamespaceIdRuleClause {
     }
 
     #[setter]
-    fn set_namespace(&mut self, rule: String) -> PyResult<()> {
+    fn set_rule(&mut self, rule: String) -> PyResult<()> {
         self.rule = fastobo::ast::UnquotedString::new(rule);
         Ok(())
     }

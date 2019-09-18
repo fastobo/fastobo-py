@@ -74,7 +74,7 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
 // --- OBO document ----------------------------------------------------------
 
 /// The abstract syntax tree corresponding to an OBO document.
-#[pyclass(subclass, module = "fastobo.doc")]
+#[pyclass(module = "fastobo.doc")]
 #[derive(Debug, PyList)]
 pub struct OboDoc {
     header: Py<HeaderFrame>,

@@ -93,12 +93,15 @@ impl From<Error> for fastobo::error::Error {
     }
 }
 
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        fastobo::error::Error::from(err).into()
+    }
+}
+
 impl From<fastobo::error::SyntaxError> for Error {
     fn from(err: fastobo::error::SyntaxError) -> Self {
-        Self {
-            err: fastobo::error::Error::from(err),
-            path: None
-        }
+        fastobo::error::Error::from(err).into()
     }
 }
 

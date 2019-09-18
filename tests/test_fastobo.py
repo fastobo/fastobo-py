@@ -32,5 +32,17 @@ class TestLoad(unittest.TestCase):
             self.assertRaises(RuntimeError, fastobo.load, f)
 
     def test_syntax_error(self):
-
         self.assertRaises(SyntaxError, fastobo.loads, "hello there")
+
+
+class TestIter(unittest.TestCase):
+
+    def test_file_not_found(self):
+        self.assertRaises(FileNotFoundError, fastobo.iter, "abcdef")
+
+    def test_type_error(self):
+        self.assertRaises(TypeError, fastobo.iter, 1)
+        self.assertRaises(TypeError, fastobo.iter, [])
+
+        with open(MS) as f:
+            self.assertRaises(TypeError, fastobo.iter, f)

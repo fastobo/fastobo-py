@@ -19,14 +19,18 @@ use pyo3::PyObject;
 
 // ---------------------------------------------------------------------------
 
-macro_rules! transmute_error {
+#[macro_export]
+macro_rules! transmute_file_error {
     ($self:ident, $e:ident, $msg:expr) => ({
+        transmute_file_error!($self, $e, $msg, $self.py)
+    });
+    ($self:ident, $e:ident, $msg:expr, $py:expr) => ({
         // Attempt to transmute the Python OSError to an actual
         // Rust `std::io::Error` using `from_raw_os_error`.
-        if $e.is_instance::<OSError>($self.py) {
+        if $e.is_instance::<OSError>($py) {
             if let PyErrValue::Value(obj) = &$e.pvalue {
-                if let Ok(code) = obj.getattr($self.py, "errno") {
-                    if let Ok(n) = code.extract::<i32>($self.py) {
+                if let Ok(code) = obj.getattr($py, "errno") {
+                    if let Ok(n) = code.extract::<i32>($py) {
                         return Err(IoError::from_raw_os_error(n));
                     }
                 }
@@ -38,12 +42,12 @@ macro_rules! transmute_error {
         // generic Rust error instead.
         $self.err = Some($e);
         Err(IoError::new(std::io::ErrorKind::Other, $msg))
-    })
+    });
 }
 
 // ---------------------------------------------------------------------------
 
-/// A wrapper around a readable Python file.
+/// A wrapper around a readable Python file borrowed with the GIL.
 pub struct PyFileRead<'p> {
     file: pyo3::PyObject,
     py: Python<'p>,
@@ -51,7 +55,7 @@ pub struct PyFileRead<'p> {
 }
 
 impl<'p> PyFileRead<'p> {
-    pub fn from_object<T>(py: Python<'p>, obj: &T) -> PyResult<PyFileRead<'p>>
+    pub fn from_ref<T>(py: Python<'p>, obj: &T) -> PyResult<PyFileRead<'p>>
     where
         T: AsPyPointer,
     {
@@ -96,7 +100,7 @@ impl<'p> Read for PyFileRead<'p> {
                         ))
                     }
                 }
-                Err(e) => transmute_error!(self, e, "read method failed")
+                Err(e) => transmute_file_error!(self, e, "read method failed")
             }
         }
     }
@@ -104,7 +108,7 @@ impl<'p> Read for PyFileRead<'p> {
 
 // ---------------------------------------------------------------------------
 
-/// A wrapper around a writable Python file.
+/// A wrapper around a writable Python file borrowed with the GIL.
 pub struct PyFileWrite<'p> {
     file: pyo3::PyObject,
     py: Python<'p>,
@@ -112,7 +116,7 @@ pub struct PyFileWrite<'p> {
 }
 
 impl<'p> PyFileWrite<'p> {
-    pub fn from_object<T>(py: Python<'p>, obj: &T) -> PyResult<PyFileWrite<'p>>
+    pub fn from_ref<T>(py: Python<'p>, obj: &T) -> PyResult<PyFileWrite<'p>>
     where
         T: AsPyPointer,
     {
@@ -152,14 +156,14 @@ impl<'p> Write for PyFileWrite<'p> {
                     ))
                 }
             }
-            Err(e) => transmute_error!(self, e, "write method failed"),
+            Err(e) => transmute_file_error!(self, e, "write method failed"),
         }
     }
 
     fn flush(&mut self) -> Result<(), IoError> {
         match self.file.call_method0(self.py, "flush") {
             Ok(_) => Ok(()),
-            Err(e) => transmute_error!(self, e, "flush method failed"),
+            Err(e) => transmute_file_error!(self, e, "flush method failed"),
         }
     }
 }

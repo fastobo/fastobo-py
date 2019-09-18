@@ -3,6 +3,7 @@
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
+use std::io::BufRead;
 use std::io::BufReader;
 use std::rc::Rc;
 use std::str::FromStr;
@@ -33,6 +34,7 @@ use fastobo_graphs::model::GraphDocument;
 
 use crate::error::Error;
 use crate::error::GraphError;
+use crate::iter::FrameReader;
 use crate::pyfile::PyFileRead;
 use crate::pyfile::PyFileWrite;
 use crate::utils::AsGILRef;
@@ -86,6 +88,32 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     add_submodule!(py, m, typedef);
     add_submodule!(py, m, xref);
 
+    /// iter(fh)
+    /// --
+    ///
+    /// Iterate over the frames contained in an OBO document.
+    #[pyfn(m, "iter")]
+    fn iter(py: Python, fh: &PyAny) -> PyResult<FrameReader> {
+        if let Ok(s) = fh.downcast_ref::<PyString>() {
+            let path = s.to_string()?;
+            FrameReader::from_path(path.as_ref())
+        } else {
+            match FrameReader::from_handle(py, fh) {
+                Ok(r) => Ok(r),
+                Err(inner) => {
+                    let msg = "expected path or binary file handle";
+                    let err = TypeError::py_err(msg).to_object(py);
+                    err.call_method1(
+                        py,
+                        "__setattr__",
+                        ("__cause__".to_object(py), inner.to_object(py)),
+                    )?;
+                    return Err(PyErr::from_instance(err.as_ref(py).as_ref()))
+                }
+            }
+        }
+    }
+
     /// load(fh)
     /// --
     ///
@@ -125,7 +153,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
                 Err(e) => Error::from(e).with_path(path).into(),
             }
         } else {
-            match PyFileRead::from_object(fh.py(), fh) {
+            match PyFileRead::from_ref(fh.py(), fh) {
                 // Object is a binary file-handle: attempt to parse the
                 // document and return an `OboDoc` object.
                 Ok(f) => {
@@ -240,7 +268,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
             fastobo_graphs::from_file(path.as_ref())
                 .map_err(|e| PyErr::from(GraphError::from(e)))?
         } else {
-            match PyFileRead::from_object(fh.py(), fh) {
+            match PyFileRead::from_ref(fh.py(), fh) {
                 // Object is a binary file-handle: attempt to parse the
                 // document and return an `OboDoc` object.
                 Ok(mut f) => {
@@ -312,7 +340,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
                 .map_err(|e| PyErr::from(GraphError::from(e)))
         } else {
             // Write into the handle if given a writable file.
-            match PyFileWrite::from_object(fh.py(), fh) {
+            match PyFileWrite::from_ref(fh.py(), fh) {
                 // Object is a binary file-handle: attempt to write the
                 // `GraphDocument` to the file handle.
                 Ok(mut f) => {

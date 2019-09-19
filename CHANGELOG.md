@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.1...HEAD
+
+
+## [v0.5.1] - 2019-09-19
+
+[v0.5.1]: https://github.com/fastobo/fastobo-py/compare/v0.5.0...v0.5.1
+
+### Added
+- Getters for `ExpandExpressionToClause` and `ExpandAssertionToClause` in
+ `fastobo.typedef`.
+
+### Fixed
+- Missing `NamespaceIdRuleClause` class is now a member of `fastobo.header`.
 
 
 ## [v0.5.0] - 2019-09-18
@@ -16,7 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - `fastobo.iter` function to iterate over the entity frames of an OBO document.
-- `From<std::io::Error>` impl for `Error`
+- `From<std::io::Error>` impl for `Error`.
 
 ### Changed
 - `OboDoc` cannot be subclassed anymore.
@@ -27,8 +39,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [v0.4.2]: https://github.com/fastobo/fastobo-py/compare/v0.4.1...v0.4.2
 
 ### Added
-- Getters for `IsClassLevelClause` and `IsMetadataTag` in `fastobo.typedef`
-- Getters for `RelationshipClause` in `fastobo.term`
+- Getters for `IsClassLevelClause` and `IsMetadataTag` in `fastobo.typedef`.
+- Getters for `RelationshipClause` in `fastobo.term`.
 
 ### Changed
 - Inconsistent naming for `PropertyValueClause` between `fastobo.header`

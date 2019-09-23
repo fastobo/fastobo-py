@@ -4,6 +4,7 @@ include Cargo.lock
 include COPYING
 include CHANGELOG.md
 include README.md
+include pyproject.toml
 
 recursive-include derive Cargo.toml *.rs
 recursive-include src *.rs

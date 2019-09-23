@@ -14,6 +14,7 @@ class sdist(_sdist):
         c = configparser.ConfigParser()
         c.add_section("build-system")
         c.set("build-system", "requires", str(self.distribution.setup_requires))
+        c.set("build-system", 'build-backend', '"setuptools.build_meta"')
         with open("pyproject.toml", "w") as pyproject:
             c.write(pyproject)
 

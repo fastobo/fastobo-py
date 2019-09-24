@@ -8,6 +8,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::sync::Mutex;
 
 use pyo3::exceptions::TypeError;
 use pyo3::exceptions::OSError;
@@ -28,7 +29,7 @@ use crate::transmute_file_error;
 
 /// A wrapper for a Python file that can outlive the GIL.
 struct PyFileGILRead {
-    file: Py<PyObject>,
+    file: Mutex<Py<PyObject>>,
     err: Option<PyErr>,
 }
 
@@ -42,7 +43,7 @@ impl PyFileGILRead {
             let res = file.to_object(py).call_method1(py, "read", (0,))?;
             if py.is_instance::<PyBytes, PyObject>(&res).unwrap_or(false) {
                 Ok(PyFileGILRead {
-                    file,
+                    file: Mutex::new(file),
                     err: None,
                 })
             } else {
@@ -58,7 +59,8 @@ impl Read for PyFileGILRead {
         unsafe {
             let gil = Python::acquire_gil();
             let py = gil.python();
-            match self.file.to_object(py).call_method1(py, "read", (buf.len(),)) {
+            let file = self.file.lock().unwrap();
+            match file.to_object(py).call_method1(py, "read", (buf.len(),)) {
                 Ok(obj) => {
                     // Check `fh.read` returned bytes, else raise a `TypeError`.
                     if let Ok(bytes) = obj.extract::<&PyBytes>(py) {
@@ -130,7 +132,7 @@ impl Handle for BufReader<PyFileGILRead> {
     fn handle(&self) -> PyObject {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        self.get_ref().file.to_object(py)
+        self.get_ref().file.lock().unwrap().to_object(py)
     }
 
     fn into_err(&mut self) -> Option<PyErr> {

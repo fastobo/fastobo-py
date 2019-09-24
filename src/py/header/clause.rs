@@ -864,7 +864,8 @@ impl PyObjectProtocol for SynonymTypedefClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         if let Some(ref scope) = self.scope {
             let fmt = PyString::new(py, "SynonymTypedefClause({!r}, {!r}, {!r})").to_object(py);
             fmt.call_method1(
@@ -969,7 +970,8 @@ impl_raw_value!(DefaultNamespaceClause, "{}", self.namespace);
 #[pyproto]
 impl PyObjectProtocol for DefaultNamespaceClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let ns = self.namespace.to_object(py);
         let nsref = ns.as_ref(py);
         let fmt = PyString::new(py, "DefaultNamespaceClause({})").to_object(py);
@@ -977,7 +979,8 @@ impl PyObjectProtocol for DefaultNamespaceClause {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(self.clone_py(py).to_string())
     }
 
@@ -1024,12 +1027,10 @@ impl From<NamespaceIdRuleClause> for obo::HeaderClause {
 impl NamespaceIdRuleClause {
     #[new]
     fn __init__(obj: &PyRawObject, rule: String) -> PyResult<()> {
-        unsafe {
-            Ok(obj.init(Self::new(
-                Python::assume_gil_acquired(),
-                fastobo::ast::UnquotedString::new(rule),
-            )))
-        }
+        Ok(obj.init(Self::new(
+            obj.py(),
+            fastobo::ast::UnquotedString::new(rule),
+        )))
     }
 
     /// `str`: the default namespace for this ontology.
@@ -1051,13 +1052,15 @@ impl_raw_value!(NamespaceIdRuleClause, "{}", self.rule);
 #[pyproto]
 impl PyObjectProtocol for NamespaceIdRuleClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let fmt = PyString::new(py, "NamespaceIdRuleClause({})").to_object(py);
         fmt.call_method1(py, "format", (self.rule.as_str(),))
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(self.clone_py(py).to_string())
     }
 
@@ -1138,7 +1141,8 @@ impl IdspaceClause {
     /// `~fastobo.id.IdentPrefix`: the prefix used in prefixed IDs.
     #[getter]
     fn get_prefix(&self) -> PyResult<IdentPrefix> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(self.prefix.clone_py(py))
     }
 
@@ -1175,7 +1179,8 @@ impl PyObjectProtocol for IdspaceClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
 
         let pref = self.prefix.as_gil_ref(py).as_str();
         let url = self.url.__repr__()?;
@@ -1869,7 +1874,8 @@ impl PyObjectProtocol for OntologyClause {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(self.to_string())
     }
 

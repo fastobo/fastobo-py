@@ -97,13 +97,15 @@ impl HeaderFrame {
 #[pyproto]
 impl PyObjectProtocol for HeaderFrame {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let fmt = PyString::new(py, "HeaderFrame({!r})").to_object(py);
         fmt.call_method1(py, "format", (self.to_object(py),))
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let frame: obo::HeaderFrame = self.clone_py(py).into_py(py);
         Ok(frame.to_string())
     }
@@ -116,7 +118,8 @@ impl PySequenceProtocol for HeaderFrame {
         Ok(self.clauses.len())
     }
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
 
         if index < self.clauses.len() as isize {
             let item = &self.clauses[index as usize];

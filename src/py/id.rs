@@ -368,7 +368,8 @@ impl PyObjectProtocol for PrefixedIdent {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(self.as_gil_ref(py).to_string())
     }
 
@@ -521,7 +522,8 @@ impl PyObjectProtocol for UnprefixedIdent {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(self.as_gil_ref(py).to_string())
     }
 
@@ -637,7 +639,8 @@ impl Url {
 #[pyproto]
 impl PyObjectProtocol for Url {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let fmt = PyString::new(py, "Url({!r})").to_object(py);
         fmt.call_method1(py, "format", (self.inner.as_str(),))
     }
@@ -798,13 +801,15 @@ impl IdentLocal {
 #[pyproto]
 impl PyObjectProtocol for IdentLocal {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let fmt = PyString::new(py, "IdentLocal({!r})").to_object(py);
         fmt.call_method1(py, "format", (self.inner.as_str(),))
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(self.as_gil_ref(py).to_string())
     }
 }

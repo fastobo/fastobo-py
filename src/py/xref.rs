@@ -164,7 +164,8 @@ impl Xref {
 #[pyproto]
 impl PyObjectProtocol for Xref {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         if let Some(ref d) = self.desc {
             PyString::new(py, "Xref({!r}, {!r})")
                 .to_object(py)
@@ -274,13 +275,15 @@ impl XrefList {
 #[pyproto]
 impl PyObjectProtocol for XrefList {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let fmt = PyString::new(py, "XrefList({!r})").to_object(py);
         fmt.call_method1(py, "format", (&self.xrefs.to_object(py),))
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let frame: fastobo::ast::XrefList = self.clone_py(py).into_py(py);
         Ok(frame.to_string())
     }
@@ -293,7 +296,8 @@ impl PySequenceProtocol for XrefList {
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<Py<Xref>> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         if index < self.xrefs.len() as isize {
             Ok(self.xrefs[index as usize].clone_ref(py))
         } else {

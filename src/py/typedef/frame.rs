@@ -116,7 +116,8 @@ impl TypedefFrame {
 #[pyproto]
 impl PyObjectProtocol for TypedefFrame {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         PyString::new(py, "TypedefFrame({!r})")
             .to_object(py)
             .call_method1(py, "format", (&self.id,))
@@ -134,8 +135,8 @@ impl PySequenceProtocol for TypedefFrame {
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
-
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         if index < self.clauses.len() as isize {
             let item = &self.clauses[index as usize];
             Ok(item.to_object(py))

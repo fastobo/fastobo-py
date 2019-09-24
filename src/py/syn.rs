@@ -228,7 +228,8 @@ impl Synonym {
 
     #[setter]
     pub fn set_xrefs(&mut self, xrefs: &XrefList) -> PyResult<()> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         self.xrefs = xrefs.clone_py(py);
         Ok(())
     }

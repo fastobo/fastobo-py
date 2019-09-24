@@ -754,7 +754,8 @@ impl SynonymClause {
     }
 
     fn raw_value(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(format!("{}", self.synonym.as_gil_ref(py)))
     }
 }

@@ -135,7 +135,8 @@ impl OboDoc {
 
     #[setter]
     fn set_header(&mut self, header: &HeaderFrame) -> PyResult<()> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         self.header = Py::new(py, header.clone_py(py))?;
         Ok(())
     }
@@ -175,7 +176,8 @@ impl OboDoc {
     ///     section of the OBO format version 1.4 specification.
     ///
     fn compact_ids(&self) -> PyResult<Self> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let mut doc = obo::OboDoc::from_py(self.clone_py(py), py);
         fastobo::visit::IdCompactor::new().visit_doc(&mut doc);
         Ok(doc.into_py(py))
@@ -213,7 +215,8 @@ impl OboDoc {
     ///     section of the OBO format version 1.4 specification.
     ///
     fn decompact_ids(&self) -> PyResult<Self> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let mut doc = obo::OboDoc::from_py(self.clone_py(py), py);
         fastobo::visit::IdDecompactor::new().visit_doc(&mut doc);
         Ok(doc.into_py(py))
@@ -234,7 +237,8 @@ impl PySequenceProtocol for OboDoc {
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         if index < self.entities.len() as isize {
             let item = &self.entities[index as usize];
             Ok(item.to_object(py))

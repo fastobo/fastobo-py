@@ -204,7 +204,8 @@ impl LiteralPropertyValue {
 #[pyproto]
 impl PyObjectProtocol for LiteralPropertyValue {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
         fmt.to_object(py).call_method1(
             py,
@@ -218,7 +219,8 @@ impl PyObjectProtocol for LiteralPropertyValue {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(self.as_gil_ref(py).to_string())
     }
 }
@@ -309,7 +311,8 @@ impl ResourcePropertyValue {
 #[pyproto]
 impl PyObjectProtocol for ResourcePropertyValue {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let fmt = PyString::new(py, "ResourcePropertyValue({!r}, {!r})");
         fmt.to_object(py).call_method1(
             py,
@@ -319,7 +322,8 @@ impl PyObjectProtocol for ResourcePropertyValue {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let py = unsafe { Python::assume_gil_acquired() };
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         Ok(self.as_gil_ref(py).to_string())
     }
 }

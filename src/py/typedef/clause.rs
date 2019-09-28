@@ -2545,6 +2545,7 @@ impl PyObjectProtocol for IsObsoleteClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct ReplacedByClause {
+    #[pyo3(set)]
     typedef: Ident,
 }
 
@@ -2583,6 +2584,15 @@ impl FromPy<ReplacedByClause> for fastobo::ast::TypedefClause {
 
 impl_raw_tag!(ReplacedByClause, "replaced_by");
 impl_raw_value!(ReplacedByClause, "{}", self.typedef);
+
+#[pymethods]
+impl ReplacedByClause {
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the replacing relationship.
+    fn get_typedef(&self) -> &Ident {
+        &self.typedef
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for ReplacedByClause {

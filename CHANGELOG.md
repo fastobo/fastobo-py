@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.2...HEAD
+
+## [v0.5.2] - 2019-09-28
+
+[v0.5.2]: https://github.com/fastobo/fastobo-py/compare/v0.5.1...v0.5.2
+
+### Added
+- Getters for `ReplacedByClause` in `fastobo.typedef`.
+
+### Fixed
+- `PyFileGILRead` (used in `fastobo.iter`) should now be thread safe.
 
 
 ## [v0.5.1] - 2019-09-19

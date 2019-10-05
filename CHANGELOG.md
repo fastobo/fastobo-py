@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.3...HEAD
+
+
+## [v0.5.3] - 2019-10-06
+
+[v0.5.3]: https://github.com/fastobo/fastobo-py/compare/v0.5.2...v0.5.3
+
+### Added
+- `__init__` and `date` getter to `CreationDateClause` in both `fastobo.term`
+  and `fastobo.typedef` with proper timezone support.
+
 
 ## [v0.5.2] - 2019-09-28
 

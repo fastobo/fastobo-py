@@ -1705,14 +1705,18 @@ impl CreationDateClause {
 
 impl Display for CreationDateClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        fastobo::ast::TermClause::from(self.clone()).fmt(f)
     }
 }
 
 impl FromPy<CreationDateClause> for fastobo::ast::TermClause {
     fn from_py(clause: CreationDateClause, py: Python) -> fastobo::ast::TermClause {
+        fastobo::ast::TermClause::from(clause)
+    }
+}
+
+impl From<CreationDateClause> for fastobo::ast::TermClause {
+    fn from(clause: CreationDateClause) -> fastobo::ast::TermClause {
         fastobo::ast::TermClause::CreationDate(clause.date)
     }
 }

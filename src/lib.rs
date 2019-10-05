@@ -18,6 +18,7 @@ extern crate fastobo_graphs;
 #[macro_use]
 pub mod macros;
 pub mod built;
+pub mod date;
 pub mod error;
 pub mod py;
 pub mod pyfile;

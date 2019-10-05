@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+use std::cmp::Ord;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
@@ -9,8 +11,11 @@ use pyo3::exceptions::TypeError;
 use pyo3::exceptions::ValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
+use pyo3::types::PyDateAccess;
 use pyo3::types::PyDateTime;
 use pyo3::types::PyString;
+use pyo3::types::PyTimeAccess;
+use pyo3::types::PyTzInfo;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
@@ -27,6 +32,8 @@ use super::super::pv::PropertyValue;
 use super::super::syn::Synonym;
 use super::super::xref::Xref;
 use super::super::xref::XrefList;
+use crate::date::datetime_to_isodate;
+use crate::date::isodate_to_datetime;
 use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
@@ -110,7 +117,7 @@ impl FromPy<fastobo::ast::TermClause> for TermClause {
 
 // --- Base ------------------------------------------------------------------
 
-/// A header clause, appearing in the OBO header frame.
+/// A term clause, appearing in an OBO term frame.
 #[pyclass(extends=AbstractEntityClause, module="fastobo.term")]
 pub struct BaseTermClause {}
 
@@ -1676,6 +1683,14 @@ impl PyObjectProtocol for CreatedByClause {
 
 // --- CreationDate ----------------------------------------------------------
 
+/// A clause declaring the date and time a term was created.
+///
+/// Arguments:
+///     datetime (~datetime.datetime): the date and time this term was created.
+///
+/// Warning:
+///     The timezone of the `datetime` cannot be extracted currently, so
+///     dates will be stored without a timezone.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct CreationDateClause {
@@ -1707,29 +1722,34 @@ impl_raw_value!(CreationDateClause, "{}", self.date);
 
 #[pymethods]
 impl CreationDateClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, datetime: &PyDateTime) -> PyResult<()> {
+        let date = datetime_to_isodate(datetime.py(), datetime)?;
+        obj.init(CreationDateClause { date });
+        Ok(())
+    }
+
     #[getter]
-    /// `datetime.datetime`: the date and time this entity was created.
+    /// `datetime.datetime`: the date and time this term was created.
     fn get_date<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDateTime> {
-        PyDateTime::new(
-            py,
-            self.date.year() as i32,
-            self.date.month(),
-            self.date.day(),
-            self.date.hour(),
-            self.date.minute(),
-            self.date.second(),
-            self.date.fraction().map(|f| (f*1000.0) as u32).unwrap_or(0),
-            None,
-        )
+        isodate_to_datetime(py, &self.date)
+    }
+
+    #[setter]
+    fn set_date(&mut self, datetime: &PyDateTime) -> PyResult<()> {
+        self.date = datetime_to_isodate(datetime.py(), datetime)?;
+        Ok(())
     }
 }
 
 #[pyproto]
 impl PyObjectProtocol for CreationDateClause {
-    // TODO
-    // fn __repr__(&self) -> PyResult<PyObject> {
-    //     impl_repr!(self, CreationDateClause(self.date))
-    // }
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
+        self.get_date(py).and_then(|dt| fmt.call_method1(py, "format", (dt,)))
+    }
 
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())

@@ -1597,6 +1597,11 @@ impl_raw_value!(ConsiderClause, "{}", self.term);
 
 #[pymethods]
 impl ConsiderClause {
+    #[new]
+    fn __init__(obj: &PyRawObject, term: Ident) -> PyResult<()> {
+        Ok(obj.init(Self::new(obj.py(), term)))
+    }
+
     #[getter]
     fn get_term(&self) -> &Ident {
         &self.term

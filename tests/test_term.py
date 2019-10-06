@@ -44,6 +44,31 @@ class TestTermFrame(unittest.TestCase):
         self.assertRaises(TypeError, self.type, self.id, "abc")
 
 
+# --- ConsiderClause ---------------------------------------------------------
+
+class TestConsiderClause(unittest.TestCase):
+
+    type = fastobo.term.ConsiderClause
+
+    def setUp(self):
+        self.id = fastobo.id.PrefixedIdent("MS", "1000031")
+        self.id2 = fastobo.id.PrefixedIdent("MS", "1000032")
+
+    def test_init(self):
+        try:
+            frame = self.type(self.id)
+        except Exception:
+            self.fail("could not create `ConsiderClause` instances")
+
+    def test_init_type_error(self):
+        self.assertRaises(TypeError, self.type)
+        self.assertRaises(TypeError, self.type, 1)
+
+    def test_eq(self):
+        self.assertEqual(self.type(self.id), self.type(self.id))
+        self.assertNotEqual(self.type(self.id), self.type(self.id2))
+
+
 # --- IsObsoleteClause -------------------------------------------------------
 
 

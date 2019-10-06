@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import configparser
 import os
 
 import setuptools
@@ -24,6 +25,7 @@ class sdist(_sdist):
 
 setuptools.setup(
     setup_requires=["setuptools", "setuptools_rust"],
+    cmdclass=dict(sdist=sdist),
     rust_extensions=[rust.RustExtension(
         "fastobo",
         path="Cargo.toml",

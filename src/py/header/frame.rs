@@ -31,6 +31,10 @@ pub struct HeaderFrame {
 }
 
 impl HeaderFrame {
+    pub fn empty() -> Self {
+        Self::new(Vec::new())
+    }
+
     pub fn new(clauses: Vec<HeaderClause>) -> Self {
         Self { clauses }
     }

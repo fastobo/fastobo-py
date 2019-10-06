@@ -16,6 +16,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
+use pyo3::types::PyIterator;
 use pyo3::PyGCProtocol;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
@@ -73,12 +74,31 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
 
 // --- OBO document ----------------------------------------------------------
 
+/// OboDoc(header=None, entities=None)
+/// --
+///
 /// The abstract syntax tree corresponding to an OBO document.
+///
+/// Arguments:
+///     header (~fastobo.header.HeaderFrame, optional): the header to use in
+///         the document. If `None` is given, an empty header is used instead.
+///     entities (collections.abc.Iterable, optional): an iterable of entity
+///         frames, either `TermFrame`, `TypedefFrame` or `InstanceFrame`.
+///
 #[pyclass(module = "fastobo.doc")]
 #[derive(Debug, PyList)]
 pub struct OboDoc {
     header: Py<HeaderFrame>,
     entities: Vec<EntityFrame>,
+}
+
+impl OboDoc {
+    pub fn with_header(header: Py<HeaderFrame>) -> Self {
+        Self {
+            header,
+            entities: Vec::new(),
+        }
+    }
 }
 
 impl ClonePy for OboDoc {
@@ -127,6 +147,26 @@ impl FromPy<OboDoc> for fastobo::ast::OboDoc {
 
 #[pymethods]
 impl OboDoc {
+    #[new]
+    fn __init__(obj: &PyRawObject, header: Option<&HeaderFrame>, entities: Option<&PyAny>) -> PyResult<()> {
+        let py = obj.py();
+
+        // extract header
+        let header = header
+            .map(|h| h.clone_py(py))
+            .unwrap_or_else(HeaderFrame::empty);
+
+        // create doc and extract entities
+        let mut doc = OboDoc::with_header(Py::new(py, header)?);
+        if let Some(any) = entities {
+            for res in PyIterator::from_object(py, &any.to_object(py))? {
+                doc.entities.push(EntityFrame::extract(res?)?);
+            }
+        }
+
+        Ok(obj.init(doc))
+    }
+
     /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.
     #[getter]
     fn get_header<'py>(&self, py: Python<'py>) -> PyResult<Py<HeaderFrame>> {

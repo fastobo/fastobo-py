@@ -1713,7 +1713,7 @@ impl PyObjectProtocol for TreatXrefsAsHasSubclassClause {
 /// PropertyValueClause(property_value)
 /// --
 ///
-/// A clause that binds a property to a value in the OBO document instance.
+/// A clause that binds a property to a value in the OBO document.
 ///
 /// Arguments:
 ///     property_value (~fastobo.pv.AbstractPropertyValue): the property value

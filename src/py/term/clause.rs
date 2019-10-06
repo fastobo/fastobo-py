@@ -1461,6 +1461,14 @@ impl FromPy<IsObsoleteClause> for fastobo::ast::TermClause {
 impl_raw_tag!(IsObsoleteClause, "is_obsolete");
 impl_raw_value!(IsObsoleteClause, "{}", self.obsolete);
 
+#[pymethods]
+impl IsObsoleteClause {
+    #[new]
+    fn __new__(obj: &PyRawObject, value: bool) -> PyResult<()> {
+        Ok(obj.init(Self::new(obj.py(), value)))
+    }
+}
+
 #[pyproto]
 impl PyObjectProtocol for IsObsoleteClause {
     fn __repr__(&self) -> PyResult<PyObject> {

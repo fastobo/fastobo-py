@@ -5,3 +5,4 @@ fastobo
 ipykernel
 IPython
 nbsphinx
+pygments-style-monokailight

@@ -5,7 +5,7 @@ import unittest
 
 import fastobo
 
-# --- HeaderFrame -----------------------------------------------------------
+# --- HeaderFrame ------------------------------------------------------------
 
 class TestHeaderFrame(unittest.TestCase):
 
@@ -29,12 +29,12 @@ class TestHeaderFrame(unittest.TestCase):
             self.fail("could not create `HeaderFrame` instance from iterable")
 
     def test_init_type_error(self):
-        # self.assertRaises(TypeError, self.type, 1) # SEGFAULTS
+        self.assertRaises(TypeError, self.type, 1)
         self.assertRaises(TypeError, self.type, [1])
         self.assertRaises(TypeError, self.type, ["abc"])
         self.assertRaises(TypeError, self.type, "abc")
 
-# --- HeaderClause ----------------------------------------------------------
+# --- HeaderClause -----------------------------------------------------------
 
 class _TestUnquotedStringClause(object):
 

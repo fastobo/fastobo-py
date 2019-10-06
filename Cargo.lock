@@ -197,7 +197,7 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "built 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "fastobo 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",

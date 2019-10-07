@@ -1124,7 +1124,7 @@ impl PyObjectProtocol for IsAClause {
 ///     a subclass of ``GO:0051319`` (*G2 phase*) and has a ``part_of``
 ///     relationship to ``GO:0000278`` (*mitotic cell cycle*):
 ///
-///     >>> from fastobo.term import TermFrame, IntersectionOfClause//
+///     >>> from fastobo.term import TermFrame, IntersectionOfClause
 ///     >>> frame = TermFrame(fastobo.id.PrefixedIdent("GO", "0000085"))
 ///     >>> frame.append(IntersectionOfClause(
 ///     ...    typedef=None,

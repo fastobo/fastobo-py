@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.4...HEAD
+
+
+## [v0.5.4] - 2019-10-08
+
+[v0.5.3]: https://github.com/fastobo/fastobo-py/compare/v0.5.3...v0.5.4
+
+### Added 
+- `__init__` implementation for `fastobo.doc.OboDoc`.
+- `__init__` implementation for `fastobo.term.ConsiderClause`.
+- `__init__` implementation for `fastobo.term.IsObsoleteClause`.
+- Add constructor signatures to classes in `fastobo.term` and `fastobo.header`.
+
+### Changed
+- Bumped `pyo3` dependency to `v0.8.1`.
+
+### Fixed
+- Automatic generation of `pyproject.toml` in `sdist`.
 
 
 ## [v0.5.3] - 2019-10-06

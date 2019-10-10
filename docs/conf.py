@@ -53,10 +53,14 @@ project_urls = dict(
 # -- Setup -------------------------------------------------------------------
 
 def setup(app):
+    # Copy `CHANGELOG.md` from project directory
     changelog_src = os.path.join(project_dir, "CHANGELOG.md")
     changelog_dst = os.path.join(docssrc_dir, "changes.md")
     shutil.copy(changelog_src, changelog_dst)
+    # Add custom stylesheet
+    app.add_css_file("css/main.css")
 
+    # Add custom signature inspector support *argument-clinic* signatures.
     def inspector(app, what, name, obj, options, signature, return_annotation):
         if signature is not None:
             return signature, return_annotation

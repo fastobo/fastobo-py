@@ -605,7 +605,7 @@ impl PyObjectProtocol for CommentClause {
 /// SubsetClause(subset)
 /// --
 ///
-/// A clause declaring a term subset to which this term belongs.
+/// A clause declaring a subset to which this term belongs.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct SubsetClause {
@@ -1615,7 +1615,7 @@ impl PyObjectProtocol for IsObsoleteClause {
 /// ReplacedByClause(term)
 /// --
 ///
-/// A clause giving a term which replaces an obsolete term.
+/// A clause giving a term which replaces this obsolete term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug)]
 pub struct ReplacedByClause {

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 [Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.4...HEAD
 
+### Added
+- `__init__` to all classes of `fastobo.typedef`.
+### Changed
+- Renamed `term` field of `fastobo.typedef.Relationship` to `target`.
+
 
 ## [v0.5.4] - 2019-10-08
 

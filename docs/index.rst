@@ -8,7 +8,7 @@
 
 *Faultless AST for Open Biomedical Ontologies in Python.*
 
-|Travis| |License| |Source| |PyPI| |Wheel| |Versions| |Implementation| |Changelog| |Docs| |Issues|
+|Travis| |License| |Source| |PyPI| |Wheel| |Versions| |Implementation| |Changelog| |Docs| |Issues| |Downloads|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/fastobo.svg?style=flat-square&maxAge=300
    :target: https://pypi.org/project/fastobo
@@ -42,6 +42,9 @@
 
 .. |Issues| image:: https://img.shields.io/github/issues/fastobo/fastobo-py.svg?style=flat-square&maxAge=600
    :target: https://github.com/fastobo/fastobo-py/issues
+
+.. |Downloads| image:: https://img.shields.io/badge/dynamic/json?style=flat-square&color=303f9f&maxAge=86400&label=downloads&query=%24.total_downloads&url=https%3A%2F%2Fapi.pepy.tech%2Fapi%2Fprojects%2Ffastobo
+   :target: https://pepy.tech/project/fastobo
 
 About
 -----

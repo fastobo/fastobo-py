@@ -2827,6 +2827,10 @@ impl PyObjectProtocol for ReplacedByClause {
 
 // --- Consider --------------------------------------------------------------
 
+/// ConsiderClause(typedef)
+/// --
+///
+/// A clause giving a potential substitute for an obsolete typedef.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct ConsiderClause {

@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.6.0...HEAD
+
+
+## [v0.6.0] - 2019-10-08
+
+[v0.6.0]: https://github.com/fastobo/fastobo-py/compare/v0.5.4...v0.6.0
 
 ### Added
 - `__init__` to all classes of `fastobo.typedef`.
@@ -17,9 +22,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.5.4] - 2019-10-08
 
-[v0.5.3]: https://github.com/fastobo/fastobo-py/compare/v0.5.3...v0.5.4
+[v0.5.4]: https://github.com/fastobo/fastobo-py/compare/v0.5.3...v0.5.4
 
-### Added 
+### Added
 - `__init__` implementation for `fastobo.doc.OboDoc`.
 - `__init__` implementation for `fastobo.term.ConsiderClause`.
 - `__init__` implementation for `fastobo.term.IsObsoleteClause`.
@@ -105,7 +110,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 [v0.4.0]: https://github.com/fastobo/fastobo-py/compare/v0.3.3...v0.4.0
 
-### Added 
+### Added
 - `__init__` implementation for `fastobo.term.DefClause`
 - `__init__` implementation for `fastobo.syn.Synonym`
 - Precompiled wheels for PyPy3 on OSX and Linux.

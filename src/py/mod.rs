@@ -76,6 +76,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add("__package__", "fastobo")?;
     m.add("__build__", pyo3_built!(py, built))?;
+    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+    m.add("__author__", env!("CARGO_PKG_AUTHORS").replace(':', "\n"))?;
 
     add_submodule!(py, m, abc);
     add_submodule!(py, m, doc);

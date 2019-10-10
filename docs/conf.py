@@ -18,6 +18,7 @@ import configparser
 import inspect
 import os
 import sys
+import semantic_version
 
 docssrc_dir = os.path.abspath(os.path.join(__file__, ".."))
 project_dir = os.path.dirname(docssrc_dir)
@@ -41,6 +42,13 @@ copyright = '{}, {}'.format(
     '2019-{}'.format(year) if year > 2019 else '2019',
     author,
 )
+
+# The parsed semantic version
+semver = semantic_version.Version.coerce(fastobo.__version__)
+# The short X.Y.Z version
+version = "{v.major}.{v.minor}.{v.patch}".format(v=semver)
+# The full version, including alpha/beta/rc tags
+release = str(semver)
 
 # Project URLs
 project_urls = dict(

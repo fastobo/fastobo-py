@@ -186,7 +186,7 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
 
 // --- Base ------------------------------------------------------------------
 
-#[pyclass(extends=AbstractEntityClause)]
+#[pyclass(extends=AbstractEntityClause, module="fastobo.typedef")]
 pub struct BaseTypedefClause {}
 
 // --- IsAnonymous -----------------------------------------------------------

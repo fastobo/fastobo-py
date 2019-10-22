@@ -17,6 +17,10 @@ Installation is supported through pip::
 
   $ pip install fastobo --user
 
+Or as a conda package in the bioconda channel::
+
+  $ conda install -c bioconda fastobo 
+
 Note that this will install a static library that have been built with most
 feature flags disabled for compatibility purposes. If you wish to build the
 optimized library from source, with all feature flags enabled, make rust to

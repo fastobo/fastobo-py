@@ -8,10 +8,13 @@
 
 *Faultless AST for Open Biomedical Ontologies in Python.*
 
-|Travis| |AppVeyor| |License| |Source| |PyPI| |Wheel| |Versions| |Implementation| |Changelog| |Docs| |Issues| |DOI| |Downloads|
+|Travis| |AppVeyor| |License| |Source| |PyPI| |Wheel| |Bioconda| |Versions| |Implementation| |Changelog| |Docs| |Issues| |DOI| |Downloads|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/fastobo.svg?style=flat-square&maxAge=300
    :target: https://pypi.org/project/fastobo
+
+.. |Bioconda| image:: https://img.shields.io/conda/vn/bioconda/fastobo?style=flat-square&maxAge=3600
+   :target: https://anaconda.org/bioconda/fastobo
 
 .. |Travis| image:: https://img.shields.io/travis/fastobo/fastobo-py.svg?logo=travis&style=flat-square&maxAge=3600
    :target: https://travis-ci.org/fastobo/fastobo-py/branches

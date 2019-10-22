@@ -8,6 +8,7 @@
 [![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/fastobo/fastobo-py/)
 [![PyPI](https://img.shields.io/pypi/v/fastobo.svg?style=flat-square&maxAge=600)](https://pypi.org/project/fastobo)
 [![Wheel](https://img.shields.io/pypi/wheel/fastobo.svg?style=flat-square&maxAge=2678400)](https://pypi.org/project/fastobo/#files)
+[![Bioconda](https://img.shields.io/conda/vn/bioconda/fastobo?style=flat-square&maxAge=3600)](https://anaconda.org/bioconda/fastobo)
 [![Python Versions](https://img.shields.io/pypi/pyversions/fastobo.svg?style=flat-square&maxAge=600)](https://pypi.org/project/fastobo/#files)
 [![PyPI - Implementation](https://img.shields.io/pypi/implementation/fastobo.svg?style=flat-square&maxAge=600)](https://pypi.org/project/fastobo/#files)
 [![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/fastobo/fastobo-py/blob/master/CHANGELOG.md)

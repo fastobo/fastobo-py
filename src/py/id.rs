@@ -518,13 +518,11 @@ impl PyObjectProtocol for UnprefixedIdent {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let fmt = PyString::new(py, "UnprefixedIdent({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.inner.as_str().to_string(),))
+        fmt.call_method1(py, "format", (self.inner.as_str(),))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        Ok(self.as_gil_ref(py).to_string())
+    fn __str__(&'p self) -> PyResult<&'p str> {
+        Ok(self.inner.as_str())
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
@@ -646,8 +644,8 @@ impl PyObjectProtocol for Url {
     }
 
     /// Retrieve the URL in a serialized form.
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.inner.to_string())
+    fn __str__(&'p self) -> PyResult<&'p str> {
+        Ok(self.inner.as_str())
     }
 
     /// Compare to another `Url` or `str` instance.
@@ -706,7 +704,7 @@ impl Display for IdentPrefix {
 
 impl ToPyObject for IdentPrefix {
     fn to_object(&self, py: pyo3::Python<'_>) -> PyObject {
-        self.inner.to_string().to_object(py)
+        self.inner.as_str().to_object(py)
     }
 }
 
@@ -743,8 +741,8 @@ impl PyObjectProtocol for IdentPrefix {
         fmt.call_method1(py, "format", (self.inner.as_str(),))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.inner.to_string())
+    fn __str__(&'p self) -> PyResult<&'p str> {
+        Ok(self.inner.as_str())
     }
 }
 
@@ -807,9 +805,7 @@ impl PyObjectProtocol for IdentLocal {
         fmt.call_method1(py, "format", (self.inner.as_str(),))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        Ok(self.as_gil_ref(py).to_string())
+    fn __str__(&'p self) -> PyResult<&'p str> {
+        Ok(self.inner.as_ref())
     }
 }

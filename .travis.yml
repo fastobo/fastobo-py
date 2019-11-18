@@ -60,14 +60,19 @@ jobs:
       <<: *test-python
     - python: 3.7
       <<: *test-python
+    - python: 3.8
+      <<: *test-python
     - python: pypy3
       <<: *test-python
     # OSX
     - env: PYTHON=python3.6
+      osx_image: xcode9.4
       <<: *test-python-osx
     - env: PYTHON=python3.7
+      osx_image: xcode10.2
       <<: *test-python-osx
     - env: PYTHON=pypy3
+      osx_image: xcode9.4
       <<: *test-python-osx
 
 deploy:

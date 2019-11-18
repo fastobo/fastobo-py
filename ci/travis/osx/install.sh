@@ -4,11 +4,7 @@
 
 # --- Install Python ---------------------------------------------------------
 
-if [ "$PYTHON" = "python3.7" ]; then
-  log Updating Python to v${PYTHON#python}
-  brew unlink python
-  brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/master/Formula/python.rb
-elif [ "$PYTHON" = "pypy3" ]; then
+if [ "$PYTHON" = "pypy3" ]; then
   log Installing PyPy3
   brew unlink python
   brew install pypy3

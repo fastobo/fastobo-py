@@ -287,8 +287,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> from urllib.request import urlopen
     ///     >>> url = "http://purl.obolibrary.org/obo/pato.json"
     ///     >>> doc = fastobo.load_graph(urlopen(url))
-    ///     >>> doc[3]
-    ///     TermFrame(PrefixedIdent('PATO', '0000000'))
+    ///     >>> doc[0]
+    ///     TypedefFrame(UnprefixedIdent('bearer_of'))
     ///
     #[pyfn(m, "load_graph")]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {

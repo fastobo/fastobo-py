@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.6.1...HEAD
+
+
+## [v0.6.1] - 2019-11-19
+
+[v0.6.1]: https://github.com/fastobo/fastobo-py/compare/v0.6.0...v0.6.1
+
+### Added
+- Compilation of Python 3.8 wheels for Linux and Windows
+  ([#67](https://github.com/fastobo/fastobo-py/issues/67)).
+
+### Fixed
+- `BaseTypedefClause` not being declared in `fastobo.typdef` submodule.
+- `fastobo.id` module performing unneeded string allocation.
 
 
 ## [v0.6.0] - 2019-10-08

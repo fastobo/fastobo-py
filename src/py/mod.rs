@@ -288,7 +288,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> url = "http://purl.obolibrary.org/obo/pato.json"
     ///     >>> doc = fastobo.load_graph(urlopen(url))
     ///     >>> doc[0]
-    ///     TypedefFrame(UnprefixedIdent('bearer_of'))
+    ///     TypedefFrame(UnprefixedIdent('has_part'))
     ///
     #[pyfn(m, "load_graph")]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {

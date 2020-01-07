@@ -16,13 +16,13 @@ name = "fastobo_py"
 built = "0.3.1"
 
 [dependencies]
-libc = "0.2.62"
+libc = "0.2.66"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
-pyo3 = { version = "0.8.1", features = ["unsound-subclass", "extension-module"] }
+pyo3 = { version = "0.8.5", features = ["unsound-subclass", "extension-module"] }
 pyo3-built = "0.3.0"
 pest = "=2.1.2"
-url = "2.0.0"
+url = "2.1.0"
 
 fastobo = "0.7.4"
 fastobo-graphs = "0.1.2"

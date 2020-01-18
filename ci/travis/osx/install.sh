@@ -9,6 +9,10 @@ if [ "$PYTHON" = "pypy3" ]; then
   brew unlink python
   brew install pypy3
   ln -s /usr/local/bin/pypy3 /usr/local/bin/python3
+elif [ "$PYTHON" = "python3.6" ]; then
+  log Installing Python v3.6
+  brew unlink python
+  brew install --ignore-dependencies https://raw.githubusercontent.com/Homebrew/homebrew-core/f2a764ef944b1080be64bd88dca9a1d80130c558/Formula/python.rb
 else
   log Using Python v${PYTHON#python}
 fi

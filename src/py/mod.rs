@@ -169,10 +169,10 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     from the Berkeley BOP portal:
     ///
     ///     >>> from urllib.request import urlopen
-    ///     >>> url = "http://purl.obolibrary.org/obo/cmo.obo"
+    ///     >>> url = "http://purl.obolibrary.org/obo/eco.obo"
     ///     >>> doc = fastobo.load(urlopen(url))
-    ///     >>> doc.header[2]
-    ///     OntologyClause('cmo.obo')
+    ///     >>> doc.header[3]
+    ///     SavedByClause('rctauber')
     ///
     #[pyfn(m, "load")]
     fn load(py: Python, fh: &PyAny) -> PyResult<OboDoc> {

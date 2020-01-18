@@ -4,14 +4,9 @@
 
 # --- Test -------------------------------------------------------------------
 
-case $TRAVIS_PYTHON_VERSION in
-  pypy3)
-    TAG=pp371-pypy3_71
-    ;;
-  *)
-    TAG=cp$(echo $TRAVIS_PYTHON_VERSION | sed 's/\.//')
-    ;;
-esac
+if [ ! "$TRAVIS_PYTHON_VERSION" = "pypy3" ]; then
+  TAG=cp$(echo $TRAVIS_PYTHON_VERSION | sed 's/\.//')
+fi
 
 log Running test with $TAG
 docker exec -it manylinux sh /io/ci/travis/manylinux/_script.sh $TAG

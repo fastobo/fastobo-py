@@ -26,15 +26,15 @@ if [ "$PYTHON" = "pypy3.7" ]; then
   ln -s /usr/local/bin/pypy3 /usr/local/bin/python3
 elif [ "$PYTHON" = "pypy3.6" ]; then
   log Installing PyPy v3.6
-  pyenv install pypy3.6-7.3.0
+  pyenv install --skip-existing pypy3.6-7.3.0
   pyenv shell pypy3.6-7.3.0
 elif [ "$PYTHON" = "pypy3.5" ]; then
   log Installing PyPy v3.5
-  pyenv install pypy3.5-7.0.0
+  pyenv install --skip-existing pypy3.5-7.0.0
   pyenv shell pypy3.5-7.0.0
 else
   log Installing Python v${PYTHON#python}
-  pyenv install ${PYTHON#python}-dev
+  pyenv install --skip-existing ${PYTHON#python}-dev
   pyenv shell ${PYTHON#python}-dev
 fi
 

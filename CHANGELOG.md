@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.6.2...HEAD
+
+
+## [v0.6.2] - 2020-01-18
+
+[v0.6.2]: https://github.com/fastobo/fastobo-py/compare/v0.6.1...v0.6.2
+
+### Added
+- Compilation of Python 3.8, PyPy 3.5 and PyPy 3.6 wheels for OSX.
+
+### Fixed
+- Bumped `fastobo` to `v0.7.5`, which should finally support Windows
+  style line-endings.
 
 
 ## [v0.6.1] - 2019-11-19

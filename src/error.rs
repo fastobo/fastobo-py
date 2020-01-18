@@ -139,7 +139,7 @@ impl From<Error> for PyErr {
             }
 
             fastobo::error::Error::IOError { error: ioerror } => {
-                let desc = <std::io::Error as std::error::Error>::description(&ioerror).to_string();
+                let desc = ioerror.to_string();
                 match ioerror.raw_os_error() {
                     Some(2) => FileNotFoundError::py_err((2, desc, error.path)),
                     Some(code) => OSError::py_err((code, desc, error.path)),
@@ -174,7 +174,7 @@ impl From<GraphError> for PyErr {
                 Error::from(error).into()
             }
             fastobo_graphs::error::Error::IOError(error) => {
-                let desc = <std::io::Error as std::error::Error>::description(&error).to_string();
+                let desc = error.to_string();
                 match error.raw_os_error() {
                     Some(code) => OSError::py_err((code, desc)),
                     None => OSError::py_err((desc,)),

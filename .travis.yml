@@ -55,17 +55,19 @@ stages:
 jobs:
   include:
     # Linux
-    - python: 3.5
-      <<: *test-python
-    - python: 3.6
-      <<: *test-python
-    - python: 3.7
-      <<: *test-python
-    - python: 3.8
-      <<: *test-python
-    - python: pypy3
-      <<: *test-python
+    # - python: 3.5
+    #   <<: *test-python
+    # - python: 3.6
+    #   <<: *test-python
+    # - python: 3.7
+    #   <<: *test-python
+    # - python: 3.8
+    #   <<: *test-python
+    # - python: pypy3
+    #   <<: *test-python
     # OSX
+    - env: PYTHON=python3.5
+      <<: *test-python-osx
     - env: PYTHON=python3.6
       <<: *test-python-osx
     - env: PYTHON=python3.6
@@ -75,6 +77,8 @@ jobs:
     - env: PYTHON=python3.8
       <<: *test-python-osx
     - env: PYTHON=pypy3.6
+      <<: *test-python-osx
+    - env: PYTHON=pypy3.7
       <<: *test-python-osx
 
 deploy:

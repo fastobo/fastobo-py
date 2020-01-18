@@ -6,7 +6,7 @@ is only required if your platform does not have precompiled wheels available.
 Currently, we provide wheels for the following platforms:
 
 * **Linux x86-64**: CPython 3.5, 3.6, 3.7, 3.8, and PyPy 3.7
-* **OSX x86-64**: CPython 3.6, 3.7, and PyPy 3.7
+* **OSX x86-64**: CPython 3.5, 3.6, 3.7, 3.8, and PyPy 3.5, 3.6, 3.7
 * **Windows x86-64**: CPython 3.5, 3.6, 3.7, 3.8
 
 If your platform is not listed above, you will need to have the Rust compiler
@@ -19,7 +19,7 @@ Installation is supported through pip::
 
 Or as a conda package in the bioconda channel::
 
-  $ conda install -c bioconda fastobo 
+  $ conda install -c bioconda fastobo
 
 Note that this will install a static library that have been built with most
 feature flags disabled for compatibility purposes. If you wish to build the

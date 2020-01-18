@@ -4,9 +4,9 @@
 
 # --- Using proper Python executable -----------------------------------------
 
-if [ ! "$PYTHON" = "pypy3" ]; then
+if [ ! "$PYTHON" = "pypy3.7" ]; then
   eval "$(pyenv init -)"
-  pyenv shell ${PYTHON#python}-dev
+  pyenv shell $(pyenv versions --bare)
 fi
 
 # --- Patch version number ---------------------------------------------------
@@ -20,5 +20,5 @@ fi
 
 if [ ! -z "$TRAVIS_TAG" ]; then
   log Building wheel
-  $PYTHON setup.py sdist bdist_wheel
+  python setup.py sdist bdist_wheel
 fi

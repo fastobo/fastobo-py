@@ -12,7 +12,9 @@ if [ "$PYTHON" = "pypy3.7" ]; then
   log Installing PyPy v3.7
   brew unlink python
   brew install pypy3
+  rm -f /usr/local/bin/python /usr/local/bin/python3
   ln -s /usr/local/bin/pypy3 /usr/local/bin/python
+  ln -s /usr/local/bin/pypy3 /usr/local/bin/python3
 elif [ "$PYTHON" = "pypy3.6" ]; then
   log Installing PyPy v3.6
   pyenv install pypy3.6-7.3.0
@@ -22,15 +24,14 @@ elif [ "$PYTHON" = "pypy3.5" ]; then
   pyenv install pypy3.5-7.0.0
   pyenv shell pypy3.5-7.0.0
 else
-  log Install Python v${PYTHON#python}
+  log Installing Python v${PYTHON#python}
   pyenv install ${PYTHON#python}-dev
   pyenv shell ${PYTHON#python}-dev
 fi
 
 # --- Check system Python version --------------------------------------------
 
-log Checking global Python version
-python --version
+log Using $(python --version | head -n1 | cut -d' ' -f1,2)
 
 
 # --- Install Rust -----------------------------------------------------------
@@ -42,7 +43,7 @@ curl -sSf https://build.travis-ci.org/files/rustup-init.sh | sh -s -- --default-
 # --- Install Python requirements --------------------------------------------
 
 log Installing Python requirements
-python -m pip install -r "$TRAVIS_BUILD_DIR/ci/requirements.txt"
+python -m pip install -U -r "$TRAVIS_BUILD_DIR/ci/requirements.txt"
 
 
 # --- Setup cargo-cache ------------------------------------------------------

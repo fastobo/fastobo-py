@@ -11,4 +11,5 @@ fi
 
 # --- Test -------------------------------------------------------------------
 
+log Using $(python --version | head -n1 | cut -d' ' -f1,2)
 python setup.py test

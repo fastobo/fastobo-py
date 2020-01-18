@@ -12,4 +12,4 @@ docker exec -it manylinux sh -c \
 # --- Install Python deployment dependencies ---------------------------------
 
 log Installing Python requirements
-pip install -r ci/requirements.txt
+pip install -U -r ci/requirements.txt

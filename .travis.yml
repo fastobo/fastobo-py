@@ -68,16 +68,16 @@ jobs:
     # OSX
     - env: PYTHON=python3.5
       <<: *test-python-osx
-    - env: PYTHON=python3.6
-      <<: *test-python-osx
-    - env: PYTHON=python3.6
-      <<: *test-python-osx
-    - env: PYTHON=python3.7
-      <<: *test-python-osx
-    - env: PYTHON=python3.8
-      <<: *test-python-osx
-    - env: PYTHON=pypy3.6
-      <<: *test-python-osx
+    #- env: PYTHON=python3.6
+    #  <<: *test-python-osx
+    #- env: PYTHON=python3.6
+    #  <<: *test-python-osx
+    #- env: PYTHON=python3.7
+    #  <<: *test-python-osx
+    #- env: PYTHON=python3.8
+    #  <<: *test-python-osx
+    #- env: PYTHON=pypy3.6
+    #  <<: *test-python-osx
     - env: PYTHON=pypy3.7
       <<: *test-python-osx
 

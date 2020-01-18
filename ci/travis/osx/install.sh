@@ -13,10 +13,12 @@ elif [ "$PYTHON" = "python3.6" ]; then
   log Installing Python v3.6
   brew unlink python
   brew install --ignore-dependencies https://raw.githubusercontent.com/Homebrew/homebrew-core/f2a764ef944b1080be64bd88dca9a1d80130c558/Formula/python.rb
+  export PATH="$(brew --prefix)/bin:${PATH}"
 elif [ "$PYTHON" = "python3.8" ]; then
   log Installing Python v3.8
   brew unlink python
   brew install python@3.8
+  export PATH="$(brew --prefix)/bin:${PATH}"
 else
   log Using Python v${PYTHON#python}
 fi

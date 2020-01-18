@@ -5,6 +5,7 @@
 # --- Using proper Python executable -----------------------------------------
 
 if [ ! "$PYTHON" = "pypy3.7" ]; then
+  log Activating pyenv
   eval "$(pyenv init -)"
   pyenv shell $(pyenv versions --bare)
 fi

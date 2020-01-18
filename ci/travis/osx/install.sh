@@ -4,8 +4,17 @@
 
 # --- Install Python ---------------------------------------------------------
 
-log Installing pyenv from GitHub
-git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
+if [ ! -e "$PYENV_ROOT/.git" ]; then
+  log Installing pyenv from GitHub
+  git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
+else
+  log Updating pyenv
+  cd "$PYENV_ROOT"
+  git pull
+  cd "$TRAVIS_BUILD_DIR"
+fi
+
+log Activating pyenv
 eval "$(pyenv init -)"
 
 if [ "$PYTHON" = "pypy3.7" ]; then
@@ -43,7 +52,7 @@ curl -sSf https://build.travis-ci.org/files/rustup-init.sh | sh -s -- --default-
 # --- Install Python requirements --------------------------------------------
 
 log Installing Python requirements
-python -m pip install -U -r "$TRAVIS_BUILD_DIR/ci/requirements.txt"
+python -m pip install -r "$TRAVIS_BUILD_DIR/ci/requirements.txt"
 
 
 # --- Setup cargo-cache ------------------------------------------------------

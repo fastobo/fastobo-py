@@ -41,6 +41,7 @@ stages:
     directories:
       - $HOME/.cargo/bin
       - $HOME/.cache/pip
+      - $HOME/.pyenv
       - $TRAVIS_BUILD_DIR/target
       - $HOME/Library/Caches/Homebrew
   install:

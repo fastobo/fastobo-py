@@ -15,5 +15,8 @@ chandler push --github="$TRAVIS_REPO_SLUG" --changelog="CHANGELOG.md"
 
 # --- Deploy to PyPI ---------------------------------------------------------
 
+log Checking twine is installed
+python3 -m pip install twine
+
 log Deploying to PyPI
 python3 -m twine upload --skip-existing dist/*.whl dist/*.tar.gz

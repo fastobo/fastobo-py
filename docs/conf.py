@@ -173,7 +173,7 @@ html_theme_options = {
         ("GitHub", _parser.get("metadata", "home-page").strip(), True)
     ] + [
         (k, v, True) for k, v in project_urls.items()
-        if k not in {"Documentation", "Changelog"}
+        if k not in {"Documentation", "Changelog", "Bug Tracker"}
     ],
     "admonition_use_panel": True,
 }

@@ -53,6 +53,11 @@ stages:
     - ci/travis/osx/after_success.sh
 
 jobs:
+  allowed_failures:
+    - os: osx
+      env: PYTHON=pypy3.5
+    - os: osx
+      env: PYTHON=pypy3.6
   include:
     # Linux
     - python: 3.5
@@ -92,6 +97,9 @@ jobs:
       if: tag IS present
       <<: *test-python-osx
     - env: PYTHON=python3.8
+      <<: *test-python-osx
+    - env: PYTHON=pypy3.5
+      if: tag IS present
       <<: *test-python-osx
     - env: PYTHON=pypy3.6
       if: tag IS present

@@ -189,6 +189,7 @@ html_theme_options = {
 html_sidebars = {
     "*": ["localtoc.html"],
     os.path.join("api", "*"): ["localtoc.html"],
+    os.path.join("examples", "*"): ["localtoc.html"],
 }
 
 # -- Extension configuration -------------------------------------------------

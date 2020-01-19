@@ -1,6 +1,8 @@
 Installation
 ============
 
+.. highlight:: console
+
 Precompiled Wheels
 ------------------
 
@@ -17,7 +19,7 @@ If your platform and implementation is not listed above, you will need to build
 from source (see next section). Feel free to
 `open an issue <https://github.com/fastobo/fastobo-py/issues>`_ as well!
 
-Downloading and installing from a wheel is then as simple as:
+Downloading and installing from a wheel is then as simple as::
 
   $ pip install fastobo --user
 
@@ -46,7 +48,7 @@ Then installing with ``pip`` will build the pacakge::
 
   $ pip install fastobo --user
 
- **Be patient, it can take a long time on lower-end machine!**
+**Be patient, it can take a long time on lower-end machine!**
 
 Note that this will install a static library that have been built with most
 feature flags disabled for compatibility purposes. If you wish to build the

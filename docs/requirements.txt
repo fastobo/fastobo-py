@@ -1,10 +1,9 @@
 sphinx ~=2.2
 recommonmark ~=0.6
 sphinx_bootstrap_theme ~=0.7
-fastobo
+fastobo ~=0.6.2
 ipykernel ~=5.1
 ipython ~=7.8
 nbsphinx ~=0.4
 pygments-style-monokailight ~=0.4
 semantic_version ~=2.6
-

@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.7.0...HEAD
+
+
+## [v0.7.0] - 2020-01-24
+
+[v0.7.0]: https://github.com/fastobo/fastobo-py/compare/v0.6.2...v0.7.0
+
+### Changed
+- Bumped `fastobo` to `v0.8.1` to use multi-threaded parser implementation.
+- Added `ordered` keyword argument to top-level `fastobo` function to disable
+  requirement to parse the document in order-preserving mode.
 
 
 ## [v0.6.2] - 2020-01-18

@@ -1,5 +1,6 @@
 //! Definition of the Python classes exported in the `fastobo` module.
 
+use std::convert::TryFrom;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
@@ -90,7 +91,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     add_submodule!(py, m, typedef);
     add_submodule!(py, m, xref);
 
-    /// iter(fh)
+    /// iter(fh, ordered=True)
     /// --
     ///
     /// Iterate over the frames contained in an OBO document.
@@ -103,6 +104,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     fh (str or file-handle): the path to an OBO file, or a **binary**
     ///         stream that contains a serialized OBO document. *A binary
     ///         stream needs a* ``read(x)`` *method returning* ``x`` *bytes*.
+    ///     ordered (bool): whether or not to yield the frames in the same
+    ///         order they are declared in the source document.
     ///
     /// Raises:
     ///     TypeError: when the argument is not a `str` or a binary stream.
@@ -122,13 +125,13 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> list(reader)
     ///     [TermFrame(PrefixedIdent('MS', '1000001')), ...]
     ///
-    #[pyfn(m, "iter")]
-    fn iter(py: Python, fh: &PyAny) -> PyResult<FrameReader> {
+    #[pyfn(m, "iter", ordered="true")]
+    fn iter(py: Python, fh: &PyAny, ordered: bool) -> PyResult<FrameReader> {
         if let Ok(s) = fh.downcast_ref::<PyString>() {
             let path = s.to_string()?;
-            FrameReader::from_path(path.as_ref())
+            FrameReader::from_path(path.as_ref(), ordered)
         } else {
-            match FrameReader::from_handle(py, fh) {
+            match FrameReader::from_handle(py, fh, ordered) {
                 Ok(r) => Ok(r),
                 Err(inner) => {
                     let msg = "expected path or binary file handle";
@@ -144,7 +147,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
         }
     }
 
-    /// load(fh)
+    /// load(fh, ordered=True)
     /// --
     ///
     /// Load an OBO document from the given path or file handle.
@@ -153,6 +156,8 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     fh (str or file-handle): the path to an OBO file, or a **binary**
     ///         stream that contains a serialized OBO document. *A binary
     ///         stream needs a* ``read(x)`` *method returning* ``x`` *bytes*.
+    ///     ordered (bool): whether or not to yield the frames in the same
+    ///         order they are declared in the source document.
     ///
     /// Returns:
     ///     `~fastobo.doc.OboDoc`: the OBO document deserialized into an
@@ -174,11 +179,13 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc.header[3]
     ///     SavedByClause('rctauber')
     ///
-    #[pyfn(m, "load")]
-    fn load(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
+    #[pyfn(m, "load", ordered="true")]
+    fn load(py: Python, fh: &PyAny, ordered: bool) -> PyResult<OboDoc> {
         if let Ok(s) = fh.downcast_ref::<PyString>() {
             let path = s.to_string()?;
-            match fastobo::from_file(path.as_ref()) {
+            let f = std::fs::File::open(&*path).map_err(Error::from)?;
+            let mut reader = fastobo::parser::FrameReader::from(f);
+            match fastobo::ast::OboDoc::try_from(reader.ordered(ordered)) {
                 Ok(doc) => Ok(doc.into_py(py)),
                 Err(e) => Error::from(e).with_path(path).into(),
             }
@@ -187,10 +194,12 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
                 // Object is a binary file-handle: attempt to parse the
                 // document and return an `OboDoc` object.
                 Ok(f) => {
-                    let mut bufreader = std::io::BufReader::new(f);
-                    match fastobo::from_reader(&mut bufreader) {
+                    let bufreader = std::io::BufReader::new(f);
+                    let mut reader = fastobo::parser::FrameReader::new(bufreader);
+                    match fastobo::ast::OboDoc::try_from(reader.ordered(ordered)) {
                         Ok(doc) => Ok(doc.into_py(py)),
-                        Err(e) => bufreader
+                        Err(e) => reader
+                            .into_inner()
                             .into_inner()
                             .into_err()
                             .unwrap_or_else(|| Error::from(e).into())
@@ -213,13 +222,15 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
         }
     }
 
-    /// loads(document)
+    /// loads(document, ordered=True)
     /// --
     ///
     /// Load an OBO document from a string.
     ///
     /// Arguments:
     ///     document (str): a string containing an OBO document.
+    ///     ordered (bool): whether or not to yield the frames in the same
+    ///         order they are declared in the source document.
     ///
     /// Returns:
     ///     `~fastobo.doc.OboDoc`: the OBO document deserialized into an
@@ -245,9 +256,11 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc[0][0]
     ///     NameClause('test item')
     ///
-    #[pyfn(m, "loads")]
-    fn loads(py: Python, document: &str) -> PyResult<OboDoc> {
-        match fastobo::ast::OboDoc::from_str(document) {
+    #[pyfn(m, "loads", ordered="true")]
+    fn loads(py: Python, document: &str, ordered: bool) -> PyResult<OboDoc> {
+        let cursor = std::io::Cursor::new(document);
+        let mut reader = fastobo::parser::FrameReader::new(cursor);
+        match fastobo::ast::OboDoc::try_from(reader.ordered(ordered)) {
             Ok(doc) => Ok(doc.into_py(py)),
             Err(e) => Error::from(e).into(),
         }

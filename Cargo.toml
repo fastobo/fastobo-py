@@ -25,7 +25,7 @@ pest = "=2.1.2"
 url = "2.1.0"
 
 fastobo = "0.7.5"
-fastobo-graphs = "0.1.2"
+fastobo-graphs = "0.2.0"
 fastobo-py-derive-internal = { path = "./derive" }
 
 [features]

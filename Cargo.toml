@@ -24,7 +24,7 @@ pyo3-built = "0.3.0"
 pest = "=2.1.2"
 url = "2.1.0"
 
-fastobo = "0.7.5"
+fastobo = "0.8.0"
 fastobo-graphs = "0.1.2"
 fastobo-py-derive-internal = { path = "./derive" }
 

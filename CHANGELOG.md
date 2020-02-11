@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.7.0...HEAD
 
 
+### Changed
+- Bumped `fastobo` to `v0.8.2` to fix `Display` implementation of 
+  `HeaderClause::Unreserved` variant.
+
+
 ## [v0.7.0] - 2020-01-24
 
 [v0.7.0]: https://github.com/fastobo/fastobo-py/compare/v0.6.2...v0.7.0

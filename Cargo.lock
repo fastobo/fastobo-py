@@ -61,6 +61,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "built"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20c01a8375121157fc0a9643af2d045272d86916d9a3e2cb491096971bdaf1c1"
+dependencies = [
+ "cargo-lock",
+ "chrono",
+]
+
+[[package]]
 name = "byte-tools"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -71,6 +81,18 @@ name = "byteorder"
 version = "1.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
+
+[[package]]
+name = "cargo-lock"
+version = "4.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8504b63dd1249fd1745b7b4ef9b6f7b107ddeb3c95370043c7dbcc38653a2679"
+dependencies = [
+ "semver",
+ "serde",
+ "toml",
+ "url",
+]
 
 [[package]]
 name = "cc"
@@ -248,7 +270,7 @@ dependencies = [
 name = "fastobo-py"
 version = "0.7.0"
 dependencies = [
- "built",
+ "built 0.4.0",
  "fastobo",
  "fastobo-graphs",
  "fastobo-py-derive-internal",
@@ -740,7 +762,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2e9d66c33f69830543cfbb912bd687f98e1cd2b5037477df1017596387ca178"
 dependencies = [
- "built",
+ "built 0.3.2",
  "pyo3",
 ]
 
@@ -833,6 +855,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 dependencies = [
  "semver-parser",
+ "serde",
 ]
 
 [[package]]

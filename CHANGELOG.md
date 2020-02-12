@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.7.2...HEAD
+
+
+## [v0.7.2] - 2020-02-12
+
+[v0.7.2]: https://github.com/fastobo/fastobo-py/compare/v0.7.1...v0.7.2
+
+### Changed
+- Bumped `fastobo` to `v0.8.3` to fix `Display` implementation of 
+  `fastobo::ast::IsoDateTime`.
 
 
 ## [v0.7.1] - 2020-02-11

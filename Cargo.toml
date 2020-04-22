@@ -16,7 +16,7 @@ name = "fastobo_py"
 built = { version  = "0.4.1", features = ["chrono"] }
 
 [dependencies]
-libc = "0.2.67"
+libc = "0.2.69"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
 pyo3 = { version = "0.8.5", features = ["unsound-subclass", "extension-module"] }

@@ -62,9 +62,9 @@ dependencies = [
 
 [[package]]
 name = "built"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20c01a8375121157fc0a9643af2d045272d86916d9a3e2cb491096971bdaf1c1"
+checksum = "0d666ee87840ed5ad1e8cb429199c9b68ca3ee74a9f439e069b1e68748f46c92"
 dependencies = [
  "cargo-lock",
  "chrono",
@@ -270,7 +270,7 @@ dependencies = [
 name = "fastobo-py"
 version = "0.7.2"
 dependencies = [
- "built 0.4.0",
+ "built 0.4.1",
  "fastobo",
  "fastobo-graphs",
  "fastobo-py-derive-internal",

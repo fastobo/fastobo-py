@@ -88,9 +88,11 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
 ///         frames, either `TermFrame`, `TypedefFrame` or `InstanceFrame`.
 ///
 #[pyclass(module = "fastobo.doc")]
-#[derive(Debug, PyList)]
+// #[derive(Debug, PyList)]
+#[derive(Debug)]
 pub struct OboDoc {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
+    /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.
     header: Py<HeaderFrame>,
     entities: Vec<EntityFrame>,
 }
@@ -124,17 +126,21 @@ impl Display for OboDoc {
 impl FromPy<obo::OboDoc> for OboDoc {
     fn from_py(mut doc: fastobo::ast::OboDoc, py: Python) -> Self {
         // Take ownership of header and entities w/o reallocation or clone.
-        let header: HeaderFrame = replace(doc.header_mut(), Default::default())
+        let h: HeaderFrame = replace(doc.header_mut(), Default::default())
             .into_py(py);
         let entities = replace(doc.entities_mut(), Default::default())
             .into_iter()
             .map(|frame| EntityFrame::from_py(frame, py))
             .collect();
 
-        Self {
-            header: Py::new(py, header).expect("could not move header to Python heap"),
-            entities,
-        }
+        let header = PyCell::new(
+                py,
+                PyClassInitializer::from(AbstractFrame {}).add_subclass(h)
+            )
+            .map(Py::from)
+            .expect("could not move header to Python heap");
+
+        Self { header, entities }
     }
 }
 
@@ -160,9 +166,8 @@ impl OboDoc {
         let header = header
             .map(|h| h.clone_py(py))
             .unwrap_or_else(HeaderFrame::empty);
-
         // create doc and extract entities
-        let mut doc = OboDoc::with_header(Py::new(py, header)?);
+        let mut doc = OboDoc::with_header(Py::from(PyCell::new(py, header)?));
         if let Some(any) = entities {
             for res in PyIterator::from_object(py, &any.to_object(py))? {
                 doc.entities.push(EntityFrame::extract(res?)?);
@@ -172,7 +177,6 @@ impl OboDoc {
         Ok(doc)
     }
 
-    /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.
     #[getter]
     fn get_header<'py>(&self, py: Python<'py>) -> PyResult<Py<HeaderFrame>> {
         Ok(self.header.clone_ref(py))

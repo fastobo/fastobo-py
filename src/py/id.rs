@@ -170,6 +170,7 @@ impl_convert!(NamespaceIdent, Ident);
 
 /// A sequence of character used to refer to an OBO entity.
 #[pyclass(subclass, module = "fastobo.id")]
+#[derive(Default)]
 pub struct BaseIdent {}
 
 // --- PrefixedIdent ----------------------------------------------------------
@@ -186,7 +187,7 @@ pub struct BaseIdent {}
 ///     'GO:0009637'
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Debug)]
+#[derive(Debug, PyClassInitializer)]
 pub struct PrefixedIdent {
     prefix: Py<IdentPrefix>,
     local: Py<IdentLocal>,
@@ -257,13 +258,6 @@ impl FromPy<ast::PrefixedIdent> for PrefixedIdent {
             Py::new(py, prefix).expect("could not allocate on Python heap"),
             Py::new(py, local).expect("could not allocate on Python heap"),
         )
-    }
-}
-
-impl Into<PyClassInitializer<PrefixedIdent>> for PrefixedIdent {
-    fn into(self) -> PyClassInitializer<PrefixedIdent> {
-        PyClassInitializer::from(BaseIdent {})
-            .add_subclass(self)
     }
 }
 
@@ -422,7 +416,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///     hello world
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq, PyClassInitializer)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
 }
@@ -484,13 +478,6 @@ impl From<ast::UnprefixedIdent> for UnprefixedIdent {
 impl FromPy<ast::UnprefixedIdent> for UnprefixedIdent {
     fn from_py(id: ast::UnprefixedIdent, _py: Python) -> Self {
         Self::from(id)
-    }
-}
-
-impl Into<PyClassInitializer<UnprefixedIdent>> for UnprefixedIdent {
-    fn into(self) -> PyClassInitializer<UnprefixedIdent> {
-        PyClassInitializer::from(BaseIdent {})
-            .add_subclass(self)
     }
 }
 
@@ -575,7 +562,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///     ValueError: invalid url: ...
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd, PyClassInitializer)]
 #[opaque_typedef(derive(FromInner, IntoInner))]
 pub struct Url {
     inner: url::Url,
@@ -614,13 +601,6 @@ impl FromPy<Url> for fastobo::ast::Ident {
 impl FromPy<Url> for url::Url {
     fn from_py(url: Url, _py: Python) -> Self {
         url.inner
-    }
-}
-
-impl Into<PyClassInitializer<Url>> for Url {
-    fn into(self) -> PyClassInitializer<Url> {
-        PyClassInitializer::from(BaseIdent {})
-            .add_subclass(self)
     }
 }
 

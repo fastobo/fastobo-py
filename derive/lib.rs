@@ -451,3 +451,32 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
         }
     })
 }
+
+
+// ---
+
+#[proc_macro_derive(PyClassInitializer, attributes(extends))]
+pub fn pyclassinitializer_derive(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    match &ast.data {
+        syn::Data::Struct(s) => pyclassinitializer_impl_struct(&ast, &s),
+        _ => panic!("#[derive(PyClassInitializer)] only supports structs"),
+    }
+}
+
+fn pyclassinitializer_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream {
+    // Get the name of the wrapped struct.
+    let name1 = &ast.ident;
+    let name2 = &ast.ident;
+
+    // derive an implementation of PyClassInitializer using simply the
+    // default value of the base class as the initializer value
+    TokenStream::from(quote! {
+        impl Into<pyo3::pyclass_init::PyClassInitializer<#name1>> for #name2 {
+            fn into(self) ->  pyo3::pyclass_init::PyClassInitializer<Self> {
+                let base = <Self as pyo3::type_object::PyTypeInfo>::BaseType::default();
+                 pyo3::pyclass_init::PyClassInitializer::from(base).add_subclass(self)
+            }
+        }
+    })
+}

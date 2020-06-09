@@ -25,7 +25,7 @@ use super::clause::HeaderClause;
 use crate::utils::ClonePy;
 
 #[pyclass(extends=AbstractFrame, module="fastobo.header")]
-#[derive(Debug, PyList)]
+#[derive(Debug, PyList, PyClassInitializer)]
 pub struct HeaderFrame {
     clauses: Vec<HeaderClause>,
 }
@@ -73,13 +73,6 @@ impl FromPy<HeaderFrame> for obo::HeaderFrame {
             .into_iter()
             .map(|clause| obo::HeaderClause::from_py(clause, py))
             .collect()
-    }
-}
-
-impl Into<PyClassInitializer<HeaderFrame>> for HeaderFrame {
-    fn into(self) -> PyClassInitializer<HeaderFrame> {
-        PyClassInitializer::from(AbstractFrame {})
-            .add_subclass(self)
     }
 }
 

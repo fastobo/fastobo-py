@@ -62,6 +62,7 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
 /// `~fastobo.header.OntologyClause` for compatibility purposes), followed by
 /// a various number of entity frames.
 #[pyclass(subclass, module = "fastobo.abc")]
+#[derive(Default)]
 pub struct AbstractFrame {}
 
 /// An abstract entity frame, which clauses define an entity.
@@ -71,6 +72,7 @@ pub struct AbstractFrame {}
 /// which is supposedly unique, that can be accessed through the ``id``
 /// property in any concrete subclass.
 #[pyclass(extends=AbstractFrame, module="fastobo.abc")]
+#[derive(Default)]
 pub struct AbstractEntityFrame {}
 
 #[pymethods]
@@ -102,6 +104,7 @@ impl AbstractEntityFrame {
 ///      'xref': ['value-type:xsd\\:string "The allowed value-type for this CV term."']}
 ///
 #[pyclass(subclass, module = "fastobo.abc")]
+#[derive(Default)]
 pub struct AbstractClause {}
 
 #[pymethods]
@@ -142,4 +145,5 @@ impl AbstractClause {
 
 /// An abstract entity clause.
 #[pyclass(extends=AbstractClause, module="fastobo.abc")]
+#[derive(Default)]
 pub struct AbstractEntityClause {}

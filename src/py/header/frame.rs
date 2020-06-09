@@ -23,9 +23,11 @@ use super::super::abc::AbstractFrame;
 use super::clause::BaseHeaderClause;
 use super::clause::HeaderClause;
 use crate::utils::ClonePy;
+use crate::utils::FinalClass;
+use crate::utils::AbstractClass;
 
 #[pyclass(extends=AbstractFrame, module="fastobo.header")]
-#[derive(Debug, PyList, PyClassInitializer)]
+#[derive(Debug, PyList, FinalClass)]
 pub struct HeaderFrame {
     clauses: Vec<HeaderClause>,
 }

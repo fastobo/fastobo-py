@@ -25,6 +25,8 @@ use fastobo::share::Share;
 use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use crate::utils::ClonePy;
+use crate::utils::FinalClass;
+use crate::utils::AbstractClass;
 
 #[pyclass(module="fastobo.instance")]
 #[derive(Debug)]

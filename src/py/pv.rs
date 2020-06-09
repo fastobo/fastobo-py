@@ -19,6 +19,8 @@ use fastobo::share::Share;
 
 use super::id::Ident;
 use crate::utils::ClonePy;
+use crate::utils::FinalClass;
+use crate::utils::AbstractClass;
 
 // --- Module export ---------------------------------------------------------
 
@@ -81,13 +83,19 @@ impl FromPy<PropertyValue> for fastobo::ast::PropertyValue {
 // --- Base ------------------------------------------------------------------
 
 #[pyclass(subclass, module = "fastobo.pv")]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct AbstractPropertyValue {}
+
+impl AbstractClass for AbstractPropertyValue {
+    fn initializer() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Self {})
+    }
+}
 
 // --- Literal -----------------------------------------------------------------
 
-#[pyclass(module="fastobo.pv")]
-#[derive(Debug)]
+#[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
+#[derive(Debug, FinalClass)]
 pub struct LiteralPropertyValue {
     relation: Ident,
     value: ast::QuotedString,
@@ -145,7 +153,7 @@ impl LiteralPropertyValue {
         relation: &PyAny,
         value: &PyAny,
         datatype: &PyAny,
-    ) -> PyResult<Self> {
+    ) -> PyResult<PyClassInitializer<Self>> {
         let r = relation.extract::<Ident>()?;
         let v = if let Ok(s) = value.extract::<&PyString>() {
             ast::QuotedString::new(s.to_string()?.to_string())
@@ -154,7 +162,7 @@ impl LiteralPropertyValue {
             return TypeError::into(format!("expected str for value, found {}", n));
         };
         let dt = datatype.extract::<Ident>()?;
-        Ok(Self::new(relation.py(), r, v, dt))
+        Ok(Self::new(relation.py(), r, v, dt).into())
     }
 
     #[getter]
@@ -218,8 +226,8 @@ impl PyObjectProtocol for LiteralPropertyValue {
 
 // --- Resource ------------------------------------------------------------
 
-#[pyclass(module="fastobo.pv")]
-#[derive(Debug)]
+#[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
+#[derive(Debug, FinalClass)]
 pub struct ResourcePropertyValue {
     relation: Ident,
     value: Ident,
@@ -266,9 +274,9 @@ impl FromPy<ResourcePropertyValue> for fastobo::ast::PropertyValue {
 #[pymethods]
 impl ResourcePropertyValue {
     #[new]
-    fn __init__(relation: Ident, value: Ident) -> Self {
+    fn __init__(relation: Ident, value: Ident) -> PyClassInitializer<Self> {
         let gil = Python::acquire_gil();
-        Self::new(gil.python(), relation, value)
+        Self::new(gil.python(), relation, value).into()
     }
 
     #[getter]

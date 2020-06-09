@@ -26,6 +26,8 @@ use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use super::clause::TermClause;
 use crate::utils::ClonePy;
+use crate::utils::FinalClass;
+use crate::utils::AbstractClass;
 
 #[pyclass(module="fastobo.term")]
 #[derive(Debug, PyList)]

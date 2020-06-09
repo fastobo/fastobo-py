@@ -26,6 +26,7 @@ use fastobo::ast as obo;
 
 use crate::error::Error;
 use crate::utils::ClonePy;
+use crate::utils::AbstractClass;
 
 use super::header::frame::HeaderFrame;
 use super::id::Ident;
@@ -65,6 +66,12 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
 #[derive(Default)]
 pub struct AbstractFrame {}
 
+impl AbstractClass for AbstractFrame {
+    fn initializer() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Self {})
+    }
+}
+
 /// An abstract entity frame, which clauses define an entity.
 ///
 /// Entity frames define OBO entities, which can be classes (terms),
@@ -72,7 +79,7 @@ pub struct AbstractFrame {}
 /// which is supposedly unique, that can be accessed through the ``id``
 /// property in any concrete subclass.
 #[pyclass(extends=AbstractFrame, module="fastobo.abc")]
-#[derive(Default)]
+#[derive(Default, AbstractClass)]
 pub struct AbstractEntityFrame {}
 
 #[pymethods]
@@ -106,6 +113,12 @@ impl AbstractEntityFrame {
 #[pyclass(subclass, module = "fastobo.abc")]
 #[derive(Default)]
 pub struct AbstractClause {}
+
+impl AbstractClass for AbstractClause {
+    fn initializer() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Self {})
+    }
+}
 
 #[pymethods]
 impl AbstractClause {
@@ -145,5 +158,5 @@ impl AbstractClause {
 
 /// An abstract entity clause.
 #[pyclass(extends=AbstractClause, module="fastobo.abc")]
-#[derive(Default)]
+#[derive(Default, AbstractClass)]
 pub struct AbstractEntityClause {}

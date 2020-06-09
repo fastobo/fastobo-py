@@ -21,8 +21,9 @@ use fastobo::share::Cow;
 use fastobo::share::Redeem;
 use fastobo::share::Share;
 
-// use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
+use crate::utils::FinalClass;
+use crate::utils::AbstractClass;
 
 // --- Module export ----------------------------------------------------------
 
@@ -173,6 +174,12 @@ impl_convert!(NamespaceIdent, Ident);
 #[derive(Default)]
 pub struct BaseIdent {}
 
+impl AbstractClass for BaseIdent {
+    fn initializer() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(BaseIdent {})
+    }
+}
+
 // --- PrefixedIdent ----------------------------------------------------------
 
 /// An identifier with a prefix.
@@ -187,7 +194,7 @@ pub struct BaseIdent {}
 ///     'GO:0009637'
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Debug, PyClassInitializer)]
+#[derive(Debug, FinalClass)]
 pub struct PrefixedIdent {
     prefix: Py<IdentPrefix>,
     local: Py<IdentLocal>,
@@ -416,7 +423,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///     hello world
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq, PyClassInitializer)]
+#[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq, FinalClass)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
 }
@@ -562,7 +569,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///     ValueError: invalid url: ...
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd, PyClassInitializer)]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd, FinalClass)]
 #[opaque_typedef(derive(FromInner, IntoInner))]
 pub struct Url {
     inner: url::Url,

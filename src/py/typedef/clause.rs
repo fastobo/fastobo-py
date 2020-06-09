@@ -851,6 +851,8 @@ impl PyObjectProtocol for SynonymClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Debug)]
 pub struct XrefClause {
+    #[pyo3(get, set)]
+    /// `fastobo.xref.Xref`: a cross-reference relevant to this entity.
     xref: Py<Xref>,
 }
 
@@ -907,17 +909,6 @@ impl XrefClause {
     #[new]
     fn __init__(xref: &PyAny) -> PyResult<Self> {
         Xref::from_object(xref.py(), xref).map(Self::from)
-    }
-
-    #[getter]
-    fn get_xref<'py>(&self, py: Python<'py>) -> PyResult<Py<Xref>> {
-        Ok(self.xref.clone_ref(py))
-    }
-
-    #[setter]
-    fn set_xref(&mut self, xref: &PyAny) -> PyResult<()> {
-        self.xref = Xref::from_object(xref.py(), xref)?;
-        Ok(())
     }
 
     pub fn raw_value(&self) -> PyResult<String> {
@@ -1199,7 +1190,8 @@ impl PyObjectProtocol for RangeClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct BuiltinClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
+    /// `bool`: ``True`` if the relationship is built in the OBO format.
     builtin: bool,
 }
 
@@ -1232,12 +1224,6 @@ impl BuiltinClause {
     #[new]
     fn __init__(builtin: bool) -> Self {
         Self::new(builtin)
-    }
-
-    /// `bool`: ``True`` if the relationship is built in the OBO format.
-    #[getter]
-    fn get_builtin(&self) -> bool {
-        self.builtin
     }
 }
 
@@ -1361,7 +1347,7 @@ impl PyObjectProtocol for HoldsOverChainClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsAntiSymmetricClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     anti_symmetric: bool,
 }
 
@@ -1395,11 +1381,6 @@ impl IsAntiSymmetricClause {
     fn __init__(anti_symmetric: bool) -> Self {
         Self::new(anti_symmetric)
     }
-
-    #[getter]
-    fn get_anti_symmetric(&self) -> bool {
-        self.anti_symmetric
-    }
 }
 
 impl_raw_tag!(IsAntiSymmetricClause, "is_anti_symmetric");
@@ -1429,7 +1410,7 @@ impl PyObjectProtocol for IsAntiSymmetricClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsCyclicClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     cyclic: bool,
 }
 
@@ -1463,11 +1444,6 @@ impl IsCyclicClause {
     fn __init__(cyclic: bool) -> Self {
         Self::new(cyclic)
     }
-
-    #[getter]
-    fn get_cyclic(&self) -> bool {
-        self.cyclic
-    }
 }
 
 impl_raw_tag!(IsCyclicClause, "is_cyclic");
@@ -1497,7 +1473,7 @@ impl PyObjectProtocol for IsCyclicClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsReflexiveClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     reflexive: bool,
 }
 
@@ -1531,11 +1507,6 @@ impl IsReflexiveClause {
     fn __init__(reflexive: bool) -> Self {
         Self::new(reflexive)
     }
-
-    #[getter]
-    fn get_reflexive(&self) -> bool {
-        self.reflexive
-    }
 }
 
 impl_raw_tag!(IsReflexiveClause, "is_reflexive");
@@ -1565,6 +1536,7 @@ impl PyObjectProtocol for IsReflexiveClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsSymmetricClause {
+    #[pyo3(get, set)]
     symmetric: bool,
 }
 
@@ -1598,11 +1570,6 @@ impl IsSymmetricClause {
     fn __init__(symmetric: bool) -> Self {
         Self::new(symmetric)
     }
-
-    #[getter]
-    fn get_symmetric(&self) -> bool {
-        self.symmetric
-    }
 }
 
 impl_raw_tag!(IsSymmetricClause, "is_symmetric");
@@ -1632,7 +1599,7 @@ impl PyObjectProtocol for IsSymmetricClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsAsymmetricClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     asymmetric: bool,
 }
 
@@ -1666,11 +1633,6 @@ impl IsAsymmetricClause {
     fn __init__(asymmetric: bool) -> Self {
         Self::new(asymmetric)
     }
-
-    #[getter]
-    fn get_asymmetric(&self) -> bool {
-        self.asymmetric
-    }
 }
 
 impl_raw_tag!(IsAsymmetricClause, "is_asymmetric");
@@ -1700,7 +1662,7 @@ impl PyObjectProtocol for IsAsymmetricClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsTransitiveClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     transitive: bool,
 }
 
@@ -1734,11 +1696,6 @@ impl IsTransitiveClause {
     fn __init__(transitive: bool) -> Self {
         Self::new(transitive)
     }
-
-    #[getter]
-    fn get_transitive(&self) -> bool {
-        self.transitive
-    }
 }
 
 impl_raw_tag!(IsTransitiveClause, "is_transitive");
@@ -1768,7 +1725,7 @@ impl PyObjectProtocol for IsTransitiveClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsFunctionalClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     functional: bool,
 }
 
@@ -1802,11 +1759,6 @@ impl IsFunctionalClause {
     fn __init__(functional: bool) -> Self {
         Self::new(functional)
     }
-
-    #[getter]
-    fn get_functional(&self) -> bool {
-        self.functional
-    }
 }
 
 impl_raw_tag!(IsFunctionalClause, "is_functional");
@@ -1836,7 +1788,7 @@ impl PyObjectProtocol for IsFunctionalClause {
 #[pyclass(module="fastobo.typedef")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct IsInverseFunctionalClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     inverse_functional: bool,
 }
 
@@ -1869,11 +1821,6 @@ impl IsInverseFunctionalClause {
     #[new]
     fn __init__(inverse_functional: bool) -> Self {
         Self::new(inverse_functional)
-    }
-
-    #[getter]
-    fn get_inverse_functional(&self) -> bool {
-        self.inverse_functional
     }
 }
 

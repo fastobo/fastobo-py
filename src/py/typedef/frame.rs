@@ -27,8 +27,8 @@ use super::super::id::Ident;
 use super::clause::TypedefClause;
 use crate::utils::ClonePy;
 
-#[pyclass(extends=AbstractEntityFrame, module="fastobo.typedef")]
-#[derive(Debug, PyList)]
+#[pyclass(module="fastobo.typedef")]
+// #[derive(Debug, PyList)]
 pub struct TypedefFrame {
     id: Ident,
     clauses: Vec<TypedefClause>,
@@ -97,8 +97,8 @@ impl FromPy<TypedefFrame> for fastobo::ast::EntityFrame {
 impl TypedefFrame {
     // FIXME: should accept any iterable.
     #[new]
-    fn __init__(obj: &PyRawObject, id: Ident, clauses: Option<Vec<TypedefClause>>) -> PyResult<()> {
-        Ok(obj.init(Self::with_clauses(id, clauses.unwrap_or_else(Vec::new))))
+    fn __init__(id: Ident, clauses: Option<Vec<TypedefClause>>) -> Self {
+        Self::with_clauses(id, clauses.unwrap_or_else(Vec::new))
     }
 
     #[getter]

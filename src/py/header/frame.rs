@@ -19,13 +19,13 @@ use pyo3::PyObjectProtocol;
 use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
-use super::super::abc::AbstractFrame;
+// use super::super::abc::AbstractFrame;
 use super::clause::BaseHeaderClause;
 use super::clause::HeaderClause;
 use crate::utils::ClonePy;
 
-#[pyclass(extends=AbstractFrame, module="fastobo.header")]
-#[derive(Debug, PyList)]
+#[pyclass(module="fastobo.header")]
+// #[derive(Debug, PyList)]
 pub struct HeaderFrame {
     clauses: Vec<HeaderClause>,
 }
@@ -85,16 +85,15 @@ impl ToPyObject for HeaderFrame {
 #[pymethods]
 impl HeaderFrame {
     #[new]
-    pub fn __init__(obj: &PyRawObject, clauses: Option<&PyAny>) -> PyResult<()> {
+    pub fn __init__(clauses: Option<&PyAny>) -> PyResult<Self> {
+        let mut vec = Vec::new();
         if let Some(c) = clauses {
-            let mut vec = Vec::new();
-            for item in PyIterator::from_object(c.py(), c)? {
+            let gil = Python::acquire_gil();
+            for item in PyIterator::from_object(gil.python(), c)? {
                 vec.push(HeaderClause::extract(item?)?);
             }
-            Ok(obj.init(Self::new(vec)))
-        } else {
-            Ok(obj.init(Self::new(Vec::new())))
         }
+        Ok(Self::new(vec))
     }
 }
 

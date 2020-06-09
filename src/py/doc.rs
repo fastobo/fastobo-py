@@ -148,8 +148,9 @@ impl FromPy<OboDoc> for fastobo::ast::OboDoc {
 #[pymethods]
 impl OboDoc {
     #[new]
-    fn __init__(obj: &PyRawObject, header: Option<&HeaderFrame>, entities: Option<&PyAny>) -> PyResult<()> {
-        let py = obj.py();
+    fn __init__(header: Option<&HeaderFrame>, entities: Option<&PyAny>) -> PyResult<Self> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
 
         // extract header
         let header = header
@@ -164,7 +165,7 @@ impl OboDoc {
             }
         }
 
-        Ok(obj.init(doc))
+        Ok(doc)
     }
 
     /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.

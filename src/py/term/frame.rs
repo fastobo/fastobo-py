@@ -27,8 +27,8 @@ use super::super::id::Ident;
 use super::clause::TermClause;
 use crate::utils::ClonePy;
 
-#[pyclass(extends=AbstractEntityFrame, module="fastobo.term")]
-#[derive(Debug, PyList)]
+#[pyclass(module="fastobo.term")]
+// #[derive(Debug, PyList)]
 pub struct TermFrame {
     #[pyo3(set)]
     id: Ident,
@@ -99,8 +99,8 @@ impl FromPy<TermFrame> for fastobo::ast::EntityFrame {
 impl TermFrame {
     // FIXME: should accept any iterable.
     #[new]
-    fn __init__(obj: &PyRawObject, id: Ident, clauses: Option<Vec<TermClause>>) -> PyResult<()> {
-        Ok(obj.init(Self::with_clauses(id, clauses.unwrap_or_else(Vec::new))))
+    fn __init__(id: Ident, clauses: Option<Vec<TermClause>>) -> Self {
+        Self::with_clauses(id, clauses.unwrap_or_else(Vec::new))
     }
 
     #[getter]

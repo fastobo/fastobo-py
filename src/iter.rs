@@ -22,8 +22,8 @@ use pyo3::AsPyPointer;
 use pyo3::PyGCProtocol;
 
 use crate::error::Error;
-use crate::py::header::frame::HeaderFrame;
-use crate::py::doc::EntityFrame;
+// use crate::py::header::frame::HeaderFrame;
+// use crate::py::doc::EntityFrame;
 use crate::transmute_file_error;
 use crate::utils::ClonePy;
 
@@ -143,6 +143,7 @@ impl Handle for BufReader<PyFileGILRead> {
 
 // ---------------------------------------------------------------------------
 
+/*
 // FIXME: May cause memory leaks.
 /// An iterator over the frames of an OBO document.
 ///
@@ -232,3 +233,4 @@ impl PyIterProtocol for FrameReader {
         }
     }
 }
+*/

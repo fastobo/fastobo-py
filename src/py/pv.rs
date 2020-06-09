@@ -151,11 +151,10 @@ impl FromPy<LiteralPropertyValue> for fastobo::ast::PropertyValue {
 impl LiteralPropertyValue {
     #[new]
     fn __init__(
-        obj: &PyRawObject,
         relation: &PyAny,
         value: &PyAny,
         datatype: &PyAny,
-    ) -> PyResult<()> {
+    ) -> PyResult<Self> {
         let r = relation.extract::<Ident>()?;
         let v = if let Ok(s) = value.extract::<&PyString>() {
             ast::QuotedString::new(s.to_string()?.to_string())
@@ -164,7 +163,7 @@ impl LiteralPropertyValue {
             return TypeError::into(format!("expected str for value, found {}", n));
         };
         let dt = datatype.extract::<Ident>()?;
-        Ok(obj.init(Self::new(obj.py(), r, v, dt)))
+        Ok(Self::new(relation.py(), r, v, dt))
     }
 
     #[getter]
@@ -281,8 +280,9 @@ impl FromPy<ResourcePropertyValue> for fastobo::ast::PropertyValue {
 #[pymethods]
 impl ResourcePropertyValue {
     #[new]
-    fn __init__(obj: &PyRawObject, relation: Ident, value: Ident) -> PyResult<()> {
-        Ok(obj.init(Self::new(obj.py(), relation, value)))
+    fn __init__(relation: Ident, value: Ident) -> Self {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), relation, value)
     }
 
     #[getter]

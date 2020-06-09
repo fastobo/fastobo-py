@@ -58,7 +58,7 @@ pub struct Xref {
 }
 
 impl Xref {
-    pub fn new(_py: Python, id: Ident) -> Self {
+    pub fn new(id: Ident) -> Self {
         Self { id, desc: None }
     }
 
@@ -131,12 +131,17 @@ impl Xref {
     ///     id (~fastobo.id.Ident): the identifier of the reference.
     ///     desc (str, optional): an optional description for the reference.
     #[new]
-    fn __init__(obj: &PyRawObject, id: Ident, desc: Option<String>) -> PyResult<()> {
-        Ok(obj.init(Self::with_desc(
-            obj.py(),
-            id,
-            desc.map(fastobo::ast::QuotedString::new),
-        )))
+    fn __init__(id: Ident, desc: Option<String>) -> Self {
+        if let Some(s) = desc {
+            let gil = Python::acquire_gil();
+            Self::with_desc(
+                gil.python(),
+                id,
+                fastobo::ast::QuotedString::new(s)
+            )
+        } else {
+            Self::new(id)
+        }
     }
 
     /// `~fastobo.id.Ident`: the identifier of the reference.
@@ -201,7 +206,7 @@ pub struct XrefList {
 
 impl XrefList {
     /// Create a new `XrefList` from a vector of Xrefs.
-    pub fn new(_py: Python, xrefs: Vec<Py<Xref>>) -> Self {
+    pub fn new(xrefs: Vec<Py<Xref>>) -> Self {
         Self { xrefs }
     }
 
@@ -237,7 +242,7 @@ impl FromPy<fastobo::ast::XrefList> for XrefList {
         for xref in list.into_iter() {
             xrefs.push(Py::new(py, xref.into_py(py)).unwrap())
         }
-        Self::new(py, xrefs)
+        Self::new(xrefs)
     }
 }
 
@@ -256,18 +261,19 @@ impl ToPyObject for XrefList {
             .iter()
             .map(|xref| xref.clone_py(py))
             .collect();
-        IntoPy::into_py(XrefList::new(py, list), py)
+        IntoPy::into_py(XrefList::new(list), py)
     }
 }
 
 #[pymethods]
 impl XrefList {
     #[new]
-    fn __init__(obj: &PyRawObject, xrefs: Option<&PyAny>) -> PyResult<()> {
+    fn __init__(xrefs: Option<&PyAny>) -> PyResult<Self> {
         if let Some(x) = xrefs {
-            Ok(obj.init(Self::collect(obj.py(), x)?))
+            let gil = Python::acquire_gil();
+            Self::collect(gil.python(), x)
         } else {
-            Ok(obj.init(Self::new(obj.py(), Vec::new())))
+            Ok(Self::new(Vec::new()))
         }
     }
 }
@@ -306,7 +312,7 @@ impl PySequenceProtocol for XrefList {
     }
 
     fn __contains__(&self, item: &PyAny) -> PyResult<bool> {
-        if let Ok(xref) = item.downcast_ref::<Xref>() {
+        if let Ok(xref) = item.downcast::<Xref>() {
             let py = item.py();
             Ok(self.xrefs.iter().any(|x| x.as_gil_ref(py) == xref))
         } else {

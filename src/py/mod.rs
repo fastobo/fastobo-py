@@ -35,26 +35,26 @@ use fastobo_graphs::model::GraphDocument;
 
 use crate::error::Error;
 use crate::error::GraphError;
-use crate::iter::FrameReader;
+// use crate::iter::FrameReader;
 use crate::pyfile::PyFileRead;
 use crate::pyfile::PyFileWrite;
-use crate::utils::AsGILRef;
+// use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 // ---------------------------------------------------------------------------
 
-pub mod abc;
-pub mod doc;
-pub mod header;
+// pub mod abc;
+// pub mod doc;
+// pub mod header;
 pub mod id;
-pub mod instance;
-pub mod pv;
-pub mod syn;
-pub mod term;
-pub mod typedef;
-pub mod xref;
+// pub mod instance;
+// pub mod pv;
+// pub mod syn;
+// pub mod term;
+// pub mod typedef;
+// pub mod xref;
 
-use self::doc::OboDoc;
+// use self::doc::OboDoc;
 use super::built;
 
 // --- Module export ---------------------------------------------------------
@@ -64,33 +64,34 @@ use super::built;
 ///
 #[pymodule]
 fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
-    use self::abc::PyInit_abc;
-    use self::doc::PyInit_doc;
-    use self::header::PyInit_header;
+    // use self::abc::PyInit_abc;
+    // use self::doc::PyInit_doc;
+    // use self::header::PyInit_header;
     use self::id::PyInit_id;
-    use self::instance::PyInit_instance;
-    use self::pv::PyInit_pv;
-    use self::syn::PyInit_syn;
-    use self::term::PyInit_term;
-    use self::typedef::PyInit_typedef;
-    use self::xref::PyInit_xref;
+    // use self::instance::PyInit_instance;
+    // use self::pv::PyInit_pv;
+    // use self::syn::PyInit_syn;
+    // use self::term::PyInit_term;
+    // use self::typedef::PyInit_typedef;
+    // use self::xref::PyInit_xref;
 
     m.add("__package__", "fastobo")?;
     m.add("__build__", pyo3_built!(py, built))?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add("__author__", env!("CARGO_PKG_AUTHORS").replace(':', "\n"))?;
 
-    add_submodule!(py, m, abc);
-    add_submodule!(py, m, doc);
-    add_submodule!(py, m, header);
+    // add_submodule!(py, m, abc);
+    // add_submodule!(py, m, doc);
+    // add_submodule!(py, m, header);
     add_submodule!(py, m, id);
-    add_submodule!(py, m, instance);
-    add_submodule!(py, m, pv);
-    add_submodule!(py, m, syn);
-    add_submodule!(py, m, term);
-    add_submodule!(py, m, typedef);
-    add_submodule!(py, m, xref);
+    // add_submodule!(py, m, instance);
+    // add_submodule!(py, m, pv);
+    // add_submodule!(py, m, syn);
+    // add_submodule!(py, m, term);
+    // add_submodule!(py, m, typedef);
+    // add_submodule!(py, m, xref);
 
+    /*
     /// iter(fh, ordered=True)
     /// --
     ///
@@ -408,6 +409,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
             }
         }
     }
+    */
 
     Ok(())
 }

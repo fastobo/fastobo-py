@@ -167,25 +167,25 @@ impl Synonym {
 
     #[new]
     pub fn __init__(
-        obj: &PyRawObject,
         desc: String,
         scope: &str,
         ty: Option<Ident>,
         xrefs: Option<&PyAny>
-    ) -> PyResult<()> {
-        let list = match xrefs {
-            Some(x) => XrefList::collect(obj.py(), x)?,
-            None => XrefList::new(obj.py(), Vec::new()),
-        };
+    ) -> PyResult<Self> {
 
-        let synonym = Self {
+        let list = xrefs
+            .map(|x| XrefList::collect(Python::acquire_gil().python(), x))
+            .transpose()?
+            .unwrap_or_else(XrefList::new);
+
+        Ok(Self {
             desc: fastobo::ast::QuotedString::new(desc),
             scope: SynonymScope::from_str(scope)?,
             xrefs: list,
             ty,
-        };
+        })
 
-        Ok(obj.init(synonym))
+        Ok(synonym)
     }
 
     #[getter]

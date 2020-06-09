@@ -11,6 +11,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
+use pyo3::AsPyRef;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
@@ -20,7 +21,7 @@ use fastobo::share::Cow;
 use fastobo::share::Redeem;
 use fastobo::share::Share;
 
-use crate::utils::AsGILRef;
+// use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 // --- Module export ----------------------------------------------------------
@@ -34,7 +35,6 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::IdentLocal>()?;
     m.add_class::<self::Url>()?;
     m.add("__name__", "fastobo.id")?;
-
 
     /// parse(s)
     /// --
@@ -92,6 +92,7 @@ macro_rules! impl_convert {
 }
 
 #[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+// #[derive(ClonePy, Debug, PartialEq)]
 #[wraps(BaseIdent)]
 pub enum Ident {
     Unprefixed(Py<UnprefixedIdent>),
@@ -99,29 +100,30 @@ pub enum Ident {
     Url(Py<Url>),
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::Id<'p>> for Ident {
-    fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::Id<'p> {
-        match self {
-            Ident::Unprefixed(ref id) => {
-                let x: &UnprefixedIdent = id.as_gil_ref(py);
-                fastobo::ast::Id::Unprefixed(Cow::Borrowed(x.as_gil_ref(py)))
-            }
-            Ident::Prefixed(ref id) => {
-                let x: &PrefixedIdent = id.as_gil_ref(py);
-                fastobo::ast::Id::Prefixed(Cow::Borrowed(x.as_gil_ref(py)))
-            }
-            Ident::Url(ref url) => {
-                let x: &Url = url.as_gil_ref(py);
-                fastobo::ast::Id::Url(Cow::Borrowed(x.as_gil_ref(py)))
-            }
-        }
-    }
-}
+// impl<'p> AsGILRef<'p, fastobo::ast::Id<'p>> for Ident {
+//     fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::Id<'p> {
+//         match self {
+//             Ident::Unprefixed(ref id) => {
+//                 let x: &UnprefixedIdent = id.as_gil_ref(py);
+//                 fastobo::ast::Id::Unprefixed(Cow::Borrowed(x.as_gil_ref(py)))
+//             }
+//             Ident::Prefixed(ref id) => {
+//                 let x: &PrefixedIdent = id.as_gil_ref(py);
+//                 fastobo::ast::Id::Prefixed(Cow::Borrowed(x.as_gil_ref(py)))
+//             }
+//             Ident::Url(ref url) => {
+//                 let x: &Url = url.as_gil_ref(py);
+//                 fastobo::ast::Id::Url(Cow::Borrowed(x.as_gil_ref(py)))
+//             }
+//         }
+//     }
+// }
 
 impl Display for Ident {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        // self.as_gil_ref(gil.python()).fmt(f)
+        unimplemented!()
     }
 }
 
@@ -144,16 +146,21 @@ impl FromPy<Ident> for fastobo::ast::Ident {
     fn from_py(ident: Ident, py: Python) -> Self {
         match ident {
             Ident::Unprefixed(id) => {
-                let i: UnprefixedIdent = id.as_ref(py).clone_py(py);
-                ast::Ident::Unprefixed(i.into_py(py))
+                let i = id.as_ref(py).borrow();
+                ast::Ident::Unprefixed((*i).inner.clone())
             }
             Ident::Prefixed(id) => {
-                let i: PrefixedIdent = id.as_ref(py).clone_py(py);
-                ast::Ident::Prefixed(i.into_py(py))
+                unimplemented!()
+                // let i = id.as_ref(py).borrow();
+                // let p = i.prefix.as_ref(py).borrow();
+                // let l = i.local.as_ref(py).borrow();
+                // ast::Ident::Prefixed(
+                //     ast::PrefixedIdent::new((*p).inner.clone(), (*l).inner.clone())
+                // )
             }
             Ident::Url(id) => {
-                let url: Url = id.as_ref(py).clone();
-                ast::Ident::Url(url.into_py(py))
+                let i = id.as_ref(py).borrow();
+                ast::Ident::Url((*i).inner.clone())
             }
         }
     }
@@ -185,7 +192,7 @@ pub struct BaseIdent {}
 ///     >>> str(ident)
 ///     'GO:0009637'
 ///
-#[pyclass(extends=BaseIdent, module="fastobo.id")]
+#[pyclass(module="fastobo.id")]
 #[derive(Debug)]
 pub struct PrefixedIdent {
     prefix: Py<IdentPrefix>,
@@ -198,17 +205,17 @@ impl PrefixedIdent {
     }
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::PrefixedId<'p>> for PrefixedIdent {
-    fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PrefixedId<'p> {
-        // NB(@althonos): We can actually access the data as long as we hold
-        //                the GIL ('p), so we're fine here.
-        unsafe {
-            let prefix: &IdentPrefix = self.prefix.as_gil_ref(py);
-            let local: &IdentLocal = self.local.as_gil_ref(py);
-            fastobo::ast::PrefixedId::new(prefix.as_gil_ref(py), local.as_gil_ref(py))
-        }
-    }
-}
+// impl<'p> AsGILRef<'p, fastobo::ast::PrefixedId<'p>> for PrefixedIdent {
+//     fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PrefixedId<'p> {
+//         // NB(@althonos): We can actually access the data as long as we hold
+//         //                the GIL ('p), so we're fine here.
+//         unsafe {
+//             let prefix: &IdentPrefix = self.prefix.as_gil_ref(py);
+//             let local: &IdentLocal = self.local.as_gil_ref(py);
+//             fastobo::ast::PrefixedId::new(prefix.as_gil_ref(py), local.as_gil_ref(py))
+//         }
+//     }
+// }
 
 impl ClonePy for PrefixedIdent {
     fn clone_py(&self, py: Python) -> Self {
@@ -221,8 +228,9 @@ impl ClonePy for PrefixedIdent {
 
 impl Display for PrefixedIdent {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        // let gil = Python::acquire_gil();
+        // self.as_gil_ref(gil.python()).fmt(f)
+        unimplemented!()
     }
 }
 
@@ -230,9 +238,9 @@ impl PartialEq for PrefixedIdent {
     fn eq(&self, other: &Self) -> bool {
         let gil = Python::acquire_gil();
         let py = gil.python();
-
-        *self.prefix.as_ref(py) == *other.prefix.as_ref(py)
-            && *self.local.as_ref(py) == *other.local.as_ref(py)
+        unimplemented!()
+        // *self.prefix.as_ref(py).borrow() == *other.prefix.as_ref(py).borrow()
+        //     && *self.local.as_ref(py).borrow() == *other.local.as_ref(py).borrow()
     }
 }
 
@@ -240,10 +248,11 @@ impl Eq for PrefixedIdent {}
 
 impl FromPy<PrefixedIdent> for ast::PrefixedIdent {
     fn from_py(ident: PrefixedIdent, py: Python) -> Self {
-        ast::PrefixedIdent::new(
-            ident.prefix.as_ref(py).clone(),
-            ident.local.as_ref(py).clone(),
-        )
+        unimplemented!()
+        // ast::PrefixedIdent::new(
+        //     ident.prefix.as_ref(py).clone(),
+        //     ident.local.as_ref(py).clone(),
+        // )
     }
 }
 
@@ -258,10 +267,12 @@ impl FromPy<ast::PrefixedIdent> for PrefixedIdent {
         let prefix = id.prefix().clone();
         let local = id.local().clone();
 
-        Self::new(
-            Py::new(py, prefix.into()).expect("could not allocate on Python heap"),
-            Py::new(py, local.into()).expect("could not allocate on Python heap"),
-        )
+        unimplemented!()
+
+        // Self::new(
+        //     Py::new(py, prefix.into()).expect("could not allocate on Python heap"),
+        //     Py::new(py, local.into()).expect("could not allocate on Python heap"),
+        // )
     }
 }
 
@@ -277,10 +288,11 @@ impl PrefixedIdent {
     ///     local (str or `IdentLocal`): the local part of the identifier.
     ///
     #[new]
-    fn __init__(obj: &PyRawObject, prefix: &PyAny, local: &PyAny) -> PyResult<()> {
-        let py = prefix.py();
+    fn __init__(prefix: &PyAny, local: &PyAny) -> PyResult<Self> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
 
-        let p = if prefix.downcast_ref::<IdentPrefix>().is_ok() {
+        let p = if prefix.extract::<IdentPrefix>().is_ok() {
             unsafe { Py::from_borrowed_ptr(prefix.as_ptr()) }
         } else if let Ok(ref s) = PyString::try_from(prefix) {
             let string = s.to_string();
@@ -291,7 +303,7 @@ impl PrefixedIdent {
             return TypeError::into(msg);
         };
 
-        let l = if local.downcast_ref::<IdentLocal>().is_ok() {
+        let l = if local.extract::<IdentLocal>().is_ok() {
             unsafe { Py::from_borrowed_ptr(local.as_ptr()) }
         } else if let Ok(ref s) = PyString::try_from(local) {
             let string = s.to_string();
@@ -302,7 +314,7 @@ impl PrefixedIdent {
             return TypeError::into(msg);
         };
 
-        Ok(obj.init(Self::new(p, l)))
+        Ok(Self::new(p, l))
     }
 
     /// `~fastobo.id.IdentPrefix`: the IDspace of the identifier.
@@ -314,7 +326,7 @@ impl PrefixedIdent {
     #[setter]
     fn set_prefix(&mut self, prefix: &PyAny) -> PyResult<()> {
         let py = prefix.py();
-        self.prefix = if prefix.downcast_ref::<IdentPrefix>().is_ok() {
+        self.prefix = if prefix.extract::<IdentPrefix>().is_ok() {
             unsafe { Py::from_borrowed_ptr(prefix.as_ptr()) }
         } else if let Ok(ref s) = PyString::try_from(prefix) {
             let string = s.to_string();
@@ -336,7 +348,7 @@ impl PrefixedIdent {
     #[setter]
     fn set_local(&mut self, local: &PyAny) -> PyResult<()> {
         let py = local.py();
-        self.local = if local.downcast_ref::<IdentLocal>().is_ok() {
+        self.local = if local.extract::<IdentLocal>().is_ok() {
             unsafe { Py::from_borrowed_ptr(local.as_ptr()) }
         } else if let Ok(ref s) = PyString::try_from(local) {
             let string = s.to_string();
@@ -359,47 +371,50 @@ impl PyObjectProtocol for PrefixedIdent {
         // extract inner references
         let pref = self.prefix.as_ref(py);
         let lref = self.local.as_ref(py);
-        // extract string slices
-        let p = pref.inner.as_str();
-        let l = lref.inner.as_str();
-        // return the formatted `repr` string
-        let fmt = PyString::new(py, "PrefixedIdent({!r}, {!r})").to_object(py);
-        fmt.call_method1(py, "format", (p, l))
+        // get the formatted `repr` string
+        let fmt = PyString::new(py, "PrefixedIdent({!r}, {!r})");
+        let repr = fmt.call_method1(
+            "format",
+            (pref.borrow().inner.as_str(), lref.borrow().inner.as_str())
+        );
+        // convert to an object before releasing the GIL
+        Ok(repr?.to_object(py))
     }
 
     fn __str__(&self) -> PyResult<String> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        Ok(self.as_gil_ref(py).to_string())
+        // Ok(self.as_gil_ref(py).to_string())
+        unimplemented!()
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-        let py = other.py();
-        if let Ok(r) = other.downcast_ref::<PrefixedIdent>() {
-            let lp = &*self.prefix.as_ref(py);
-            let ll = &*self.local.as_ref(py);
-            let rp = &*r.prefix.as_ref(py);
-            let rl = &*r.local.as_ref(py);
-            match op {
-                CompareOp::Eq => Ok((lp, ll) == (rp, rl)),
-                CompareOp::Ne => Ok((lp, ll) != (rp, rl)),
-                CompareOp::Lt => Ok((lp, ll) < (rp, rl)),
-                CompareOp::Le => Ok((lp, ll) <= (rp, rl)),
-                CompareOp::Gt => Ok((lp, ll) > (rp, rl)),
-                CompareOp::Ge => Ok((lp, ll) >= (rp, rl)),
-            }
-        } else {
-            match op {
-                CompareOp::Eq => Ok(false),
-                CompareOp::Ne => Ok(true),
-                _ => {
-                    let n = other.get_type().name();
-                    let msg = format!("expected PrefixedIdent, found {}", n);
-                    TypeError::into(msg)
-                }
-            }
-        }
-    }
+    // fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
+    //     let py = other.py();
+    //     if let Ok(r) = other.extract::<PrefixedIdent>() {
+    //         let lp = &*self.prefix.as_ref(py);
+    //         let ll = &*self.local.as_ref(py);
+    //         let rp = &*r.prefix.as_ref(py);
+    //         let rl = &*r.local.as_ref(py);
+    //         match op {
+    //             CompareOp::Eq => Ok((lp, ll) == (rp, rl)),
+    //             CompareOp::Ne => Ok((lp, ll) != (rp, rl)),
+    //             CompareOp::Lt => Ok((lp, ll) < (rp, rl)),
+    //             CompareOp::Le => Ok((lp, ll) <= (rp, rl)),
+    //             CompareOp::Gt => Ok((lp, ll) > (rp, rl)),
+    //             CompareOp::Ge => Ok((lp, ll) >= (rp, rl)),
+    //         }
+    //     } else {
+    //         match op {
+    //             CompareOp::Eq => Ok(false),
+    //             CompareOp::Ne => Ok(true),
+    //             _ => {
+    //                 let n = other.get_type().name();
+    //                 let msg = format!("expected PrefixedIdent, found {}", n);
+    //                 TypeError::into(msg)
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 // --- UnprefixedIdent --------------------------------------------------------
@@ -414,7 +429,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///     >>> print(ident.unescaped)
 ///     hello world
 ///
-#[pyclass(extends=BaseIdent, module="fastobo.id")]
+#[pyclass(module="fastobo.id")]
 #[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
@@ -432,12 +447,6 @@ impl AsRef<ast::UnprefixedId> for UnprefixedIdent {
     }
 }
 
-impl<'p> AsGILRef<'p, &'p fastobo::ast::UnprefixedId> for UnprefixedIdent {
-    fn as_gil_ref(&'p self, _py: Python<'p>) -> &'p fastobo::ast::UnprefixedId {
-        self.inner.share()
-    }
-}
-
 impl ClonePy for UnprefixedIdent {
     fn clone_py(&self, _py: Python) -> Self {
         self.clone()
@@ -446,8 +455,7 @@ impl ClonePy for UnprefixedIdent {
 
 impl Display for UnprefixedIdent {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        self.inner.fmt(f)
     }
 }
 
@@ -494,9 +502,9 @@ impl UnprefixedIdent {
     /// Arguments:
     ///     value (`str`): the unescaped representation of the identifier.
     #[new]
-    fn __init__(obj: &PyRawObject, value: &str) -> PyResult<()> {
+    fn __init__(value: &str) -> Self {
         let id = ast::UnprefixedIdent::new(value.to_string());
-        Ok(obj.init(UnprefixedIdent::new(id)))
+        UnprefixedIdent::new(id)
     }
 
     /// `str`: the escaped representation of the identifier.
@@ -525,28 +533,28 @@ impl PyObjectProtocol for UnprefixedIdent {
         Ok(self.inner.as_str())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-        if let Ok(u) = other.downcast_ref::<UnprefixedIdent>() {
-            match op {
-                CompareOp::Lt => Ok(self.inner < u.inner),
-                CompareOp::Le => Ok(self.inner <= u.inner),
-                CompareOp::Eq => Ok(self.inner == u.inner),
-                CompareOp::Ne => Ok(self.inner != u.inner),
-                CompareOp::Gt => Ok(self.inner > u.inner),
-                CompareOp::Ge => Ok(self.inner >= u.inner),
-            }
-        } else {
-            match op {
-                CompareOp::Eq => Ok(false),
-                CompareOp::Ne => Ok(true),
-                _ => {
-                    let n = other.get_type().name();
-                    let msg = format!("expected UnprefixedIdent, found {}", n);
-                    TypeError::into(msg)
-                }
-            }
-        }
-    }
+    // fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
+    //     if let Ok(u) = other.extract::<UnprefixedIdent>() {
+    //         match op {
+    //             CompareOp::Lt => Ok(self.inner < u.inner),
+    //             CompareOp::Le => Ok(self.inner <= u.inner),
+    //             CompareOp::Eq => Ok(self.inner == u.inner),
+    //             CompareOp::Ne => Ok(self.inner != u.inner),
+    //             CompareOp::Gt => Ok(self.inner > u.inner),
+    //             CompareOp::Ge => Ok(self.inner >= u.inner),
+    //         }
+    //     } else {
+    //         match op {
+    //             CompareOp::Eq => Ok(false),
+    //             CompareOp::Ne => Ok(true),
+    //             _ => {
+    //                 let n = other.get_type().name();
+    //                 let msg = format!("expected UnprefixedIdent, found {}", n);
+    //                 TypeError::into(msg)
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 // --- UrlIdent ---------------------------------------------------------------
@@ -565,7 +573,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///         ...
 ///     ValueError: invalid url: ...
 ///
-#[pyclass(extends=BaseIdent, module="fastobo.id")]
+#[pyclass(module="fastobo.id")]
 #[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd)]
 #[opaque_typedef(derive(FromInner, IntoInner))]
 pub struct Url {
@@ -578,16 +586,9 @@ impl Url {
     }
 }
 
-impl<'p> AsGILRef<'p, &'p url::Url> for Url {
-    fn as_gil_ref(&'p self, _py: Python<'p>) -> &'p url::Url {
-        &self.inner
-    }
-}
-
 impl Display for Url {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        self.inner.fmt(f)
     }
 }
 
@@ -626,9 +627,9 @@ impl Url {
     /// Raises:
     ///     ValueError: when the given string is not a valid URL.
     #[new]
-    fn __new__(obj: &PyRawObject, value: &str) -> PyResult<()> {
+    fn __new__(value: &str) -> PyResult<Self> {
         match url::Url::from_str(value) {
-            Ok(url) => Ok(obj.init(Url::new(url))),
+            Ok(url) => Ok(Url::new(url)),
             Err(e) => ValueError::into(format!("invalid url: {}", e)),
         }
     }
@@ -648,29 +649,29 @@ impl PyObjectProtocol for Url {
         Ok(self.inner.as_str())
     }
 
-    /// Compare to another `Url` or `str` instance.
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-        if let Ok(url) = other.downcast_ref::<Url>() {
-            match op {
-                CompareOp::Lt => Ok(self < url),
-                CompareOp::Le => Ok(self <= url),
-                CompareOp::Eq => Ok(self == url),
-                CompareOp::Ne => Ok(self != url),
-                CompareOp::Gt => Ok(self > url),
-                CompareOp::Ge => Ok(self >= url),
-            }
-        } else {
-            match op {
-                CompareOp::Eq => Ok(false),
-                CompareOp::Ne => Ok(true),
-                _ => {
-                    let n = other.get_type().name();
-                    let msg = format!("expected str or Url, found {}", n);
-                    TypeError::into(msg)
-                }
-            }
-        }
-    }
+    // /// Compare to another `Url` or `str` instance.
+    // fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
+    //     if let Ok(url) = other.extract::<Url>() {
+    //         match op {
+    //             CompareOp::Lt => Ok(self < url),
+    //             CompareOp::Le => Ok(self <= url),
+    //             CompareOp::Eq => Ok(self == url),
+    //             CompareOp::Ne => Ok(self != url),
+    //             CompareOp::Gt => Ok(self > url),
+    //             CompareOp::Ge => Ok(self >= url),
+    //         }
+    //     } else {
+    //         match op {
+    //             CompareOp::Eq => Ok(false),
+    //             CompareOp::Ne => Ok(true),
+    //             _ => {
+    //                 let n = other.get_type().name();
+    //                 let msg = format!("expected str or Url, found {}", n);
+    //                 TypeError::into(msg)
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 // --- IdentPrefix -----------------------------------------------------------
@@ -689,16 +690,9 @@ impl IdentPrefix {
     }
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::IdPrefix<'p>> for IdentPrefix {
-    fn as_gil_ref(&'p self, _py: Python<'p>) -> fastobo::ast::IdPrefix<'p> {
-        self.inner.share()
-    }
-}
-
 impl Display for IdentPrefix {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        self.inner.fmt(f)
     }
 }
 
@@ -715,8 +709,8 @@ impl IdentPrefix {
     /// Arguments:
     ///     value (`str`): the unescaped representation of the prefix.
     #[new]
-    fn __init__(obj: &PyRawObject, value: String) -> PyResult<()> {
-        Ok(obj.init(Self::new(ast::IdentPrefix::new(value))))
+    fn __init__(value: String) -> Self {
+        Self::new(ast::IdentPrefix::new(value))
     }
 
     /// `str`: the escaped representation of the identifier.
@@ -762,16 +756,9 @@ impl IdentLocal {
     }
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::IdLocal<'p>> for IdentLocal {
-    fn as_gil_ref(&'p self, _py: Python<'p>) -> fastobo::ast::IdLocal<'p> {
-        self.inner.share()
-    }
-}
-
 impl Display for IdentLocal {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        self.inner.fmt(f)
     }
 }
 
@@ -779,8 +766,8 @@ impl Display for IdentLocal {
 impl IdentLocal {
     /// Create a new `IdentLocal` instance.
     #[new]
-    fn __init__(obj: &PyRawObject, value: String) -> PyResult<()> {
-        Ok(obj.init(Self::new(ast::IdentLocal::new(value))))
+    fn __init__(value: String) -> Self {
+        Self::new(ast::IdentLocal::new(value))
     }
 
     /// `str`: the escaped representation of the identifier.

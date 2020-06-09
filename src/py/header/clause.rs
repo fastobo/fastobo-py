@@ -22,7 +22,6 @@ use pyo3::exceptions::TypeError;
 use pyo3::exceptions::ValueError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
-use pyo3::type_object::PyTypeCreate;
 use pyo3::types::PyAny;
 use pyo3::types::PyDateAccess;
 use pyo3::types::PyDateTime;
@@ -35,7 +34,7 @@ use pyo3::PyObjectProtocol;
 use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
-use super::super::abc::AbstractClause;
+// use super::super::abc::AbstractClause;
 use super::super::id::BaseIdent;
 use super::super::id::Ident;
 use super::super::id::IdentPrefix;
@@ -155,7 +154,7 @@ impl FromPy<HeaderClause> for fastobo::ast::HeaderClause {
 // --- Base ------------------------------------------------------------------
 
 /// A header clause, appearing in the OBO header frame.
-#[pyclass(extends=AbstractClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 pub struct BaseHeaderClause {}
 
 // --- FormatVersion ---------------------------------------------------------
@@ -164,14 +163,14 @@ pub struct BaseHeaderClause {}
 /// --
 ///
 /// A header clause indicating the format version of the OBO document.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct FormatVersionClause {
     version: obo::UnquotedString,
 }
 
 impl FormatVersionClause {
-    pub fn new(_py: Python, version: obo::UnquotedString) -> Self {
+    pub fn new(version: obo::UnquotedString) -> Self {
         Self { version }
     }
 }
@@ -197,8 +196,8 @@ impl FromPy<FormatVersionClause> for obo::HeaderClause {
 #[pymethods]
 impl FormatVersionClause {
     #[new]
-    fn __init__(obj: &PyRawObject, version: String) {
-        obj.init(Self::new(obj.py(), obo::UnquotedString::new(version)));
+    fn __init__(version: String) -> Self {
+        Self::new(obo::UnquotedString::new(version));
     }
 
     /// `str`: the OBO format version used in document.
@@ -238,14 +237,14 @@ impl PyObjectProtocol for FormatVersionClause {
 /// --
 ///
 /// A header clause indicating the version of the data in the OBO document.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct DataVersionClause {
     version: UnquotedString,
 }
 
 impl DataVersionClause {
-    pub fn new(_py: Python, version: UnquotedString) -> Self {
+    pub fn new(version: UnquotedString) -> Self {
         Self { version }
     }
 }
@@ -271,8 +270,8 @@ impl Display for DataVersionClause {
 #[pymethods]
 impl DataVersionClause {
     #[new]
-    fn __init__(obj: &PyRawObject, version: String) {
-        obj.init(Self::new(obj.py(), UnquotedString::new(version)));
+    fn __init__(version: String) -> Self {
+        Self::new(UnquotedString::new(version));
     }
 
     /// `str`: the version of the data in the OBO document.
@@ -312,14 +311,14 @@ impl PyObjectProtocol for DataVersionClause {
 /// --
 ///
 /// A header clause indicating the date the document was last modified.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct DateClause {
     date: obo::NaiveDateTime,
 }
 
 impl DateClause {
-    pub fn new(_py: Python, date: obo::NaiveDateTime) -> Self {
+    pub fn new(date: obo::NaiveDateTime) -> Self {
         Self { date }
     }
 }
@@ -345,15 +344,16 @@ impl Display for DateClause {
 #[pymethods]
 impl DateClause {
     #[new]
-    fn __init__(obj: &PyRawObject, date: &PyDateTime) {
-        let dt = fastobo::ast::NaiveDateTime::new(
-            date.get_day() as u8,
-            date.get_month() as u8,
-            date.get_year() as u16,
-            date.get_hour() as u8,
-            date.get_minute() as u8,
-        );
-        obj.init(Self::new(obj.py(), dt))
+    fn __init__(date: &PyDateTime) -> Self {
+        Self::new(
+            fastobo::ast::NaiveDateTime::new(
+                date.get_day() as u8,
+                date.get_month() as u8,
+                date.get_year() as u16,
+                date.get_hour() as u8,
+                date.get_minute() as u8,
+            )
+        )
     }
 
     /// `~datetime.datetime`: the date this document was last modified.
@@ -402,7 +402,7 @@ impl PyObjectProtocol for DateClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        if let Ok(ref clause) = other.downcast_ref::<Self>() {
+        if let Ok(ref clause) = other.downcast::<Self>() {
             Ok(match op {
                 CompareOp::Eq => self.date == clause.date,
                 CompareOp::Ne => self.date != clause.date,
@@ -428,14 +428,14 @@ impl PyObjectProtocol for DateClause {
 /// --
 ///
 /// A header clause containing the name of the person who saved the document.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct SavedByClause {
     name: UnquotedString,
 }
 
 impl SavedByClause {
-    pub fn new(_py: Python, name: UnquotedString) -> Self {
+    pub fn new(name: UnquotedString) -> Self {
         Self { name }
     }
 }
@@ -461,8 +461,8 @@ impl FromPy<SavedByClause> for obo::HeaderClause {
 #[pymethods]
 impl SavedByClause {
     #[new]
-    fn __init__(obj: &PyRawObject, name: String) {
-        obj.init(Self::new(obj.py(), UnquotedString::new(name)));
+    fn __init__(name: String) -> Self {
+        Self::new(UnquotedString::new(name));
     }
 
     /// `str`: the name of the person who saved the document.
@@ -502,14 +502,14 @@ impl PyObjectProtocol for SavedByClause {
 /// --
 ///
 /// A header clause indicating the software that generated the document.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct AutoGeneratedByClause {
     name: UnquotedString,
 }
 
 impl AutoGeneratedByClause {
-    pub fn new(_py: Python, name: UnquotedString) -> Self {
+    pub fn new(name: UnquotedString) -> Self {
         Self { name }
     }
 }
@@ -535,8 +535,8 @@ impl FromPy<AutoGeneratedByClause> for obo::HeaderClause {
 #[pymethods]
 impl AutoGeneratedByClause {
     #[new]
-    fn __init__(obj: &PyRawObject, name: String) {
-        obj.init(Self::new(obj.py(), UnquotedString::new(name)));
+    fn __init__(name: String) -> Self {
+        Self::new(UnquotedString::new(name));
     }
 
     /// `str`: the name of the software that generated the document.
@@ -576,14 +576,14 @@ impl PyObjectProtocol for AutoGeneratedByClause {
 /// --
 ///
 /// A clause with a URL or ontology ID referencing another OBO document.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct ImportClause {
     reference: obo::Import, // should be `Import` ?
 }
 
 impl ImportClause {
-    pub fn new(_py: Python, reference: obo::Import) -> Self {
+    pub fn new(reference: obo::Import) -> Self {
         Self { reference }
     }
 }
@@ -610,12 +610,11 @@ impl FromPy<ImportClause> for obo::HeaderClause {
 impl ImportClause {
     // FIXME(@althonos): should not be implicit here ?
     #[new]
-    pub fn __init__(obj: &PyRawObject, reference: &str) -> PyResult<()> {
-        let py = obj.py();
+    pub fn __init__(reference: &str) -> PyResult<Self> {
         if let Ok(url) = url::Url::from_str(reference) {
-            Ok(obj.init(Self::new(py, obo::Import::Url(url))))
+            Ok(Self::new(obo::Import::Url(url)))
         } else if let Ok(id) = obo::Ident::from_str(reference) {
-            Ok(obj.init(Self::new(py, obo::Import::Abbreviated(id))))
+            Ok(Self::new(obo::Import::Abbreviated(id)))
         } else {
             ValueError::into(format!("invalid import: {:?}", reference))
         }
@@ -655,7 +654,7 @@ impl PyObjectProtocol for ImportClause {
 /// --
 ///
 /// A header clause declaring a subset in the OBO document.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Debug)]
 pub struct SubsetdefClause {
     subset: Ident,
@@ -703,9 +702,9 @@ impl FromPy<SubsetdefClause> for obo::HeaderClause {
 #[pymethods]
 impl SubsetdefClause {
     #[new]
-    fn __init__(obj: &PyRawObject, subset: Ident, description: String) -> PyResult<()> {
-        let py = obj.py();
-        Ok(obj.init(Self::new(py, subset, QuotedString::new(description))))
+    fn __init__(subset: Ident, description: String) -> Self {
+        let gil = Python::acquire_gil();
+        Ok(Self::new(gil.python(), subset, QuotedString::new(description)))
     }
 
     /// `~fastobo.id.Ident`: the identifier of the declared subset.
@@ -761,7 +760,7 @@ impl PyObjectProtocol for SubsetdefClause {
 /// --
 ///
 /// A header clause declaring a synonym type in the OBO document.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Debug)]
 pub struct SynonymTypedefClause {
     #[pyo3(set)]
@@ -828,10 +827,11 @@ impl FromPy<SynonymTypedefClause> for obo::HeaderClause {
 #[pymethods]
 impl SynonymTypedefClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident, description: String, scope: Option<String>) {
+    fn __init__(typedef: Ident, description: String, scope: Option<String>) -> Self {
+        let gil = Python::acquire_gil();
         let desc = fastobo::ast::QuotedString::new(description);
         let sc = scope.map(|s| fastobo::ast::SynonymScope::from_str(&s).unwrap()); // FIXME
-        obj.init(Self::with_scope(obj.py(), typedef, desc, sc));
+        Self::with_scope(gil.python(), typedef, desc, sc)
     }
 
     /// `~fastobo.id.Ident`: the identifier of the declared synonym type.
@@ -917,7 +917,7 @@ impl PyObjectProtocol for SynonymTypedefClause {
 /// --
 ///
 /// A clause declaring the default namespace for the rest of the document.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Debug)]
 pub struct DefaultNamespaceClause {
     namespace: Ident,
@@ -959,18 +959,18 @@ impl FromPy<DefaultNamespaceClause> for obo::HeaderClause {
 #[pymethods]
 impl DefaultNamespaceClause {
     #[new]
-    fn __init__(obj: &PyRawObject, namespace: &PyAny) -> PyResult<()> {
-        let py = obj.py();
+    fn __init__(namespace: &PyAny) -> PyResult<Self> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
         let ident = if py.is_instance::<BaseIdent, PyAny>(namespace)? {
-            Ident::extract(namespace)?
+            Ident::extract(namespace).map(|id| Self::new(py, id))
         } else if py.is_instance::<PyString, PyAny>(namespace)? {
             let s: &PyString = FromPyObject::extract(namespace)?;
             let id = ast::Ident::from_str(&s.to_string()?).unwrap(); // FIXME
-            Ident::from_py(id, py)
+            Ok(Self::new(py, Ident::from_py(id, py)))
         } else {
-            return TypeError::into("expected str or Ident for 'namespace'");
+            TypeError::into("expected str or Ident for 'namespace'");
         };
-        Ok(obj.init(Self::new(py, ident)))
     }
 
     /// `~fastobo.id.Ident`: the default namespace for this ontology.
@@ -1017,14 +1017,14 @@ impl PyObjectProtocol for DefaultNamespaceClause {
 /// --
 ///
 /// A clause to describe the rule for Namespace ID generation in this document.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct NamespaceIdRuleClause {
     rule: fastobo::ast::UnquotedString,
 }
 
 impl NamespaceIdRuleClause {
-    pub fn new(_py: Python, rule: fastobo::ast::UnquotedString) -> Self {
+    pub fn new(rule: fastobo::ast::UnquotedString) -> Self {
         Self { rule }
     }
 }
@@ -1052,11 +1052,8 @@ impl From<NamespaceIdRuleClause> for obo::HeaderClause {
 #[pymethods]
 impl NamespaceIdRuleClause {
     #[new]
-    fn __init__(obj: &PyRawObject, rule: String) -> PyResult<()> {
-        Ok(obj.init(Self::new(
-            obj.py(),
-            fastobo::ast::UnquotedString::new(rule),
-        )))
+    fn __init__(rule: String) -> Self {
+        Self::new(fastobo::ast::UnquotedString::new(rule))
     }
 
     /// `str`: the default namespace for this ontology.
@@ -1101,7 +1098,7 @@ impl PyObjectProtocol for NamespaceIdRuleClause {
 /// --
 ///
 /// A clause giving the mapping between a "local" and a "global" ID space.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Debug)]
 pub struct IdspaceClause {
     prefix: IdentPrefix,
@@ -1110,7 +1107,7 @@ pub struct IdspaceClause {
 }
 
 impl IdspaceClause {
-    pub fn new<I, U>(_py: Python, prefix: I, url: U) -> Self
+    pub fn new<I, U>(prefix: I, url: U) -> Self
     where
         I: Into<IdentPrefix>,
         U: Into<Url>,
@@ -1168,6 +1165,8 @@ impl FromPy<IdspaceClause> for obo::HeaderClause {
 
 #[pymethods]
 impl IdspaceClause {
+    // TODO: missing __init__
+
     /// `~fastobo.id.IdentPrefix`: the prefix used in prefixed IDs.
     #[getter]
     fn get_prefix(&self) -> PyResult<IdentPrefix> {
@@ -1235,7 +1234,7 @@ impl PyObjectProtocol for IdspaceClause {
 /// --
 ///
 /// A macro to treats xrefs coming from an ID space as equivalence statements.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct TreatXrefsAsEquivalentClause {
     idspace: IdentPrefix,
@@ -1303,7 +1302,7 @@ impl PyObjectProtocol for TreatXrefsAsEquivalentClause {
 /// --
 ///
 /// A macro to treats xrefs from an ID space as genus-differentia definitions.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Debug)]
 pub struct TreatXrefsAsGenusDifferentiaClause {
     idspace: IdentPrefix,
@@ -1396,7 +1395,7 @@ impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
 /// --
 ///
 /// A macro to treats xrefs from an ID space as reverse genus-differentia definitions.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Debug)]
 pub struct TreatXrefsAsReverseGenusDifferentiaClause {
     idspace: IdentPrefix,
@@ -1489,7 +1488,7 @@ impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
 /// --
 ///
 /// A macro to treats xrefs from an ID space as being relationships.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Debug)]
 pub struct TreatXrefsAsRelationshipClause {
     idspace: IdentPrefix,
@@ -1576,7 +1575,7 @@ impl PyObjectProtocol for TreatXrefsAsRelationshipClause {
 /// --
 ///
 /// A macro to treats xrefs from an ID space as being subclassing relations.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct TreatXrefsAsIsAClause {
     idspace: IdentPrefix,
@@ -1646,7 +1645,7 @@ impl PyObjectProtocol for TreatXrefsAsIsAClause {
 /// --
 ///
 /// A macro to treats xrefs from an ID space as being superclassing relations.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct TreatXrefsAsHasSubclassClause {
     idspace: IdentPrefix,
@@ -1719,7 +1718,7 @@ impl PyObjectProtocol for TreatXrefsAsHasSubclassClause {
 ///     property_value (~fastobo.pv.AbstractPropertyValue): the property value
 ///         to annotate the current OBO document with.
 ///
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Debug)]
 pub struct PropertyValueClause {
     inner: PropertyValue,
@@ -1761,9 +1760,9 @@ impl FromPy<PropertyValueClause> for ast::HeaderClause {
 #[pymethods]
 impl PropertyValueClause {
     #[new]
-    fn __init__(obj: &PyRawObject, property_value: PropertyValue) -> PyResult<()> {
-        obj.init(Self::new(obj.py(), property_value));
-        Ok(())
+    fn __init__(property_value: PropertyValue) -> Self {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), property_value)
     }
 
     #[getter]
@@ -1803,14 +1802,14 @@ impl PyObjectProtocol for PropertyValueClause {
 /// --
 ///
 /// A header clause storing general comments for the current OBO file.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct RemarkClause {
     remark: UnquotedString,
 }
 
 impl RemarkClause {
-    pub fn new(_py: Python, remark: ast::UnquotedString) -> Self {
+    pub fn new(remark: ast::UnquotedString) -> Self {
         Self { remark }
     }
 }
@@ -1837,9 +1836,8 @@ impl FromPy<RemarkClause> for obo::HeaderClause {
 #[pymethods]
 impl RemarkClause {
     #[new]
-    fn __init__(obj: &PyRawObject, remark: String) -> PyResult<()> {
-        let py = obj.py();
-        Ok(obj.init(Self::new(py, UnquotedString::new(remark))))
+    fn __init__(remark: String) -> Self {
+        Self::new(UnquotedString::new(remark))
     }
 
     /// `str`: a remark about the ontology.
@@ -1882,14 +1880,14 @@ impl PyObjectProtocol for RemarkClause {
 /// --
 ///
 /// The ontology ID of the current OBO file.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct OntologyClause {
     ontology: UnquotedString,
 }
 
 impl OntologyClause {
-    pub fn new(_py: Python, ontology: UnquotedString) -> Self {
+    pub fn new(ontology: UnquotedString) -> Self {
         Self { ontology }
     }
 }
@@ -1915,9 +1913,8 @@ impl FromPy<OntologyClause> for obo::HeaderClause {
 #[pymethods]
 impl OntologyClause {
     #[new]
-    fn __init__(obj: &PyRawObject, ontology: String) -> PyResult<()> {
-        let py = obj.py();
-        Ok(obj.init(Self::new(py, UnquotedString::new(ontology))))
+    fn __init__(ontology: String) -> Self {
+        Self::new(UnquotedString::new(ontology))
     }
 
     /// `str`: the ID of the ontology described in the OBO document.
@@ -1962,14 +1959,14 @@ impl PyObjectProtocol for OntologyClause {
 /// --
 ///
 /// A header clause containing untranslatable OWL axioms.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct OwlAxiomsClause {
     axioms: UnquotedString,
 }
 
 impl OwlAxiomsClause {
-    pub fn new(_py: Python, axioms: UnquotedString) -> Self {
+    pub fn new(axioms: UnquotedString) -> Self {
         Self { axioms }
     }
 }
@@ -1995,9 +1992,9 @@ impl FromPy<OwlAxiomsClause> for obo::HeaderClause {
 #[pymethods]
 impl OwlAxiomsClause {
     #[new]
-    fn __init__(obj: &PyRawObject, axioms: String) -> PyResult<()> {
-        let py = obj.py();
-        Ok(obj.init(Self::new(py, UnquotedString::new(axioms))))
+    fn __init__(axioms: String) -> Self {
+        // FIXME: validate syntax using `horned-functional`
+        Self::new(UnquotedString::new(axioms))
     }
 
     /// `str`: raw OWL axioms that have no equivalent in the OBO language.
@@ -2040,7 +2037,7 @@ impl PyObjectProtocol for OwlAxiomsClause {
 /// --
 ///
 /// A tag/value pair not reserved in the OBO specification.
-#[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
+#[pyclass(module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug)]
 pub struct UnreservedClause {
     tag: UnquotedString,
@@ -2074,13 +2071,13 @@ impl Display for UnreservedClause {
 #[pymethods]
 impl UnreservedClause {
     #[new]
-    fn __init__(obj: &PyRawObject, tag: String, value: String) {
-        let py = obj.py();
-        obj.init(Self::new(
-            py,
+    fn __init__(tag: String, value: String) -> Self {
+        let gil = Python::acquire_gil();
+        Self::new(
+            gil.python(),
             UnquotedString::new(tag),
             UnquotedString::new(value),
-        ))
+        )
     }
 
     #[getter]

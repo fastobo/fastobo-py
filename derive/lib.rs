@@ -167,6 +167,7 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
 }
 
 fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
+    let wrapped = &ast.ident;
     let mut variants = Vec::new();
 
     // Build clone for each variant
@@ -194,7 +195,11 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         );
 
         variants.push(quote!(
-            #lit => Ok(#name(pyo3::Py::from_borrowed_ptr(ob.as_ptr())))
+            #lit => if #path::is_exact_instance(ob) {
+                Ok(#wrapped::#name(pyo3::Py::from_borrowed_ptr(ob.as_ptr())))
+            } else {
+                pyo3::exceptions::TypeError::into("extraction of subclass failed")
+            }
         ));
     }
 
@@ -215,7 +220,6 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     };
 
     // Build FromPyObject implementation
-    let name = &ast.ident;
     let err_sub = syn::LitStr::new(
         &format!("subclassing {} is not supported", quote!(#base)),
         base.span(),
@@ -226,9 +230,8 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     );
     let expanded = quote! {
         #[automatically_derived]
-        impl<'source> pyo3::FromPyObject<'source> for #name {
+        impl<'source> pyo3::FromPyObject<'source> for #wrapped {
             fn extract(ob: &'source pyo3::types::PyAny) -> pyo3::PyResult<Self> {
-                use self::#name::*;
                 use pyo3::AsPyPointer;
 
                 let qualname = ob.get_type().name();
@@ -358,9 +361,10 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             /// --
             ///
             /// Return a shallow copy of the list.
-            fn copy(&self) -> Self {
+            fn copy(&self) -> PyResult<Py<Self>> {
                 let gil = Python::acquire_gil();
-                self.clone_py(gil.python())
+                let copy = self.clone_py(gil.python());
+                Py::new(gil.python(), copy)
             }
 
             /// count($self, value)
@@ -426,7 +430,6 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                     IndexError::into("pop index out of range")
                 }
             }
-
 
             // |
             // |  remove(self, value, /)

@@ -28,7 +28,7 @@ use super::clause::TermClause;
 use crate::utils::ClonePy;
 
 #[pyclass(module="fastobo.term")]
-// #[derive(Debug, PyList)]
+#[derive(Debug, PyList)]
 pub struct TermFrame {
     #[pyo3(set)]
     id: Ident,

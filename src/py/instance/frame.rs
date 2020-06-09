@@ -26,8 +26,7 @@ use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use crate::utils::ClonePy;
 
-#[pyclass(extends=AbstractEntityFrame, module="fastobo.instance")]
-// #[derive(Debug, PyList)]
+#[pyclass(module="fastobo.instance")]
 #[derive(Debug)]
 pub struct InstanceFrame {
     id: Ident,

@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
+use std::ops::Deref;
 use std::str::FromStr;
 
 use pyo3::exceptions::TypeError;
@@ -17,7 +18,6 @@ use fastobo::share::Cow;
 use fastobo::share::Share;
 
 use super::id::Ident;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 // --- Module export ---------------------------------------------------------
@@ -40,19 +40,14 @@ pub enum PropertyValue {
     Resource(Py<ResourcePropertyValue>),
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::PropVal<'p>> for PropertyValue {
-    fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PropVal<'p> {
-        match self {
-            PropertyValue::Literal(pv) => pv.as_gil_ref(py).as_gil_ref(py),
-            PropertyValue::Resource(pv) => pv.as_gil_ref(py).as_gil_ref(py),
-        }
-    }
-}
-
 impl Display for PropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        let py = gil.python();
+        match self {
+            PropertyValue::Literal(lpv) => lpv.as_ref(py).borrow().fmt(f),
+            PropertyValue::Resource(rpv) => rpv.as_ref(py).borrow().fmt(f),
+        }
     }
 }
 
@@ -73,8 +68,12 @@ impl FromPy<fastobo::ast::PropertyValue> for PropertyValue {
 impl FromPy<PropertyValue> for fastobo::ast::PropertyValue {
     fn from_py(pv: PropertyValue, py: Python) -> Self {
         match pv {
-            PropertyValue::Literal(t) => Self::from_py(t.as_ref(py).clone_py(py), py),
-            PropertyValue::Resource(i) => Self::from_py(i.as_ref(py).clone_py(py), py),
+            PropertyValue::Literal(t) => {
+                Self::from_py(t.as_ref(py).borrow().deref().clone_py(py), py)
+            }
+            PropertyValue::Resource(r) => {
+                Self::from_py(r.as_ref(py).borrow().deref().clone_py(py), py)
+            }
         }
     }
 }
@@ -87,7 +86,7 @@ pub struct AbstractPropertyValue {}
 
 // --- Literal -----------------------------------------------------------------
 
-#[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
+#[pyclass(module="fastobo.pv")]
 #[derive(Debug)]
 pub struct LiteralPropertyValue {
     relation: Ident,
@@ -110,16 +109,6 @@ impl LiteralPropertyValue {
     }
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::PropVal<'p>> for LiteralPropertyValue {
-    fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PropVal<'p> {
-        fastobo::ast::PropVal::Literal(
-            Cow::Borrowed(self.relation.as_gil_ref(py).into()),
-            Cow::Borrowed(self.value.share()),
-            Cow::Borrowed(self.datatype.as_gil_ref(py)),
-        )
-    }
-}
-
 impl ClonePy for LiteralPropertyValue {
     fn clone_py(&self, py: Python) -> Self {
         Self {
@@ -133,7 +122,9 @@ impl ClonePy for LiteralPropertyValue {
 impl Display for LiteralPropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        let py = gil.python();
+        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        pv.fmt(f)
     }
 }
 
@@ -220,13 +211,14 @@ impl PyObjectProtocol for LiteralPropertyValue {
     fn __str__(&self) -> PyResult<String> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        Ok(self.as_gil_ref(py).to_string())
+        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        Ok(pv.to_string())
     }
 }
 
 // --- Resource ------------------------------------------------------------
 
-#[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
+#[pyclass(module="fastobo.pv")]
 #[derive(Debug)]
 pub struct ResourcePropertyValue {
     relation: Ident,
@@ -246,15 +238,6 @@ impl ResourcePropertyValue {
     }
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::PropVal<'p>> for ResourcePropertyValue {
-    fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PropVal<'p> {
-        fastobo::ast::PropVal::Resource(
-            Cow::Borrowed(self.relation.as_gil_ref(py).into()),
-            Cow::Borrowed(self.value.as_gil_ref(py).into()),
-        )
-    }
-}
-
 impl ClonePy for ResourcePropertyValue {
     fn clone_py(&self, py: Python) -> Self {
         Self {
@@ -267,7 +250,10 @@ impl ClonePy for ResourcePropertyValue {
 impl Display for ResourcePropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        let py = gil.python();
+
+        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        pv.fmt(f)
     }
 }
 
@@ -324,6 +310,7 @@ impl PyObjectProtocol for ResourcePropertyValue {
     fn __str__(&self) -> PyResult<String> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        Ok(self.as_gil_ref(py).to_string())
+        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        Ok(pv.to_string())
     }
 }

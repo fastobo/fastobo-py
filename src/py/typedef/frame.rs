@@ -28,7 +28,7 @@ use super::clause::TypedefClause;
 use crate::utils::ClonePy;
 
 #[pyclass(module="fastobo.typedef")]
-// #[derive(Debug, PyList)]
+#[derive(Debug, PyList)]
 pub struct TypedefFrame {
     id: Ident,
     clauses: Vec<TypedefClause>,

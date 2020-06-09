@@ -25,7 +25,6 @@ use pyo3::PyTypeInfo;
 use fastobo::ast as obo;
 
 use crate::error::Error;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 use super::header::frame::HeaderFrame;
@@ -71,7 +70,7 @@ pub struct AbstractFrame {}
 /// relations (typedefs) and instances. All OBO entities have an identifier,
 /// which is supposedly unique, that can be accessed through the ``id``
 /// property in any concrete subclass.
-#[pyclass(extends=AbstractFrame, module="fastobo.abc")]
+#[pyclass(module="fastobo.abc")]
 pub struct AbstractEntityFrame {}
 
 #[pymethods]
@@ -142,5 +141,5 @@ impl AbstractClause {
 }
 
 /// An abstract entity clause.
-#[pyclass(extends=AbstractClause, module="fastobo.abc")]
+#[pyclass(module="fastobo.abc")]
 pub struct AbstractEntityClause {}

@@ -27,7 +27,6 @@ use fastobo::ast as obo;
 use fastobo::visit::VisitMut;
 
 use crate::error::Error;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 use super::abc::AbstractFrame;
@@ -59,13 +58,16 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
     fn from_py(frame: fastobo::ast::EntityFrame, py: Python) -> Self {
         match frame {
             fastobo::ast::EntityFrame::Term(frame) => {
-                Py::new(py, TermFrame::from_py(frame, py)).map(EntityFrame::Term)
+                Py::new(py, TermFrame::from_py(frame, py))
+                    .map(EntityFrame::Term)
             }
             fastobo::ast::EntityFrame::Typedef(frame) => {
-                Py::new(py, TypedefFrame::from_py(frame, py)).map(EntityFrame::Typedef)
+                Py::new(py, TypedefFrame::from_py(frame, py))
+                    .map(EntityFrame::Typedef)
             }
             fastobo::ast::EntityFrame::Instance(frame) => {
-                Py::new(py, InstanceFrame::from_py(frame, py)).map(EntityFrame::Instance)
+                Py::new(py, InstanceFrame::from_py(frame, py))
+                    .map(EntityFrame::Instance)
             },
         }
         .expect("could not allocate on Python heap")
@@ -88,6 +90,7 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
 #[pyclass(module = "fastobo.doc")]
 #[derive(Debug, PyList)]
 pub struct OboDoc {
+    #[pyo3(set)]
     header: Py<HeaderFrame>,
     entities: Vec<EntityFrame>,
 }
@@ -121,7 +124,8 @@ impl Display for OboDoc {
 impl FromPy<obo::OboDoc> for OboDoc {
     fn from_py(mut doc: fastobo::ast::OboDoc, py: Python) -> Self {
         // Take ownership of header and entities w/o reallocation or clone.
-        let header = replace(doc.header_mut(), Default::default()).into_py(py);
+        let header: HeaderFrame = replace(doc.header_mut(), Default::default())
+            .into_py(py);
         let entities = replace(doc.entities_mut(), Default::default())
             .into_iter()
             .map(|frame| EntityFrame::from_py(frame, py))
@@ -136,7 +140,7 @@ impl FromPy<obo::OboDoc> for OboDoc {
 
 impl FromPy<OboDoc> for fastobo::ast::OboDoc {
     fn from_py(doc: OboDoc, py: Python) -> Self {
-        let header: HeaderFrame = doc.header.as_ref(py).clone_py(py);
+        let header: HeaderFrame = doc.header.as_ref(py).borrow().clone_py(py);
         doc.entities
             .iter()
             .map(|frame| fastobo::ast::EntityFrame::from_py(frame, py))
@@ -174,13 +178,13 @@ impl OboDoc {
         Ok(self.header.clone_ref(py))
     }
 
-    #[setter]
-    fn set_header(&mut self, header: &HeaderFrame) -> PyResult<()> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        self.header = Py::new(py, header.clone_py(py))?;
-        Ok(())
-    }
+    // #[setter]
+    // fn set_header(&mut self, header: PyHeaderFrame) -> PyResult<()> {
+    //     let gil = Python::acquire_gil();
+    //     let py = gil.python();
+    //     self.header = Py::new(py, header.clone_py(py))?;
+    //     Ok(())
+    // }
 
     /// compact_ids(self, /)
     /// --

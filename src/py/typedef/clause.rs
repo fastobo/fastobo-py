@@ -29,7 +29,6 @@ use super::super::xref::Xref;
 use super::super::xref::XrefList;
 use crate::date::datetime_to_isodate;
 use crate::date::isodate_to_datetime;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 // --- Conversion Wrapper ----------------------------------------------------
@@ -86,9 +85,9 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
         use fastobo::ast::TypedefClause::*;
         match clause {
             IsAnonymous(b) => {
-                Py::new(py, IsAnonymousClause::new(py, b)).map(TypedefClause::IsAnonymous)
+                Py::new(py, IsAnonymousClause::new(b)).map(TypedefClause::IsAnonymous)
             }
-            Name(n) => Py::new(py, NameClause::new(py, n)).map(TypedefClause::Name),
+            Name(n) => Py::new(py, NameClause::new(n)).map(TypedefClause::Name),
             Namespace(ns) => {
                 Py::new(py, NamespaceClause::new(py, ns)).map(TypedefClause::Namespace)
             }
@@ -96,7 +95,7 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
             Def(desc, xrefs) => {
                 Py::new(py, DefClause::new(py, desc, xrefs)).map(TypedefClause::Def)
             }
-            Comment(c) => Py::new(py, CommentClause::new(py, c)).map(TypedefClause::Comment),
+            Comment(c) => Py::new(py, CommentClause::new(c)).map(TypedefClause::Comment),
             Subset(s) => Py::new(py, SubsetClause::new(py, s)).map(TypedefClause::Subset),
             Synonym(s) => Py::new(py, SynonymClause::new(py, s)).map(TypedefClause::Synonym),
             Xref(x) => Py::new(py, XrefClause::new(py, x)).map(TypedefClause::Xref),
@@ -105,29 +104,29 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
             }
             Domain(id) => Py::new(py, DomainClause::new(py, id)).map(TypedefClause::Domain),
             Range(id) => Py::new(py, RangeClause::new(py, id)).map(TypedefClause::Range),
-            Builtin(b) => Py::new(py, BuiltinClause::new(py, b)).map(TypedefClause::Builtin),
+            Builtin(b) => Py::new(py, BuiltinClause::new(b)).map(TypedefClause::Builtin),
             HoldsOverChain(r1, r2) => Py::new(py, HoldsOverChainClause::new(py, r1, r2))
                 .map(TypedefClause::HoldsOverChain),
             IsAntiSymmetric(b) => {
-                Py::new(py, IsAntiSymmetricClause::new(py, b)).map(TypedefClause::IsAntiSymmetric)
+                Py::new(py, IsAntiSymmetricClause::new(b)).map(TypedefClause::IsAntiSymmetric)
             }
-            IsCyclic(b) => Py::new(py, IsCyclicClause::new(py, b)).map(TypedefClause::IsCyclic),
+            IsCyclic(b) => Py::new(py, IsCyclicClause::new(b)).map(TypedefClause::IsCyclic),
             IsReflexive(b) => {
-                Py::new(py, IsReflexiveClause::new(py, b)).map(TypedefClause::IsReflexive)
+                Py::new(py, IsReflexiveClause::new(b)).map(TypedefClause::IsReflexive)
             }
             IsSymmetric(b) => {
-                Py::new(py, IsSymmetricClause::new(py, b)).map(TypedefClause::IsSymmetric)
+                Py::new(py, IsSymmetricClause::new(b)).map(TypedefClause::IsSymmetric)
             }
             IsAsymmetric(b) => {
-                Py::new(py, IsAsymmetricClause::new(py, b)).map(TypedefClause::IsAsymmetric)
+                Py::new(py, IsAsymmetricClause::new(b)).map(TypedefClause::IsAsymmetric)
             }
             IsTransitive(b) => {
-                Py::new(py, IsTransitiveClause::new(py, b)).map(TypedefClause::IsTransitive)
+                Py::new(py, IsTransitiveClause::new(b)).map(TypedefClause::IsTransitive)
             }
             IsFunctional(b) => {
-                Py::new(py, IsFunctionalClause::new(py, b)).map(TypedefClause::IsFunctional)
+                Py::new(py, IsFunctionalClause::new(b)).map(TypedefClause::IsFunctional)
             }
-            IsInverseFunctional(b) => Py::new(py, IsInverseFunctionalClause::new(py, b))
+            IsInverseFunctional(b) => Py::new(py, IsInverseFunctionalClause::new(b))
                 .map(TypedefClause::IsInverseFunctional),
             IsA(id) => Py::new(py, IsAClause::new(py, id)).map(TypedefClause::IsA),
             IntersectionOf(r) => {
@@ -155,14 +154,14 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
                 Py::new(py, RelationshipClause::new(py, r, id)).map(TypedefClause::Relationship)
             }
             IsObsolete(b) => {
-                Py::new(py, IsObsoleteClause::new(py, b)).map(TypedefClause::IsObsolete)
+                Py::new(py, IsObsoleteClause::new(b)).map(TypedefClause::IsObsolete)
             }
             ReplacedBy(id) => {
                 Py::new(py, ReplacedByClause::new(py, id)).map(TypedefClause::ReplacedBy)
             }
             Consider(id) => Py::new(py, ConsiderClause::new(py, id)).map(TypedefClause::Consider),
             CreatedBy(name) => {
-                Py::new(py, CreatedByClause::new(py, name)).map(TypedefClause::CreatedBy)
+                Py::new(py, CreatedByClause::new(name)).map(TypedefClause::CreatedBy)
             }
             CreationDate(dt) => {
                 Py::new(py, CreationDateClause::new(py, dt)).map(TypedefClause::CreationDate)
@@ -174,10 +173,10 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
                     .map(TypedefClause::ExpandExpressionTo)
             }
             IsMetadataTag(b) => {
-                Py::new(py, IsMetadataTagClause::new(py, b)).map(TypedefClause::IsMetadataTag)
+                Py::new(py, IsMetadataTagClause::new(b)).map(TypedefClause::IsMetadataTag)
             }
             IsClassLevel(b) => {
-                Py::new(py, IsClassLevelClause::new(py, b)).map(TypedefClause::IsClassLevel)
+                Py::new(py, IsClassLevelClause::new(b)).map(TypedefClause::IsClassLevel)
             }
         }
         .expect("could not allocate memory for `TypedefClause` in Python heap")
@@ -789,7 +788,7 @@ impl Display for SynonymClause {
 impl FromPy<SynonymClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: SynonymClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::Synonym(
-            clause.synonym.as_gil_ref(py).clone_py(py).into_py(py)
+            clause.synonym.as_ref(py).borrow().clone_py(py).into_py(py)
         )
     }
 }
@@ -797,10 +796,12 @@ impl FromPy<SynonymClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl SynonymClause {
     #[new]
-    fn __init__(synonym: &Synonym) -> Self {
+    fn __init__(synonym: Py<Synonym>) -> Self {
         let gil = Python::acquire_gil();
-        let s = synonym.clone_py(gil.python());
-        Self::new(gil.python(), s)
+        let py = gil.python();
+        Self {
+            synonym: synonym.clone_ref(py)
+        }
     }
 
     #[getter]
@@ -810,17 +811,17 @@ impl SynonymClause {
     }
 
     #[setter]
-    fn set_synonym(&mut self, synonym: &Synonym) -> PyResult<()> {
+    fn set_synonym(&mut self, synonym: Py<Synonym>) -> PyResult<()> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        self.synonym = Py::new(py, synonym.clone_py(py))?;
+        self.synonym = synonym.clone_ref(py);
         Ok(())
     }
 
     fn raw_value(&self) -> PyResult<String> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        Ok(format!("{}", self.synonym.as_gil_ref(py)))
+        Ok(format!("{}", &*self.synonym.as_ref(py).borrow()))
     }
 }
 
@@ -880,7 +881,9 @@ impl Display for XrefClause {
 
 impl FromPy<XrefClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: XrefClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::Xref(clause.xref.as_ref(py).clone_py(py).into_py(py))
+        fastobo::ast::TypedefClause::Xref(
+            clause.xref.as_ref(py).borrow().clone_py(py).into_py(py)
+        )
     }
 }
 
@@ -2499,7 +2502,7 @@ impl FromPy<EquivalentToChainClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl EquivalentToChainClause {
     #[new]
-    fn __init__(first: Ident, last: Ident) {
+    fn __init__(first: Ident, last: Ident) -> Self {
         let gil = Python::acquire_gil();
         Self::new(gil.python(), first, last)
     }

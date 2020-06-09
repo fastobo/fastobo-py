@@ -25,7 +25,7 @@ use super::clause::HeaderClause;
 use crate::utils::ClonePy;
 
 #[pyclass(module="fastobo.header")]
-// #[derive(Debug, PyList)]
+#[derive(Debug, PyList)]
 pub struct HeaderFrame {
     clauses: Vec<HeaderClause>,
 }

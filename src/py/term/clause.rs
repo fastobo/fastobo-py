@@ -34,7 +34,6 @@ use super::super::xref::Xref;
 use super::super::xref::XrefList;
 use crate::date::datetime_to_isodate;
 use crate::date::isodate_to_datetime;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 // --- Conversion Wrapper ----------------------------------------------------
@@ -71,17 +70,17 @@ impl FromPy<fastobo::ast::TermClause> for TermClause {
         use fastobo::ast::TermClause::*;
         match clause {
             IsAnonymous(b) => {
-                Py::new(py, IsAnonymousClause::new(py, b)).map(TermClause::IsAnonymous)
+                Py::new(py, IsAnonymousClause::new(b)).map(TermClause::IsAnonymous)
             }
-            Name(n) => Py::new(py, NameClause::new(py, n)).map(TermClause::Name),
+            Name(n) => Py::new(py, NameClause::new(n)).map(TermClause::Name),
             Namespace(ns) => Py::new(py, NamespaceClause::new(py, ns)).map(TermClause::Namespace),
             AltId(id) => Py::new(py, AltIdClause::new(py, id)).map(TermClause::AltId),
             Def(desc, xrefs) => Py::new(py, DefClause::new(py, desc, xrefs)).map(TermClause::Def),
-            Comment(c) => Py::new(py, CommentClause::new(py, c)).map(TermClause::Comment),
+            Comment(c) => Py::new(py, CommentClause::new(c)).map(TermClause::Comment),
             Subset(s) => Py::new(py, SubsetClause::new(py, s)).map(TermClause::Subset),
             Synonym(s) => Py::new(py, SynonymClause::new(py, s)).map(TermClause::Synonym),
             Xref(x) => Py::new(py, XrefClause::new(py, x)).map(TermClause::Xref),
-            Builtin(b) => Py::new(py, BuiltinClause::new(py, b)).map(TermClause::Builtin),
+            Builtin(b) => Py::new(py, BuiltinClause::new(b)).map(TermClause::Builtin),
             PropertyValue(pv) => {
                 Py::new(py, PropertyValueClause::new(py, pv)).map(TermClause::PropertyValue)
             }
@@ -99,13 +98,13 @@ impl FromPy<fastobo::ast::TermClause> for TermClause {
             Relationship(r, id) => {
                 Py::new(py, RelationshipClause::new(py, r, id)).map(TermClause::Relationship)
             }
-            IsObsolete(b) => Py::new(py, IsObsoleteClause::new(py, b)).map(TermClause::IsObsolete),
+            IsObsolete(b) => Py::new(py, IsObsoleteClause::new(b)).map(TermClause::IsObsolete),
             ReplacedBy(id) => {
                 Py::new(py, ReplacedByClause::new(py, id)).map(TermClause::ReplacedBy)
             }
             Consider(id) => Py::new(py, ConsiderClause::new(py, id)).map(TermClause::Consider),
             CreatedBy(name) => {
-                Py::new(py, CreatedByClause::new(py, name)).map(TermClause::CreatedBy)
+                Py::new(py, CreatedByClause::new(name)).map(TermClause::CreatedBy)
             }
             CreationDate(dt) => {
                 Py::new(py, CreationDateClause::new(py, dt)).map(TermClause::CreationDate)
@@ -162,7 +161,7 @@ impl FromPy<IsAnonymousClause> for fastobo::ast::TermClause {
 impl IsAnonymousClause {
     #[new]
     fn __init__(anonymous: bool) -> Self {
-        Self::new(anonymous);
+        Self::new(anonymous)
     }
 }
 
@@ -310,7 +309,7 @@ impl NamespaceClause {
     #[new]
     fn __init__(namespace: Ident) -> Self {
         let gil = Python::acquire_gil();
-        Self::new(gil.python(), namespace);
+        Self::new(gil.python(), namespace)
     }
 
     #[getter]
@@ -393,7 +392,7 @@ impl AltIdClause {
     #[new]
     fn __init__(alt_id: Ident) -> Self {
         let gil = Python::acquire_gil();
-        Self::new(gil.python(), alt_id);
+        Self::new(gil.python(), alt_id)
     }
 
     #[getter]
@@ -724,7 +723,7 @@ impl Display for SynonymClause {
 impl FromPy<SynonymClause> for fastobo::ast::TermClause {
     fn from_py(clause: SynonymClause, py: Python) -> Self {
         fastobo::ast::TermClause::Synonym(
-            clause.synonym.as_gil_ref(py).clone_py(py).into_py(py)
+            clause.synonym.as_ref(py).borrow().clone_py(py).into_py(py)
         )
     }
 }
@@ -747,16 +746,17 @@ impl SynonymClause {
     }
 
     #[setter]
-    fn set_synonym(&mut self, synonym: &Synonym) -> PyResult<()> {
+    fn set_synonym(&mut self, synonym: Py<Synonym>) -> PyResult<()> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        self.synonym = Py::new(py, synonym.clone_py(py))?;
+        self.synonym = synonym.clone_ref(py);
         Ok(())
     }
 
     fn raw_value(&self) -> PyResult<String> {
         let gil = Python::acquire_gil();
-        Ok(format!("{}", self.synonym.as_gil_ref(gil.python())))
+        let py = gil.python();
+        Ok(format!("{}", &*self.synonym.as_ref(py).borrow()))
     }
 }
 
@@ -814,7 +814,9 @@ impl Display for XrefClause {
 
 impl FromPy<XrefClause> for fastobo::ast::TermClause {
     fn from_py(clause: XrefClause, py: Python) -> Self {
-        fastobo::ast::TermClause::Xref(clause.xref.as_ref(py).clone_py(py).into_py(py))
+        fastobo::ast::TermClause::Xref(
+            clause.xref.as_ref(py).borrow().clone_py(py).into_py(py)
+        )
     }
 }
 
@@ -1000,7 +1002,7 @@ impl PropertyValueClause {
     #[new]
     pub fn __init__(property_value: PropertyValue) -> Self {
         let gil = Python::acquire_gil();
-        Self::new(gil.python(), property_value);
+        Self::new(gil.python(), property_value)
     }
 
     #[getter]
@@ -1283,7 +1285,7 @@ impl FromPy<UnionOfClause> for fastobo::ast::TermClause {
 #[pymethods]
 impl UnionOfClause {
     #[new]
-    fn __init__(id: Ident) {
+    fn __init__(id: Ident) -> Self {
         let gil = Python::acquire_gil();
         Self::new(gil.python(), id)
     }

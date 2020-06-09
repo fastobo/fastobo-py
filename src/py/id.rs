@@ -116,24 +116,18 @@ impl FromPy<fastobo::ast::Ident> for Ident {
     fn from_py(ident: fastobo::ast::Ident, py: Python) -> Self {
         match ident {
             ast::Ident::Unprefixed(id) => {
-                let init = pyo3::PyClassInitializer::from(BaseIdent {})
-                    .add_subclass(UnprefixedIdent::new(id));
-                Py::new(py, init)
+                Py::new(py, UnprefixedIdent::new(id))
                     .map(Ident::Unprefixed)
                     .expect("could not allocate on Python heap")
             }
             ast::Ident::Prefixed(id) => {
-                let init = pyo3::PyClassInitializer::from(BaseIdent {})
-                    .add_subclass(PrefixedIdent::from_py(id, py));
-                PyCell::new(py, init)
+                PyCell::new(py, PrefixedIdent::from_py(id, py))
                     .map(Py::from)
                     .map(Ident::Prefixed)
                     .expect("could not allocate on Python heap")
             }
             ast::Ident::Url(id) => {
-                let init = pyo3::PyClassInitializer::from(BaseIdent {})
-                    .add_subclass(Url::from_py(id, py));
-                PyCell::new(py, init)
+                PyCell::new(py, Url::from_py(id, py))
                     .map(Py::from)
                     .map(Ident::Url)
                     .expect("could not allocate on Python heap")
@@ -263,6 +257,13 @@ impl FromPy<ast::PrefixedIdent> for PrefixedIdent {
             Py::new(py, prefix).expect("could not allocate on Python heap"),
             Py::new(py, local).expect("could not allocate on Python heap"),
         )
+    }
+}
+
+impl Into<PyClassInitializer<PrefixedIdent>> for PrefixedIdent {
+    fn into(self) -> PyClassInitializer<PrefixedIdent> {
+        PyClassInitializer::from(BaseIdent {})
+            .add_subclass(self)
     }
 }
 
@@ -486,6 +487,13 @@ impl FromPy<ast::UnprefixedIdent> for UnprefixedIdent {
     }
 }
 
+impl Into<PyClassInitializer<UnprefixedIdent>> for UnprefixedIdent {
+    fn into(self) -> PyClassInitializer<UnprefixedIdent> {
+        PyClassInitializer::from(BaseIdent {})
+            .add_subclass(self)
+    }
+}
+
 #[pymethods]
 impl UnprefixedIdent {
     /// Create a new `UnprefixedIdent` instance.
@@ -606,6 +614,13 @@ impl FromPy<Url> for fastobo::ast::Ident {
 impl FromPy<Url> for url::Url {
     fn from_py(url: Url, _py: Python) -> Self {
         url.inner
+    }
+}
+
+impl Into<PyClassInitializer<Url>> for Url {
+    fn into(self) -> PyClassInitializer<Url> {
+        PyClassInitializer::from(BaseIdent {})
+            .add_subclass(self)
     }
 }
 

@@ -19,12 +19,12 @@ use pyo3::PyObjectProtocol;
 use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
-// use super::super::abc::AbstractFrame;
+use super::super::abc::AbstractFrame;
 use super::clause::BaseHeaderClause;
 use super::clause::HeaderClause;
 use crate::utils::ClonePy;
 
-#[pyclass(module="fastobo.header")]
+#[pyclass(extends=AbstractFrame, module="fastobo.header")]
 #[derive(Debug, PyList)]
 pub struct HeaderFrame {
     clauses: Vec<HeaderClause>,
@@ -76,6 +76,13 @@ impl FromPy<HeaderFrame> for obo::HeaderFrame {
     }
 }
 
+impl Into<PyClassInitializer<HeaderFrame>> for HeaderFrame {
+    fn into(self) -> PyClassInitializer<HeaderFrame> {
+        PyClassInitializer::from(AbstractFrame {})
+            .add_subclass(self)
+    }
+}
+
 impl ToPyObject for HeaderFrame {
     fn to_object(&self, py: Python) -> PyObject {
         IntoPy::into_py(PyList::new(py, &self.clauses), py)
@@ -85,7 +92,7 @@ impl ToPyObject for HeaderFrame {
 #[pymethods]
 impl HeaderFrame {
     #[new]
-    pub fn __init__(clauses: Option<&PyAny>) -> PyResult<Self> {
+    pub fn __init__(clauses: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
         let mut vec = Vec::new();
         if let Some(c) = clauses {
             let gil = Python::acquire_gil();
@@ -93,7 +100,11 @@ impl HeaderFrame {
                 vec.push(HeaderClause::extract(item?)?);
             }
         }
-        Ok(Self::new(vec))
+
+        Ok(
+            PyClassInitializer::from(AbstractFrame {})
+                .add_subclass(Self::new(vec))
+        )
     }
 }
 
@@ -120,6 +131,7 @@ impl PySequenceProtocol for HeaderFrame {
     fn __len__(&self) -> PyResult<usize> {
         Ok(self.clauses.len())
     }
+
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
         let gil = Python::acquire_gil();
         let py = gil.python();
@@ -131,6 +143,7 @@ impl PySequenceProtocol for HeaderFrame {
             IndexError::into("list index out of range")
         }
     }
+
     fn __setitem__(&mut self, index: isize, elem: &PyAny) -> PyResult<()> {
         if index as usize > self.clauses.len() {
             return IndexError::into("list index out of range");
@@ -139,6 +152,7 @@ impl PySequenceProtocol for HeaderFrame {
         self.clauses[index as usize] = clause;
         Ok(())
     }
+
     fn __delitem__(&mut self, index: isize) -> PyResult<()> {
         if index as usize > self.clauses.len() {
             return IndexError::into("list index out of range");
@@ -146,7 +160,8 @@ impl PySequenceProtocol for HeaderFrame {
         self.clauses.remove(index as usize);
         Ok(())
     }
-    fn __concat__(&self, other: &PyAny) -> PyResult<Self> {
+
+    fn __concat__(&self, other: &PyAny) -> PyResult<Py<Self>> {
         let py = other.py();
 
         let iterator = PyIterator::from_object(py, other)?;
@@ -155,6 +170,8 @@ impl PySequenceProtocol for HeaderFrame {
             new_clauses.push(HeaderClause::extract(item?)?);
         }
 
-        Ok(Self::new(new_clauses))
+        let init = PyClassInitializer::from(AbstractFrame {})
+            .add_subclass(Self::new(new_clauses));
+        PyCell::new(py, init).map(Py::from)
     }
 }

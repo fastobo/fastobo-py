@@ -116,14 +116,29 @@ impl FromPy<fastobo::ast::Ident> for Ident {
     fn from_py(ident: fastobo::ast::Ident, py: Python) -> Self {
         match ident {
             ast::Ident::Unprefixed(id) => {
-                Py::new(py, UnprefixedIdent::from_py(id, py)).map(Ident::Unprefixed)
+                let init = pyo3::PyClassInitializer::from(BaseIdent {})
+                    .add_subclass(UnprefixedIdent::new(id));
+                Py::new(py, init)
+                    .map(Ident::Unprefixed)
+                    .expect("could not allocate on Python heap")
             }
             ast::Ident::Prefixed(id) => {
-                Py::new(py, PrefixedIdent::from_py(id, py)).map(Ident::Prefixed)
+                let init = pyo3::PyClassInitializer::from(BaseIdent {})
+                    .add_subclass(PrefixedIdent::from_py(id, py));
+                PyCell::new(py, init)
+                    .map(Py::from)
+                    .map(Ident::Prefixed)
+                    .expect("could not allocate on Python heap")
             }
-            ast::Ident::Url(id) => Py::new(py, Url::from_py(id, py)).map(Ident::Url),
+            ast::Ident::Url(id) => {
+                let init = pyo3::PyClassInitializer::from(BaseIdent {})
+                    .add_subclass(Url::from_py(id, py));
+                PyCell::new(py, init)
+                    .map(Py::from)
+                    .map(Ident::Url)
+                    .expect("could not allocate on Python heap")
+            }
         }
-        .expect("could not allocate on Python heap")
     }
 }
 
@@ -176,7 +191,7 @@ pub struct BaseIdent {}
 ///     >>> str(ident)
 ///     'GO:0009637'
 ///
-#[pyclass(module="fastobo.id")]
+#[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Debug)]
 pub struct PrefixedIdent {
     prefix: Py<IdentPrefix>,
@@ -263,7 +278,7 @@ impl PrefixedIdent {
     ///     local (str or `IdentLocal`): the local part of the identifier.
     ///
     #[new]
-    fn __init__(prefix: &PyAny, local: &PyAny) -> PyResult<Self> {
+    fn __init__(prefix: &PyAny, local: &PyAny) -> PyResult<PyClassInitializer<Self>> {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
@@ -289,7 +304,10 @@ impl PrefixedIdent {
             return TypeError::into(msg);
         };
 
-        Ok(Self::new(p, l))
+        Ok(
+            PyClassInitializer::from(BaseIdent {})
+                .add_subclass(Self::new(p, l))
+        )
     }
 
     /// `~fastobo.id.IdentPrefix`: the IDspace of the identifier.
@@ -402,7 +420,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///     >>> print(ident.unescaped)
 ///     hello world
 ///
-#[pyclass(module="fastobo.id")]
+#[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
@@ -475,9 +493,10 @@ impl UnprefixedIdent {
     /// Arguments:
     ///     value (`str`): the unescaped representation of the identifier.
     #[new]
-    fn __init__(value: &str) -> Self {
+    fn __init__(value: &str) -> PyClassInitializer<Self> {
         let id = ast::UnprefixedIdent::new(value.to_string());
-        UnprefixedIdent::new(id)
+        PyClassInitializer::from(BaseIdent {})
+            .add_subclass(UnprefixedIdent::new(id))
     }
 
     /// `str`: the escaped representation of the identifier.
@@ -547,7 +566,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///         ...
 ///     ValueError: invalid url: ...
 ///
-#[pyclass(module="fastobo.id")]
+#[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd)]
 #[opaque_typedef(derive(FromInner, IntoInner))]
 pub struct Url {
@@ -601,9 +620,10 @@ impl Url {
     /// Raises:
     ///     ValueError: when the given string is not a valid URL.
     #[new]
-    fn __new__(value: &str) -> PyResult<Self> {
+    fn __new__(value: &str) -> PyResult<PyClassInitializer<Self>> {
+        let init = PyClassInitializer::from(BaseIdent {});
         match url::Url::from_str(value) {
-            Ok(url) => Ok(Url::new(url)),
+            Ok(url) => Ok(init.add_subclass(Url::new(url))),
             Err(e) => ValueError::into(format!("invalid url: {}", e)),
         }
     }
@@ -690,13 +710,13 @@ impl IdentPrefix {
 
     /// `str`: the escaped representation of the identifier.
     #[getter]
-    fn escaped(&self) -> PyResult<String> {
+    pub fn escaped(&self) -> PyResult<String> {
         Ok(self.inner.to_string())
     }
 
     /// `str`: the unescaped representation of the identifier.
     #[getter]
-    fn unescaped(&self) -> PyResult<&str> {
+    pub fn unescaped(&self) -> PyResult<&str> {
         Ok(self.inner.as_str())
     }
 }

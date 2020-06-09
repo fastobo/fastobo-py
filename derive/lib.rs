@@ -78,8 +78,8 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(aspyptr_impl_enum(&ast, &e));
-        output.extend(frompy_impl_enum(&ast, &e));
-    // output.extend(pyobjectprotocol_impl_enum(&ast, &e))
+        // output.extend(frompy_impl_enum(&ast, &e));
+        // output.extend(pyobjectprotocol_impl_enum(&ast, &e))
     } else {
         panic!("only supports enums");
     }
@@ -263,7 +263,7 @@ fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote!(#name(x) => Self::from_py(x.as_ref(py).deref().clone_py(py), py)));
+        variants.push(quote!(#name(x) => Self::from_py(x.as_ref(py).deref().to_object(py), py)));
     }
 
     // Build clone implementation

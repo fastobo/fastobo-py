@@ -92,7 +92,6 @@ macro_rules! impl_convert {
 }
 
 #[derive(ClonePy, Debug, PartialEq, PyWrapper)]
-// #[derive(ClonePy, Debug, PartialEq)]
 #[wraps(BaseIdent)]
 pub enum Ident {
     Unprefixed(Py<UnprefixedIdent>),
@@ -100,30 +99,16 @@ pub enum Ident {
     Url(Py<Url>),
 }
 
-// impl<'p> AsGILRef<'p, fastobo::ast::Id<'p>> for Ident {
-//     fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::Id<'p> {
-//         match self {
-//             Ident::Unprefixed(ref id) => {
-//                 let x: &UnprefixedIdent = id.as_gil_ref(py);
-//                 fastobo::ast::Id::Unprefixed(Cow::Borrowed(x.as_gil_ref(py)))
-//             }
-//             Ident::Prefixed(ref id) => {
-//                 let x: &PrefixedIdent = id.as_gil_ref(py);
-//                 fastobo::ast::Id::Prefixed(Cow::Borrowed(x.as_gil_ref(py)))
-//             }
-//             Ident::Url(ref url) => {
-//                 let x: &Url = url.as_gil_ref(py);
-//                 fastobo::ast::Id::Url(Cow::Borrowed(x.as_gil_ref(py)))
-//             }
-//         }
-//     }
-// }
-
 impl Display for Ident {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
-        // self.as_gil_ref(gil.python()).fmt(f)
-        unimplemented!()
+        let py = gil.python();
+
+        match self {
+            Ident::Unprefixed(id) => id.as_ref(py).borrow().fmt(f),
+            Ident::Prefixed(id) => id.as_ref(py).borrow().fmt(f),
+            Ident::Url(id) => id.as_ref(py).borrow().fmt(f),
+        }
     }
 }
 
@@ -150,13 +135,12 @@ impl FromPy<Ident> for fastobo::ast::Ident {
                 ast::Ident::Unprefixed((*i).inner.clone())
             }
             Ident::Prefixed(id) => {
-                unimplemented!()
-                // let i = id.as_ref(py).borrow();
-                // let p = i.prefix.as_ref(py).borrow();
-                // let l = i.local.as_ref(py).borrow();
-                // ast::Ident::Prefixed(
-                //     ast::PrefixedIdent::new((*p).inner.clone(), (*l).inner.clone())
-                // )
+                let i = id.as_ref(py).borrow();
+                let p = i.prefix.as_ref(py).borrow();
+                let l = i.local.as_ref(py).borrow();
+                ast::Ident::Prefixed(
+                    ast::PrefixedIdent::new((*p).inner.clone(), (*l).inner.clone())
+                )
             }
             Ident::Url(id) => {
                 let i = id.as_ref(py).borrow();
@@ -205,18 +189,6 @@ impl PrefixedIdent {
     }
 }
 
-// impl<'p> AsGILRef<'p, fastobo::ast::PrefixedId<'p>> for PrefixedIdent {
-//     fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PrefixedId<'p> {
-//         // NB(@althonos): We can actually access the data as long as we hold
-//         //                the GIL ('p), so we're fine here.
-//         unsafe {
-//             let prefix: &IdentPrefix = self.prefix.as_gil_ref(py);
-//             let local: &IdentLocal = self.local.as_gil_ref(py);
-//             fastobo::ast::PrefixedId::new(prefix.as_gil_ref(py), local.as_gil_ref(py))
-//         }
-//     }
-// }
-
 impl ClonePy for PrefixedIdent {
     fn clone_py(&self, py: Python) -> Self {
         Self {
@@ -228,9 +200,13 @@ impl ClonePy for PrefixedIdent {
 
 impl Display for PrefixedIdent {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        // let gil = Python::acquire_gil();
-        // self.as_gil_ref(gil.python()).fmt(f)
-        unimplemented!()
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+
+        let p = self.prefix.as_ref(py).borrow();
+        let l = self.local.as_ref(py).borrow();
+
+        fastobo::ast::PrefixedId::new(p.inner.share(), l.inner.share()).fmt(f)
     }
 }
 
@@ -238,9 +214,11 @@ impl PartialEq for PrefixedIdent {
     fn eq(&self, other: &Self) -> bool {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        unimplemented!()
-        // *self.prefix.as_ref(py).borrow() == *other.prefix.as_ref(py).borrow()
-        //     && *self.local.as_ref(py).borrow() == *other.local.as_ref(py).borrow()
+
+        let res = *self.prefix.as_ref(py).borrow() == *other.prefix.as_ref(py).borrow()
+            && *self.local.as_ref(py).borrow() == *other.local.as_ref(py).borrow();
+
+        res
     }
 }
 
@@ -248,11 +226,10 @@ impl Eq for PrefixedIdent {}
 
 impl FromPy<PrefixedIdent> for ast::PrefixedIdent {
     fn from_py(ident: PrefixedIdent, py: Python) -> Self {
-        unimplemented!()
-        // ast::PrefixedIdent::new(
-        //     ident.prefix.as_ref(py).clone(),
-        //     ident.local.as_ref(py).clone(),
-        // )
+        ast::PrefixedIdent::new(
+            ident.prefix.as_ref(py).borrow().clone(),
+            ident.local.as_ref(py).borrow().clone(),
+        )
     }
 }
 
@@ -264,15 +241,13 @@ impl FromPy<PrefixedIdent> for ast::Ident {
 
 impl FromPy<ast::PrefixedIdent> for PrefixedIdent {
     fn from_py(id: ast::PrefixedIdent, py: Python) -> Self {
-        let prefix = id.prefix().clone();
-        let local = id.local().clone();
+        let prefix: IdentPrefix = id.prefix().clone().into();
+        let local: IdentLocal = id.local().clone().into();
 
-        unimplemented!()
-
-        // Self::new(
-        //     Py::new(py, prefix.into()).expect("could not allocate on Python heap"),
-        //     Py::new(py, local.into()).expect("could not allocate on Python heap"),
-        // )
+        Self::new(
+            Py::new(py, prefix).expect("could not allocate on Python heap"),
+            Py::new(py, local).expect("could not allocate on Python heap"),
+        )
     }
 }
 
@@ -382,39 +357,37 @@ impl PyObjectProtocol for PrefixedIdent {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        // Ok(self.as_gil_ref(py).to_string())
-        unimplemented!()
+        Ok(self.to_string())
     }
 
-    // fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-    //     let py = other.py();
-    //     if let Ok(r) = other.extract::<PrefixedIdent>() {
-    //         let lp = &*self.prefix.as_ref(py);
-    //         let ll = &*self.local.as_ref(py);
-    //         let rp = &*r.prefix.as_ref(py);
-    //         let rl = &*r.local.as_ref(py);
-    //         match op {
-    //             CompareOp::Eq => Ok((lp, ll) == (rp, rl)),
-    //             CompareOp::Ne => Ok((lp, ll) != (rp, rl)),
-    //             CompareOp::Lt => Ok((lp, ll) < (rp, rl)),
-    //             CompareOp::Le => Ok((lp, ll) <= (rp, rl)),
-    //             CompareOp::Gt => Ok((lp, ll) > (rp, rl)),
-    //             CompareOp::Ge => Ok((lp, ll) >= (rp, rl)),
-    //         }
-    //     } else {
-    //         match op {
-    //             CompareOp::Eq => Ok(false),
-    //             CompareOp::Ne => Ok(true),
-    //             _ => {
-    //                 let n = other.get_type().name();
-    //                 let msg = format!("expected PrefixedIdent, found {}", n);
-    //                 TypeError::into(msg)
-    //             }
-    //         }
-    //     }
-    // }
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
+        let py = other.py();
+        if let Ok(r) = other.extract::<Py<PrefixedIdent>>() {
+            let r = r.as_ref(py).borrow();
+            let lp = &*self.prefix.as_ref(py).borrow();
+            let ll = &*self.local.as_ref(py).borrow();
+            let rp = &*r.prefix.as_ref(py).borrow();
+            let rl = &*r.local.as_ref(py).borrow();
+            match op {
+                CompareOp::Eq => Ok((lp, ll) == (rp, rl)),
+                CompareOp::Ne => Ok((lp, ll) != (rp, rl)),
+                CompareOp::Lt => Ok((lp, ll) < (rp, rl)),
+                CompareOp::Le => Ok((lp, ll) <= (rp, rl)),
+                CompareOp::Gt => Ok((lp, ll) > (rp, rl)),
+                CompareOp::Ge => Ok((lp, ll) >= (rp, rl)),
+            }
+        } else {
+            match op {
+                CompareOp::Eq => Ok(false),
+                CompareOp::Ne => Ok(true),
+                _ => {
+                    let n = other.get_type().name();
+                    let msg = format!("expected PrefixedIdent, found {}", n);
+                    TypeError::into(msg)
+                }
+            }
+        }
+    }
 }
 
 // --- UnprefixedIdent --------------------------------------------------------
@@ -533,28 +506,29 @@ impl PyObjectProtocol for UnprefixedIdent {
         Ok(self.inner.as_str())
     }
 
-    // fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-    //     if let Ok(u) = other.extract::<UnprefixedIdent>() {
-    //         match op {
-    //             CompareOp::Lt => Ok(self.inner < u.inner),
-    //             CompareOp::Le => Ok(self.inner <= u.inner),
-    //             CompareOp::Eq => Ok(self.inner == u.inner),
-    //             CompareOp::Ne => Ok(self.inner != u.inner),
-    //             CompareOp::Gt => Ok(self.inner > u.inner),
-    //             CompareOp::Ge => Ok(self.inner >= u.inner),
-    //         }
-    //     } else {
-    //         match op {
-    //             CompareOp::Eq => Ok(false),
-    //             CompareOp::Ne => Ok(true),
-    //             _ => {
-    //                 let n = other.get_type().name();
-    //                 let msg = format!("expected UnprefixedIdent, found {}", n);
-    //                 TypeError::into(msg)
-    //             }
-    //         }
-    //     }
-    // }
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
+        if let Ok(u) = other.extract::<Py<UnprefixedIdent>>() {
+            let u = u.as_ref(other.py()).borrow();
+            match op {
+                CompareOp::Lt => Ok(self.inner < u.inner),
+                CompareOp::Le => Ok(self.inner <= u.inner),
+                CompareOp::Eq => Ok(self.inner == u.inner),
+                CompareOp::Ne => Ok(self.inner != u.inner),
+                CompareOp::Gt => Ok(self.inner > u.inner),
+                CompareOp::Ge => Ok(self.inner >= u.inner),
+            }
+        } else {
+            match op {
+                CompareOp::Eq => Ok(false),
+                CompareOp::Ne => Ok(true),
+                _ => {
+                    let n = other.get_type().name();
+                    let msg = format!("expected UnprefixedIdent, found {}", n);
+                    TypeError::into(msg)
+                }
+            }
+        }
+    }
 }
 
 // --- UrlIdent ---------------------------------------------------------------
@@ -649,29 +623,30 @@ impl PyObjectProtocol for Url {
         Ok(self.inner.as_str())
     }
 
-    // /// Compare to another `Url` or `str` instance.
-    // fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-    //     if let Ok(url) = other.extract::<Url>() {
-    //         match op {
-    //             CompareOp::Lt => Ok(self < url),
-    //             CompareOp::Le => Ok(self <= url),
-    //             CompareOp::Eq => Ok(self == url),
-    //             CompareOp::Ne => Ok(self != url),
-    //             CompareOp::Gt => Ok(self > url),
-    //             CompareOp::Ge => Ok(self >= url),
-    //         }
-    //     } else {
-    //         match op {
-    //             CompareOp::Eq => Ok(false),
-    //             CompareOp::Ne => Ok(true),
-    //             _ => {
-    //                 let n = other.get_type().name();
-    //                 let msg = format!("expected str or Url, found {}", n);
-    //                 TypeError::into(msg)
-    //             }
-    //         }
-    //     }
-    // }
+    /// Compare to another `Url` or `str` instance.
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
+        if let Ok(url) = other.extract::<Py<Url>>() {
+            let url = &*url.as_ref(other.py()).borrow();
+            match op {
+                CompareOp::Lt => Ok(self < url),
+                CompareOp::Le => Ok(self <= url),
+                CompareOp::Eq => Ok(self == url),
+                CompareOp::Ne => Ok(self != url),
+                CompareOp::Gt => Ok(self > url),
+                CompareOp::Ge => Ok(self >= url),
+            }
+        } else {
+            match op {
+                CompareOp::Eq => Ok(false),
+                CompareOp::Ne => Ok(true),
+                _ => {
+                    let n = other.get_type().name();
+                    let msg = format!("expected str or Url, found {}", n);
+                    TypeError::into(msg)
+                }
+            }
+        }
+    }
 }
 
 // --- IdentPrefix -----------------------------------------------------------

@@ -24,7 +24,6 @@ use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use super::id::Ident;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 // --- Module export ---------------------------------------------------------
@@ -137,7 +136,7 @@ impl Xref {
             Self::with_desc(
                 gil.python(),
                 id,
-                fastobo::ast::QuotedString::new(s)
+                Some(fastobo::ast::QuotedString::new(s))
             )
         } else {
             Self::new(id)
@@ -199,7 +198,7 @@ impl PyObjectProtocol for Xref {
 ///     Xref(PrefixedIdent('PSI', 'MS'))
 ///
 #[pyclass(module = "fastobo.xref")]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct XrefList {
     xrefs: Vec<Py<Xref>>,
 }
@@ -215,10 +214,8 @@ impl XrefList {
         let mut vec = Vec::new();
         for item in PyIterator::from_object(py, xrefs)? {
             let i = item?;
-            if Xref::is_exact_instance(i) {
-                unsafe {
-                    vec.push(Py::from_borrowed_ptr(i.as_ptr()));
-                }
+            if let Ok(xref) = i.extract::<Py<Xref>>() {
+                vec.push(xref.clone_ref(py));
             } else {
                 let ty = i.get_type().name();
                 return TypeError::into(format!("expected Xref, found {}", ty));
@@ -240,7 +237,7 @@ impl FromPy<fastobo::ast::XrefList> for XrefList {
     fn from_py(list: fastobo::ast::XrefList, py: Python) -> Self {
         let mut xrefs = Vec::with_capacity((&list).len());
         for xref in list.into_iter() {
-            xrefs.push(Py::new(py, xref.into_py(py)).unwrap())
+            xrefs.push(Py::new(py, Xref::from_py(xref, py)).unwrap())
         }
         Self::new(xrefs)
     }
@@ -250,7 +247,7 @@ impl FromPy<XrefList> for fastobo::ast::XrefList {
     fn from_py(list: XrefList, py: Python) -> Self {
         list.xrefs
             .into_iter()
-            .map(|xref| xref.as_ref(py).clone_py(py).into_py(py))
+            .map(|xref| xref.as_ref(py).borrow().clone_py(py).into_py(py))
             .collect()
     }
 }
@@ -312,9 +309,9 @@ impl PySequenceProtocol for XrefList {
     }
 
     fn __contains__(&self, item: &PyAny) -> PyResult<bool> {
-        if let Ok(xref) = item.downcast::<Xref>() {
+        if let Ok(xref) = item.extract::<Py<Xref>>() {
             let py = item.py();
-            Ok(self.xrefs.iter().any(|x| x.as_gil_ref(py) == xref))
+            Ok(self.xrefs.iter().any(|x| *x.as_ref(py).borrow() == *xref.as_ref(py).borrow()))
         } else {
             let ty = item.get_type().name();
             let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);

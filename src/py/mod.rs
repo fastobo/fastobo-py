@@ -49,10 +49,10 @@ use crate::utils::ClonePy;
 pub mod id;
 // pub mod instance;
 // pub mod pv;
-// pub mod syn;
+pub mod syn;
 // pub mod term;
 // pub mod typedef;
-// pub mod xref;
+pub mod xref;
 
 // use self::doc::OboDoc;
 use super::built;
@@ -70,10 +70,10 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     use self::id::PyInit_id;
     // use self::instance::PyInit_instance;
     // use self::pv::PyInit_pv;
-    // use self::syn::PyInit_syn;
+    use self::syn::PyInit_syn;
     // use self::term::PyInit_term;
     // use self::typedef::PyInit_typedef;
-    // use self::xref::PyInit_xref;
+    use self::xref::PyInit_xref;
 
     m.add("__package__", "fastobo")?;
     m.add("__build__", pyo3_built!(py, built))?;
@@ -86,10 +86,10 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
     add_submodule!(py, m, id);
     // add_submodule!(py, m, instance);
     // add_submodule!(py, m, pv);
-    // add_submodule!(py, m, syn);
+    add_submodule!(py, m, syn);
     // add_submodule!(py, m, term);
     // add_submodule!(py, m, typedef);
-    // add_submodule!(py, m, xref);
+    add_submodule!(py, m, xref);
 
     /*
     /// iter(fh, ordered=True)

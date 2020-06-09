@@ -27,7 +27,6 @@ use pyo3::PyTypeInfo;
 use super::id::Ident;
 use super::xref::XrefList;
 use crate::utils::ClonePy;
-use crate::utils::AsGILRef;
 
 // --- Module export ---------------------------------------------------------
 
@@ -113,7 +112,7 @@ pub struct Synonym {
     desc: fastobo::ast::QuotedString,
     scope: SynonymScope,
     ty: Option<Ident>,
-    xrefs: XrefList,
+    xrefs: Py<XrefList>,
 }
 
 impl ClonePy for Synonym {
@@ -144,9 +143,16 @@ impl FromPy<fastobo::ast::Synonym> for Synonym {
             ),
             scope: SynonymScope::new(syn.scope().clone()),
             ty: syn.ty().map(|id| id.clone().into_py(py)),
-            xrefs: std::mem::replace(
-                syn.xrefs_mut(), fastobo::ast::XrefList::new(Vec::new())
-            ).into_py(py)
+            xrefs: Py::new(
+                py,
+                XrefList::from_py(
+                    std::mem::replace(
+                        syn.xrefs_mut(),
+                        fastobo::ast::XrefList::new(Vec::new())
+                    ),
+                    py
+                )
+            ).expect("failed allocating memory on Python heap")
         }
     }
 }
@@ -157,7 +163,7 @@ impl FromPy<Synonym> for fastobo::ast::Synonym {
             syn.desc,
             syn.scope.inner,
             syn.ty.map(|ty| ty.into_py(py)),
-            fastobo::ast::XrefList::from_py(syn.xrefs, py)
+            fastobo::ast::XrefList::from_py(&*syn.xrefs.as_ref(py).borrow(), py)
         )
     }
 }
@@ -172,20 +178,20 @@ impl Synonym {
         ty: Option<Ident>,
         xrefs: Option<&PyAny>
     ) -> PyResult<Self> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
 
         let list = xrefs
-            .map(|x| XrefList::collect(Python::acquire_gil().python(), x))
+            .map(|x| XrefList::collect(py, x))
             .transpose()?
-            .unwrap_or_else(XrefList::new);
+            .unwrap_or_default();
 
         Ok(Self {
             desc: fastobo::ast::QuotedString::new(desc),
             scope: SynonymScope::from_str(scope)?,
-            xrefs: list,
+            xrefs: Py::new(py, list)?,
             ty,
         })
-
-        Ok(synonym)
     }
 
     #[getter]
@@ -222,15 +228,15 @@ impl Synonym {
     }
 
     #[getter]
-    pub fn get_xrefs<'py>(&self, py: Python<'py>) -> PyResult<XrefList> {
-        Ok(self.xrefs.clone_py(py))
+    pub fn get_xrefs<'py>(&self, py: Python<'py>) -> Py<XrefList> {
+        self.xrefs.clone_py(py)
     }
 
     #[setter]
-    pub fn set_xrefs(&mut self, xrefs: &XrefList) -> PyResult<()> {
+    pub fn set_xrefs(&mut self, xrefs: Py<XrefList>) -> PyResult<()> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        self.xrefs = xrefs.clone_py(py);
+        self.xrefs = xrefs.clone_ref(py);
         Ok(())
     }
 }

@@ -245,8 +245,14 @@ impl FromPy<fastobo::ast::XrefList> for XrefList {
 
 impl FromPy<XrefList> for fastobo::ast::XrefList {
     fn from_py(list: XrefList, py: Python) -> Self {
+        Self::from_py(&list, py)
+    }
+}
+
+impl FromPy<&XrefList> for fastobo::ast::XrefList {
+    fn from_py(list: &XrefList, py: Python) -> Self {
         list.xrefs
-            .into_iter()
+            .iter()
             .map(|xref| xref.as_ref(py).borrow().clone_py(py).into_py(py))
             .collect()
     }

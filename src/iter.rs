@@ -22,8 +22,8 @@ use pyo3::AsPyPointer;
 use pyo3::PyGCProtocol;
 
 use crate::error::Error;
-// use crate::py::header::frame::HeaderFrame;
-// use crate::py::doc::EntityFrame;
+use crate::py::header::frame::HeaderFrame;
+use crate::py::doc::EntityFrame;
 use crate::transmute_file_error;
 use crate::utils::ClonePy;
 
@@ -143,7 +143,7 @@ impl Handle for BufReader<PyFileGILRead> {
 
 // ---------------------------------------------------------------------------
 
-/*
+
 // FIXME: May cause memory leaks.
 /// An iterator over the frames of an OBO document.
 ///
@@ -151,7 +151,7 @@ impl Handle for BufReader<PyFileGILRead> {
 #[pyclass(module = "fastobo")]
 pub struct FrameReader {
     inner: fastobo::parser::SequentialReader<Box<dyn Handle>>,
-    header: HeaderFrame,
+    header: Py<HeaderFrame>,
 }
 
 impl FrameReader {
@@ -161,13 +161,15 @@ impl FrameReader {
 
         let mut inner = fastobo::parser::SequentialReader::new(reader);
         inner.ordered(ordered);
-        let header = inner
+
+        let frame = inner
             .next()
             .unwrap()
             .map_err(Error::from)?
             .into_header_frame()
-            .unwrap()
-            .into_py(py);
+            .unwrap();
+        let header = PyCell::new(py, HeaderFrame::from_py(frame, py))
+            .map(Py::from)?;
 
         Ok(Self { inner, header })
     }
@@ -193,7 +195,7 @@ impl FrameReader {
 
 #[pymethods]
 impl FrameReader {
-    fn header<'py>(&self, py: Python<'py>) -> HeaderFrame {
+    fn header<'py>(&self, py: Python<'py>) -> Py<HeaderFrame> {
         self.header.clone_py(py)
     }
 }
@@ -233,4 +235,3 @@ impl PyIterProtocol for FrameReader {
         }
     }
 }
-*/

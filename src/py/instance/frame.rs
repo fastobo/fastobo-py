@@ -28,8 +28,8 @@ use crate::utils::ClonePy;
 use crate::utils::FinalClass;
 use crate::utils::AbstractClass;
 
-#[pyclass(module="fastobo.instance")]
-#[derive(Debug)]
+#[pyclass(extends=AbstractEntityFrame, module="fastobo.instance")]
+#[derive(Debug, FinalClass)]
 pub struct InstanceFrame {
     id: Ident,
     //clauses: Vec<InstanceClause>,

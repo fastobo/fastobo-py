@@ -20,7 +20,7 @@ libc = "0.2.70"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
 pyo3 = { version = "0.8.5", features = ["unsound-subclass", "extension-module"] }
-pyo3-built = "0.3.0"
+pyo3-built = "0.4.1"
 pest = "=2.1.2"
 url = "2.1.0"
 

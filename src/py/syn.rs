@@ -112,6 +112,7 @@ pub struct Synonym {
     desc: fastobo::ast::QuotedString,
     scope: SynonymScope,
     ty: Option<Ident>,
+    #[pyo3(get, set)]
     xrefs: Py<XrefList>,
 }
 
@@ -224,19 +225,6 @@ impl Synonym {
     #[setter]
     pub fn set_type(&mut self, ty: Option<Ident>) -> PyResult<()> {
         self.ty = ty;
-        Ok(())
-    }
-
-    #[getter]
-    pub fn get_xrefs<'py>(&self, py: Python<'py>) -> Py<XrefList> {
-        self.xrefs.clone_py(py)
-    }
-
-    #[setter]
-    pub fn set_xrefs(&mut self, xrefs: Py<XrefList>) -> PyResult<()> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        self.xrefs = xrefs.clone_ref(py);
         Ok(())
     }
 }

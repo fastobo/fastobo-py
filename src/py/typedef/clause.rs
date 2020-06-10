@@ -758,6 +758,8 @@ impl PyObjectProtocol for SubsetClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug, FinalClass)]
 pub struct SynonymClause {
+    #[pyo3(get, set)]
+    /// `~fastobo.syn.Synonym`: a possible synonym for this term.
     synonym: Py<Synonym>,
 }
 
@@ -805,20 +807,6 @@ impl SynonymClause {
         Self {
             synonym: synonym.clone_ref(py)
         }.into()
-    }
-
-    #[getter]
-    /// `~fastobo.syn.Synonym`: a possible synonym for this term.
-    fn get_synonym<'py>(&self, py: Python<'py>) -> PyResult<Py<Synonym>> {
-        Ok(self.synonym.clone_py(py))
-    }
-
-    #[setter]
-    fn set_synonym(&mut self, synonym: Py<Synonym>) -> PyResult<()> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        self.synonym = synonym.clone_ref(py);
-        Ok(())
     }
 
     fn raw_value(&self) -> PyResult<String> {

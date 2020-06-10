@@ -1105,6 +1105,8 @@ impl PyObjectProtocol for NamespaceIdRuleClause {
 #[derive(Debug, FinalClass)]
 pub struct IdspaceClause {
     prefix: IdentPrefix,
+    #[pyo3(get, set)]
+    /// `~fastobo.id.Url`: the URL used to expand IDs of this IDspace.
     url: Py<Url>,
     description: Option<QuotedString>,
 }
@@ -1124,11 +1126,8 @@ impl IdspaceClause {
         U: Into<Url>,
         D: Into<Option<QuotedString>>,
     {
-        let u = PyClassInitializer::from(BaseIdent {})
-            .add_subclass(url.into());
-        let cell = PyCell::new(py, u)
+        let cell = PyCell::new(py, url.into())
             .expect("cannot allocate to Python heap");
-
         Self {
             prefix: prefix.into(),
             url: Py::from(cell),
@@ -1181,16 +1180,8 @@ impl IdspaceClause {
 
     /// `~fastobo.id.IdentPrefix`: the prefix used in prefixed IDs.
     #[getter]
-    fn get_prefix(&self) -> PyResult<IdentPrefix> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
+    fn get_prefix(&self, py: Python) -> PyResult<IdentPrefix> {
         Ok(self.prefix.clone_py(py))
-    }
-
-    /// `~fastobo.id.Url`: the URL used to expand IDs of this IDspace.
-    #[getter]
-    fn get_url<'py>(&self, py: Python<'py>) -> PyResult<Py<Url>> {
-        Ok(self.url.clone_py(py))
     }
 
     /// `str`, optional: a description of this IDspace.

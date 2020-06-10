@@ -90,16 +90,11 @@ impl HeaderFrame {
     pub fn __init__(clauses: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
         let mut vec = Vec::new();
         if let Some(c) = clauses {
-            let gil = Python::acquire_gil();
-            for item in PyIterator::from_object(gil.python(), c)? {
+            for item in PyIterator::from_object(c.py(), c)? {
                 vec.push(HeaderClause::extract(item?)?);
             }
         }
-
-        Ok(
-            PyClassInitializer::from(AbstractFrame {})
-                .add_subclass(Self::new(vec))
-        )
+        Ok(Self::new(vec).into())
     }
 }
 

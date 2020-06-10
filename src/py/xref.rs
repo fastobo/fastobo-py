@@ -70,18 +70,6 @@ impl Xref {
             desc: desc.map(|d| d.into_py(py)),
         }
     }
-
-    pub fn from_object(py: Python, obj: &PyAny) -> PyResult<Py<Self>> {
-        if Xref::is_instance(&obj) {
-            unsafe {
-                let ptr = obj.as_ptr();
-                Ok(Py::from_borrowed_ptr(ptr))
-            }
-        } else {
-            let ty = obj.get_type().name();
-            TypeError::into(format!("expected Xref, found {}", ty))
-        }
-    }
 }
 
 impl ClonePy for Xref {

@@ -855,7 +855,7 @@ impl PyObjectProtocol for SynonymClause {
 #[derive(Debug, FinalClass)]
 pub struct XrefClause {
     #[pyo3(get, set)]
-    /// `fastobo.xref.Xref`: a cross-reference relevant to this entity.
+    /// `~fastobo.xref.Xref`: a cross-reference relevant to this typedef.
     xref: Py<Xref>,
 }
 
@@ -910,8 +910,8 @@ impl FromPy<Xref> for XrefClause {
 #[pymethods]
 impl XrefClause {
     #[new]
-    fn __init__(xref: &PyAny) -> PyResult<PyClassInitializer<Self>> {
-        Xref::from_object(xref.py(), xref).map(Self::from).map(Into::into)
+    fn __init__(xref: Py<Xref>) -> PyClassInitializer<Self> {
+        Self::from(xref).into()
     }
 
     pub fn raw_value(&self) -> PyResult<String> {

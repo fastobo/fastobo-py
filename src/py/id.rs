@@ -284,8 +284,8 @@ impl PrefixedIdent {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
-        let p = if prefix.extract::<IdentPrefix>().is_ok() {
-            unsafe { Py::from_borrowed_ptr(prefix.as_ptr()) }
+        let p = if let Ok(prefix) = prefix.extract::<Py<IdentPrefix>>() {
+            prefix.clone_ref(py)
         } else if let Ok(ref s) = PyString::try_from(prefix) {
             let string = s.to_string();
             Py::new(py, IdentPrefix::new(ast::IdentPrefix::new(string)))?
@@ -295,8 +295,8 @@ impl PrefixedIdent {
             return TypeError::into(msg);
         };
 
-        let l = if local.extract::<IdentLocal>().is_ok() {
-            unsafe { Py::from_borrowed_ptr(local.as_ptr()) }
+        let l = if let Ok(local) = local.extract::<Py<IdentLocal>>() {
+            local.clone_ref(py)
         } else if let Ok(ref s) = PyString::try_from(local) {
             let string = s.to_string();
             Py::new(py, IdentLocal::new(ast::IdentLocal::new(string)))?
@@ -321,8 +321,8 @@ impl PrefixedIdent {
     #[setter]
     fn set_prefix(&mut self, prefix: &PyAny) -> PyResult<()> {
         let py = prefix.py();
-        self.prefix = if prefix.extract::<IdentPrefix>().is_ok() {
-            unsafe { Py::from_borrowed_ptr(prefix.as_ptr()) }
+        self.prefix = if let Ok(prefix) = prefix.extract::<Py<IdentPrefix>>() {
+            prefix.clone_ref(py)
         } else if let Ok(ref s) = PyString::try_from(prefix) {
             let string = s.to_string();
             Py::new(py, IdentPrefix::new(ast::IdentPrefix::new(string)))?
@@ -343,8 +343,8 @@ impl PrefixedIdent {
     #[setter]
     fn set_local(&mut self, local: &PyAny) -> PyResult<()> {
         let py = local.py();
-        self.local = if local.extract::<IdentLocal>().is_ok() {
-            unsafe { Py::from_borrowed_ptr(local.as_ptr()) }
+        self.local = if let Ok(local) = local.extract::<Py<IdentLocal>>() {
+            local.clone_ref(py)
         } else if let Ok(ref s) = PyString::try_from(local) {
             let string = s.to_string();
             Py::new(py, IdentLocal::new(ast::IdentLocal::new(string)))?

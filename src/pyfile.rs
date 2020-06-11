@@ -4,6 +4,7 @@ use std::io::Read;
 use std::io::Write;
 use std::marker::PhantomData;
 use std::sync::Arc;
+use std::sync::Mutex;
 
 use pyo3::exceptions::OSError;
 use pyo3::exceptions::TypeError;
@@ -47,7 +48,7 @@ macro_rules! transmute_file_error {
 
 // ---------------------------------------------------------------------------
 
-/// A wrapper around a readable Python file borrowed with the GIL.
+/// A wrapper around a readable Python file borrowed within a GIL lifetime.
 pub struct PyFileRead<'p> {
     file: pyo3::PyObject,
     py: Python<'p>,
@@ -108,7 +109,7 @@ impl<'p> Read for PyFileRead<'p> {
 
 // ---------------------------------------------------------------------------
 
-/// A wrapper around a writable Python file borrowed with the GIL.
+/// A wrapper around a writable Python file borrowed within a GIL lifetime.
 pub struct PyFileWrite<'p> {
     file: pyo3::PyObject,
     py: Python<'p>,
@@ -164,6 +165,76 @@ impl<'p> Write for PyFileWrite<'p> {
         match self.file.call_method0(self.py, "flush") {
             Ok(_) => Ok(()),
             Err(e) => transmute_file_error!(self, e, "flush method failed"),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+
+/// A wrapper for a Python file that can outlive the GIL.
+pub struct PyFileGILRead {
+    file: Mutex<Py<PyObject>>,
+    err: Option<PyErr>,
+}
+
+impl PyFileGILRead {
+    pub fn from_object<T>(py: Python<'_>, obj: &T) -> PyResult<PyFileGILRead>
+    where
+        T: AsPyPointer,
+    {
+        unsafe {
+            let file: Py<PyObject> = Py::from_borrowed_ptr(obj.as_ptr());
+            let res = file.to_object(py).call_method1(py, "read", (0,))?;
+            if py.is_instance::<PyBytes, PyObject>(&res).unwrap_or(false) {
+                Ok(PyFileGILRead {
+                    file: Mutex::new(file),
+                    err: None,
+                })
+            } else {
+                let ty = res.as_ref(py).get_type().name().to_string();
+                TypeError::into(format!("expected bytes, found {}", ty))
+            }
+        }
+    }
+
+    pub fn file(&self) -> &Mutex<Py<PyObject>> {
+        &self.file
+    }
+
+    pub fn err(&self) -> &Option<PyErr> {
+        &self.err
+    }
+
+    pub fn err_mut(&mut self) -> &mut Option<PyErr> {
+        &mut self.err
+    }
+}
+
+impl Read for PyFileGILRead {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
+        unsafe {
+            let gil = Python::acquire_gil();
+            let py = gil.python();
+            let file = self.file.lock().unwrap();
+            match file.to_object(py).call_method1(py, "read", (buf.len(),)) {
+                Ok(obj) => {
+                    // Check `fh.read` returned bytes, else raise a `TypeError`.
+                    if let Ok(bytes) = obj.extract::<&PyBytes>(py) {
+                        let b = bytes.as_bytes();
+                        (&mut buf[..b.len()]).copy_from_slice(b);
+                        Ok(b.len())
+                    } else {
+                        let ty = obj.as_ref(py).get_type().name().to_string();
+                        let msg = format!("expected bytes, found {}", ty);
+                        self.err = Some(TypeError::py_err(msg));
+                        Err(IoError::new(
+                            std::io::ErrorKind::Other,
+                            "fh.read did not return bytes",
+                        ))
+                    }
+                }
+                Err(e) => transmute_file_error!(self, e, "read method failed", py)
+            }
         }
     }
 }

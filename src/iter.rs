@@ -8,7 +8,6 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::ops::Deref;
 use std::ops::DerefMut;
-use std::sync::Mutex;
 
 use pyo3::exceptions::TypeError;
 use pyo3::exceptions::OSError;
@@ -24,65 +23,9 @@ use pyo3::PyGCProtocol;
 use crate::error::Error;
 use crate::py::header::frame::HeaderFrame;
 use crate::py::doc::EntityFrame;
+use crate::pyfile::PyFileGILRead;
 use crate::transmute_file_error;
 use crate::utils::ClonePy;
-
-
-/// A wrapper for a Python file that can outlive the GIL.
-struct PyFileGILRead {
-    file: Mutex<Py<PyObject>>,
-    err: Option<PyErr>,
-}
-
-impl PyFileGILRead {
-    pub fn from_object<T>(py: Python<'_>, obj: &T) -> PyResult<PyFileGILRead>
-    where
-        T: AsPyPointer,
-    {
-        unsafe {
-            let file: Py<PyObject> = Py::from_borrowed_ptr(obj.as_ptr());
-            let res = file.to_object(py).call_method1(py, "read", (0,))?;
-            if py.is_instance::<PyBytes, PyObject>(&res).unwrap_or(false) {
-                Ok(PyFileGILRead {
-                    file: Mutex::new(file),
-                    err: None,
-                })
-            } else {
-                let ty = res.as_ref(py).get_type().name().to_string();
-                TypeError::into(format!("expected bytes, found {}", ty))
-            }
-        }
-    }
-}
-
-impl Read for PyFileGILRead {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
-        unsafe {
-            let gil = Python::acquire_gil();
-            let py = gil.python();
-            let file = self.file.lock().unwrap();
-            match file.to_object(py).call_method1(py, "read", (buf.len(),)) {
-                Ok(obj) => {
-                    // Check `fh.read` returned bytes, else raise a `TypeError`.
-                    if let Ok(bytes) = obj.extract::<&PyBytes>(py) {
-                        let b = bytes.as_bytes();
-                        (&mut buf[..b.len()]).copy_from_slice(b);
-                        Ok(b.len())
-                    } else {
-                        let ty = obj.as_ref(py).get_type().name().to_string();
-                        let msg = format!("expected bytes, found {}", ty);
-                        self.err = Some(TypeError::py_err(msg));
-                        Err(IoError::new(
-                            std::io::ErrorKind::Other,
-                            "fh.read did not return bytes",
-                        ))
-                    }
-                }
-                Err(e) => transmute_file_error!(self, e, "read method failed", py)
-            }
-        }
-    }
-}
 
 // ---------------------------------------------------------------------------
 
@@ -133,16 +76,15 @@ impl Handle for BufReader<PyFileGILRead> {
     fn handle(&self) -> PyObject {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        self.get_ref().file.lock().unwrap().to_object(py)
+        self.get_ref().file().lock().unwrap().to_object(py)
     }
 
     fn into_err(&mut self) -> Option<PyErr> {
-        self.get_mut().err.take()
+        self.get_mut().err_mut().take()
     }
 }
 
 // ---------------------------------------------------------------------------
-
 
 // FIXME: May cause memory leaks.
 /// An iterator over the frames of an OBO document.
@@ -182,11 +124,8 @@ impl FrameReader {
         }
     }
 
-    pub fn from_handle<T>(py: Python<'_>, obj: &T, ordered: bool) -> PyResult<Self>
-    where
-        T: AsPyPointer
-    {
-        match PyFileGILRead::from_object(py, obj) {
+    pub fn from_handle(obj: &PyAny, ordered: bool) -> PyResult<Self> {
+        match PyFileGILRead::from_ref(obj) {
             Ok(inner) => Self::new(Box::new(BufReader::new(inner)), ordered),
             Err(e) => Err(e),
         }
@@ -217,13 +156,12 @@ impl PyIterProtocol for FrameReader {
     }
 
     fn __next__(mut slf: PyRefMut<'p, Self>) -> PyResult<Option<EntityFrame>> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
         match slf.deref_mut().inner.next() {
             None => Ok(None),
             Some(Ok(frame)) => {
+                let gil = Python::acquire_gil();
                 let entity = frame.into_entity_frame().unwrap();
-                Ok(Some(EntityFrame::from_py(entity, py)))
+                Ok(Some(EntityFrame::from_py(entity, gil.python())))
             },
             Some(Err(e)) => slf
                 .deref_mut()

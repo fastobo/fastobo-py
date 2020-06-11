@@ -304,9 +304,8 @@ impl NameClause {
     }
 
     #[setter]
-    fn set_name(&mut self, name: String) -> PyResult<()> {
+    fn set_name(&mut self, name: String) {
         self.name = fastobo::ast::UnquotedString::new(name);
-        Ok(())
     }
 }
 
@@ -646,9 +645,8 @@ impl CommentClause {
     }
 
     #[setter]
-    fn set_comment(&mut self, comment: String) -> PyResult<()> {
+    fn set_comment(&mut self, comment: String) {
         self.comment = fastobo::ast::UnquotedString::new(comment);
-        Ok(())
     }
 }
 
@@ -940,6 +938,7 @@ impl PyObjectProtocol for XrefClause {
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
 #[derive(Debug, FinalClass)]
 pub struct PropertyValueClause {
+    #[pyo3(set)]
     inner: PropertyValue,
 }
 
@@ -988,11 +987,6 @@ impl PropertyValueClause {
     /// `~fastobo.pv.AbstractPropertyValue`: an annotation of the relation.
     pub fn property_value(&self) -> &PropertyValue {
         &self.inner
-    }
-
-    #[setter]
-    pub fn set_property_value(&mut self, pv: PropertyValue)  {
-        self.inner = pv;
     }
 }
 
@@ -2917,9 +2911,8 @@ impl CreatedByClause {
     }
 
     #[setter]
-    fn set_creator(&mut self, creator: String) -> PyResult<()> {
+    fn set_creator(&mut self, creator: String) {
         self.creator = fastobo::ast::UnquotedString::new(creator);
-        Ok(())
     }
 }
 

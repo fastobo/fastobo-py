@@ -32,6 +32,7 @@ use crate::utils::FinalClass;
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.typedef")]
 #[derive(Debug, PyList, FinalClass)]
 pub struct TypedefFrame {
+    #[pyo3(set)]
     id: Ident,
     clauses: Vec<TypedefClause>,
 }
@@ -106,12 +107,6 @@ impl TypedefFrame {
     #[getter]
     fn get_id(&self) -> PyResult<&Ident> {
         Ok(&self.id)
-    }
-
-    #[setter]
-    fn set_id(&mut self, id: Ident) -> PyResult<()> {
-        self.id = id;
-        Ok(())
     }
 }
 

@@ -131,7 +131,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
             let path = s.to_string()?;
             FrameReader::from_path(path.as_ref(), ordered)
         } else {
-            match FrameReader::from_handle(py, fh, ordered) {
+            match FrameReader::from_handle(fh, ordered) {
                 Ok(r) => Ok(r),
                 Err(inner) => {
                     let msg = "expected path or binary file handle";
@@ -190,7 +190,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
                 Err(e) => Error::from(e).with_path(path).into(),
             }
         } else {
-            match PyFileRead::from_ref(fh.py(), fh) {
+            match PyFileRead::from_ref(fh) {
                 // Object is a binary file-handle: attempt to parse the
                 // document and return an `OboDoc` object.
                 Ok(f) => {
@@ -311,7 +311,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
             fastobo_graphs::from_file(path.as_ref())
                 .map_err(|e| PyErr::from(GraphError::from(e)))?
         } else {
-            match PyFileRead::from_ref(fh.py(), fh) {
+            match PyFileRead::from_ref(fh) {
                 // Object is a binary file-handle: attempt to parse the
                 // document and return an `OboDoc` object.
                 Ok(mut f) => {
@@ -383,7 +383,7 @@ fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
                 .map_err(|e| PyErr::from(GraphError::from(e)))
         } else {
             // Write into the handle if given a writable file.
-            match PyFileWrite::from_ref(fh.py(), fh) {
+            match PyFileWrite::from_ref(fh) {
                 // Object is a binary file-handle: attempt to write the
                 // `GraphDocument` to the file handle.
                 Ok(mut f) => {

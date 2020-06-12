@@ -242,7 +242,7 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py"
-version = "0.7.2"
+version = "0.8.0"
 dependencies = [
  "built",
  "fastobo",
@@ -260,7 +260,7 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py-derive-internal"
-version = "0.7.2"
+version = "0.8.0"
 dependencies = [
  "quote 1.0.7",
  "syn 1.0.31",

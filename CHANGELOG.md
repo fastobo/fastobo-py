@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.8.0...HEAD
+
+
+## [v0.8.0] - 2020-06-12
+
+[v0.8.0]: https://github.com/fastobo/fastobo-py/compare/v0.7.2...v0.8.0
+
+### Changed
+- Bumped `fastobo` to `v0.8.4`.
+- Bumped `pyo3` to `v0.10.1`.
+- Removed occurences of unsafe code for Python type management.
+- Reduced number of GIL acquisition where possible.
+- Changed implementation of file wrappers to use `PyAny` where applicable.
+
+### Added
+- Configuratble support for multithreading in `fastobo.iter`, `fastobo.load`
+  and `fastobo.loads` using the `threads` keyword argument.
 
 
 ## [v0.7.2] - 2020-02-12

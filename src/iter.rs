@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -9,8 +10,9 @@ use std::path::PathBuf;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
-use pyo3::exceptions::TypeError;
 use pyo3::exceptions::OSError;
+use pyo3::exceptions::TypeError;
+use pyo3::exceptions::ValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
 use pyo3::types::PyBytes;
@@ -26,6 +28,42 @@ use crate::py::doc::EntityFrame;
 use crate::pyfile::PyFileGILRead;
 use crate::transmute_file_error;
 use crate::utils::ClonePy;
+
+// ---------------------------------------------------------------------------
+
+/// A trait to unify API of the sequential and threaded parsers from `fastobo`.
+pub(crate) trait FastoboReader<B: BufRead + Sized>:
+    Iterator<Item = fastobo::error::Result<fastobo::ast::Frame>>
+    + AsRef<B> + AsMut<B>
+{
+    fn ordered(&mut self, ordered: bool);
+    fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc>;
+    fn into_bufread(self: Box<Self>) -> B;
+}
+
+impl<B: BufRead + Sized> FastoboReader<B> for fastobo::parser::ThreadedReader<B> {
+    fn ordered(&mut self, ordered: bool) {
+        self.ordered(ordered);
+    }
+    fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc> {
+        self.try_into()
+    }
+    fn into_bufread(self: Box<Self>) -> B {
+        self.into_inner()
+    }
+}
+
+impl<B: BufRead + Sized> FastoboReader<B> for fastobo::parser::SequentialReader<B> {
+    fn ordered(&mut self, ordered: bool) {
+        self.ordered(ordered);
+    }
+    fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc> {
+        self.try_into()
+    }
+    fn into_bufread(self: Box<Self>) -> B {
+        self.into_inner()
+    }
+}
 
 // ---------------------------------------------------------------------------
 
@@ -92,18 +130,17 @@ impl Handle for BufReader<PyFileGILRead> {
 /// See help(fastobo.iter) for more information.
 #[pyclass(module = "fastobo")]
 pub struct FrameReader {
-    inner: fastobo::parser::SequentialReader<Box<dyn Handle>>,
+    inner: Box<dyn FastoboReader<Box<dyn Handle>>>,
     header: Py<HeaderFrame>,
 }
 
 impl FrameReader {
-    fn new(reader: Box<dyn Handle>, ordered: bool) -> PyResult<Self> {
+    fn new(handle: Box<dyn Handle>, ordered: bool, threads: i16) -> PyResult<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
-        let mut inner = fastobo::parser::SequentialReader::new(reader);
+        let mut inner: Box<dyn FastoboReader<_>> = fastobo_reader!(handle, threads);
         inner.ordered(ordered);
-
         let frame = inner
             .next()
             .unwrap()
@@ -116,17 +153,17 @@ impl FrameReader {
         Ok(Self { inner, header })
     }
 
-    pub fn from_path<P: AsRef<Path>>(path: P, ordered: bool) -> PyResult<Self> {
+    pub fn from_path<P: AsRef<Path>>(path: P, ordered: bool, threads: i16) -> PyResult<Self> {
         let p = path.as_ref();
         match FsFile::open(p) {
-            Ok(inner) => Self::new(Box::new(BufReader::new(inner)), ordered),
+            Ok(inner) => Self::new(Box::new(BufReader::new(inner)), ordered, threads),
             Err(e) => Error::from(e).with_path(p.display().to_string()).into(),
         }
     }
 
-    pub fn from_handle(obj: &PyAny, ordered: bool) -> PyResult<Self> {
+    pub fn from_handle(obj: &PyAny, ordered: bool, threads: i16) -> PyResult<Self> {
         match PyFileGILRead::from_ref(obj) {
-            Ok(inner) => Self::new(Box::new(BufReader::new(inner)), ordered),
+            Ok(inner) => Self::new(Box::new(BufReader::new(inner)), ordered, threads),
             Err(e) => Err(e),
         }
     }
@@ -145,7 +182,7 @@ impl PyObjectProtocol for FrameReader {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let fmt = PyString::new(py, "fastobo.iter({!r})").to_object(py);
-        fmt.call_method1(py, "format", (&self.inner.as_ref().handle(),))
+        fmt.call_method1(py, "format", (&self.inner.as_ref().as_ref().handle(),))
     }
 }
 
@@ -166,6 +203,7 @@ impl PyIterProtocol for FrameReader {
             Some(Err(e)) => slf
                 .deref_mut()
                 .inner
+                .as_mut()
                 .as_mut()
                 .into_err()
                 .unwrap_or_else(|| Error::from(e).into())

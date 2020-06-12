@@ -35,6 +35,7 @@ use fastobo_graphs::model::GraphDocument;
 
 use crate::error::Error;
 use crate::error::GraphError;
+use crate::iter::FastoboReader;
 use crate::iter::FrameReader;
 use crate::pyfile::PyFileRead;
 use crate::pyfile::PyFileWrite;
@@ -114,13 +115,13 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> list(reader)
     ///     [TermFrame(PrefixedIdent('MS', '1000001')), ...]
     ///
-    #[pyfn(m, "iter", ordered="true")]
-    fn iter(py: Python, fh: &PyAny, ordered: bool) -> PyResult<FrameReader> {
+    #[pyfn(m, "iter", ordered="true", threads="0")]
+    fn iter(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<FrameReader> {
         if let Ok(s) = fh.cast_as::<PyString>() {
             let path = s.to_string()?;
-            FrameReader::from_path(path.as_ref(), ordered)
+            FrameReader::from_path(path.as_ref(), ordered, threads)
         } else {
-            match FrameReader::from_handle(fh, ordered) {
+            match FrameReader::from_handle(fh, ordered, threads) {
                 Ok(r) => Ok(r),
                 Err(inner) => {
                     let msg = "expected path or binary file handle";
@@ -136,7 +137,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         }
     }
 
-    /// load(fh, ordered=True)
+    /// load(fh, ordered=True, threads=0)
     /// --
     ///
     /// Load an OBO document from the given path or file handle.
@@ -147,6 +148,9 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///         stream needs a* ``read(x)`` *method returning* ``x`` *bytes*.
     ///     ordered (bool): whether or not to yield the frames in the same
     ///         order they are declared in the source document.
+    ///     threads (int): the number of threads to use for parsing. Set to
+    ///         **0** to detect the number of logical cores, **1** to use the
+    ///         single threadeded parser, or to any positive integer value.
     ///
     /// Returns:
     ///     `~fastobo.doc.OboDoc`: the OBO document deserialized into an
@@ -168,44 +172,58 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc.header[3]
     ///     SavedByClause('rctauber')
     ///
-    #[pyfn(m, "load", ordered="true")]
-    fn load(py: Python, fh: &PyAny, ordered: bool) -> PyResult<OboDoc> {
+    #[pyfn(m, "load", ordered="true", threads="0")]
+    fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         if let Ok(s) = fh.cast_as::<PyString>() {
+            // get a buffered reader to the resources pointed by `path`
             let path = s.to_string()?;
-            let f = std::fs::File::open(&*path).map_err(Error::from)?;
-            let mut reader = fastobo::parser::FrameReader::from(f);
-            match fastobo::ast::OboDoc::try_from(reader.ordered(ordered)) {
+            let bf = match std::fs::File::open(&*path) {
+                Ok(f) => std::io::BufReader::new(f),
+                Err(e) => return Err(PyErr::from(Error::from(e))),
+            };
+            // use a sequential or a threaded reader depending on `threads`.
+            let mut reader: Box<dyn FastoboReader<_>> = fastobo_reader!(bf, threads);
+            // set the `ordered` flag and parse the document using the reader
+            reader.ordered(ordered);
+            match reader.try_into_doc() {
                 Ok(doc) => Ok(doc.into_py(py)),
                 Err(e) => Error::from(e).with_path(path).into(),
             }
         } else {
-            match PyFileRead::from_ref(fh) {
+            // get a buffered reader by wrapping the given file handle
+            let bf = match PyFileRead::from_ref(fh) {
                 // Object is a binary file-handle: attempt to parse the
                 // document and return an `OboDoc` object.
-                Ok(f) => {
-                    let bufreader = std::io::BufReader::new(f);
-                    let mut reader = fastobo::parser::FrameReader::new(bufreader);
-                    match fastobo::ast::OboDoc::try_from(reader.ordered(ordered)) {
-                        Ok(doc) => Ok(doc.into_py(py)),
-                        Err(e) => reader
-                            .into_inner()
-                            .into_inner()
-                            .into_err()
-                            .unwrap_or_else(|| Error::from(e).into())
-                            .into(),
-                    }
-                }
+                Ok(f) => std::io::BufReader::new(f),
                 // Object is not a binary file-handle: wrap the inner error
                 // into a `TypeError` and raise that error.
-                Err(inner) => {
+                Err(e) => {
                     let msg = "expected path or binary file handle";
                     let err = TypeError::py_err(msg).to_object(py);
                     err.call_method1(
                         py,
                         "__setattr__",
-                        ("__cause__".to_object(py), inner.to_object(py)),
+                        ("__cause__".to_object(py), e.to_object(py)),
                     )?;
-                    Err(PyErr::from_instance(err.as_ref(py)))
+                    return Err(PyErr::from_instance(err.as_ref(py)));
+                }
+            };
+            // use a sequential or a threaded reader depending on `threads`.
+            let mut reader: Box<dyn FastoboReader<_>> = fastobo_reader!(bf, threads);
+            // set the `ordered` flag and parse the document using the reader
+            reader.ordered(ordered);
+            let res = reader.try_into_doc();
+            // check the result and extract the internal Python error if
+            // the parser failed,
+            match res {
+                Ok(doc) => Ok(doc.into_py(py)),
+                Err(e) => {
+                    reader
+                        .into_bufread()
+                        .into_inner()
+                        .into_err()
+                        .unwrap_or_else(|| Error::from(e).into())
+                        .into()
                 }
             }
         }
@@ -245,11 +263,12 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc[0][0]
     ///     NameClause('test item')
     ///
-    #[pyfn(m, "loads", ordered="true")]
-    fn loads(py: Python, document: &str, ordered: bool) -> PyResult<OboDoc> {
+    #[pyfn(m, "loads", ordered="true", threads="0")]
+    fn loads(py: Python, document: &str, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         let cursor = std::io::Cursor::new(document);
-        let mut reader = fastobo::parser::FrameReader::new(cursor);
-        match fastobo::ast::OboDoc::try_from(reader.ordered(ordered)) {
+        let mut reader: Box<dyn FastoboReader<_>> = fastobo_reader!(cursor, threads);
+        reader.ordered(ordered);
+        match reader.try_into_doc() {
             Ok(doc) => Ok(doc.into_py(py)),
             Err(e) => Error::from(e).into(),
         }
@@ -397,7 +416,6 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             }
         }
     }
-
 
     Ok(())
 }

@@ -196,9 +196,9 @@ checksum = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
 
 [[package]]
 name = "fastobo"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbc9fc28cc47b10f9dc6b1458b7e8a46058d2dd83d2716ac10567c58091b115f"
+checksum = "d7831977f331a8daaa8d52236820a1adca6d3513bc633cf6a032ccd1ac66dde9"
 dependencies = [
  "crossbeam-channel",
  "err-derive",
@@ -216,9 +216,9 @@ dependencies = [
 
 [[package]]
 name = "fastobo-derive-internal"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39523057f816103288272c11208e10c0abf04ac3d43263dff6db55f8033c83b7"
+checksum = "0c74bcdbed8b677dffb2cbcd9a1227dd4ada6a694423a91333bbee39e12b0144"
 dependencies = [
  "darling",
  "heck",

@@ -96,6 +96,9 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///         stream needs a* ``read(x)`` *method returning* ``x`` *bytes*.
     ///     ordered (bool): whether or not to yield the frames in the same
     ///         order they are declared in the source document.
+    ///     threads (int): the number of threads to use for parsing. Set to
+    ///         **0** to detect the number of logical cores, **1** to use the
+    ///         single threadeded parser, or to any positive integer value.
     ///
     /// Raises:
     ///     TypeError: when the argument is not a `str` or a binary stream.
@@ -238,6 +241,9 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     document (str): a string containing an OBO document.
     ///     ordered (bool): whether or not to yield the frames in the same
     ///         order they are declared in the source document.
+    ///     threads (int): the number of threads to use for parsing. Set to
+    ///         **0** to detect the number of logical cores, **1** to use the
+    ///         single threadeded parser, or to any positive integer value.
     ///
     /// Returns:
     ///     `~fastobo.doc.OboDoc`: the OBO document deserialized into an

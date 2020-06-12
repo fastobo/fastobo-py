@@ -25,7 +25,7 @@ use crate::utils::AbstractClass;
 // --- Module export ---------------------------------------------------------
 
 #[pymodule(pv)]
-fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::AbstractPropertyValue>()?;
     m.add_class::<self::LiteralPropertyValue>()?;
     m.add_class::<self::ResourcePropertyValue>()?;

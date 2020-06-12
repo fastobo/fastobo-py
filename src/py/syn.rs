@@ -31,7 +31,7 @@ use crate::utils::ClonePy;
 // --- Module export ---------------------------------------------------------
 
 #[pymodule(syn)]
-fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::Synonym>()?;
     m.add_class::<self::SynonymScope>()?;
     m.add("__name__", "fastobo.syn")?;

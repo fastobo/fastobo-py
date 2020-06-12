@@ -4,7 +4,7 @@ pub mod frame;
 use pyo3::prelude::*;
 
 #[pymodule(header)]
-pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::frame::HeaderFrame>()?;
     m.add_class::<self::clause::BaseHeaderClause>()?;
     m.add_class::<self::clause::FormatVersionClause>()?;

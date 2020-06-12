@@ -73,16 +73,16 @@ macro_rules! register {
 macro_rules! add_submodule {
     ($py:ident, $sup:ident, $sub:ident) => {{
         use super::*;
-        use pyo3::AsPyPointer;
 
-        let func = $crate::pyo3::wrap_pymodule!($sub);
-        let module = func($py);
+        // create new module object and initialize it
+        let module = PyModule::new($py, stringify!($ub))?;
+        self::$sub::init($py, &module)?;
+        module.add("__package__", $sup.get("__package__")?)?;
 
-        module
-            .extract::<&pyo3::types::PyModule>($py)?
-            .add("__package__", $sup.get("__package__")?)?;
+        // add the submodule to the supermodule
+        $sup.add(stringify!($sub), &module)?;
 
-        $sup.add(stringify!($sub), module.clone_ref($py))?;
+        // add the submodule to the `sys.modules` index
         $py.import("sys")?
             .get("modules")?
             .cast_as::<pyo3::types::PyDict>()?

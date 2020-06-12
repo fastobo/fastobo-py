@@ -38,7 +38,7 @@ use super::instance::frame::InstanceFrame;
 // --- Module export ---------------------------------------------------------
 
 #[pymodule(doc)]
-fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::OboDoc>()?;
     m.add("__name__", "fastobo.doc")?;
     Ok(())

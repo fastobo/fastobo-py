@@ -61,19 +61,8 @@ use super::built;
 /// The Faultless AST for Open Biomedical Ontologies.
 ///
 ///
-#[pymodule]
-fn fastobo(py: Python, m: &PyModule) -> PyResult<()> {
-    use self::abc::PyInit_abc;
-    use self::doc::PyInit_doc;
-    use self::header::PyInit_header;
-    use self::id::PyInit_id;
-    use self::instance::PyInit_instance;
-    use self::pv::PyInit_pv;
-    use self::syn::PyInit_syn;
-    use self::term::PyInit_term;
-    use self::typedef::PyInit_typedef;
-    use self::xref::PyInit_xref;
-
+#[pymodule(fastobo)]
+pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("__package__", "fastobo")?;
     m.add("__build__", pyo3_built!(py, built))?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;

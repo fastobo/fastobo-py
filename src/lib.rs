@@ -1,4 +1,5 @@
 #![recursion_limit = "128"]
+#![cfg_attr(feature = "extension-module", crate_type = "cdylib")]
 #![allow(unused_imports, unused_unsafe, unused_variables)]
 
 extern crate fastobo;

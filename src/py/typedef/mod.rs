@@ -4,7 +4,7 @@ pub mod frame;
 use pyo3::prelude::*;
 
 #[pymodule(typedef)]
-pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::frame::TypedefFrame>()?;
     m.add_class::<self::clause::BaseTypedefClause>()?;
     m.add_class::<self::clause::IsAnonymousClause>()?;

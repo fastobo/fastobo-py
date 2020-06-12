@@ -4,7 +4,7 @@ pub mod frame;
 use pyo3::prelude::*;
 
 #[pymodule(term)]
-pub fn module(py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::frame::TermFrame>()?;
     m.add_class::<self::clause::BaseTermClause>()?;
     m.add_class::<self::clause::IsAnonymousClause>()?;

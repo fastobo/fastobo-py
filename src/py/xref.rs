@@ -29,7 +29,7 @@ use crate::utils::ClonePy;
 // --- Module export ---------------------------------------------------------
 
 #[pymodule(xref)]
-fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::Xref>()?;
     m.add_class::<self::XrefList>()?;
     m.add("__name__", "fastobo.xref")?;

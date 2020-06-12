@@ -45,7 +45,7 @@ use super::typedef::frame::TypedefFrame;
 /// and is likely to cause an undefined behaviour.
 ///
 #[pymodule(abc)]
-fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::AbstractFrame>()?;
     m.add_class::<self::AbstractEntityFrame>()?;
     m.add_class::<self::AbstractClause>()?;

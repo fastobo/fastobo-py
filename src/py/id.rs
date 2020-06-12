@@ -28,7 +28,7 @@ use crate::utils::AbstractClass;
 // --- Module export ----------------------------------------------------------
 
 #[pymodule(id)]
-fn module(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::BaseIdent>()?;
     m.add_class::<self::PrefixedIdent>()?;
     m.add_class::<self::UnprefixedIdent>()?;

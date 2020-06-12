@@ -17,6 +17,7 @@ use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
+use fastobo::parser::FromSlice;
 use fastobo::share::Cow;
 use fastobo::share::Redeem;
 use fastobo::share::Share;
@@ -43,7 +44,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     /// Parse a string into an OBO identifier.
     ///
     /// Arguments:
-    ///     s (str): the string representation of an OBO identifier
+    ///     s (`str`): the string representation of an OBO identifier
     ///
     /// Returns:
     ///     `~fastobo.id.BaseIdent`: the appropriate concrete subclass that
@@ -68,6 +69,30 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
             .map(|ident| Ident::from_py(ident, py))
     }
 
+    /// is_valid(s)
+    /// --
+    ///
+    /// Check whether or not a string is a valid OBO identifier.
+    ///
+    /// Arguments
+    ///     s (`str`): the identifier to validate.
+    ///
+    /// Returns:
+    ///     `bool`: whether or not the string is valid as an OBO identifier.
+    ///
+    /// Example
+    ///     >>> fastobo.id.is_valid("MS:1000031")
+    ///     True
+    ///     >>> fastobo.id.is_valid("https://purl.obolibrary.org/obo/MS_1000031")
+    ///     True
+    ///     >>> fastobo.id.is_valid("related_to")
+    ///     True
+    ///     >>> fastobo.id.is_valid("definitely not an identifier")
+    ///     False
+    #[pyfn(m, "is_valid")]
+    fn is_valid(_py: Python, s: &str) -> bool {
+        fastobo::ast::Id::from_slice(s).is_ok()
+    }
 
     Ok(())
 }

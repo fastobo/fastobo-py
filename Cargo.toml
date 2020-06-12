@@ -9,8 +9,12 @@ publish = false
 build = "src/build.rs"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 name = "fastobo_py"
+doctest = false
+
+[dev-dependencies]
+lazy_static = "1.4.0"
 
 [build-dependencies]
 built = { version  = "0.4.1", features = ["chrono"] }
@@ -19,7 +23,7 @@ built = { version  = "0.4.1", features = ["chrono"] }
 libc = "0.2.70"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
-pyo3 = { version = "0.10.1", features = ["extension-module"] }
+pyo3 = "0.10.1"
 pyo3-built = "0.4.1"
 pest = "=2.1.2"
 url = "2.1.0"

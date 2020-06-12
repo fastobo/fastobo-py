@@ -248,6 +248,7 @@ dependencies = [
  "fastobo",
  "fastobo-graphs",
  "fastobo-py-derive-internal",
+ "lazy_static",
  "libc",
  "opaque_typedef",
  "opaque_typedef_macros",

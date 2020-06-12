@@ -2,9 +2,9 @@
 $env:PATH="$env:PYTHON;$env:PYTHON\\Scripts;$env:PATH"
 
 # Download Rust
-Start-FileDownload "https://static.rust-lang.org/dist/rust-nightly-${env:TARGET}.msi"
-Start-Process -FilePath "msiexec.exe" -ArgumentList "/i rust-nightly-$env:TARGET.msi INSTALLDIR=`"$((Get-Location).Path)\rust-nightly-$env:TARGET`" /quiet /qn /norestart" -Wait
-$env:PATH="$env:PATH;$((Get-Location).Path)/rust-nightly-$env:TARGET/bin"
+Start-FileDownload "https://win.rustup.rs" -FileName "rustup-init.exe"
+Start-Process -FilePath "rustup-init.exe" -ArgumentList "-y --default-toolchain $env:RUST_TOOLCHAIN --default-host $env:TARGET" -Wait
+$env:PATH="$env:PATH;C:/Users/appveyor/.cargo/bin"
 
 # Setup $LIBPATH to use Python libraries
 $pythonLocation = Invoke-Expression "python -c `"import sys; print(sys.base_prefix)`""

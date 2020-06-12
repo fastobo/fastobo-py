@@ -74,15 +74,11 @@ jobs:
       <<: *test-python
     - python: pypy3
       if: tag IS present
-      env: TAG=pp371
+      env: TRAVIS_PYPY_VERSION=7.2.0
       <<: *test-python
     - python: pypy3
       if: tag IS present
-      env: TAG=pp372
-      <<: *test-python
-    - python: pypy3
-      if: tag IS present
-      env: TAG=pp373
+      env: TRAVIS_PYPY_VERSION=7.3.1
       <<: *test-python
     # OSX
     - env: PYTHON=python3.5

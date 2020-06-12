@@ -26,9 +26,11 @@ use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use super::clause::TermClause;
 use crate::utils::ClonePy;
+use crate::utils::FinalClass;
+use crate::utils::AbstractClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.term")]
-#[derive(Debug, PyList)]
+#[derive(Debug, PyList, FinalClass)]
 pub struct TermFrame {
     #[pyo3(set)]
     id: Ident,
@@ -99,8 +101,8 @@ impl FromPy<TermFrame> for fastobo::ast::EntityFrame {
 impl TermFrame {
     // FIXME: should accept any iterable.
     #[new]
-    fn __init__(obj: &PyRawObject, id: Ident, clauses: Option<Vec<TermClause>>) -> PyResult<()> {
-        Ok(obj.init(Self::with_clauses(id, clauses.unwrap_or_else(Vec::new))))
+    fn __init__(id: Ident, clauses: Option<Vec<TermClause>>) -> PyClassInitializer<Self> {
+        Self::with_clauses(id, clauses.unwrap_or_else(Vec::new)).into()
     }
 
     #[getter]
@@ -160,7 +162,7 @@ impl PySequenceProtocol for TermFrame {
         Ok(())
     }
 
-    fn __concat__(&self, other: &PyAny) -> PyResult<Self> {
+    fn __concat__(&self, other: &PyAny) -> PyResult<Py<Self>> {
         let py = other.py();
 
         let iterator = PyIterator::from_object(py, other)?;
@@ -169,6 +171,6 @@ impl PySequenceProtocol for TermFrame {
             new_clauses.push(TermClause::extract(item?)?);
         }
 
-        Ok(Self::with_clauses(self.id.clone_py(py), new_clauses))
+        Py::new(py, Self::with_clauses(self.id.clone_py(py), new_clauses))
     }
 }

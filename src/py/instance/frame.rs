@@ -25,10 +25,11 @@ use fastobo::share::Share;
 use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use crate::utils::ClonePy;
+use crate::utils::FinalClass;
+use crate::utils::AbstractClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.instance")]
-// #[derive(Debug, PyList)]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct InstanceFrame {
     id: Ident,
     //clauses: Vec<InstanceClause>,

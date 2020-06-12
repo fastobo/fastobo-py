@@ -29,8 +29,9 @@ use super::super::xref::Xref;
 use super::super::xref::XrefList;
 use crate::date::datetime_to_isodate;
 use crate::date::isodate_to_datetime;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
+use crate::utils::AbstractClass;
+use crate::utils::FinalClass;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
@@ -86,9 +87,9 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
         use fastobo::ast::TypedefClause::*;
         match clause {
             IsAnonymous(b) => {
-                Py::new(py, IsAnonymousClause::new(py, b)).map(TypedefClause::IsAnonymous)
+                Py::new(py, IsAnonymousClause::new(b)).map(TypedefClause::IsAnonymous)
             }
-            Name(n) => Py::new(py, NameClause::new(py, n)).map(TypedefClause::Name),
+            Name(n) => Py::new(py, NameClause::new(n)).map(TypedefClause::Name),
             Namespace(ns) => {
                 Py::new(py, NamespaceClause::new(py, ns)).map(TypedefClause::Namespace)
             }
@@ -96,7 +97,7 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
             Def(desc, xrefs) => {
                 Py::new(py, DefClause::new(py, desc, xrefs)).map(TypedefClause::Def)
             }
-            Comment(c) => Py::new(py, CommentClause::new(py, c)).map(TypedefClause::Comment),
+            Comment(c) => Py::new(py, CommentClause::new(c)).map(TypedefClause::Comment),
             Subset(s) => Py::new(py, SubsetClause::new(py, s)).map(TypedefClause::Subset),
             Synonym(s) => Py::new(py, SynonymClause::new(py, s)).map(TypedefClause::Synonym),
             Xref(x) => Py::new(py, XrefClause::new(py, x)).map(TypedefClause::Xref),
@@ -105,29 +106,29 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
             }
             Domain(id) => Py::new(py, DomainClause::new(py, id)).map(TypedefClause::Domain),
             Range(id) => Py::new(py, RangeClause::new(py, id)).map(TypedefClause::Range),
-            Builtin(b) => Py::new(py, BuiltinClause::new(py, b)).map(TypedefClause::Builtin),
+            Builtin(b) => Py::new(py, BuiltinClause::new(b)).map(TypedefClause::Builtin),
             HoldsOverChain(r1, r2) => Py::new(py, HoldsOverChainClause::new(py, r1, r2))
                 .map(TypedefClause::HoldsOverChain),
             IsAntiSymmetric(b) => {
-                Py::new(py, IsAntiSymmetricClause::new(py, b)).map(TypedefClause::IsAntiSymmetric)
+                Py::new(py, IsAntiSymmetricClause::new(b)).map(TypedefClause::IsAntiSymmetric)
             }
-            IsCyclic(b) => Py::new(py, IsCyclicClause::new(py, b)).map(TypedefClause::IsCyclic),
+            IsCyclic(b) => Py::new(py, IsCyclicClause::new(b)).map(TypedefClause::IsCyclic),
             IsReflexive(b) => {
-                Py::new(py, IsReflexiveClause::new(py, b)).map(TypedefClause::IsReflexive)
+                Py::new(py, IsReflexiveClause::new(b)).map(TypedefClause::IsReflexive)
             }
             IsSymmetric(b) => {
-                Py::new(py, IsSymmetricClause::new(py, b)).map(TypedefClause::IsSymmetric)
+                Py::new(py, IsSymmetricClause::new(b)).map(TypedefClause::IsSymmetric)
             }
             IsAsymmetric(b) => {
-                Py::new(py, IsAsymmetricClause::new(py, b)).map(TypedefClause::IsAsymmetric)
+                Py::new(py, IsAsymmetricClause::new(b)).map(TypedefClause::IsAsymmetric)
             }
             IsTransitive(b) => {
-                Py::new(py, IsTransitiveClause::new(py, b)).map(TypedefClause::IsTransitive)
+                Py::new(py, IsTransitiveClause::new(b)).map(TypedefClause::IsTransitive)
             }
             IsFunctional(b) => {
-                Py::new(py, IsFunctionalClause::new(py, b)).map(TypedefClause::IsFunctional)
+                Py::new(py, IsFunctionalClause::new(b)).map(TypedefClause::IsFunctional)
             }
-            IsInverseFunctional(b) => Py::new(py, IsInverseFunctionalClause::new(py, b))
+            IsInverseFunctional(b) => Py::new(py, IsInverseFunctionalClause::new(b))
                 .map(TypedefClause::IsInverseFunctional),
             IsA(id) => Py::new(py, IsAClause::new(py, id)).map(TypedefClause::IsA),
             IntersectionOf(r) => {
@@ -155,14 +156,14 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
                 Py::new(py, RelationshipClause::new(py, r, id)).map(TypedefClause::Relationship)
             }
             IsObsolete(b) => {
-                Py::new(py, IsObsoleteClause::new(py, b)).map(TypedefClause::IsObsolete)
+                Py::new(py, IsObsoleteClause::new(b)).map(TypedefClause::IsObsolete)
             }
             ReplacedBy(id) => {
                 Py::new(py, ReplacedByClause::new(py, id)).map(TypedefClause::ReplacedBy)
             }
             Consider(id) => Py::new(py, ConsiderClause::new(py, id)).map(TypedefClause::Consider),
             CreatedBy(name) => {
-                Py::new(py, CreatedByClause::new(py, name)).map(TypedefClause::CreatedBy)
+                Py::new(py, CreatedByClause::new(name)).map(TypedefClause::CreatedBy)
             }
             CreationDate(dt) => {
                 Py::new(py, CreationDateClause::new(py, dt)).map(TypedefClause::CreationDate)
@@ -174,10 +175,10 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
                     .map(TypedefClause::ExpandExpressionTo)
             }
             IsMetadataTag(b) => {
-                Py::new(py, IsMetadataTagClause::new(py, b)).map(TypedefClause::IsMetadataTag)
+                Py::new(py, IsMetadataTagClause::new(b)).map(TypedefClause::IsMetadataTag)
             }
             IsClassLevel(b) => {
-                Py::new(py, IsClassLevelClause::new(py, b)).map(TypedefClause::IsClassLevel)
+                Py::new(py, IsClassLevelClause::new(b)).map(TypedefClause::IsClassLevel)
             }
         }
         .expect("could not allocate memory for `TypedefClause` in Python heap")
@@ -186,7 +187,8 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
 
 // --- Base ------------------------------------------------------------------
 
-#[pyclass(extends=AbstractEntityClause, module="fastobo.typedef")]
+#[pyclass(subclass, extends=AbstractEntityClause, module="fastobo.typedef")]
+#[derive(Debug, AbstractClass)]
 pub struct BaseTypedefClause {}
 
 // --- IsAnonymous -----------------------------------------------------------
@@ -196,14 +198,14 @@ pub struct BaseTypedefClause {}
 ///
 /// A clause declaring whether or not the relationship has an anonymous id.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsAnonymousClause {
     #[pyo3(get, set)]
     anonymous: bool,
 }
 
 impl IsAnonymousClause {
-    pub fn new(_py: Python, anonymous: bool) -> Self {
+    pub fn new(anonymous: bool) -> Self {
         Self { anonymous }
     }
 }
@@ -229,8 +231,8 @@ impl FromPy<IsAnonymousClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsAnonymousClause {
     #[new]
-    fn __init__(obj: &PyRawObject, anonymous: bool) {
-        obj.init(Self::new(obj.py(), anonymous));
+    fn __init__(anonymous: bool) -> PyClassInitializer<Self> {
+        Self::new(anonymous).into()
     }
 }
 
@@ -259,13 +261,13 @@ impl PyObjectProtocol for IsAnonymousClause {
 ///
 /// A clause declaring the human-readable name of this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct NameClause {
     name: fastobo::ast::UnquotedString,
 }
 
 impl NameClause {
-    pub fn new(_py: Python, name: fastobo::ast::UnquotedString) -> Self {
+    pub fn new(name: fastobo::ast::UnquotedString) -> Self {
         Self { name }
     }
 }
@@ -291,8 +293,8 @@ impl FromPy<NameClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl NameClause {
     #[new]
-    fn __init__(obj: &PyRawObject, name: String) {
-        obj.init(Self::new(obj.py(), fastobo::ast::UnquotedString::new(name)));
+    fn __init__(name: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(name)).into()
     }
 
     /// `str`: the name of the current term.
@@ -302,9 +304,8 @@ impl NameClause {
     }
 
     #[setter]
-    fn set_name(&mut self, name: String) -> PyResult<()> {
+    fn set_name(&mut self, name: String) {
         self.name = fastobo::ast::UnquotedString::new(name);
-        Ok(())
     }
 }
 
@@ -333,7 +334,7 @@ impl PyObjectProtocol for NameClause {
 ///
 /// A term clause declaring the namespace of this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct NamespaceClause {
     #[pyo3(set)]
     namespace: Ident,
@@ -376,8 +377,9 @@ impl FromPy<NamespaceClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl NamespaceClause {
     #[new]
-    fn __init__(obj: &PyRawObject, namespace: Ident) {
-        obj.init(Self::new(obj.py(), namespace));
+    fn __init__(namespace: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), namespace).into()
     }
 
     #[getter]
@@ -416,7 +418,7 @@ impl PyObjectProtocol for NamespaceClause {
 ///
 /// A clause defines an alternate id for this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct AltIdClause {
     #[pyo3(set)]
     alt_id: Ident,
@@ -456,8 +458,9 @@ impl FromPy<AltIdClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl AltIdClause {
     #[new]
-    fn __init__(obj: &PyRawObject, alt_id: Ident) {
-        obj.init(Self::new(obj.py(), alt_id));
+    fn __init__(alt_id: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), alt_id).into()
     }
 
     #[getter]
@@ -500,7 +503,7 @@ impl PyObjectProtocol for AltIdClause {
 ///         definition, or `None`.
 ///
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct DefClause {
     definition: fastobo::ast::QuotedString,
     xrefs: XrefList,
@@ -544,13 +547,16 @@ impl FromPy<DefClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl DefClause {
     #[new]
-    fn __init__(obj: &PyRawObject, definition: String, xrefs: Option<&PyAny>) -> PyResult<()> {
+    fn __init__(definition: String, xrefs: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+
         let def = fastobo::ast::QuotedString::new(definition);
-        let list = match xrefs {
-            Some(x) => XrefList::collect(obj.py(), x)?,
-            None => XrefList::new(obj.py(), Vec::new()),
-        };
-        Ok(obj.init(Self::new(obj.py(), def, list)))
+        let list = xrefs.map(|x| XrefList::collect(py, x))
+            .transpose()?
+            .unwrap_or_else(|| XrefList::new(Vec::new()));
+
+        Ok(Self::new(py, def, list).into())
     }
 
     #[getter]
@@ -596,13 +602,13 @@ impl PyObjectProtocol for DefClause {
 ///
 /// A clause storing a comment for this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct CommentClause {
     comment: fastobo::ast::UnquotedString,
 }
 
 impl CommentClause {
-    pub fn new(_py: Python, comment: fastobo::ast::UnquotedString) -> Self {
+    pub fn new(comment: fastobo::ast::UnquotedString) -> Self {
         Self { comment }
     }
 }
@@ -628,11 +634,8 @@ impl FromPy<CommentClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl CommentClause {
     #[new]
-    fn __init__(obj: &PyRawObject, comment: String) {
-        obj.init(Self::new(
-            obj.py(),
-            fastobo::ast::UnquotedString::new(comment),
-        ));
+    fn __init__(comment: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(comment)).into()
     }
 
     #[getter]
@@ -642,9 +645,8 @@ impl CommentClause {
     }
 
     #[setter]
-    fn set_comment(&mut self, comment: String) -> PyResult<()> {
+    fn set_comment(&mut self, comment: String) {
         self.comment = fastobo::ast::UnquotedString::new(comment);
-        Ok(())
     }
 }
 
@@ -673,7 +675,7 @@ impl PyObjectProtocol for CommentClause {
 ///
 /// A clause declaring a subset to which this relationship belongs.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct SubsetClause {
     #[pyo3(set)]
     subset: Ident,
@@ -715,8 +717,9 @@ impl FromPy<SubsetClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl SubsetClause {
     #[new]
-    fn __init__(obj: &PyRawObject, subset: Ident) {
-        obj.init(Self::new(obj.py(), subset));
+    fn __init__(subset: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), subset).into()
     }
 
     #[getter]
@@ -751,8 +754,10 @@ impl PyObjectProtocol for SubsetClause {
 ///
 /// A clause giving a synonym for this relation, with some cross-references.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct SynonymClause {
+    #[pyo3(get, set)]
+    /// `~fastobo.syn.Synonym`: a possible synonym for this term.
     synonym: Py<Synonym>,
 }
 
@@ -786,7 +791,7 @@ impl Display for SynonymClause {
 impl FromPy<SynonymClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: SynonymClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::Synonym(
-            clause.synonym.as_gil_ref(py).clone_py(py).into_py(py)
+            clause.synonym.as_ref(py).borrow().clone_py(py).into_py(py)
         )
     }
 }
@@ -794,29 +799,18 @@ impl FromPy<SynonymClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl SynonymClause {
     #[new]
-    fn __init__(obj: &PyRawObject, synonym: &Synonym) {
-        let s = synonym.clone_py(obj.py());
-        obj.init(Self::new(obj.py(), s));
-    }
-
-    #[getter]
-    /// `~fastobo.syn.Synonym`: a possible synonym for this term.
-    fn get_synonym<'py>(&self, py: Python<'py>) -> PyResult<Py<Synonym>> {
-        Ok(self.synonym.clone_py(py))
-    }
-
-    #[setter]
-    fn set_synonym(&mut self, synonym: &Synonym) -> PyResult<()> {
+    fn __init__(synonym: Py<Synonym>) -> PyClassInitializer<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        self.synonym = Py::new(py, synonym.clone_py(py))?;
-        Ok(())
+        Self {
+            synonym: synonym.clone_ref(py)
+        }.into()
     }
 
     fn raw_value(&self) -> PyResult<String> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        Ok(format!("{}", self.synonym.as_gil_ref(py)))
+        Ok(format!("{}", &*self.synonym.as_ref(py).borrow()))
     }
 }
 
@@ -844,8 +838,10 @@ impl PyObjectProtocol for SynonymClause {
 ///
 /// A cross-reference describing an analogous relation in another vocabulary.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct XrefClause {
+    #[pyo3(get, set)]
+    /// `~fastobo.xref.Xref`: a cross-reference relevant to this typedef.
     xref: Py<Xref>,
 }
 
@@ -876,7 +872,9 @@ impl Display for XrefClause {
 
 impl FromPy<XrefClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: XrefClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::Xref(clause.xref.as_ref(py).clone_py(py).into_py(py))
+        fastobo::ast::TypedefClause::Xref(
+            clause.xref.as_ref(py).borrow().clone_py(py).into_py(py)
+        )
     }
 }
 
@@ -898,19 +896,8 @@ impl FromPy<Xref> for XrefClause {
 #[pymethods]
 impl XrefClause {
     #[new]
-    fn __init__(obj: &PyRawObject, xref: &PyAny) -> PyResult<()> {
-        Xref::from_object(obj.py(), xref).map(|x| obj.init(Self::from(x)))
-    }
-
-    #[getter]
-    fn get_xref<'py>(&self, py: Python<'py>) -> PyResult<Py<Xref>> {
-        Ok(self.xref.clone_ref(py))
-    }
-
-    #[setter]
-    fn set_xref(&mut self, xref: &PyAny) -> PyResult<()> {
-        self.xref = Xref::from_object(xref.py(), xref)?;
-        Ok(())
+    fn __init__(xref: Py<Xref>) -> PyClassInitializer<Self> {
+        Self::from(xref).into()
     }
 
     pub fn raw_value(&self) -> PyResult<String> {
@@ -949,8 +936,9 @@ impl PyObjectProtocol for XrefClause {
 ///         to annotate the current relationship.
 ///
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct PropertyValueClause {
+    #[pyo3(set)]
     inner: PropertyValue,
 }
 
@@ -990,19 +978,15 @@ impl FromPy<PropertyValueClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl PropertyValueClause {
     #[new]
-    pub fn __init__(obj: &PyRawObject, pv: PropertyValue) {
-        obj.init(Self::new(obj.py(), pv));
+    pub fn __init__(pv: PropertyValue) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), pv).into()
     }
 
     #[getter]
     /// `~fastobo.pv.AbstractPropertyValue`: an annotation of the relation.
     pub fn property_value(&self) -> &PropertyValue {
         &self.inner
-    }
-
-    #[setter]
-    pub fn set_property_value(&mut self, pv: PropertyValue)  {
-        self.inner = pv;
     }
 }
 
@@ -1031,7 +1015,7 @@ impl PyObjectProtocol for PropertyValueClause {
 ///
 /// A clause declaring the domain of the relationship, if any.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct DomainClause {
     #[pyo3(set)]
     domain: Ident,
@@ -1073,8 +1057,9 @@ impl FromPy<DomainClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl DomainClause {
     #[new]
-    fn __init__(obj: &PyRawObject, domain: Ident) {
-        obj.init(Self::new(obj.py(), domain));
+    fn __init__(domain: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), domain).into()
     }
 
     /// `~fastobo.id.Ident`: the identifier of the domain of the relation.
@@ -1109,7 +1094,7 @@ impl PyObjectProtocol for DomainClause {
 ///
 /// A clause declaring the range of the relationship, if any.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct RangeClause {
     #[pyo3(set)]
     range: Ident,
@@ -1151,8 +1136,9 @@ impl FromPy<RangeClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl RangeClause {
     #[new]
-    fn __init__(obj: &PyRawObject, range: Ident) {
-        obj.init(Self::new(obj.py(), range));
+    fn __init__(range: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), range).into()
     }
 
     #[getter]
@@ -1187,14 +1173,15 @@ impl PyObjectProtocol for RangeClause {
 ///
 /// A clause declaring whether this relation is built-in to the OBO format.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct BuiltinClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
+    /// `bool`: ``True`` if the relationship is built in the OBO format.
     builtin: bool,
 }
 
 impl BuiltinClause {
-    pub fn new(_py: Python, builtin: bool) -> Self {
+    pub fn new(builtin: bool) -> Self {
         Self { builtin }
     }
 }
@@ -1220,14 +1207,8 @@ impl FromPy<BuiltinClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl BuiltinClause {
     #[new]
-    fn __init__(obj: &PyRawObject, builtin: bool) {
-        obj.init(Self::new(obj.py(), builtin));
-    }
-
-    /// `bool`: ``True`` if the relationship is built in the OBO format.
-    #[getter]
-    fn get_builtin(&self) -> bool {
-        self.builtin
+    fn __init__(builtin: bool) -> PyClassInitializer<Self> {
+        Self::new(builtin).into()
     }
 }
 
@@ -1256,7 +1237,7 @@ impl PyObjectProtocol for BuiltinClause {
 ///
 /// An extension of the `transitive_over` tag for property chains.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct HoldsOverChainClause {
     #[pyo3(set)]
     first: Ident,
@@ -1306,8 +1287,9 @@ impl FromPy<HoldsOverChainClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl HoldsOverChainClause {
     #[new]
-    fn __init__(obj: &PyRawObject, first: Ident, last: Ident) {
-        obj.init(Self::new(obj.py(), first, last));
+    fn __init__(first: Ident, last: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), first, last).into()
     }
 
     #[getter]
@@ -1348,14 +1330,14 @@ impl PyObjectProtocol for HoldsOverChainClause {
 ///
 /// A clause declaring whether the relationship if anti-symmetric or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsAntiSymmetricClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     anti_symmetric: bool,
 }
 
 impl IsAntiSymmetricClause {
-    pub fn new(_py: Python, anti_symmetric: bool) -> Self {
+    pub fn new(anti_symmetric: bool) -> Self {
         Self { anti_symmetric }
     }
 }
@@ -1381,13 +1363,8 @@ impl FromPy<IsAntiSymmetricClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsAntiSymmetricClause {
     #[new]
-    fn __init__(obj: &PyRawObject, anti_symmetric: bool) {
-        obj.init(Self::new(obj.py(), anti_symmetric));
-    }
-
-    #[getter]
-    fn get_anti_symmetric(&self) -> bool {
-        self.anti_symmetric
+    fn __init__(anti_symmetric: bool) -> PyClassInitializer<Self> {
+        Self::new(anti_symmetric).into()
     }
 }
 
@@ -1416,14 +1393,14 @@ impl PyObjectProtocol for IsAntiSymmetricClause {
 ///
 /// A clause declaring whether the relationship if cyclic or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsCyclicClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     cyclic: bool,
 }
 
 impl IsCyclicClause {
-    pub fn new(_py: Python, cyclic: bool) -> Self {
+    pub fn new(cyclic: bool) -> Self {
         Self { cyclic }
     }
 }
@@ -1449,13 +1426,8 @@ impl FromPy<IsCyclicClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsCyclicClause {
     #[new]
-    fn __init__(obj: &PyRawObject, cyclic: bool) {
-        obj.init(Self::new(obj.py(), cyclic));
-    }
-
-    #[getter]
-    fn get_cyclic(&self) -> bool {
-        self.cyclic
+    fn __init__(cyclic: bool) -> PyClassInitializer<Self> {
+        Self::new(cyclic).into()
     }
 }
 
@@ -1484,14 +1456,14 @@ impl PyObjectProtocol for IsCyclicClause {
 ///
 /// A clause declaring whether the relationship if reflexive or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsReflexiveClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     reflexive: bool,
 }
 
 impl IsReflexiveClause {
-    pub fn new(_py: Python, reflexive: bool) -> Self {
+    pub fn new(reflexive: bool) -> Self {
         Self { reflexive }
     }
 }
@@ -1517,13 +1489,8 @@ impl FromPy<IsReflexiveClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsReflexiveClause {
     #[new]
-    fn __init__(obj: &PyRawObject, reflexive: bool) {
-        obj.init(Self::new(obj.py(), reflexive));
-    }
-
-    #[getter]
-    fn get_reflexive(&self) -> bool {
-        self.reflexive
+    fn __init__(reflexive: bool) -> PyClassInitializer<Self> {
+        Self::new(reflexive).into()
     }
 }
 
@@ -1552,13 +1519,14 @@ impl PyObjectProtocol for IsReflexiveClause {
 ///
 /// A clause declaring whether the relationship if symmetric or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsSymmetricClause {
+    #[pyo3(get, set)]
     symmetric: bool,
 }
 
 impl IsSymmetricClause {
-    pub fn new(_py: Python, symmetric: bool) -> Self {
+    pub fn new(symmetric: bool) -> Self {
         Self { symmetric }
     }
 }
@@ -1584,13 +1552,8 @@ impl FromPy<IsSymmetricClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsSymmetricClause {
     #[new]
-    fn __init__(obj: &PyRawObject, symmetric: bool) {
-        obj.init(Self::new(obj.py(), symmetric));
-    }
-
-    #[getter]
-    fn get_symmetric(&self) -> bool {
-        self.symmetric
+    fn __init__(symmetric: bool) -> PyClassInitializer<Self> {
+        Self::new(symmetric).into()
     }
 }
 
@@ -1619,14 +1582,14 @@ impl PyObjectProtocol for IsSymmetricClause {
 ///
 /// A clause declaring whether the relationship is asymmetric or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsAsymmetricClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     asymmetric: bool,
 }
 
 impl IsAsymmetricClause {
-    pub fn new(_py: Python, asymmetric: bool) -> Self {
+    pub fn new(asymmetric: bool) -> Self {
         Self { asymmetric }
     }
 }
@@ -1652,13 +1615,8 @@ impl FromPy<IsAsymmetricClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsAsymmetricClause {
     #[new]
-    fn __init__(obj: &PyRawObject, asymmetric: bool) {
-        obj.init(Self::new(obj.py(), asymmetric));
-    }
-
-    #[getter]
-    fn get_asymmetric(&self) -> bool {
-        self.asymmetric
+    fn __init__(asymmetric: bool) -> PyClassInitializer<Self> {
+        Self::new(asymmetric).into()
     }
 }
 
@@ -1687,14 +1645,14 @@ impl PyObjectProtocol for IsAsymmetricClause {
 ///
 /// A clause declaring whether the relationship if transitive or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsTransitiveClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     transitive: bool,
 }
 
 impl IsTransitiveClause {
-    pub fn new(_py: Python, transitive: bool) -> Self {
+    pub fn new(transitive: bool) -> Self {
         Self { transitive }
     }
 }
@@ -1720,13 +1678,8 @@ impl FromPy<IsTransitiveClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsTransitiveClause {
     #[new]
-    fn __init__(obj: &PyRawObject, transitive: bool) {
-        obj.init(Self::new(obj.py(), transitive));
-    }
-
-    #[getter]
-    fn get_transitive(&self) -> bool {
-        self.transitive
+    fn __init__(transitive: bool) -> PyClassInitializer<Self> {
+        Self::new(transitive).into()
     }
 }
 
@@ -1755,14 +1708,14 @@ impl PyObjectProtocol for IsTransitiveClause {
 ///
 /// A clause declaring whether the relationship if functional or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsFunctionalClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     functional: bool,
 }
 
 impl IsFunctionalClause {
-    pub fn new(_py: Python, functional: bool) -> Self {
+    pub fn new(functional: bool) -> Self {
         Self { functional }
     }
 }
@@ -1788,13 +1741,8 @@ impl FromPy<IsFunctionalClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsFunctionalClause {
     #[new]
-    fn __init__(obj: &PyRawObject, functional: bool) {
-        obj.init(Self::new(obj.py(), functional));
-    }
-
-    #[getter]
-    fn get_functional(&self) -> bool {
-        self.functional
+    fn __init__(functional: bool) -> PyClassInitializer<Self> {
+        Self::new(functional).into()
     }
 }
 
@@ -1823,14 +1771,14 @@ impl PyObjectProtocol for IsFunctionalClause {
 ///
 /// A clause declaring whether the relationship if inverse-functional or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsInverseFunctionalClause {
-    #[pyo3(set)]
+    #[pyo3(get, set)]
     inverse_functional: bool,
 }
 
 impl IsInverseFunctionalClause {
-    pub fn new(_py: Python, inverse_functional: bool) -> Self {
+    pub fn new(inverse_functional: bool) -> Self {
         Self { inverse_functional }
     }
 }
@@ -1856,13 +1804,8 @@ impl FromPy<IsInverseFunctionalClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsInverseFunctionalClause {
     #[new]
-    fn __init__(obj: &PyRawObject, inverse_functional: bool) {
-        obj.init(Self::new(obj.py(), inverse_functional));
-    }
-
-    #[getter]
-    fn get_inverse_functional(&self) -> bool {
-        self.inverse_functional
+    fn __init__(inverse_functional: bool) -> PyClassInitializer<Self> {
+        Self::new(inverse_functional).into()
     }
 }
 
@@ -1891,7 +1834,7 @@ impl PyObjectProtocol for IsInverseFunctionalClause {
 ///
 /// A clause declaring this relation is a subproperty of another relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct IsAClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -1931,8 +1874,9 @@ impl FromPy<IsAClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IsAClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident) {
-        obj.init(Self::new(obj.py(), typedef));
+    fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef).into()
     }
 
     #[getter]
@@ -1967,7 +1911,7 @@ impl PyObjectProtocol for IsAClause {
 ///
 /// Declares this relation is equivalent to the intersection of other relations.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct IntersectionOfClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2009,8 +1953,9 @@ impl FromPy<IntersectionOfClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl IntersectionOfClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident) {
-        obj.init(Self::new(obj.py(), typedef))
+    fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef).into()
     }
 
     #[getter]
@@ -2044,7 +1989,7 @@ impl PyObjectProtocol for IntersectionOfClause {
 ///
 /// Declares the relation represents the union of several other relations.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct UnionOfClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2086,8 +2031,9 @@ impl FromPy<UnionOfClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl UnionOfClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident) {
-        obj.init(Self::new(obj.py(), typedef));
+    fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef).into()
     }
 
     #[getter]
@@ -2122,7 +2068,7 @@ impl PyObjectProtocol for UnionOfClause {
 ///
 /// A clause indicating the relation is exactly equivalent to another relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct EquivalentToClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2164,8 +2110,9 @@ impl FromPy<EquivalentToClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl EquivalentToClause {
     #[new]
-    fn __init__(obj: &PyRawObject, id: Ident) {
-        obj.init(Self::new(obj.py(), id));
+    fn __init__(id: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), id).into()
     }
 
     #[getter]
@@ -2200,7 +2147,7 @@ impl PyObjectProtocol for EquivalentToClause {
 ///
 /// A clause stating is disjoint from another relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct DisjointFromClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2242,8 +2189,9 @@ impl FromPy<DisjointFromClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl DisjointFromClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident) {
-        obj.init(Self::new(obj.py(), typedef));
+    fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef).into()
     }
 
     #[getter]
@@ -2278,7 +2226,7 @@ impl PyObjectProtocol for DisjointFromClause {
 ///
 /// A clause declaring the inverse of this relationship type.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct InverseOfClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2320,8 +2268,9 @@ impl FromPy<InverseOfClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl InverseOfClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident) {
-        obj.init(Self::new(obj.py(), typedef));
+    fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef).into()
     }
 
     #[getter]
@@ -2356,7 +2305,7 @@ impl PyObjectProtocol for InverseOfClause {
 ///
 /// A clause declaring another relation that this relation is transitive over.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct TransitiveOverClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2398,8 +2347,9 @@ impl FromPy<TransitiveOverClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl TransitiveOverClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident) {
-        obj.init(Self::new(obj.py(), typedef));
+    fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef).into()
     }
 
     #[getter]
@@ -2434,7 +2384,7 @@ impl PyObjectProtocol for TransitiveOverClause {
 ///
 /// A clause declaring a property chain this relationship is equivalent to.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct EquivalentToChainClause {
     #[pyo3(set)]
     first: Ident,
@@ -2484,8 +2434,9 @@ impl FromPy<EquivalentToChainClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl EquivalentToChainClause {
     #[new]
-    fn __init__(obj: &PyRawObject, first: Ident, last: Ident) {
-        obj.init(Self::new(obj.py(), first, last));
+    fn __init__(first: Ident, last: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), first, last).into()
     }
 
     #[getter]
@@ -2526,7 +2477,7 @@ impl PyObjectProtocol for EquivalentToChainClause {
 ///
 /// A clause declaring a relationship this relationship is disjoint over.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct DisjointOverClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2568,8 +2519,9 @@ impl FromPy<DisjointOverClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl DisjointOverClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident) {
-        obj.init(Self::new(obj.py(), typedef));
+    fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef).into()
     }
 
     #[getter]
@@ -2604,7 +2556,7 @@ impl PyObjectProtocol for DisjointOverClause {
 ///
 /// A clause declaring a relationship this relation has to another relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct RelationshipClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2654,8 +2606,9 @@ impl_raw_value!(RelationshipClause, "{} {}", self.typedef, self.target);
 #[pymethods]
 impl RelationshipClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident, target: Ident) {
-        obj.init(Self::new(obj.py(), typedef, target));
+    fn __init__(typedef: Ident, target: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef, target).into()
     }
 
     #[getter]
@@ -2691,14 +2644,14 @@ impl PyObjectProtocol for RelationshipClause {
 ///
 /// A clause indicating whether or not this relationship is obsolete.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsObsoleteClause {
     #[pyo3(get, set)]
     obsolete: bool,
 }
 
 impl IsObsoleteClause {
-    pub fn new(_py: Python, obsolete: bool) -> Self {
+    pub fn new(obsolete: bool) -> Self {
         Self { obsolete }
     }
 }
@@ -2727,8 +2680,8 @@ impl_raw_value!(IsObsoleteClause, "{}", self.obsolete);
 #[pymethods]
 impl IsObsoleteClause {
     #[new]
-    fn __init__(obj: &PyRawObject, obsolete: bool) -> PyResult<()> {
-        Ok(obj.init(Self::new(obj.py(), obsolete)))
+    fn __init__(obsolete: bool) -> PyClassInitializer<Self> {
+        Self::new(obsolete).into()
     }
 }
 
@@ -2754,7 +2707,7 @@ impl PyObjectProtocol for IsObsoleteClause {
 ///
 /// A clause giving a relation which replaces this obsolete relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct ReplacedByClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2799,8 +2752,9 @@ impl_raw_value!(ReplacedByClause, "{}", self.typedef);
 #[pymethods]
 impl ReplacedByClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident) {
-        obj.init(Self::new(obj.py(), typedef));
+    fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef).into()
     }
 
     #[getter]
@@ -2832,7 +2786,7 @@ impl PyObjectProtocol for ReplacedByClause {
 ///
 /// A clause giving a potential substitute for an obsolete typedef.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct ConsiderClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -2877,8 +2831,9 @@ impl_raw_value!(ConsiderClause, "{}", self.typedef);
 #[pymethods]
 impl ConsiderClause {
     #[new]
-    fn __init__(obj: &PyRawObject, typedef: Ident) {
-        obj.init(Self::new(obj.py(), typedef));
+    fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
+        let gil = Python::acquire_gil();
+        Self::new(gil.python(), typedef).into()
     }
 
     #[getter]
@@ -2911,13 +2866,13 @@ impl PyObjectProtocol for ConsiderClause {
 ///
 /// A term clause stating the name of the creator of this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct CreatedByClause {
     creator: fastobo::ast::UnquotedString,
 }
 
 impl CreatedByClause {
-    pub fn new(_py: Python, creator: fastobo::ast::UnquotedString) -> Self {
+    pub fn new(creator: fastobo::ast::UnquotedString) -> Self {
         Self { creator }
     }
 }
@@ -2946,8 +2901,8 @@ impl_raw_value!(CreatedByClause, "{}", self.creator);
 #[pymethods]
 impl CreatedByClause {
     #[new]
-    fn __init__(obj: &PyRawObject, creator: String) -> PyResult<()> {
-        Ok(obj.init(Self::new(obj.py(), fastobo::ast::UnquotedString::new(creator))))
+    fn __init__(creator: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(creator)).into()
     }
 
     #[getter]
@@ -2956,9 +2911,8 @@ impl CreatedByClause {
     }
 
     #[setter]
-    fn set_creator(&mut self, creator: String) -> PyResult<()> {
+    fn set_creator(&mut self, creator: String) {
         self.creator = fastobo::ast::UnquotedString::new(creator);
-        Ok(())
     }
 }
 
@@ -2994,7 +2948,7 @@ impl PyObjectProtocol for CreatedByClause {
 ///     date and time properly.
 ///
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct CreationDateClause {
     date: fastobo::ast::IsoDateTime,
 }
@@ -3029,10 +2983,10 @@ impl_raw_value!(CreationDateClause, "{}", self.date);
 #[pymethods]
 impl CreationDateClause {
     #[new]
-    fn __init__(obj: &PyRawObject, datetime: &PyDateTime) -> PyResult<()> {
-        let date = datetime_to_isodate(datetime.py(), datetime)?;
-        obj.init(CreationDateClause { date });
-        Ok(())
+    fn __init__(datetime: &PyDateTime) -> PyResult<PyClassInitializer<Self>> {
+        datetime_to_isodate(datetime.py(), datetime)
+            .map(|date| CreationDateClause { date })
+            .map(Into::into)
     }
 
     #[getter]
@@ -3073,7 +3027,7 @@ impl PyObjectProtocol for CreationDateClause {
 ///
 /// An OWL macro that adds an `IAO:0000425` annotation to this relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct ExpandAssertionToClause {
     definition: fastobo::ast::QuotedString,
     xrefs: XrefList,
@@ -3117,13 +3071,17 @@ impl FromPy<ExpandAssertionToClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl ExpandAssertionToClause {
     #[new]
-    fn __init__(obj: &PyRawObject, definition: String, xrefs: Option<&PyAny>) -> PyResult<()> {
+    fn __init__(definition: String, xrefs: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+
         let def = fastobo::ast::QuotedString::new(definition);
         let list = match xrefs {
-            Some(x) => XrefList::collect(obj.py(), x)?,
-            None => XrefList::new(obj.py(), Vec::new()),
+            Some(x) => XrefList::collect(x.py(), x)?,
+            None => XrefList::new(Vec::new()),
         };
-        Ok(obj.init(Self::new(obj.py(), def, list)))
+
+        Ok(Self::new(py, def, list).into())
     }
 
     #[getter]
@@ -3175,7 +3133,7 @@ impl PyObjectProtocol for ExpandAssertionToClause {
 ///
 /// An OWL macro that adds an `IAO:0000424` annotation to this relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct ExpandExpressionToClause {
     definition: fastobo::ast::QuotedString,
     xrefs: XrefList,
@@ -3222,13 +3180,17 @@ impl FromPy<ExpandExpressionToClause> for fastobo::ast::TypedefClause {
 #[pymethods]
 impl ExpandExpressionToClause {
     #[new]
-    fn __init__(obj: &PyRawObject, definition: String, xrefs: Option<&PyAny>) -> PyResult<()> {
+    fn __init__(definition: String, xrefs: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+
         let def = fastobo::ast::QuotedString::new(definition);
         let list = match xrefs {
-            Some(x) => XrefList::collect(obj.py(), x)?,
-            None => XrefList::new(obj.py(), Vec::new()),
+            Some(x) => XrefList::collect(py, x)?,
+            None => XrefList::new(Vec::new()),
         };
-        Ok(obj.init(Self::new(obj.py(), def, list)))
+
+        Ok(Self::new(py, def, list).into())
     }
 
     #[getter]
@@ -3280,14 +3242,14 @@ impl PyObjectProtocol for ExpandExpressionToClause {
 ///
 /// A clause declaring whether this relationship is a metadata tag or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsMetadataTagClause {
     #[pyo3(get, set)]
     metadata_tag: bool,
 }
 
 impl IsMetadataTagClause {
-    pub fn new(_py: Python, metadata_tag: bool) -> Self {
+    pub fn new(metadata_tag: bool) -> Self {
         Self { metadata_tag }
     }
 }
@@ -3316,8 +3278,8 @@ impl_raw_value!(IsMetadataTagClause, "{}", self.metadata_tag);
 #[pymethods]
 impl IsMetadataTagClause {
     #[new]
-    fn __init__(obj: &PyRawObject, metadata_tag: bool) {
-        obj.init(Self::new(obj.py(), metadata_tag))
+    fn __init__(metadata_tag: bool) -> PyClassInitializer<Self> {
+        Self::new(metadata_tag).into()
     }
 }
 
@@ -3343,14 +3305,14 @@ impl PyObjectProtocol for IsMetadataTagClause {
 ///
 /// A clause declaring wether this relationship is class level or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug)]
+#[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct IsClassLevelClause {
     #[pyo3(get, set)]
     class_level: bool,
 }
 
 impl IsClassLevelClause {
-    pub fn new(_py: Python, class_level: bool) -> Self {
+    pub fn new(class_level: bool) -> Self {
         Self { class_level }
     }
 }
@@ -3379,8 +3341,8 @@ impl_raw_value!(IsClassLevelClause, "{}", self.class_level);
 #[pymethods]
 impl IsClassLevelClause {
     #[new]
-    fn __init__(obj: &PyRawObject, class_level: bool) {
-        obj.init(Self::new(obj.py(), class_level))
+    fn __init__(class_level: bool) -> PyClassInitializer<Self> {
+        Self::new(class_level).into()
     }
 }
 

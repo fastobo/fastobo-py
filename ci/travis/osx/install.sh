@@ -46,7 +46,7 @@ log Using $(python --version | head -n1 | cut -d' ' -f1,2)
 # --- Install Rust -----------------------------------------------------------
 
 log Installing Rust nightly
-curl -sSf https://build.travis-ci.org/files/rustup-init.sh | sh -s -- --default-toolchain=nightly -y
+curl -sSf https://build.travis-ci.org/files/rustup-init.sh | sh -s -- --default-toolchain=$RUST_TOOLCHAIN -y
 
 
 # --- Install Python requirements --------------------------------------------

@@ -26,10 +26,13 @@ use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use super::clause::TypedefClause;
 use crate::utils::ClonePy;
+use crate::utils::AbstractClass;
+use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.typedef")]
-#[derive(Debug, PyList)]
+#[derive(Debug, PyList, FinalClass)]
 pub struct TypedefFrame {
+    #[pyo3(set)]
     id: Ident,
     clauses: Vec<TypedefClause>,
 }
@@ -97,19 +100,13 @@ impl FromPy<TypedefFrame> for fastobo::ast::EntityFrame {
 impl TypedefFrame {
     // FIXME: should accept any iterable.
     #[new]
-    fn __init__(obj: &PyRawObject, id: Ident, clauses: Option<Vec<TypedefClause>>) -> PyResult<()> {
-        Ok(obj.init(Self::with_clauses(id, clauses.unwrap_or_else(Vec::new))))
+    fn __init__(id: Ident, clauses: Option<Vec<TypedefClause>>) -> PyClassInitializer<Self> {
+        Self::with_clauses(id, clauses.unwrap_or_else(Vec::new)).into()
     }
 
     #[getter]
     fn get_id(&self) -> PyResult<&Ident> {
         Ok(&self.id)
-    }
-
-    #[setter]
-    fn set_id(&mut self, id: Ident) -> PyResult<()> {
-        self.id = id;
-        Ok(())
     }
 }
 
@@ -162,7 +159,7 @@ impl PySequenceProtocol for TypedefFrame {
         Ok(())
     }
 
-    fn __concat__(&self, other: &PyAny) -> PyResult<Self> {
+    fn __concat__(&self, other: &PyAny) -> PyResult<Py<Self>> {
         let py = other.py();
 
         let iterator = PyIterator::from_object(py, other)?;
@@ -171,6 +168,6 @@ impl PySequenceProtocol for TypedefFrame {
             new_clauses.push(TypedefClause::extract(item?)?);
         }
 
-        Ok(Self::with_clauses(self.id.clone_py(py), new_clauses))
+        Py::new(py, Self::with_clauses(self.id.clone_py(py), new_clauses))
     }
 }

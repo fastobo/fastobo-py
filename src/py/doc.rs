@@ -27,7 +27,6 @@ use fastobo::ast as obo;
 use fastobo::visit::VisitMut;
 
 use crate::error::Error;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 use super::abc::AbstractFrame;
@@ -59,13 +58,16 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
     fn from_py(frame: fastobo::ast::EntityFrame, py: Python) -> Self {
         match frame {
             fastobo::ast::EntityFrame::Term(frame) => {
-                Py::new(py, TermFrame::from_py(frame, py)).map(EntityFrame::Term)
+                Py::new(py, TermFrame::from_py(frame, py))
+                    .map(EntityFrame::Term)
             }
             fastobo::ast::EntityFrame::Typedef(frame) => {
-                Py::new(py, TypedefFrame::from_py(frame, py)).map(EntityFrame::Typedef)
+                Py::new(py, TypedefFrame::from_py(frame, py))
+                    .map(EntityFrame::Typedef)
             }
             fastobo::ast::EntityFrame::Instance(frame) => {
-                Py::new(py, InstanceFrame::from_py(frame, py)).map(EntityFrame::Instance)
+                Py::new(py, InstanceFrame::from_py(frame, py))
+                    .map(EntityFrame::Instance)
             },
         }
         .expect("could not allocate on Python heap")
@@ -86,8 +88,11 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
 ///         frames, either `TermFrame`, `TypedefFrame` or `InstanceFrame`.
 ///
 #[pyclass(module = "fastobo.doc")]
-#[derive(Debug, PyList)]
+// #[derive(Debug, PyList)]
+#[derive(Debug)]
 pub struct OboDoc {
+    #[pyo3(get, set)]
+    /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.
     header: Py<HeaderFrame>,
     entities: Vec<EntityFrame>,
 }
@@ -121,22 +126,27 @@ impl Display for OboDoc {
 impl FromPy<obo::OboDoc> for OboDoc {
     fn from_py(mut doc: fastobo::ast::OboDoc, py: Python) -> Self {
         // Take ownership of header and entities w/o reallocation or clone.
-        let header = replace(doc.header_mut(), Default::default()).into_py(py);
+        let h: HeaderFrame = replace(doc.header_mut(), Default::default())
+            .into_py(py);
         let entities = replace(doc.entities_mut(), Default::default())
             .into_iter()
             .map(|frame| EntityFrame::from_py(frame, py))
             .collect();
 
-        Self {
-            header: Py::new(py, header).expect("could not move header to Python heap"),
-            entities,
-        }
+        let header = PyCell::new(
+                py,
+                PyClassInitializer::from(AbstractFrame {}).add_subclass(h)
+            )
+            .map(Py::from)
+            .expect("could not move header to Python heap");
+
+        Self { header, entities }
     }
 }
 
 impl FromPy<OboDoc> for fastobo::ast::OboDoc {
     fn from_py(doc: OboDoc, py: Python) -> Self {
-        let header: HeaderFrame = doc.header.as_ref(py).clone_py(py);
+        let header: HeaderFrame = doc.header.as_ref(py).borrow().clone_py(py);
         doc.entities
             .iter()
             .map(|frame| fastobo::ast::EntityFrame::from_py(frame, py))
@@ -148,38 +158,37 @@ impl FromPy<OboDoc> for fastobo::ast::OboDoc {
 #[pymethods]
 impl OboDoc {
     #[new]
-    fn __init__(obj: &PyRawObject, header: Option<&HeaderFrame>, entities: Option<&PyAny>) -> PyResult<()> {
-        let py = obj.py();
+    fn __init__(header: Option<&HeaderFrame>, entities: Option<&PyAny>) -> PyResult<Self> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
 
         // extract header
         let header = header
             .map(|h| h.clone_py(py))
             .unwrap_or_else(HeaderFrame::empty);
-
         // create doc and extract entities
-        let mut doc = OboDoc::with_header(Py::new(py, header)?);
+        let mut doc = OboDoc::with_header(Py::from(PyCell::new(py, header)?));
         if let Some(any) = entities {
             for res in PyIterator::from_object(py, &any.to_object(py))? {
                 doc.entities.push(EntityFrame::extract(res?)?);
             }
         }
 
-        Ok(obj.init(doc))
+        Ok(doc)
     }
 
-    /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.
     #[getter]
     fn get_header<'py>(&self, py: Python<'py>) -> PyResult<Py<HeaderFrame>> {
         Ok(self.header.clone_ref(py))
     }
 
-    #[setter]
-    fn set_header(&mut self, header: &HeaderFrame) -> PyResult<()> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        self.header = Py::new(py, header.clone_py(py))?;
-        Ok(())
-    }
+    // #[setter]
+    // fn set_header(&mut self, header: PyHeaderFrame) -> PyResult<()> {
+    //     let gil = Python::acquire_gil();
+    //     let py = gil.python();
+    //     self.header = Py::new(py, header.clone_py(py))?;
+    //     Ok(())
+    // }
 
     /// compact_ids(self, /)
     /// --

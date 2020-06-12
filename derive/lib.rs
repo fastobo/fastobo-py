@@ -79,7 +79,7 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(aspyptr_impl_enum(&ast, &e));
         output.extend(frompy_impl_enum(&ast, &e));
-    // output.extend(pyobjectprotocol_impl_enum(&ast, &e))
+        // output.extend(pyobjectprotocol_impl_enum(&ast, &e))
     } else {
         panic!("only supports enums");
     }
@@ -167,6 +167,7 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
 }
 
 fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
+    let wrapped = &ast.ident;
     let mut variants = Vec::new();
 
     // Build clone for each variant
@@ -194,7 +195,11 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         );
 
         variants.push(quote!(
-            #lit => Ok(#name(pyo3::Py::from_borrowed_ptr(ob.as_ptr())))
+            #lit => if #path::is_exact_instance(ob) {
+                Ok(#wrapped::#name(pyo3::Py::from_borrowed_ptr(ob.as_ptr())))
+            } else {
+                pyo3::exceptions::TypeError::into("extraction of subclass failed")
+            }
         ));
     }
 
@@ -215,7 +220,6 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     };
 
     // Build FromPyObject implementation
-    let name = &ast.ident;
     let err_sub = syn::LitStr::new(
         &format!("subclassing {} is not supported", quote!(#base)),
         base.span(),
@@ -226,9 +230,8 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     );
     let expanded = quote! {
         #[automatically_derived]
-        impl<'source> pyo3::FromPyObject<'source> for #name {
+        impl<'source> pyo3::FromPyObject<'source> for #wrapped {
             fn extract(ob: &'source pyo3::types::PyAny) -> pyo3::PyResult<Self> {
-                use self::#name::*;
                 use pyo3::AsPyPointer;
 
                 let qualname = ob.get_type().name();
@@ -263,7 +266,9 @@ fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote!(#name(x) => Self::from_py(x.as_ref(py).deref().clone_py(py), py)));
+        variants.push(quote!(
+            #name(x) => Self::from_py((&x.as_ref(py).borrow()).clone_py(py), py)
+        ));
     }
 
     // Build clone implementation
@@ -356,9 +361,10 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             /// --
             ///
             /// Return a shallow copy of the list.
-            fn copy(&self) -> Self {
+            fn copy(&self) -> PyResult<Py<Self>> {
                 let gil = Python::acquire_gil();
-                self.clone_py(gil.python())
+                let copy = self.clone_py(gil.python());
+                Py::new(gil.python(), copy)
             }
 
             /// count($self, value)
@@ -425,7 +431,6 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                 }
             }
 
-
             // |
             // |  remove(self, value, /)
             // |      Remove first occurrence of value.
@@ -444,5 +449,63 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             // |  sort(self, /, *, key=None, reverse=False)
             // |      Stable sort *IN PLACE*.
         }
+    })
+}
+
+
+// ---
+
+#[proc_macro_derive(FinalClass)]
+pub fn finalclass_derive(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    match &ast.data {
+        syn::Data::Struct(s) => finalclass_impl_struct(&ast, &s),
+        _ => panic!("#[derive(FinalClass)] only supports structs"),
+    }
+}
+
+fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream {
+    // Get the name of the wrapped struct.
+    let name = &ast.ident;
+
+    // derive an implementation of PyClassInitializer using simply the
+    // default value of the base class as the initializer value
+    TokenStream::from(quote! {
+        impl FinalClass for #name {}
+        impl Into<pyo3::pyclass_init::PyClassInitializer<#name>> for #name {
+            fn into(self) ->  pyo3::pyclass_init::PyClassInitializer<Self> {
+                <<Self as PyTypeInfo>::BaseType as AbstractClass>::initializer()
+                    .add_subclass(self)
+            }
+        }
+    })
+}
+
+
+// ---
+
+#[proc_macro_derive(AbstractClass)]
+pub fn abstractclass_derive(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    match &ast.data {
+        syn::Data::Struct(s) => abstractclass_impl_struct(&ast, &s),
+        _ => panic!("#[derive(AbstractClass)] only supports structs"),
+    }
+}
+
+fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream {
+    // Get the name of the wrapped struct.
+    let name = &ast.ident;
+
+    // derive an implementation of PyClassInitializer using simply the
+    // default value of the base class as the initializer value
+    TokenStream::from(quote! {
+        impl AbstractClass for #name {
+            fn initializer() -> pyo3::pyclass_init::PyClassInitializer<Self> {
+                <<Self as PyTypeInfo>::BaseType as AbstractClass>::initializer()
+                    .add_subclass(Self {})
+            }
+        }
+
     })
 }

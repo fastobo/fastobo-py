@@ -25,8 +25,8 @@ use pyo3::PyTypeInfo;
 use fastobo::ast as obo;
 
 use crate::error::Error;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
+use crate::utils::AbstractClass;
 
 use super::header::frame::HeaderFrame;
 use super::id::Ident;
@@ -63,7 +63,14 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
 /// `~fastobo.header.OntologyClause` for compatibility purposes), followed by
 /// a various number of entity frames.
 #[pyclass(subclass, module = "fastobo.abc")]
+#[derive(Default)]
 pub struct AbstractFrame {}
+
+impl AbstractClass for AbstractFrame {
+    fn initializer() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Self {})
+    }
+}
 
 /// An abstract entity frame, which clauses define an entity.
 ///
@@ -72,6 +79,7 @@ pub struct AbstractFrame {}
 /// which is supposedly unique, that can be accessed through the ``id``
 /// property in any concrete subclass.
 #[pyclass(extends=AbstractFrame, module="fastobo.abc")]
+#[derive(Default, AbstractClass)]
 pub struct AbstractEntityFrame {}
 
 #[pymethods]
@@ -103,7 +111,14 @@ impl AbstractEntityFrame {
 ///      'xref': ['value-type:xsd\\:string "The allowed value-type for this CV term."']}
 ///
 #[pyclass(subclass, module = "fastobo.abc")]
+#[derive(Default)]
 pub struct AbstractClause {}
+
+impl AbstractClass for AbstractClause {
+    fn initializer() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(Self {})
+    }
+}
 
 #[pymethods]
 impl AbstractClause {
@@ -143,4 +158,5 @@ impl AbstractClause {
 
 /// An abstract entity clause.
 #[pyclass(extends=AbstractClause, module="fastobo.abc")]
+#[derive(Default, AbstractClass)]
 pub struct AbstractEntityClause {}

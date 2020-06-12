@@ -2,14 +2,16 @@ macro_rules! impl_richmp {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
         match $op {
             $crate::pyo3::class::basic::CompareOp::Eq => {
-                if let Ok(ref clause) = $other.downcast_ref::<Self>() {
+                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
+                    let clause = clause.as_ref($other.py()).borrow();
                     Ok(($($self.$attr == clause.$attr)&&*).to_object($other.py()))
                 } else {
                     Ok(false.to_object($other.py()))
                 }
             }
             $crate::pyo3::class::basic::CompareOp::Ne => {
-                if let Ok(ref clause) = $other.downcast_ref::<Self>() {
+                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
+                    let clause = clause.as_ref($other.py()).borrow();
                     Ok(($($self.$attr != clause.$attr)||*).to_object($other.py()))
                 } else {
                     Ok(true.to_object($other.py()))
@@ -83,7 +85,7 @@ macro_rules! add_submodule {
         $sup.add(stringify!($sub), module.clone_ref($py))?;
         $py.import("sys")?
             .get("modules")?
-            .downcast_mut::<pyo3::types::PyDict>()?
+            .cast_as::<pyo3::types::PyDict>()?
             .set_item(concat!("fastobo.", stringify!($sub)), module)?;
     }};
 }

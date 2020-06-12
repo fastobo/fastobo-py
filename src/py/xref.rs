@@ -24,7 +24,6 @@ use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use super::id::Ident;
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
 
 // --- Module export ---------------------------------------------------------
@@ -58,7 +57,7 @@ pub struct Xref {
 }
 
 impl Xref {
-    pub fn new(_py: Python, id: Ident) -> Self {
+    pub fn new(id: Ident) -> Self {
         Self { id, desc: None }
     }
 
@@ -69,18 +68,6 @@ impl Xref {
         Self {
             id,
             desc: desc.map(|d| d.into_py(py)),
-        }
-    }
-
-    pub fn from_object(py: Python, obj: &PyAny) -> PyResult<Py<Self>> {
-        if Xref::is_instance(&obj) {
-            unsafe {
-                let ptr = obj.as_ptr();
-                Ok(Py::from_borrowed_ptr(ptr))
-            }
-        } else {
-            let ty = obj.get_type().name();
-            TypeError::into(format!("expected Xref, found {}", ty))
         }
     }
 }
@@ -131,12 +118,17 @@ impl Xref {
     ///     id (~fastobo.id.Ident): the identifier of the reference.
     ///     desc (str, optional): an optional description for the reference.
     #[new]
-    fn __init__(obj: &PyRawObject, id: Ident, desc: Option<String>) -> PyResult<()> {
-        Ok(obj.init(Self::with_desc(
-            obj.py(),
-            id,
-            desc.map(fastobo::ast::QuotedString::new),
-        )))
+    fn __init__(id: Ident, desc: Option<String>) -> Self {
+        if let Some(s) = desc {
+            let gil = Python::acquire_gil();
+            Self::with_desc(
+                gil.python(),
+                id,
+                Some(fastobo::ast::QuotedString::new(s))
+            )
+        } else {
+            Self::new(id)
+        }
     }
 
     /// `~fastobo.id.Ident`: the identifier of the reference.
@@ -194,14 +186,14 @@ impl PyObjectProtocol for Xref {
 ///     Xref(PrefixedIdent('PSI', 'MS'))
 ///
 #[pyclass(module = "fastobo.xref")]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct XrefList {
     xrefs: Vec<Py<Xref>>,
 }
 
 impl XrefList {
     /// Create a new `XrefList` from a vector of Xrefs.
-    pub fn new(_py: Python, xrefs: Vec<Py<Xref>>) -> Self {
+    pub fn new(xrefs: Vec<Py<Xref>>) -> Self {
         Self { xrefs }
     }
 
@@ -210,10 +202,8 @@ impl XrefList {
         let mut vec = Vec::new();
         for item in PyIterator::from_object(py, xrefs)? {
             let i = item?;
-            if Xref::is_exact_instance(i) {
-                unsafe {
-                    vec.push(Py::from_borrowed_ptr(i.as_ptr()));
-                }
+            if let Ok(xref) = i.extract::<Py<Xref>>() {
+                vec.push(xref.clone_ref(py));
             } else {
                 let ty = i.get_type().name();
                 return TypeError::into(format!("expected Xref, found {}", ty));
@@ -235,17 +225,23 @@ impl FromPy<fastobo::ast::XrefList> for XrefList {
     fn from_py(list: fastobo::ast::XrefList, py: Python) -> Self {
         let mut xrefs = Vec::with_capacity((&list).len());
         for xref in list.into_iter() {
-            xrefs.push(Py::new(py, xref.into_py(py)).unwrap())
+            xrefs.push(Py::new(py, Xref::from_py(xref, py)).unwrap())
         }
-        Self::new(py, xrefs)
+        Self::new(xrefs)
     }
 }
 
 impl FromPy<XrefList> for fastobo::ast::XrefList {
     fn from_py(list: XrefList, py: Python) -> Self {
+        Self::from_py(&list, py)
+    }
+}
+
+impl FromPy<&XrefList> for fastobo::ast::XrefList {
+    fn from_py(list: &XrefList, py: Python) -> Self {
         list.xrefs
-            .into_iter()
-            .map(|xref| xref.as_ref(py).clone_py(py).into_py(py))
+            .iter()
+            .map(|xref| xref.as_ref(py).borrow().clone_py(py).into_py(py))
             .collect()
     }
 }
@@ -256,18 +252,19 @@ impl ToPyObject for XrefList {
             .iter()
             .map(|xref| xref.clone_py(py))
             .collect();
-        IntoPy::into_py(XrefList::new(py, list), py)
+        IntoPy::into_py(XrefList::new(list), py)
     }
 }
 
 #[pymethods]
 impl XrefList {
     #[new]
-    fn __init__(obj: &PyRawObject, xrefs: Option<&PyAny>) -> PyResult<()> {
+    fn __init__(xrefs: Option<&PyAny>) -> PyResult<Self> {
         if let Some(x) = xrefs {
-            Ok(obj.init(Self::collect(obj.py(), x)?))
+            let gil = Python::acquire_gil();
+            Self::collect(gil.python(), x)
         } else {
-            Ok(obj.init(Self::new(obj.py(), Vec::new())))
+            Ok(Self::new(Vec::new()))
         }
     }
 }
@@ -306,9 +303,9 @@ impl PySequenceProtocol for XrefList {
     }
 
     fn __contains__(&self, item: &PyAny) -> PyResult<bool> {
-        if let Ok(xref) = item.downcast_ref::<Xref>() {
+        if let Ok(xref) = item.extract::<Py<Xref>>() {
             let py = item.py();
-            Ok(self.xrefs.iter().any(|x| x.as_gil_ref(py) == xref))
+            Ok(self.xrefs.iter().any(|x| *x.as_ref(py).borrow() == *xref.as_ref(py).borrow()))
         } else {
             let ty = item.get_type().name();
             let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);

@@ -11,6 +11,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
+use pyo3::AsPyRef;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
@@ -20,8 +21,9 @@ use fastobo::share::Cow;
 use fastobo::share::Redeem;
 use fastobo::share::Share;
 
-use crate::utils::AsGILRef;
 use crate::utils::ClonePy;
+use crate::utils::FinalClass;
+use crate::utils::AbstractClass;
 
 // --- Module export ----------------------------------------------------------
 
@@ -34,7 +36,6 @@ fn module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::IdentLocal>()?;
     m.add_class::<self::Url>()?;
     m.add("__name__", "fastobo.id")?;
-
 
     /// parse(s)
     /// --
@@ -99,29 +100,16 @@ pub enum Ident {
     Url(Py<Url>),
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::Id<'p>> for Ident {
-    fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::Id<'p> {
-        match self {
-            Ident::Unprefixed(ref id) => {
-                let x: &UnprefixedIdent = id.as_gil_ref(py);
-                fastobo::ast::Id::Unprefixed(Cow::Borrowed(x.as_gil_ref(py)))
-            }
-            Ident::Prefixed(ref id) => {
-                let x: &PrefixedIdent = id.as_gil_ref(py);
-                fastobo::ast::Id::Prefixed(Cow::Borrowed(x.as_gil_ref(py)))
-            }
-            Ident::Url(ref url) => {
-                let x: &Url = url.as_gil_ref(py);
-                fastobo::ast::Id::Url(Cow::Borrowed(x.as_gil_ref(py)))
-            }
-        }
-    }
-}
-
 impl Display for Ident {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        let py = gil.python();
+
+        match self {
+            Ident::Unprefixed(id) => id.as_ref(py).borrow().fmt(f),
+            Ident::Prefixed(id) => id.as_ref(py).borrow().fmt(f),
+            Ident::Url(id) => id.as_ref(py).borrow().fmt(f),
+        }
     }
 }
 
@@ -129,14 +117,23 @@ impl FromPy<fastobo::ast::Ident> for Ident {
     fn from_py(ident: fastobo::ast::Ident, py: Python) -> Self {
         match ident {
             ast::Ident::Unprefixed(id) => {
-                Py::new(py, UnprefixedIdent::from_py(id, py)).map(Ident::Unprefixed)
+                Py::new(py, UnprefixedIdent::new(id))
+                    .map(Ident::Unprefixed)
+                    .expect("could not allocate on Python heap")
             }
             ast::Ident::Prefixed(id) => {
-                Py::new(py, PrefixedIdent::from_py(id, py)).map(Ident::Prefixed)
+                PyCell::new(py, PrefixedIdent::from_py(id, py))
+                    .map(Py::from)
+                    .map(Ident::Prefixed)
+                    .expect("could not allocate on Python heap")
             }
-            ast::Ident::Url(id) => Py::new(py, Url::from_py(id, py)).map(Ident::Url),
+            ast::Ident::Url(id) => {
+                PyCell::new(py, Url::from_py(id, py))
+                    .map(Py::from)
+                    .map(Ident::Url)
+                    .expect("could not allocate on Python heap")
+            }
         }
-        .expect("could not allocate on Python heap")
     }
 }
 
@@ -144,16 +141,20 @@ impl FromPy<Ident> for fastobo::ast::Ident {
     fn from_py(ident: Ident, py: Python) -> Self {
         match ident {
             Ident::Unprefixed(id) => {
-                let i: UnprefixedIdent = id.as_ref(py).clone_py(py);
-                ast::Ident::Unprefixed(i.into_py(py))
+                let i = id.as_ref(py).borrow();
+                ast::Ident::Unprefixed((*i).inner.clone())
             }
             Ident::Prefixed(id) => {
-                let i: PrefixedIdent = id.as_ref(py).clone_py(py);
-                ast::Ident::Prefixed(i.into_py(py))
+                let i = id.as_ref(py).borrow();
+                let p = i.prefix.as_ref(py).borrow();
+                let l = i.local.as_ref(py).borrow();
+                ast::Ident::Prefixed(
+                    ast::PrefixedIdent::new((*p).inner.clone(), (*l).inner.clone())
+                )
             }
             Ident::Url(id) => {
-                let url: Url = id.as_ref(py).clone();
-                ast::Ident::Url(url.into_py(py))
+                let i = id.as_ref(py).borrow();
+                ast::Ident::Url((*i).inner.clone())
             }
         }
     }
@@ -170,7 +171,14 @@ impl_convert!(NamespaceIdent, Ident);
 
 /// A sequence of character used to refer to an OBO entity.
 #[pyclass(subclass, module = "fastobo.id")]
+#[derive(Default)]
 pub struct BaseIdent {}
+
+impl AbstractClass for BaseIdent {
+    fn initializer() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(BaseIdent {})
+    }
+}
 
 // --- PrefixedIdent ----------------------------------------------------------
 
@@ -186,7 +194,7 @@ pub struct BaseIdent {}
 ///     'GO:0009637'
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Debug)]
+#[derive(Debug, FinalClass)]
 pub struct PrefixedIdent {
     prefix: Py<IdentPrefix>,
     local: Py<IdentLocal>,
@@ -195,18 +203,6 @@ pub struct PrefixedIdent {
 impl PrefixedIdent {
     fn new(prefix: Py<IdentPrefix>, local: Py<IdentLocal>) -> Self {
         PrefixedIdent { prefix, local }
-    }
-}
-
-impl<'p> AsGILRef<'p, fastobo::ast::PrefixedId<'p>> for PrefixedIdent {
-    fn as_gil_ref(&'p self, py: Python<'p>) -> fastobo::ast::PrefixedId<'p> {
-        // NB(@althonos): We can actually access the data as long as we hold
-        //                the GIL ('p), so we're fine here.
-        unsafe {
-            let prefix: &IdentPrefix = self.prefix.as_gil_ref(py);
-            let local: &IdentLocal = self.local.as_gil_ref(py);
-            fastobo::ast::PrefixedId::new(prefix.as_gil_ref(py), local.as_gil_ref(py))
-        }
     }
 }
 
@@ -222,7 +218,12 @@ impl ClonePy for PrefixedIdent {
 impl Display for PrefixedIdent {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        let py = gil.python();
+
+        let p = self.prefix.as_ref(py).borrow();
+        let l = self.local.as_ref(py).borrow();
+
+        fastobo::ast::PrefixedId::new(p.inner.share(), l.inner.share()).fmt(f)
     }
 }
 
@@ -231,8 +232,10 @@ impl PartialEq for PrefixedIdent {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
-        *self.prefix.as_ref(py) == *other.prefix.as_ref(py)
-            && *self.local.as_ref(py) == *other.local.as_ref(py)
+        let res = *self.prefix.as_ref(py).borrow() == *other.prefix.as_ref(py).borrow()
+            && *self.local.as_ref(py).borrow() == *other.local.as_ref(py).borrow();
+
+        res
     }
 }
 
@@ -241,8 +244,8 @@ impl Eq for PrefixedIdent {}
 impl FromPy<PrefixedIdent> for ast::PrefixedIdent {
     fn from_py(ident: PrefixedIdent, py: Python) -> Self {
         ast::PrefixedIdent::new(
-            ident.prefix.as_ref(py).clone(),
-            ident.local.as_ref(py).clone(),
+            ident.prefix.as_ref(py).borrow().clone(),
+            ident.local.as_ref(py).borrow().clone(),
         )
     }
 }
@@ -255,12 +258,12 @@ impl FromPy<PrefixedIdent> for ast::Ident {
 
 impl FromPy<ast::PrefixedIdent> for PrefixedIdent {
     fn from_py(id: ast::PrefixedIdent, py: Python) -> Self {
-        let prefix = id.prefix().clone();
-        let local = id.local().clone();
+        let prefix: IdentPrefix = id.prefix().clone().into();
+        let local: IdentLocal = id.local().clone().into();
 
         Self::new(
-            Py::new(py, prefix.into()).expect("could not allocate on Python heap"),
-            Py::new(py, local.into()).expect("could not allocate on Python heap"),
+            Py::new(py, prefix).expect("could not allocate on Python heap"),
+            Py::new(py, local).expect("could not allocate on Python heap"),
         )
     }
 }
@@ -277,11 +280,12 @@ impl PrefixedIdent {
     ///     local (str or `IdentLocal`): the local part of the identifier.
     ///
     #[new]
-    fn __init__(obj: &PyRawObject, prefix: &PyAny, local: &PyAny) -> PyResult<()> {
-        let py = prefix.py();
+    fn __init__(prefix: &PyAny, local: &PyAny) -> PyResult<PyClassInitializer<Self>> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
 
-        let p = if prefix.downcast_ref::<IdentPrefix>().is_ok() {
-            unsafe { Py::from_borrowed_ptr(prefix.as_ptr()) }
+        let p = if let Ok(prefix) = prefix.extract::<Py<IdentPrefix>>() {
+            prefix.clone_ref(py)
         } else if let Ok(ref s) = PyString::try_from(prefix) {
             let string = s.to_string();
             Py::new(py, IdentPrefix::new(ast::IdentPrefix::new(string)))?
@@ -291,8 +295,8 @@ impl PrefixedIdent {
             return TypeError::into(msg);
         };
 
-        let l = if local.downcast_ref::<IdentLocal>().is_ok() {
-            unsafe { Py::from_borrowed_ptr(local.as_ptr()) }
+        let l = if let Ok(local) = local.extract::<Py<IdentLocal>>() {
+            local.clone_ref(py)
         } else if let Ok(ref s) = PyString::try_from(local) {
             let string = s.to_string();
             Py::new(py, IdentLocal::new(ast::IdentLocal::new(string)))?
@@ -302,7 +306,10 @@ impl PrefixedIdent {
             return TypeError::into(msg);
         };
 
-        Ok(obj.init(Self::new(p, l)))
+        Ok(
+            PyClassInitializer::from(BaseIdent {})
+                .add_subclass(Self::new(p, l))
+        )
     }
 
     /// `~fastobo.id.IdentPrefix`: the IDspace of the identifier.
@@ -314,8 +321,8 @@ impl PrefixedIdent {
     #[setter]
     fn set_prefix(&mut self, prefix: &PyAny) -> PyResult<()> {
         let py = prefix.py();
-        self.prefix = if prefix.downcast_ref::<IdentPrefix>().is_ok() {
-            unsafe { Py::from_borrowed_ptr(prefix.as_ptr()) }
+        self.prefix = if let Ok(prefix) = prefix.extract::<Py<IdentPrefix>>() {
+            prefix.clone_ref(py)
         } else if let Ok(ref s) = PyString::try_from(prefix) {
             let string = s.to_string();
             Py::new(py, IdentPrefix::new(ast::IdentPrefix::new(string)))?
@@ -336,8 +343,8 @@ impl PrefixedIdent {
     #[setter]
     fn set_local(&mut self, local: &PyAny) -> PyResult<()> {
         let py = local.py();
-        self.local = if local.downcast_ref::<IdentLocal>().is_ok() {
-            unsafe { Py::from_borrowed_ptr(local.as_ptr()) }
+        self.local = if let Ok(local) = local.extract::<Py<IdentLocal>>() {
+            local.clone_ref(py)
         } else if let Ok(ref s) = PyString::try_from(local) {
             let string = s.to_string();
             Py::new(py, IdentLocal::new(ast::IdentLocal::new(string)))?
@@ -359,27 +366,28 @@ impl PyObjectProtocol for PrefixedIdent {
         // extract inner references
         let pref = self.prefix.as_ref(py);
         let lref = self.local.as_ref(py);
-        // extract string slices
-        let p = pref.inner.as_str();
-        let l = lref.inner.as_str();
-        // return the formatted `repr` string
-        let fmt = PyString::new(py, "PrefixedIdent({!r}, {!r})").to_object(py);
-        fmt.call_method1(py, "format", (p, l))
+        // get the formatted `repr` string
+        let fmt = PyString::new(py, "PrefixedIdent({!r}, {!r})");
+        let repr = fmt.call_method1(
+            "format",
+            (pref.borrow().inner.as_str(), lref.borrow().inner.as_str())
+        );
+        // convert to an object before releasing the GIL
+        Ok(repr?.to_object(py))
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        Ok(self.as_gil_ref(py).to_string())
+        Ok(self.to_string())
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
         let py = other.py();
-        if let Ok(r) = other.downcast_ref::<PrefixedIdent>() {
-            let lp = &*self.prefix.as_ref(py);
-            let ll = &*self.local.as_ref(py);
-            let rp = &*r.prefix.as_ref(py);
-            let rl = &*r.local.as_ref(py);
+        if let Ok(r) = other.extract::<Py<PrefixedIdent>>() {
+            let r = r.as_ref(py).borrow();
+            let lp = &*self.prefix.as_ref(py).borrow();
+            let ll = &*self.local.as_ref(py).borrow();
+            let rp = &*r.prefix.as_ref(py).borrow();
+            let rl = &*r.local.as_ref(py).borrow();
             match op {
                 CompareOp::Eq => Ok((lp, ll) == (rp, rl)),
                 CompareOp::Ne => Ok((lp, ll) != (rp, rl)),
@@ -415,7 +423,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///     hello world
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq, FinalClass)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
 }
@@ -432,12 +440,6 @@ impl AsRef<ast::UnprefixedId> for UnprefixedIdent {
     }
 }
 
-impl<'p> AsGILRef<'p, &'p fastobo::ast::UnprefixedId> for UnprefixedIdent {
-    fn as_gil_ref(&'p self, _py: Python<'p>) -> &'p fastobo::ast::UnprefixedId {
-        self.inner.share()
-    }
-}
-
 impl ClonePy for UnprefixedIdent {
     fn clone_py(&self, _py: Python) -> Self {
         self.clone()
@@ -446,8 +448,7 @@ impl ClonePy for UnprefixedIdent {
 
 impl Display for UnprefixedIdent {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        self.inner.fmt(f)
     }
 }
 
@@ -494,9 +495,10 @@ impl UnprefixedIdent {
     /// Arguments:
     ///     value (`str`): the unescaped representation of the identifier.
     #[new]
-    fn __init__(obj: &PyRawObject, value: &str) -> PyResult<()> {
+    fn __init__(value: &str) -> PyClassInitializer<Self> {
         let id = ast::UnprefixedIdent::new(value.to_string());
-        Ok(obj.init(UnprefixedIdent::new(id)))
+        PyClassInitializer::from(BaseIdent {})
+            .add_subclass(UnprefixedIdent::new(id))
     }
 
     /// `str`: the escaped representation of the identifier.
@@ -526,7 +528,8 @@ impl PyObjectProtocol for UnprefixedIdent {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-        if let Ok(u) = other.downcast_ref::<UnprefixedIdent>() {
+        if let Ok(u) = other.extract::<Py<UnprefixedIdent>>() {
+            let u = u.as_ref(other.py()).borrow();
             match op {
                 CompareOp::Lt => Ok(self.inner < u.inner),
                 CompareOp::Le => Ok(self.inner <= u.inner),
@@ -566,7 +569,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///     ValueError: invalid url: ...
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd, FinalClass)]
 #[opaque_typedef(derive(FromInner, IntoInner))]
 pub struct Url {
     inner: url::Url,
@@ -578,16 +581,9 @@ impl Url {
     }
 }
 
-impl<'p> AsGILRef<'p, &'p url::Url> for Url {
-    fn as_gil_ref(&'p self, _py: Python<'p>) -> &'p url::Url {
-        &self.inner
-    }
-}
-
 impl Display for Url {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        self.inner.fmt(f)
     }
 }
 
@@ -626,9 +622,10 @@ impl Url {
     /// Raises:
     ///     ValueError: when the given string is not a valid URL.
     #[new]
-    fn __new__(obj: &PyRawObject, value: &str) -> PyResult<()> {
+    fn __new__(value: &str) -> PyResult<PyClassInitializer<Self>> {
+        let init = PyClassInitializer::from(BaseIdent {});
         match url::Url::from_str(value) {
-            Ok(url) => Ok(obj.init(Url::new(url))),
+            Ok(url) => Ok(init.add_subclass(Url::new(url))),
             Err(e) => ValueError::into(format!("invalid url: {}", e)),
         }
     }
@@ -650,7 +647,8 @@ impl PyObjectProtocol for Url {
 
     /// Compare to another `Url` or `str` instance.
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-        if let Ok(url) = other.downcast_ref::<Url>() {
+        if let Ok(url) = other.extract::<Py<Url>>() {
+            let url = &*url.as_ref(other.py()).borrow();
             match op {
                 CompareOp::Lt => Ok(self < url),
                 CompareOp::Le => Ok(self <= url),
@@ -689,16 +687,9 @@ impl IdentPrefix {
     }
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::IdPrefix<'p>> for IdentPrefix {
-    fn as_gil_ref(&'p self, _py: Python<'p>) -> fastobo::ast::IdPrefix<'p> {
-        self.inner.share()
-    }
-}
-
 impl Display for IdentPrefix {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        self.inner.fmt(f)
     }
 }
 
@@ -715,19 +706,19 @@ impl IdentPrefix {
     /// Arguments:
     ///     value (`str`): the unescaped representation of the prefix.
     #[new]
-    fn __init__(obj: &PyRawObject, value: String) -> PyResult<()> {
-        Ok(obj.init(Self::new(ast::IdentPrefix::new(value))))
+    fn __init__(value: String) -> Self {
+        Self::new(ast::IdentPrefix::new(value))
     }
 
     /// `str`: the escaped representation of the identifier.
     #[getter]
-    fn escaped(&self) -> PyResult<String> {
+    pub fn escaped(&self) -> PyResult<String> {
         Ok(self.inner.to_string())
     }
 
     /// `str`: the unescaped representation of the identifier.
     #[getter]
-    fn unescaped(&self) -> PyResult<&str> {
+    pub fn unescaped(&self) -> PyResult<&str> {
         Ok(self.inner.as_str())
     }
 }
@@ -762,16 +753,9 @@ impl IdentLocal {
     }
 }
 
-impl<'p> AsGILRef<'p, fastobo::ast::IdLocal<'p>> for IdentLocal {
-    fn as_gil_ref(&'p self, _py: Python<'p>) -> fastobo::ast::IdLocal<'p> {
-        self.inner.share()
-    }
-}
-
 impl Display for IdentLocal {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        self.as_gil_ref(gil.python()).fmt(f)
+        self.inner.fmt(f)
     }
 }
 
@@ -779,8 +763,8 @@ impl Display for IdentLocal {
 impl IdentLocal {
     /// Create a new `IdentLocal` instance.
     #[new]
-    fn __init__(obj: &PyRawObject, value: String) -> PyResult<()> {
-        Ok(obj.init(Self::new(ast::IdentLocal::new(value))))
+    fn __init__(value: String) -> Self {
+        Self::new(ast::IdentLocal::new(value))
     }
 
     /// `str`: the escaped representation of the identifier.

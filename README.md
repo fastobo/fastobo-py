@@ -40,7 +40,7 @@ $ pip install fastobo --user
 
 ## Usage
 
-An `OboDoc` instance can be instantiated from a file-handle or from a binary file handle
+An `OboDoc` instance can be instantiated from a path or from a binary file handle
 using the `fastobo.load` function, or from a string using the `fastobo.loads` function.
 
 ```python

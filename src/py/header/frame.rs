@@ -162,6 +162,6 @@ impl PySequenceProtocol for HeaderFrame {
 
         let init = PyClassInitializer::from(AbstractFrame {})
             .add_subclass(Self::new(new_clauses));
-        PyCell::new(py, init).map(Py::from)
+        Py::new(py, init)
     }
 }

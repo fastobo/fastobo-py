@@ -1108,11 +1108,11 @@ impl IdspaceClause {
         U: Into<Url>,
         D: Into<Option<QuotedString>>,
     {
-        let cell = PyCell::new(py, url.into())
+        let cell = Py::new(py, url.into())
             .expect("cannot allocate to Python heap");
         Self {
             prefix: prefix.into(),
-            url: Py::from(cell),
+            url: cell,
             description: description.into(),
         }
     }

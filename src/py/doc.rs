@@ -133,11 +133,7 @@ impl FromPy<obo::OboDoc> for OboDoc {
             .map(|frame| EntityFrame::from_py(frame, py))
             .collect();
 
-        let header = PyCell::new(
-                py,
-                PyClassInitializer::from(AbstractFrame {}).add_subclass(h)
-            )
-            .map(Py::from)
+        let header = Py::new(py,h)
             .expect("could not move header to Python heap");
 
         Self { header, entities }

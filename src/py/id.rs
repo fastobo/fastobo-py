@@ -151,14 +151,12 @@ impl FromPy<fastobo::ast::Ident> for Ident {
                     .expect("could not allocate on Python heap")
             }
             ast::Ident::Prefixed(id) => {
-                PyCell::new(py, PrefixedIdent::from_py(id, py))
-                    .map(Py::from)
+                Py::new(py, PrefixedIdent::from_py(id, py))
                     .map(Ident::Prefixed)
                     .expect("could not allocate on Python heap")
             }
             ast::Ident::Url(id) => {
-                PyCell::new(py, Url::from_py(id, py))
-                    .map(Py::from)
+                Py::new(py, Url::from_py(id, py))
                     .map(Ident::Url)
                     .expect("could not allocate on Python heap")
             }

@@ -147,8 +147,7 @@ impl FrameReader {
             .map_err(Error::from)?
             .into_header_frame()
             .unwrap();
-        let header = PyCell::new(py, HeaderFrame::from_py(frame, py))
-            .map(Py::from)?;
+        let header = Py::new(py, HeaderFrame::from_py(frame, py))?;
 
         Ok(Self { inner, header })
     }

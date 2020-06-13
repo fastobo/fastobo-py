@@ -91,7 +91,11 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     ///     False
     #[pyfn(m, "is_valid")]
     fn is_valid(_py: Python, s: &str) -> bool {
-        fastobo::ast::Id::from_slice(s).is_ok()
+        let rule = fastobo::parser::Rule::Id;
+        match fastobo::parser::OboParser::parse(rule, s) {
+            Err(e) => false,
+            Ok(pairs) => pairs.as_str().len() == s.len(),
+        }
     }
 
     Ok(())

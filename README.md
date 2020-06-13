@@ -4,6 +4,7 @@
 
 [![TravisCI](https://img.shields.io/travis/fastobo/fastobo-py/master.svg?logo=travis&maxAge=600&style=flat-square)](https://travis-ci.com/fastobo/fastobo-py/branches)
 [![AppVeyor](https://img.shields.io/appveyor/ci/althonos/fastobo-py/master?logo=appveyor&style=flat-square&maxAge=600)](https://ci.appveyor.com/project/althonos/fastobo-py)
+[![Codecov](https://img.shields.io/codecov/c/gh/fastobo/fastobo-py/master.svg?style=flat-square&maxAge=600)](https://codecov.io/gh/fastobo/fastobo-py)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)
 [![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/fastobo/fastobo-py/)
 [![PyPI](https://img.shields.io/pypi/v/fastobo.svg?style=flat-square&maxAge=600)](https://pypi.org/project/fastobo)

@@ -12,5 +12,5 @@ else
   PYTHON_PREFIX="/opt/python/$TAG-*"
 fi
 
-log Running test with $TRAVIS_PYTHON_VERSION
+log Running test with $TAG
 docker exec -it manylinux sh /io/ci/travis/manylinux/_script.sh "$PYTHON_PREFIX"

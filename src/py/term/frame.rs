@@ -18,9 +18,6 @@ use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
-use fastobo::share::Cow;
-use fastobo::share::Redeem;
-use fastobo::share::Share;
 
 use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;

@@ -14,8 +14,6 @@ use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
-use fastobo::share::Cow;
-use fastobo::share::Share;
 
 use super::id::Ident;
 use crate::utils::ClonePy;

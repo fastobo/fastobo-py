@@ -9,9 +9,6 @@ use fastobo::ast;
 use fastobo::ast as obo;
 use fastobo::ast::QuotedString;
 use fastobo::ast::UnquotedString;
-use fastobo::share::Cow;
-use fastobo::share::Redeem;
-use fastobo::share::Share;
 
 use pyo3::class::basic::CompareOp;
 use pyo3::class::gc::PyVisit;

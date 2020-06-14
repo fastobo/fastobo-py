@@ -18,9 +18,6 @@ use pyo3::PyTypeInfo;
 
 use fastobo::ast;
 use fastobo::parser::FromSlice;
-use fastobo::share::Cow;
-use fastobo::share::Redeem;
-use fastobo::share::Share;
 
 use crate::utils::ClonePy;
 use crate::utils::FinalClass;
@@ -247,10 +244,9 @@ impl Display for PrefixedIdent {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
-        let p = self.prefix.as_ref(py).borrow();
-        let l = self.local.as_ref(py).borrow();
-
-        fastobo::ast::PrefixedId::new(p.inner.share(), l.inner.share()).fmt(f)
+        let p = self.prefix.as_ref(py).borrow().inner.clone();
+        let l = self.local.as_ref(py).borrow().inner.clone();
+        fastobo::ast::PrefixedIdent::new(p, l).fmt(f)
     }
 }
 
@@ -461,9 +457,9 @@ impl UnprefixedIdent {
     }
 }
 
-impl AsRef<ast::UnprefixedId> for UnprefixedIdent {
-    fn as_ref(&self) -> &ast::UnprefixedId {
-        self.inner.share()
+impl AsRef<ast::UnprefixedIdent> for UnprefixedIdent {
+    fn as_ref(&self) -> &ast::UnprefixedIdent {
+        &self.inner
     }
 }
 

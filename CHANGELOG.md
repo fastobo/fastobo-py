@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.8.1...HEAD
+
+
+### [v0.8.1] - 2020-06-14
+
+[v0.8.1]: https://github.com/fastobo/fastobo-py/compare/v0.8.0...v0.8.1
+
+### Changed
+- Bumped `fastobo` to `v0.9.0`.
+- Bumped `fastobo-graphs` to `v0.3.0`.
+
+### Added
+- `fastobo.id.is_valid` function to check whether or not a string is a 
+  valid OBO identifier.
 
 
 ## [v0.8.0] - 2020-06-12

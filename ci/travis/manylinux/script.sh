@@ -5,7 +5,7 @@
 # --- Test -------------------------------------------------------------------
 
 if [ "$TRAVIS_PYTHON_VERSION" = "pypy3" ]; then
-  TAG="$TRAVIS_PYTHON_VERSION*-$TRAVIS_PYPY_VERSION"
+  TAG="pypy3.6-$TRAVIS_PYPY_VERSION"
   PYTHON_PREFIX="/opt/pypy/$TAG"
 else
   TAG=cp$(echo $TRAVIS_PYTHON_VERSION | sed 's/\.//')

@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.8.2...HEAD
+
+
+## [v0.8.2] - 2020-06-16
+
+[v0.8.2]: https://github.com/fastobo/fastobo-py/compare/v0.8.1...v0.8.2
+
+### Fixed
+- `OboDoc` not implementing list methods (`.append`, etc.).
 
 
 ### [v0.8.1] - 2020-06-14

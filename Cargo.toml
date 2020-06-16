@@ -3,7 +3,7 @@ members = ["derive"]
 
 [package]
 name = "fastobo-py"
-version = "0.8.1"
+version = "0.8.2"
 authors = ["Martin Larralde <martin.larralde@ens-paris-saclay.fr>"]
 publish = false
 build = "src/build.rs"
@@ -30,7 +30,7 @@ url = "2.1.0"
 
 fastobo = "0.9.0"
 fastobo-graphs = "0.3.0"
-fastobo-py-derive-internal = { version = "0.8.1", path = "./derive" }
+fastobo-py-derive-internal = { version = "0.8.2", path = "./derive" }
 
 [features]
 default = []

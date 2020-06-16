@@ -88,8 +88,7 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
 ///         frames, either `TermFrame`, `TypedefFrame` or `InstanceFrame`.
 ///
 #[pyclass(module = "fastobo.doc")]
-// #[derive(Debug, PyList)]
-#[derive(Debug)]
+#[derive(Debug, PyList)]
 pub struct OboDoc {
     #[pyo3(get, set)]
     /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.

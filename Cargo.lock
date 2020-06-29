@@ -253,7 +253,7 @@ dependencies = [
  "opaque_typedef",
  "opaque_typedef_macros",
  "pest",
- "pyo3",
+ "pyo3 0.11.0",
  "pyo3-built",
  "url",
 ]
@@ -694,9 +694,25 @@ dependencies = [
  "libc",
  "parking_lot",
  "paste",
- "pyo3cls",
+ "pyo3cls 0.10.1",
  "unindent",
  "version_check",
+]
+
+[[package]]
+name = "pyo3"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72e5a0087e5058829fba8b76cc45e65c684582dffb5ca9d66a1ba0fa2e72c630"
+dependencies = [
+ "ctor",
+ "indoc",
+ "inventory",
+ "libc",
+ "parking_lot",
+ "paste",
+ "pyo3cls 0.11.0",
+ "unindent",
 ]
 
 [[package]]
@@ -706,7 +722,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0eadc93edccc6521c53f702c11542a8ebe731e27f9453877ad3a95d170b8769d"
 dependencies = [
  "built",
- "pyo3",
+ "pyo3 0.10.1",
 ]
 
 [[package]]
@@ -721,12 +737,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "pyo3-derive-backend"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9bbf2cab9bf726a249f7d59985e3535f6b0036f7e4f9ce2d8c685f2105e49c6"
+dependencies = [
+ "proc-macro2 1.0.18",
+ "quote 1.0.7",
+ "syn 1.0.31",
+]
+
+[[package]]
 name = "pyo3cls"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f4628c487dbc084c17d4762bc0b531f373ca315997457708d6c9fabcc5c9928"
 dependencies = [
- "pyo3-derive-backend",
+ "pyo3-derive-backend 0.10.1",
+ "quote 1.0.7",
+ "syn 1.0.31",
+]
+
+[[package]]
+name = "pyo3cls"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5414ad12b320fec7d19df0d216f854e156dd4cedd03edf2c2239b4ee459b791c"
+dependencies = [
+ "pyo3-derive-backend 0.11.0",
  "quote 1.0.7",
  "syn 1.0.31",
 ]

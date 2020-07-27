@@ -181,15 +181,15 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             syn::Type::Path(path) => path.path.segments.iter().next().unwrap().arguments.clone(),
             _ => unreachable!(),
         };
-        let ref arg = match args {
+        let arg = match &args {
             syn::PathArguments::AngleBracketed(ref br) => br.args.iter().next().unwrap(),
             _ => unreachable!(),
         };
-        let ref path = match arg {
+        let path = match &arg {
             syn::GenericArgument::Type(syn::Type::Path(ref path)) => path.path.clone(),
             _ => unreachable!(),
         };
-        let ref lit = syn::LitStr::new(
+        let lit = &syn::LitStr::new(
             &path.segments.iter().next().unwrap().ident.to_string(),
             path.segments.iter().next().unwrap().ident.span(),
         );
@@ -294,9 +294,10 @@ fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
 #[proc_macro_derive(PyList)]
 pub fn pylist_derive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = syn::parse(input).unwrap();
-    match &ast.data {
-        syn::Data::Struct(s) => pylist_impl_struct(&ast, &s),
-        _ => panic!("#[derive(PyList)] only supports structs"),
+    if let syn::Data::Struct(s) = &ast.data {
+        pylist_impl_struct(&ast, &s)
+    } else {
+        panic!("#[derive(PyList)] only supports structs")
     }
 }
 
@@ -403,7 +404,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                     self.#attr.push(item);
                 } else {
                     if index < 0 {
-                        index = index % self.#attr.len() as isize;
+                        index %= self.#attr.len() as isize;
                     }
                     self.#attr.insert(index as usize, item);
                 }

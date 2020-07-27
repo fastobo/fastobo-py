@@ -335,48 +335,40 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
         #[pymethods]
         impl #name {
 
-            /// append(self, object)
-            /// --
-            ///
             /// Append object to the end of the list.
             ///
             /// Raises:
             ///     TypeError: when the object is not of the right type for
             ///         this container (see type-level documentation for the
             ///         required type).
+            #[text_signature = "(self, object)"]
             fn append(&mut self, object: &PyAny) -> PyResult<()> {
                 let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
                 self.#attr.push(item);
                 Ok(())
             }
 
-            /// clear($self)
-            /// --
-            ///
             /// Remove all items from list.
+            #[text_signature = "(self)"]
             fn clear(&mut self) {
                 self.#attr.clear();
             }
 
-            /// copy($self)
-            /// --
-            ///
             /// Return a shallow copy of the list.
+            #[text_signature = "(self)"]
             fn copy(&self) -> PyResult<Py<Self>> {
                 let gil = Python::acquire_gil();
                 let copy = self.clone_py(gil.python());
                 Py::new(gil.python(), copy)
             }
 
-            /// count($self, value)
-            /// --
-            ///
             /// Return number of occurrences of value.
             ///
             /// Raises:
             ///     TypeError: when the object is not of the right type for
             ///         this container (see type-level documentation for the
             ///         required type).
+            #[text_signature = "(self, value)"]
             fn count(&mut self, value: &PyAny) -> PyResult<usize> {
                 let item = <#ty as pyo3::prelude::FromPyObject>::extract(value)?;
                 Ok(self.#attr.iter().filter(|&x| *x == item).count())
@@ -391,13 +383,11 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             // |      Raises ValueError if the value is not present.
             // |
 
-            /// insert($self, index, object, /)
-            /// --
-            ///
             /// Insert `object` before `index`.
             ///
             /// If `index` is greater than the number of elements in the list,
             /// `object` will be added at the end of the list.
+            #[text_signature = "(self, index, object)"]
             fn insert(&mut self, mut index: isize, object: &PyAny) -> PyResult<()> {
                 let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
                 if index >= self.#attr.len() as isize {
@@ -411,14 +401,12 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                 Ok(())
             }
 
-            /// pop($self, index=-1)
-            /// --
-            ///
             /// Remove and return item at index (default last).
             ///
             /// Raises:
             ///     IndexError: when list is empty or index is out of range.
             #[args(index="-1")]
+            #[text_signature = "(self, index=-1)"]
             fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
                 // Wrap once to allow negative indexing
                 if index < 0 {
@@ -439,10 +427,8 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             // |      Raises ValueError if the value is not present.
             // |
 
-            /// reverse($self, /)
-            /// --
-            ///
             /// Reverse *IN PLACE*.
+            #[text_signature = "(self)"]
             fn reverse(&mut self) {
                 self.#attr.reverse()
             }

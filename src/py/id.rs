@@ -19,6 +19,8 @@ use pyo3::PyTypeInfo;
 use fastobo::ast;
 use fastobo::parser::FromSlice;
 
+use crate::raise;
+use crate::error::Error;
 use crate::utils::ClonePy;
 use crate::utils::FinalClass;
 use crate::utils::AbstractClass;
@@ -61,9 +63,13 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     ///
     #[pyfn(m, "parse")]
     fn parse(py: Python, s: &str) -> PyResult<Ident> {
-        fastobo::ast::Ident::from_str(s)
-            .or(ValueError::into("could not parse identifier"))
-            .map(|ident| Ident::from_py(ident, py))
+        match fastobo::ast::Ident::from_str(s) {
+            Ok(id) => Ok(Ident::from_py(id, py)),
+            Err(e) => {
+                let err = PyErr::from(Error::from(e));
+                raise!(py, ValueError("could not parse identifier") from err)
+            }
+        }
     }
 
     /// is_valid(s)

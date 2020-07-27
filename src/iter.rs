@@ -47,7 +47,7 @@ impl<B: BufRead> InternalParser<B> {
             0 => Ok(InternalParser::Threaded(ThreadedParser::new(stream))),
             1 => Ok(InternalParser::Sequential(Parser::new(stream))),
             n if n < 0 => {
-                return ValueError::into("threads count must be positive or null")
+                ValueError::into("threads count must be positive or null")
             },
             n => {
                 let t = std::num::NonZeroUsize::new(n as usize).unwrap();

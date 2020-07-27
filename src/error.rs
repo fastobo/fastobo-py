@@ -13,6 +13,23 @@ use pyo3::PyErr;
 
 use fastobo::syntax::Rule;
 
+// ---------------------------------------------------------------------------
+
+#[macro_export]
+macro_rules! raise(
+    ($py:expr, $error_type:ident ($msg:expr) from $inner:expr ) => ({
+        let err = $error_type::py_err($msg).to_object($py);
+        err.call_method1(
+            $py,
+            "__setattr__",
+            ("__cause__".to_object($py), $inner.to_object($py)),
+        )?;
+        return Err(PyErr::from_instance(err.as_ref($py)))
+    })
+);
+
+// ---------------------------------------------------------------------------
+
 /// Exact copy of `pest::error::Error` to access private fields.
 struct PestError {
     /// Variant of the error
@@ -74,6 +91,8 @@ impl PestError {
     }
 }
 
+// ---------------------------------------------------------------------------
+
 /// A wrapper to convert `fastobo::error::Error` into a `PyErr`.
 pub struct Error {
     err: fastobo::error::Error,
@@ -125,7 +144,7 @@ impl From<Error> for PyErr {
                         //               semver so any update is dangerous.
                         let pe: PestError = unsafe { std::mem::transmute(error) };
                         let msg = pe.message();
-                        let path = pe.path.unwrap_or(String::from("<stdin>"));
+                        let path = pe.path.unwrap_or_else(|| String::from("<stdin>"));
                         let (l, c) = match pe.line_col {
                             LineColLocation::Pos((l, c)) => (l, c),
                             LineColLocation::Span((l, c), _) => (l, c),
@@ -157,6 +176,8 @@ impl<T> Into<pyo3::PyResult<T>> for Error {
         Err(pyo3::PyErr::from(self))
     }
 }
+
+// ---------------------------------------------------------------------------
 
 /// A wrapper to convert `fastobo_graphs::error::Error` into a `PyErr`.
 pub struct GraphError(fastobo_graphs::error::Error);

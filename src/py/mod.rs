@@ -35,6 +35,7 @@ use fastobo_graphs::FromGraph;
 use fastobo_graphs::IntoGraph;
 use fastobo_graphs::model::GraphDocument;
 
+use crate::raise;
 use crate::error::Error;
 use crate::error::GraphError;
 use crate::iter::FrameReader;
@@ -129,14 +130,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             match FrameReader::from_handle(fh, ordered, threads) {
                 Ok(r) => Ok(r),
                 Err(inner) => {
-                    let msg = "expected path or binary file handle";
-                    let err = TypeError::py_err(msg).to_object(py);
-                    err.call_method1(
-                        py,
-                        "__setattr__",
-                        ("__cause__".to_object(py), inner.to_object(py)),
-                    )?;
-                    return Err(PyErr::from_instance(err.as_ref(py)))
+                    raise!(py, TypeError("expected path or binary file handle") from inner);
                 }
             }
         }
@@ -203,14 +197,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                 // Object is not a binary file-handle: wrap the inner error
                 // into a `TypeError` and raise that error.
                 Err(e) => {
-                    let msg = "expected path or binary file handle";
-                    let err = TypeError::py_err(msg).to_object(py);
-                    err.call_method1(
-                        py,
-                        "__setattr__",
-                        ("__cause__".to_object(py), e.to_object(py)),
-                    )?;
-                    return Err(PyErr::from_instance(err.as_ref(py)));
+                    raise!(py, TypeError("expected path or binary file handle") from e)
                 }
             };
             // use a sequential or a threaded reader depending on `threads`.
@@ -339,14 +326,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                 // Object is not a binary file-handle: wrap the inner error
                 // into a `TypeError` and raise that error.
                 Err(inner) => {
-                    let msg = "expected path or binary file handle";
-                    let err = TypeError::py_err(msg).to_object(py);
-                    err.call_method1(
-                        py,
-                        "__setattr__",
-                        ("__cause__".to_object(py), inner.to_object(py)),
-                    )?;
-                    return Err(PyErr::from_instance(err.as_ref(py)));
+                    raise!(py, TypeError("expected path or binary file handle") from inner)
                 }
             }
         };
@@ -411,14 +391,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                 // Object is not a binary file-handle: wrap the inner error
                 // into a `TypeError` and raise that error.
                 Err(inner) => {
-                    let msg = "expected path or binary file handle";
-                    let err = TypeError::py_err(msg).to_object(py);
-                    err.call_method1(
-                        py,
-                        "__setattr__",
-                        ("__cause__".to_object(py), inner.to_object(py)),
-                    )?;
-                    return Err(PyErr::from_instance(err.as_ref(py)));
+                    raise!(py, TypeError("expected path or binary file handle") from inner)
                 }
             }
         }

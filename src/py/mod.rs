@@ -1,6 +1,7 @@
 //! Definition of the Python classes exported in the `fastobo` module.
 
 use std::convert::TryFrom;
+use std::convert::TryInto;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
@@ -28,6 +29,7 @@ use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast as obo;
+use fastobo::parser::Parser;
 use fastobo::visit::VisitMut;
 use fastobo_graphs::FromGraph;
 use fastobo_graphs::IntoGraph;
@@ -35,8 +37,8 @@ use fastobo_graphs::model::GraphDocument;
 
 use crate::error::Error;
 use crate::error::GraphError;
-use crate::iter::FastoboReader;
 use crate::iter::FrameReader;
+use crate::iter::InternalParser;
 use crate::pyfile::PyFileRead;
 use crate::pyfile::PyFileWrite;
 use crate::utils::ClonePy;
@@ -185,7 +187,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                 Err(e) => return Err(PyErr::from(Error::from(e))),
             };
             // use a sequential or a threaded reader depending on `threads`.
-            let mut reader: Box<dyn FastoboReader<_>> = fastobo_reader!(bf, threads);
+            let mut reader = InternalParser::with_thread_count(bf, threads)?;
             // set the `ordered` flag and parse the document using the reader
             reader.ordered(ordered);
             match reader.try_into_doc() {
@@ -212,17 +214,16 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                 }
             };
             // use a sequential or a threaded reader depending on `threads`.
-            let mut reader: Box<dyn FastoboReader<_>> = fastobo_reader!(bf, threads);
-            // set the `ordered` flag and parse the document using the reader
+            let mut reader = InternalParser::with_thread_count(bf, threads)?;
+            // set the `ordered` flag
             reader.ordered(ordered);
-            let res = reader.try_into_doc();
-            // check the result and extract the internal Python error if
-            // the parser failed,
-            match res {
+            //  and parse the document, check the result and extract the
+            // internal Python error if the parser failed,
+            match reader.try_into_doc() {
                 Ok(doc) => Ok(doc.into_py(py)),
                 Err(e) => {
                     reader
-                        .into_bufread()
+                        .into_inner()
                         .into_inner()
                         .into_err()
                         .unwrap_or_else(|| Error::from(e).into())
@@ -272,7 +273,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "loads", ordered="true", threads="0")]
     fn loads(py: Python, document: &str, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         let cursor = std::io::Cursor::new(document);
-        let mut reader: Box<dyn FastoboReader<_>> = fastobo_reader!(cursor, threads);
+        let mut reader = InternalParser::with_thread_count(cursor, threads)?;
         reader.ordered(ordered);
         match reader.try_into_doc() {
             Ok(doc) => Ok(doc.into_py(py)),

@@ -7,6 +7,7 @@ use std::io::Read;
 use std::iter::Iterator;
 use std::path::Path;
 use std::path::PathBuf;
+use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
@@ -22,6 +23,10 @@ use pyo3::PyErrValue;
 use pyo3::AsPyPointer;
 use pyo3::PyGCProtocol;
 
+use fastobo::parser::Parser;
+use fastobo::parser::ThreadedParser;
+use fastobo::parser::SequentialParser;
+
 use crate::error::Error;
 use crate::py::header::frame::HeaderFrame;
 use crate::py::doc::EntityFrame;
@@ -31,39 +36,131 @@ use crate::utils::ClonePy;
 
 // ---------------------------------------------------------------------------
 
-/// A trait to unify API of the sequential and threaded parsers from `fastobo`.
-pub(crate) trait FastoboReader<B: BufRead + Sized>:
-    Iterator<Item = fastobo::error::Result<fastobo::ast::Frame>>
-    + AsRef<B> + AsMut<B>
-{
-    fn ordered(&mut self, ordered: bool);
-    fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc>;
-    fn into_bufread(self: Box<Self>) -> B;
+pub enum InternalParser<B: BufRead> {
+    Sequential(SequentialParser<B>),
+    Threaded(ThreadedParser<B>),
 }
 
-impl<B: BufRead + Sized> FastoboReader<B> for fastobo::parser::ThreadedReader<B> {
-    fn ordered(&mut self, ordered: bool) {
-        self.ordered(ordered);
+impl<B: BufRead> InternalParser<B> {
+    pub fn with_thread_count(stream: B, n: i16) -> Result<Self, PyErr> {
+        match n {
+            0 => Ok(InternalParser::Threaded(ThreadedParser::new(stream))),
+            1 => Ok(InternalParser::Sequential(Parser::new(stream))),
+            n if n < 0 => {
+                return ValueError::into("threads count must be positive or null")
+            },
+            n => {
+                let t = std::num::NonZeroUsize::new(n as usize).unwrap();
+                Ok(InternalParser::Threaded(ThreadedParser::with_threads(stream, t)))
+            },
+        }
     }
-    fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc> {
-        self.try_into()
-    }
-    fn into_bufread(self: Box<Self>) -> B {
-        self.into_inner()
+
+    pub fn try_into_doc(&mut self) -> Result<fastobo::ast::OboDoc, fastobo::error::Error> {
+        match self {
+            InternalParser::Sequential(parser) => parser.try_into(),
+            InternalParser::Threaded(parser) => parser.try_into(),
+        }
     }
 }
 
-impl<B: BufRead + Sized> FastoboReader<B> for fastobo::parser::SequentialReader<B> {
-    fn ordered(&mut self, ordered: bool) {
-        self.ordered(ordered);
-    }
-    fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc> {
-        self.try_into()
-    }
-    fn into_bufread(self: Box<Self>) -> B {
-        self.into_inner()
+impl<B: BufRead> AsMut<B> for InternalParser<B> {
+    fn as_mut(&mut self) -> &mut B {
+        match self {
+            InternalParser::Sequential(parser) => parser.as_mut(),
+            InternalParser::Threaded(parser) => parser.as_mut(),
+        }
     }
 }
+
+impl<B: BufRead> AsRef<B> for InternalParser<B> {
+    fn as_ref(&self) -> &B {
+        match self {
+            InternalParser::Sequential(parser) => parser.as_ref(),
+            InternalParser::Threaded(parser) => parser.as_ref(),
+        }
+    }
+}
+
+impl<B: BufRead> From<B> for InternalParser<B> {
+    fn from(stream: B) -> Self {
+        Self::Sequential(SequentialParser::from(stream))
+    }
+}
+
+impl<B: BufRead> Iterator for InternalParser<B> {
+    type Item = fastobo::error::Result<fastobo::ast::Frame>;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            InternalParser::Sequential(parser) => parser.next(),
+            InternalParser::Threaded(parser) => parser.next(),
+        }
+    }
+}
+
+impl<B: BufRead> Parser<B> for InternalParser<B> {
+    fn new(stream: B) -> Self {
+        InternalParser::Sequential(SequentialParser::new(stream))
+    }
+
+    fn with_threads(stream: B, threads: NonZeroUsize) -> Self {
+        if threads.get() == 1 {
+            Self::new(stream)
+        } else {
+            InternalParser::Threaded(ThreadedParser::with_threads(stream, threads))
+        }
+    }
+
+    fn ordered(&mut self, ordered: bool) -> &mut Self {
+        match self {
+            InternalParser::Sequential(parser) => {
+                parser.ordered(ordered);
+            }
+            InternalParser::Threaded(parser) => {
+                parser.ordered(ordered);
+            }
+        };
+        self
+    }
+
+    fn into_inner(self) -> B {
+        match self {
+            InternalParser::Sequential(parser) => parser.into_inner(),
+            InternalParser::Threaded(parser) => parser.into_inner(),
+        }
+    }
+}
+
+impl<B: BufRead> TryInto<fastobo::ast::OboDoc> for InternalParser<B> {
+    type Error = <SequentialParser<B> as TryInto<fastobo::ast::OboDoc>>::Error;
+    fn try_into(self) -> Result<fastobo::ast::OboDoc, Self::Error> {
+        unimplemented!()
+    }
+}
+
+// /// A trait to unify API of the sequential and threaded parsers from `fastobo`.
+// pub(crate) trait FastoboReader<B: BufRead + Sized>: Parser<B> {
+//     fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc>;
+//     fn into_bufread(self: Box<Self>) -> B;
+// }
+//
+// impl<B: BufRead + Sized> FastoboReader<B> for ThreadedParser<B> {
+//     fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc> {
+//         self.try_into()
+//     }
+//     fn into_bufread(self: Box<Self>) -> B {
+//         self.into_inner()
+//     }
+// }
+//
+// impl<B: BufRead + Sized> FastoboReader<B> for SequentialParser<B> {
+//     fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc> {
+//         self.try_into()
+//     }
+//     fn into_bufread(self: Box<Self>) -> B {
+//         self.into_inner()
+//     }
+// }
 
 // ---------------------------------------------------------------------------
 
@@ -124,13 +221,13 @@ impl Handle for BufReader<PyFileGILRead> {
 
 // ---------------------------------------------------------------------------
 
-// FIXME: May cause memory leaks.
+// FIXME: May cause memory leaks?
 /// An iterator over the frames of an OBO document.
 ///
 /// See help(fastobo.iter) for more information.
 #[pyclass(module = "fastobo")]
 pub struct FrameReader {
-    inner: Box<dyn FastoboReader<Box<dyn Handle>>>,
+    inner: InternalParser<Box<dyn Handle>>,
     header: Py<HeaderFrame>,
 }
 
@@ -139,7 +236,7 @@ impl FrameReader {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
-        let mut inner: Box<dyn FastoboReader<_>> = fastobo_reader!(handle, threads);
+        let mut inner = InternalParser::with_thread_count(handle, threads)?;
         inner.ordered(ordered);
         let frame = inner
             .next()

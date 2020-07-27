@@ -89,19 +89,3 @@ macro_rules! add_submodule {
             .set_item(concat!("fastobo.", stringify!($sub)), module)?;
     }};
 }
-
-macro_rules! fastobo_reader {
-    ($b:expr, $t:ident) => {
-        match $t {
-            0 => Box::new(fastobo::parser::ThreadedReader::new($b)),
-            1 => Box::new(fastobo::parser::SequentialReader::new($b)),
-            n if n < 0 => {
-                return ValueError::into("threads count must be positive or null")
-            },
-            n => {
-                let t = std::num::NonZeroUsize::new(n as usize).unwrap();
-                Box::new(fastobo::parser::ThreadedReader::with_threads($b, t))
-            },
-        }
-    }
-}

@@ -11,7 +11,7 @@ use pyo3::exceptions::SyntaxError;
 use pyo3::exceptions::ValueError;
 use pyo3::PyErr;
 
-use fastobo::parser::Rule;
+use fastobo::syntax::Rule;
 
 /// Exact copy of `pest::error::Error` to access private fields.
 struct PestError {

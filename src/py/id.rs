@@ -88,8 +88,8 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     ///     False
     #[pyfn(m, "is_valid")]
     fn is_valid(_py: Python, s: &str) -> bool {
-        let rule = fastobo::parser::Rule::Id;
-        match fastobo::parser::OboParser::parse(rule, s) {
+        let rule = fastobo::syntax::Rule::Id;
+        match fastobo::syntax::Lexer::parse(rule, s) {
             Err(e) => false,
             Ok(pairs) => pairs.as_str().len() == s.len(),
         }

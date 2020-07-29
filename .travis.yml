@@ -2,7 +2,7 @@
 env:
   global:
     - RUST_BACKTRACE=1
-    - RUST_TOOLCHAIN=nightly-2020-06-02
+    - RUST_TOOLCHAIN=nightly
     - PATH="$PYENV_ROOT/bin:$HOME/.cargo/bin:$PATH"
     - PYTHON_SYS_EXECUTABLE="python3"
     - PYENV_ROOT="$HOME/.pyenv"

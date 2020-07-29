@@ -54,14 +54,6 @@ impl Handle {
             }
         }
     }
-
-    // fn extract_err(&mut self) -> Option<PyErr> {
-    //     if let Handle::PyFile(f) = self {
-    //         f.err_mut().take().map(|m| m.into_inner().unwrap())
-    //     } else {
-    //         None
-    //     }
-    // }
 }
 
 impl TryFrom<PathBuf> for Handle {

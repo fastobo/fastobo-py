@@ -3,8 +3,8 @@ members = ["derive"]
 
 [package]
 name = "fastobo-py"
-version = "0.8.2"
-authors = ["Martin Larralde <martin.larralde@ens-paris-saclay.fr>"]
+version = "0.9.0"
+authors = ["Martin Larralde <martin.larralde@embl.de>"]
 publish = false
 build = "src/build.rs"
 
@@ -35,7 +35,7 @@ features = ["threading"]
 version = "0.4.0"
 features = ["obo"]
 [dependencies.fastobo-py-derive-internal]
-version = "0.8.2"
+version = "0.9.0"
 path = "./derive"
 
 [features]

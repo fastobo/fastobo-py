@@ -10,7 +10,7 @@ use pyo3::types::PyTimeAccess;
 pub fn extract_timezone<'py>(py: Python<'py>, datetime: &'py PyDateTime) -> PyResult<Option<fastobo::ast::IsoTimezone>> {
     use fastobo::ast::IsoTimezone::*;
     let tzinfo = datetime.to_object(py).getattr(py, "tzinfo")?;
-    if !tzinfo.is_none() {
+    if !tzinfo.is_none(py) {
         let timedelta = tzinfo.call_method1(py, "utcoffset", (datetime,))?;
         let total_seconds = timedelta.call_method0(py, "total_seconds")?.extract::<f64>(py)? as i64;
         let hh = total_seconds / 3600;

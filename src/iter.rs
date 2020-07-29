@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::fs::File;
 use std::io::BufRead;
@@ -36,6 +37,53 @@ use crate::utils::ClonePy;
 
 // ---------------------------------------------------------------------------
 
+/// An enum providing `Read` for either Python file-handles or filesystem files.
+pub enum Handle {
+    FsFile(File, PathBuf),
+    PyFile(PyFileGILRead),
+}
+
+impl Handle {
+    fn handle(&self) -> PyObject {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        match self {
+            Handle::FsFile(_, path) =>  path.display().to_string().to_object(py),
+            Handle::PyFile(f) => {
+                f.file().lock().unwrap().to_object(py)
+            }
+        }
+    }
+
+    // fn extract_err(&mut self) -> Option<PyErr> {
+    //     if let Handle::PyFile(f) = self {
+    //         f.err_mut().take().map(|m| m.into_inner().unwrap())
+    //     } else {
+    //         None
+    //     }
+    // }
+}
+
+impl TryFrom<PathBuf> for Handle {
+    type Error = std::io::Error;
+    fn try_from(p: PathBuf) -> Result<Self, Self::Error> {
+        let file = File::open(&p)?;
+        Ok(Handle::FsFile(file, p))
+    }
+}
+
+impl Read for Handle {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
+        match self {
+            Handle::FsFile(f, _) => f.read(buf),
+            Handle::PyFile(f) => f.read(buf),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+
+/// An enum providing the same API for the sequential and threaded parsers from `fastobo`.
 pub enum InternalParser<B: BufRead> {
     Sequential(SequentialParser<B>),
     Threaded(ThreadedParser<B>),
@@ -131,94 +179,6 @@ impl<B: BufRead> Parser<B> for InternalParser<B> {
     }
 }
 
-impl<B: BufRead> TryInto<fastobo::ast::OboDoc> for InternalParser<B> {
-    type Error = <SequentialParser<B> as TryInto<fastobo::ast::OboDoc>>::Error;
-    fn try_into(self) -> Result<fastobo::ast::OboDoc, Self::Error> {
-        unimplemented!()
-    }
-}
-
-// /// A trait to unify API of the sequential and threaded parsers from `fastobo`.
-// pub(crate) trait FastoboReader<B: BufRead + Sized>: Parser<B> {
-//     fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc>;
-//     fn into_bufread(self: Box<Self>) -> B;
-// }
-//
-// impl<B: BufRead + Sized> FastoboReader<B> for ThreadedParser<B> {
-//     fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc> {
-//         self.try_into()
-//     }
-//     fn into_bufread(self: Box<Self>) -> B {
-//         self.into_inner()
-//     }
-// }
-//
-// impl<B: BufRead + Sized> FastoboReader<B> for SequentialParser<B> {
-//     fn try_into_doc(&mut self) -> fastobo::error::Result<fastobo::ast::OboDoc> {
-//         self.try_into()
-//     }
-//     fn into_bufread(self: Box<Self>) -> B {
-//         self.into_inner()
-//     }
-// }
-
-// ---------------------------------------------------------------------------
-
-/// A wrapper for a path on the local filesystem
-struct FsFile {
-    file: File,
-    path: PathBuf,
-}
-
-impl FsFile {
-    fn open<P: AsRef<Path>>(path: P) -> Result<Self, IoError> {
-        let p = path.as_ref();
-        File::open(p)
-            .map(|f| FsFile {
-                file: f,
-                path: p.to_owned()
-            })
-    }
-}
-
-impl Read for FsFile {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
-        self.file.read(buf)
-    }
-}
-
-// ---------------------------------------------------------------------------
-
-trait Handle: BufRead {
-    fn handle(&self) -> PyObject;
-    fn into_err(&mut self) -> Option<PyErr>;
-}
-
-impl Handle for BufReader<FsFile> {
-    fn handle(&self) -> PyObject {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        PyString::new(py, &self.get_ref().path.display().to_string())
-            .to_object(py)
-    }
-
-    fn into_err(&mut self) -> Option<PyErr> {
-        None
-    }
-}
-
-impl Handle for BufReader<PyFileGILRead> {
-    fn handle(&self) -> PyObject {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        self.get_ref().file().lock().unwrap().to_object(py)
-    }
-
-    fn into_err(&mut self) -> Option<PyErr> {
-        self.get_mut().err_mut().take()
-    }
-}
-
 // ---------------------------------------------------------------------------
 
 // FIXME: May cause memory leaks?
@@ -227,12 +187,12 @@ impl Handle for BufReader<PyFileGILRead> {
 /// See help(fastobo.iter) for more information.
 #[pyclass(module = "fastobo")]
 pub struct FrameReader {
-    inner: InternalParser<Box<dyn Handle>>,
+    inner: InternalParser<BufReader<Handle>>,
     header: Py<HeaderFrame>,
 }
 
 impl FrameReader {
-    fn new(handle: Box<dyn Handle>, ordered: bool, threads: i16) -> PyResult<Self> {
+    fn new(handle: BufReader<Handle>, ordered: bool, threads: i16) -> PyResult<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
@@ -251,15 +211,15 @@ impl FrameReader {
 
     pub fn from_path<P: AsRef<Path>>(path: P, ordered: bool, threads: i16) -> PyResult<Self> {
         let p = path.as_ref();
-        match FsFile::open(p) {
-            Ok(inner) => Self::new(Box::new(BufReader::new(inner)), ordered, threads),
+        match Handle::try_from(p.to_owned()) {
+            Ok(inner) => Self::new(BufReader::new(inner), ordered, threads),
             Err(e) => Error::from(e).with_path(p.display().to_string()).into(),
         }
     }
 
     pub fn from_handle(obj: &PyAny, ordered: bool, threads: i16) -> PyResult<Self> {
-        match PyFileGILRead::from_ref(obj) {
-            Ok(inner) => Self::new(Box::new(BufReader::new(inner)), ordered, threads),
+        match PyFileGILRead::from_ref(obj).map(Handle::PyFile) {
+            Ok(inner) => Self::new(BufReader::new(inner), ordered, threads),
             Err(e) => Err(e),
         }
     }
@@ -278,7 +238,7 @@ impl PyObjectProtocol for FrameReader {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let fmt = PyString::new(py, "fastobo.iter({!r})").to_object(py);
-        fmt.call_method1(py, "format", (&self.inner.as_ref().as_ref().handle(),))
+        fmt.call_method1(py, "format", (&self.inner.as_ref().get_ref().handle(),))
     }
 }
 
@@ -296,14 +256,15 @@ impl PyIterProtocol for FrameReader {
                 let entity = frame.into_entity_frame().unwrap();
                 Ok(Some(EntityFrame::from_py(entity, gil.python())))
             },
-            Some(Err(e)) => slf
-                .deref_mut()
-                .inner
-                .as_mut()
-                .as_mut()
-                .into_err()
-                .unwrap_or_else(|| Error::from(e).into())
-                .into(),
+            Some(Err(e)) => {
+                let gil = Python::acquire_gil();
+                let py = gil.python();
+                if PyErr::occurred(py) {
+                    Err(PyErr::fetch(py))
+                } else {
+                    Err(Error::from(e).into())
+                }
+            }
         }
     }
 }

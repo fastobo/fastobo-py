@@ -208,14 +208,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             // internal Python error if the parser failed,
             match reader.try_into_doc() {
                 Ok(doc) => Ok(doc.into_py(py)),
-                Err(e) => {
-                    reader
-                        .into_inner()
-                        .into_inner()
-                        .into_err()
-                        .unwrap_or_else(|| Error::from(e).into())
-                        .into()
-                }
+                Err(e) if PyErr::occurred(py) => Err(PyErr::fetch(py)),
+                Err(e) => Err(Error::from(e).into())
             }
         }
     }
@@ -307,27 +301,23 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///
     #[pyfn(m, "load_graph")]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
-        // Parse the source graph document.
         let doc: GraphDocument = if let Ok(s) = fh.cast_as::<PyString>() {
+            // Argument is a string, assumed to be a path: open the file.
+            // and extract the graph
             let path = s.to_string()?;
             fastobo_graphs::from_file(path.as_ref())
                 .map_err(|e| PyErr::from(GraphError::from(e)))?
         } else {
-            match PyFileRead::from_ref(fh) {
-                // Object is a binary file-handle: attempt to parse the
-                // document and return an `OboDoc` object.
-                Ok(mut f) => {
-                    fastobo_graphs::from_reader(&mut f)
-                        .map_err(|e| f
-                            .into_err()
-                            .unwrap_or_else(|| GraphError::from(e).into())
-                        )?
-                }
-                // Object is not a binary file-handle: wrap the inner error
-                // into a `TypeError` and raise that error.
-                Err(inner) => {
-                    raise!(py, TypeError("expected path or binary file handle") from inner)
-                }
+            // Argument is not a string, check if it is a file-handle.
+            let mut f = match PyFileRead::from_ref(fh) {
+                Ok(f) => f,
+                Err(e) => raise!(py, TypeError("expected path or binary file handle") from e)
+            };
+            // Extract the graph
+            match fastobo_graphs::from_reader(&mut f) {
+                Ok(doc) => doc,
+                Err(e) if PyErr::occurred(py) => return Err(PyErr::fetch(py)),
+                Err(e) => return Err(GraphError::from(e).into())
             }
         };
 
@@ -335,7 +325,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         let graph = doc.graphs.into_iter().next().unwrap();
         let doc = obo::OboDoc::from_graph(graph).map_err(GraphError::from)?;
 
-        // Convert the OBO document to a Python handle
+        // Convert the OBO document to a Python `OboDoc` class
         Ok(OboDoc::from_py(doc, py))
     }
 
@@ -369,7 +359,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
         // Convert OBO document to an OBO Graph document.
         let doc = obo::OboDoc::from_py(obj.clone_py(py), py).into_graph()
-            .map_err(|e| RuntimeError::py_err(e.to_string()))?;
+            .map_err(|e| PyErr::from(GraphError::from(e)))?;
+
         // Write the document
         if let Ok(s) = fh.cast_as::<PyString>() {
             // Write into a file if given a path as a string.
@@ -378,21 +369,17 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                 .map_err(|e| PyErr::from(GraphError::from(e)))
         } else {
             // Write into the handle if given a writable file.
-            match PyFileWrite::from_ref(fh) {
-                // Object is a binary file-handle: attempt to write the
-                // `GraphDocument` to the file handle.
-                Ok(mut f) => {
-                    fastobo_graphs::to_writer(&mut f, &doc)
-                        .map_err(|e| f
-                            .into_err()
-                            .unwrap_or_else(|| GraphError::from(e).into())
-                        )
+            let mut f = match PyFileWrite::from_ref(fh) {
+                Ok(f) => f,
+                Err(e) => {
+                    raise!(py, TypeError("expected path or binary file handle") from e)
                 }
-                // Object is not a binary file-handle: wrap the inner error
-                // into a `TypeError` and raise that error.
-                Err(inner) => {
-                    raise!(py, TypeError("expected path or binary file handle") from inner)
-                }
+            };
+            // Write the graph
+            match fastobo_graphs::to_writer(&mut f, &doc) {
+                Ok(()) => Ok(()),
+                Err(_) if PyErr::occurred(py) => Err(PyErr::fetch(py)),
+                Err(e) => Err(PyErr::from(GraphError::from(e))),
             }
         }
     }

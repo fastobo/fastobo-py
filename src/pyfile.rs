@@ -23,9 +23,6 @@ use pyo3::PyNativeType;
 
 #[macro_export]
 macro_rules! transmute_file_error {
-    ($self:ident, $e:ident, $msg:expr) => ({
-        transmute_file_error!($self, $e, $msg, $self.py)
-    });
     ($self:ident, $e:ident, $msg:expr, $py:expr) => ({
         // Attempt to transmute the Python OSError to an actual
         // Rust `std::io::Error` using `from_raw_os_error`.
@@ -42,7 +39,7 @@ macro_rules! transmute_file_error {
         // if the conversion is not possible for any reason we fail
         // silently, wrapping the Python error, and returning a
         // generic Rust error instead.
-        $self.err = Some($e);
+        $e.restore($py);
         Err(IoError::new(std::io::ErrorKind::Other, $msg))
     });
 }
@@ -52,25 +49,17 @@ macro_rules! transmute_file_error {
 /// A wrapper around a readable Python file borrowed within a GIL lifetime.
 pub struct PyFileRead<'p> {
     file: &'p PyAny,
-    err: Option<PyErr>,
 }
 
 impl<'p> PyFileRead<'p> {
     pub fn from_ref(file: &'p PyAny) -> PyResult<PyFileRead<'p>> {
         let res = file.call_method1("read", (0,))?;
         if res.cast_as::<PyBytes>().is_ok() {
-            Ok(PyFileRead {
-                file,
-                err: None,
-            })
+            Ok(PyFileRead { file })
         } else {
             let ty = res.get_type().name().to_string();
             TypeError::into(format!("expected bytes, found {}", ty))
         }
-    }
-
-    pub fn into_err(self) -> Option<PyErr> {
-        self.err
     }
 }
 
@@ -86,7 +75,7 @@ impl<'p> Read for PyFileRead<'p> {
                 } else {
                     let ty = obj.get_type().name().to_string();
                     let msg = format!("expected bytes, found {}", ty);
-                    self.err = Some(TypeError::py_err(msg));
+                    TypeError::py_err(msg).restore(self.file.py());
                     Err(IoError::new(
                         std::io::ErrorKind::Other,
                         "fh.read did not return bytes",
@@ -106,23 +95,13 @@ impl<'p> Read for PyFileRead<'p> {
 
 /// A wrapper around a writable Python file borrowed within a GIL lifetime.
 pub struct PyFileWrite<'p> {
-    // file: pyo3::PyObject,
-    // py: Python<'p>,
     file: &'p PyAny,
-    err: Option<PyErr>,
 }
 
 impl<'p> PyFileWrite<'p> {
     pub fn from_ref(file: &'p PyAny) -> PyResult<PyFileWrite<'p>> {
         file.call_method1("write", (PyBytes::new(file.py(), b""),))
-            .map(|_| PyFileWrite {
-                file,
-                err: None,
-            })
-    }
-
-    pub fn into_err(self) -> Option<PyErr> {
-        self.err
+            .map(|_| PyFileWrite { file })
     }
 }
 
@@ -137,7 +116,7 @@ impl<'p> Write for PyFileWrite<'p> {
                 } else {
                     let ty = obj.get_type().name().to_string();
                     let msg = format!("expected int, found {}", ty);
-                    self.err = Some(TypeError::py_err(msg));
+                    TypeError::py_err(msg).restore(self.file.py());
                     Err(IoError::new(
                         std::io::ErrorKind::Other,
                         "write method did not return int",
@@ -169,7 +148,6 @@ impl<'p> Write for PyFileWrite<'p> {
 /// A wrapper for a Python file that can outlive the GIL.
 pub struct PyFileGILRead {
     file: Mutex<PyObject>,
-    err: Option<PyErr>,
 }
 
 impl PyFileGILRead {
@@ -178,7 +156,6 @@ impl PyFileGILRead {
         if res.cast_as::<PyBytes>().is_ok() {
             Ok(PyFileGILRead {
                 file: Mutex::new(file.to_object(file.py())),
-                err: None,
             })
         } else {
             let ty = res.get_type().name().to_string();
@@ -188,14 +165,6 @@ impl PyFileGILRead {
 
     pub fn file(&self) -> &Mutex<PyObject> {
         &self.file
-    }
-
-    pub fn err(&self) -> &Option<PyErr> {
-        &self.err
-    }
-
-    pub fn err_mut(&mut self) -> &mut Option<PyErr> {
-        &mut self.err
     }
 }
 
@@ -214,7 +183,7 @@ impl Read for PyFileGILRead {
                 } else {
                     let ty = obj.as_ref(py).get_type().name().to_string();
                     let msg = format!("expected bytes, found {}", ty);
-                    self.err = Some(TypeError::py_err(msg));
+                    TypeError::py_err(msg).restore(py);
                     Err(IoError::new(
                         std::io::ErrorKind::Other,
                         "fh.read did not return bytes",

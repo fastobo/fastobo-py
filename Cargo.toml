@@ -20,7 +20,7 @@ lazy_static = "1.4.0"
 built = { version  = "0.4.1", features = ["chrono"] }
 
 [dependencies]
-libc = "0.2.70"
+libc = "0.2.74"
 opaque_typedef = "0.0.5"
 opaque_typedef_macros = "0.0.5"
 pyo3-built = "0.4.1"

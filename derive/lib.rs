@@ -1,26 +1,29 @@
 #![recursion_limit = "256"]
 
 extern crate proc_macro;
+extern crate proc_macro2;
 extern crate quote;
 extern crate syn;
 
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::spanned::Spanned;
+use syn::parse_macro_input;
 
 // ---
 
 #[proc_macro_derive(ClonePy)]
 pub fn clonepy_derive(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse_macro_input!(input as syn::DeriveInput);
     match &ast.data {
-        syn::Data::Enum(e) => clonepy_impl_enum(&ast, &e),
-        syn::Data::Struct(s) => clonepy_impl_struct(&ast, &s),
+        syn::Data::Enum(e) => TokenStream::from(clonepy_impl_enum(&ast, &e)),
+        syn::Data::Struct(s) => TokenStream::from(clonepy_impl_struct(&ast, &s)),
         _ => panic!("#[derive(ClonePy)] only supports enum or structs"),
     }
 }
 
-fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
+fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     let mut variants = Vec::new();
 
     // Build clone_py for each variant
@@ -47,10 +50,10 @@ fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream 
         }
     };
 
-    TokenStream::from(expanded)
+    TokenStream2::from(expanded)
 }
 
-fn clonepy_impl_struct(ast: &syn::DeriveInput, _en: &syn::DataStruct) -> TokenStream {
+fn clonepy_impl_struct(ast: &syn::DeriveInput, _en: &syn::DataStruct) -> TokenStream2 {
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
@@ -61,17 +64,15 @@ fn clonepy_impl_struct(ast: &syn::DeriveInput, _en: &syn::DataStruct) -> TokenSt
         }
     };
 
-    TokenStream::from(expanded)
+    TokenStream2::from(expanded)
 }
 
 // ---
 
 #[proc_macro_derive(PyWrapper, attributes(wraps))]
 pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
-
-    let mut output = TokenStream::new();
-
+    let ast = parse_macro_input!(input as syn::DeriveInput);
+    let mut output = TokenStream2::new();
     if let syn::Data::Enum(e) = &ast.data {
         // output.extend(clone_impl_enum(&ast, &e));
         output.extend(topyobject_impl_enum(&ast, &e));
@@ -84,10 +85,10 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
         panic!("only supports enums");
     }
 
-    output
+    TokenStream::from(output)
 }
 
-fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
+fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     let mut variants = Vec::new();
 
     // Build clone for each variant
@@ -111,10 +112,10 @@ fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream 
         }
     };
 
-    TokenStream::from(expanded)
+    TokenStream2::from(expanded)
 }
 
-fn topyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
+fn topyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     let mut variants = Vec::new();
 
     // Build clone for each variant
@@ -137,10 +138,10 @@ fn topyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStre
         }
     };
 
-    TokenStream::from(expanded)
+    TokenStream2::from(expanded)
 }
 
-fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
+fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     let mut variants = Vec::new();
 
     // Build clone for each variant
@@ -163,10 +164,10 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         }
     };
 
-    TokenStream::from(expanded)
+    TokenStream2::from(expanded)
 }
 
-fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
+fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     let wrapped = &ast.ident;
     let mut variants = Vec::new();
 
@@ -196,7 +197,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
 
         variants.push(quote!(
             #lit => if #path::is_exact_instance(ob) {
-                Ok(#wrapped::#name(pyo3::Py::from_borrowed_ptr(ob.as_ptr())))
+                Ok(#wrapped::#name(pyo3::Py::from_borrowed_ptr(ob.py(), ob.as_ptr())))
             } else {
                 pyo3::exceptions::TypeError::into("extraction of subclass failed")
             }
@@ -257,10 +258,10 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         }
     };
 
-    TokenStream::from(expanded)
+    TokenStream2::from(expanded)
 }
 
-fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
+fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     let mut variants = Vec::new();
 
     // Build clone for each variant
@@ -286,22 +287,22 @@ fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream {
         }
     };
 
-    TokenStream::from(expanded)
+    TokenStream2::from(expanded)
 }
 
 // ---
 
 #[proc_macro_derive(PyList)]
 pub fn pylist_derive(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse_macro_input!(input as syn::DeriveInput);
     if let syn::Data::Struct(s) = &ast.data {
-        pylist_impl_struct(&ast, &s)
+        TokenStream::from(pylist_impl_struct(&ast, &s))
     } else {
         panic!("#[derive(PyList)] only supports structs")
     }
 }
 
-fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStream {
+fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStream2 {
     // Find the field with `Vec` type on the struct
     let mut field = None; // the name of the Vec field
     let mut elem = None; // the type of Vec elements
@@ -331,7 +332,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
     let ty = elem.expect("could not find a field with `Vec` type");
 
     //
-    TokenStream::from(quote! {
+    TokenStream2::from(quote! {
         #[pymethods]
         impl #name {
 
@@ -444,20 +445,20 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
 
 #[proc_macro_derive(FinalClass)]
 pub fn finalclass_derive(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse_macro_input!(input as syn::DeriveInput);
     match &ast.data {
-        syn::Data::Struct(s) => finalclass_impl_struct(&ast, &s),
+        syn::Data::Struct(s) => TokenStream::from(finalclass_impl_struct(&ast, &s)),
         _ => panic!("#[derive(FinalClass)] only supports structs"),
     }
 }
 
-fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream {
+fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream2 {
     // Get the name of the wrapped struct.
     let name = &ast.ident;
 
     // derive an implementation of PyClassInitializer using simply the
     // default value of the base class as the initializer value
-    TokenStream::from(quote! {
+    TokenStream2::from(quote! {
         impl FinalClass for #name {}
         impl Into<pyo3::pyclass_init::PyClassInitializer<#name>> for #name {
             fn into(self) ->  pyo3::pyclass_init::PyClassInitializer<Self> {
@@ -473,20 +474,20 @@ fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> Toke
 
 #[proc_macro_derive(AbstractClass)]
 pub fn abstractclass_derive(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let ast = parse_macro_input!(input as syn::DeriveInput);
     match &ast.data {
-        syn::Data::Struct(s) => abstractclass_impl_struct(&ast, &s),
+        syn::Data::Struct(s) => TokenStream::from(abstractclass_impl_struct(&ast, &s)),
         _ => panic!("#[derive(AbstractClass)] only supports structs"),
     }
 }
 
-fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream {
+fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream2 {
     // Get the name of the wrapped struct.
     let name = &ast.ident;
 
     // derive an implementation of PyClassInitializer using simply the
     // default value of the base class as the initializer value
-    TokenStream::from(quote! {
+    TokenStream2::from(quote! {
         impl AbstractClass for #name {
             fn initializer() -> pyo3::pyclass_init::PyClassInitializer<Self> {
                 <<Self as PyTypeInfo>::BaseType as AbstractClass>::initializer()

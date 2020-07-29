@@ -15,3 +15,5 @@ version = "1.0"
 features = ["extra-traits"]
 [dependencies.quote]
 version = "1.0"
+[dependencies.proc-macro2]
+version = "1.0"

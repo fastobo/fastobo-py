@@ -97,6 +97,7 @@ pub struct OboDoc {
 }
 
 impl OboDoc {
+    /// Create an empty `OboDoc` with only the given header frame.
     pub fn with_header(header: Py<HeaderFrame>) -> Self {
         Self {
             header,
@@ -176,17 +177,6 @@ impl OboDoc {
         Ok(self.header.clone_ref(py))
     }
 
-    // #[setter]
-    // fn set_header(&mut self, header: PyHeaderFrame) -> PyResult<()> {
-    //     let gil = Python::acquire_gil();
-    //     let py = gil.python();
-    //     self.header = Py::new(py, header.clone_py(py))?;
-    //     Ok(())
-    // }
-
-    /// compact_ids(self, /)
-    /// --
-    ///
     /// Create a semantically equivalent OBO document with compact identifiers.
     ///
     /// The OBO specification describes how to perform an URI decompaction
@@ -218,17 +208,15 @@ impl OboDoc {
     ///     <http://owlcollab.github.io/oboformat/doc/obo-syntax.html#5.9>`_
     ///     section of the OBO format version 1.4 specification.
     ///
+    #[text_signature = "(self, /)"]
     fn compact_ids(&self) -> PyResult<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let mut doc = obo::OboDoc::from_py(self.clone_py(py), py);
-        fastobo::visit::IdCompactor::new().visit_doc(&mut doc);
+        py.allow_threads(|| fastobo::visit::IdCompactor::new().visit_doc(&mut doc));
         Ok(doc.into_py(py))
     }
 
-    /// decompact_ids(self, /)
-    /// --
-    ///
     /// Create a semantically equivalent OBO document with IRI identifiers.
     ///
     /// The OBO specification describes how to perform an URI decompaction
@@ -257,11 +245,12 @@ impl OboDoc {
     ///     <http://owlcollab.github.io/oboformat/doc/obo-syntax.html#5.9>`_
     ///     section of the OBO format version 1.4 specification.
     ///
+    #[text_signature = "(self, /)"]
     fn decompact_ids(&self) -> PyResult<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let mut doc = obo::OboDoc::from_py(self.clone_py(py), py);
-        fastobo::visit::IdDecompactor::new().visit_doc(&mut doc);
+        py.allow_threads(|| fastobo::visit::IdDecompactor::new().visit_doc(&mut doc));
         Ok(doc.into_py(py))
     }
 }

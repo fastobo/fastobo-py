@@ -2,7 +2,7 @@
 
 *Faultless AST for Open Biomedical Ontologies in Python.*
 
-[![TravisCI](https://img.shields.io/travis/fastobo/fastobo-py/master.svg?logo=travis&maxAge=600&style=flat-square)](https://travis-ci.com/fastobo/fastobo-py/branches)
+[![TravisCI](https://img.shields.io/travis/com/fastobo/fastobo-py/master.svg?logo=travis&maxAge=600&style=flat-square)](https://travis-ci.com/fastobo/fastobo-py/branches)
 [![AppVeyor](https://img.shields.io/appveyor/ci/althonos/fastobo-py/master?logo=appveyor&style=flat-square&maxAge=600)](https://ci.appveyor.com/project/althonos/fastobo-py)
 [![Codecov](https://img.shields.io/codecov/c/gh/fastobo/fastobo-py/master.svg?style=flat-square&maxAge=600)](https://codecov.io/gh/fastobo/fastobo-py)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)

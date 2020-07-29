@@ -16,8 +16,8 @@
 .. |Bioconda| image:: https://img.shields.io/conda/vn/bioconda/fastobo?style=flat-square&maxAge=3600
    :target: https://anaconda.org/bioconda/fastobo
 
-.. |Travis| image:: https://img.shields.io/travis/fastobo/fastobo-py.svg?logo=travis&style=flat-square&maxAge=3600
-   :target: https://travis-ci.org/fastobo/fastobo-py/branches
+.. |Travis| image:: https://img.shields.io/travis/com/fastobo/fastobo-py.svg?logo=travis&style=flat-square&maxAge=3600
+   :target: https://travis-ci.com/fastobo/fastobo-py/branches
 
 .. |AppVeyor| image:: https://img.shields.io/appveyor/ci/althonos/fastobo-py/master?logo=appveyor&style=flat-square&maxAge=600
    :target: https://ci.appveyor.com/project/althonos/fastobo-py

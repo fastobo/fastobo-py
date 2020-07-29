@@ -50,7 +50,7 @@ fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
         }
     };
 
-    TokenStream2::from(expanded)
+    expanded
 }
 
 fn clonepy_impl_struct(ast: &syn::DeriveInput, _en: &syn::DataStruct) -> TokenStream2 {
@@ -64,7 +64,7 @@ fn clonepy_impl_struct(ast: &syn::DeriveInput, _en: &syn::DataStruct) -> TokenSt
         }
     };
 
-    TokenStream2::from(expanded)
+    expanded
 }
 
 // ---
@@ -112,7 +112,7 @@ fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
         }
     };
 
-    TokenStream2::from(expanded)
+    expanded
 }
 
 fn topyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
@@ -138,7 +138,7 @@ fn topyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStre
         }
     };
 
-    TokenStream2::from(expanded)
+    expanded
 }
 
 fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
@@ -164,7 +164,7 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         }
     };
 
-    TokenStream2::from(expanded)
+    expanded
 }
 
 fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
@@ -258,7 +258,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         }
     };
 
-    TokenStream2::from(expanded)
+    expanded
 }
 
 fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
@@ -287,7 +287,7 @@ fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
         }
     };
 
-    TokenStream2::from(expanded)
+    expanded
 }
 
 // ---
@@ -332,7 +332,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
     let ty = elem.expect("could not find a field with `Vec` type");
 
     //
-    TokenStream2::from(quote! {
+    quote! {
         #[pymethods]
         impl #name {
 
@@ -437,7 +437,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
             // |  sort(self, /, *, key=None, reverse=False)
             // |      Stable sort *IN PLACE*.
         }
-    })
+    }
 }
 
 
@@ -458,7 +458,7 @@ fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> Toke
 
     // derive an implementation of PyClassInitializer using simply the
     // default value of the base class as the initializer value
-    TokenStream2::from(quote! {
+    quote! {
         impl FinalClass for #name {}
         impl Into<pyo3::pyclass_init::PyClassInitializer<#name>> for #name {
             fn into(self) ->  pyo3::pyclass_init::PyClassInitializer<Self> {
@@ -466,7 +466,7 @@ fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> Toke
                     .add_subclass(self)
             }
         }
-    })
+    }
 }
 
 
@@ -487,7 +487,7 @@ fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> T
 
     // derive an implementation of PyClassInitializer using simply the
     // default value of the base class as the initializer value
-    TokenStream2::from(quote! {
+    quote! {
         impl AbstractClass for #name {
             fn initializer() -> pyo3::pyclass_init::PyClassInitializer<Self> {
                 <<Self as PyTypeInfo>::BaseType as AbstractClass>::initializer()
@@ -495,5 +495,5 @@ fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> T
             }
         }
 
-    })
+    }
 }

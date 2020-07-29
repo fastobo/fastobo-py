@@ -12,7 +12,8 @@ path = "lib.rs"
 
 [dependencies.syn]
 version = "1.0"
-features = ["extra-traits"]
+default-features = false
+features = ["derive", "clone-impls", "parsing", "printing", "proc-macro"]
 [dependencies.quote]
 version = "1.0"
 [dependencies.proc-macro2]

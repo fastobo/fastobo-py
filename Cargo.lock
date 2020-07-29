@@ -97,15 +97,6 @@ dependencies = [
 
 [[package]]
 name = "cloudabi"
-version = "0.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
-dependencies = [
- "bitflags",
-]
-
-[[package]]
-name = "cloudabi"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4344512281c643ae7638bbabc3af17a11307803ec8f0fcad9fae512a8bf36467"
@@ -275,7 +266,7 @@ dependencies = [
  "opaque_typedef",
  "opaque_typedef_macros",
  "pest",
- "pyo3 0.11.1",
+ "pyo3",
  "pyo3-built",
  "url",
 ]
@@ -437,15 +428,6 @@ checksum = "8dd5a6d5999d9907cda8ed67bbd137d3af8085216c2ac62de5be860bd41f304a"
 
 [[package]]
 name = "lock_api"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4da24a77a3d8a6d4862d95f72e6fdb9c09a643ecdb402d754004a557f2bec75"
-dependencies = [
- "scopeguard",
-]
-
-[[package]]
-name = "lock_api"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28247cc5a5be2f05fbcd76dd0cf2c7d3b5400cb978a28042abcd4fa0b3f8261c"
@@ -563,37 +545,13 @@ dependencies = [
 
 [[package]]
 name = "parking_lot"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3a704eb390aafdc107b0e392f56a82b668e3a71366993b5340f5833fd62505e"
-dependencies = [
- "lock_api 0.3.4",
- "parking_lot_core 0.7.2",
-]
-
-[[package]]
-name = "parking_lot"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4893845fa2ca272e647da5d0e46660a314ead9c2fdd9a883aabc32e481a8733"
 dependencies = [
  "instant",
- "lock_api 0.4.1",
- "parking_lot_core 0.8.0",
-]
-
-[[package]]
-name = "parking_lot_core"
-version = "0.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d58c7c768d4ba344e3e8d72518ac13e259d7c7ade24167003b8488e10b6740a3"
-dependencies = [
- "cfg-if",
- "cloudabi 0.0.3",
- "libc",
- "redox_syscall",
- "smallvec",
- "winapi",
+ "lock_api",
+ "parking_lot_core",
 ]
 
 [[package]]
@@ -603,7 +561,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c361aa727dd08437f2f1447be8b59a33b0edd15e0fcee698f935613d9efbca9b"
 dependencies = [
  "cfg-if",
- "cloudabi 0.1.0",
+ "cloudabi",
  "instant",
  "libc",
  "redox_syscall",
@@ -749,22 +707,6 @@ dependencies = [
 
 [[package]]
 name = "pyo3"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80348539d1fa3fde72728c3fe9d750ec92c39e89908a774eda074289578c8d33"
-dependencies = [
- "indoc",
- "inventory",
- "libc",
- "parking_lot 0.10.2",
- "paste",
- "pyo3cls 0.10.1",
- "unindent",
- "version_check",
-]
-
-[[package]]
-name = "pyo3"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ca8710ffa8211c9a62a8a3863c4267c710dc42a82a7fd29c97de465d7ea6b7d"
@@ -773,31 +715,20 @@ dependencies = [
  "indoc",
  "inventory",
  "libc",
- "parking_lot 0.11.0",
+ "parking_lot",
  "paste",
- "pyo3cls 0.11.1",
+ "pyo3cls",
  "unindent",
 ]
 
 [[package]]
 name = "pyo3-built"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0eadc93edccc6521c53f702c11542a8ebe731e27f9453877ad3a95d170b8769d"
+checksum = "775a2d817903b7fc95841830ab173a819f3851a4c3e28cb2770e8d2e3603626c"
 dependencies = [
  "built",
- "pyo3 0.10.1",
-]
-
-[[package]]
-name = "pyo3-derive-backend"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa4d5d2e35fa26a8556dfca96c964249062deaa940b7e82e7c214f1bc21d646d"
-dependencies = [
- "proc-macro2 1.0.18",
- "quote 1.0.7",
- "syn 1.0.31",
+ "pyo3",
 ]
 
 [[package]]
@@ -813,22 +744,11 @@ dependencies = [
 
 [[package]]
 name = "pyo3cls"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f4628c487dbc084c17d4762bc0b531f373ca315997457708d6c9fabcc5c9928"
-dependencies = [
- "pyo3-derive-backend 0.10.1",
- "quote 1.0.7",
- "syn 1.0.31",
-]
-
-[[package]]
-name = "pyo3cls"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3fa17e1ea569d0bf3b7c00f2a9eea831ca05e55dd76f1794c541abba1c64baa"
 dependencies = [
- "pyo3-derive-backend 0.11.1",
+ "pyo3-derive-backend",
  "quote 1.0.7",
  "syn 1.0.31",
 ]

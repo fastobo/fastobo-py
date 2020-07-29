@@ -83,9 +83,6 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     add_submodule!(py, m, typedef);
     add_submodule!(py, m, xref);
 
-    /// iter(fh, ordered=True)
-    /// --
-    ///
     /// Iterate over the frames contained in an OBO document.
     ///
     /// The header frame can be accessed with the ``header`` method of the
@@ -121,6 +118,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     [TermFrame(PrefixedIdent('MS', '1000001')), ...]
     ///
     #[pyfn(m, "iter", ordered="true", threads="0")]
+    #[text_signature = "(fh, ordered=True, threads=0)"]
     fn iter(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<FrameReader> {
         if let Ok(s) = fh.cast_as::<PyString>() {
             let path = s.to_string()?;
@@ -135,9 +133,6 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         }
     }
 
-    /// load(fh, ordered=True, threads=0)
-    /// --
-    ///
     /// Load an OBO document from the given path or file handle.
     ///
     /// Arguments:
@@ -171,6 +166,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     SavedByClause('rctauber')
     ///
     #[pyfn(m, "load", ordered="true", threads="0")]
+    #[text_signature = "(fh, threads=0)"]
     fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         if let Ok(s) = fh.cast_as::<PyString>() {
             // get a buffered reader to the resources pointed by `path`
@@ -213,9 +209,6 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         }
     }
 
-    /// loads(document, ordered=True)
-    /// --
-    ///
     /// Load an OBO document from a string.
     ///
     /// Arguments:
@@ -251,6 +244,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     NameClause('test item')
     ///
     #[pyfn(m, "loads", ordered="true", threads="0")]
+    #[text_signature = "(document)"]
     fn loads(py: Python, document: &str, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         let cursor = std::io::Cursor::new(document);
         let mut reader = InternalParser::with_thread_count(cursor, threads)?;
@@ -261,9 +255,6 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         }
     }
 
-    /// load_graph(fh)
-    /// --
-    ///
     /// Load an OBO graph from the given path or file handle.
     ///
     /// Both JSON and YAML formats are supported. *Actually, since YAML is a
@@ -299,6 +290,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     TypedefFrame(UnprefixedIdent('has_part'))
     ///
     #[pyfn(m, "load_graph")]
+    #[text_signature = "(fh)"]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
         let doc: GraphDocument = if let Ok(s) = fh.cast_as::<PyString>() {
             // Argument is a string, assumed to be a path: open the file.
@@ -329,9 +321,6 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         Ok(OboDoc::from_py(doc, py))
     }
 
-    /// dump_graph(doc, fh)
-    /// --
-    ///
     /// Dump an OBO graph into the given writer or file handle, serialized
     /// into a compact JSON representation.
     ///
@@ -356,6 +345,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> fastobo.dump_graph(doc, "tests/data/plana.json")
     ///
     #[pyfn(m, "dump_graph")]
+    #[text_signature = "(doc, fh)"]
     fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
         // Convert OBO document to an OBO Graph document.
         let doc = obo::OboDoc::from_py(obj.clone_py(py), py);

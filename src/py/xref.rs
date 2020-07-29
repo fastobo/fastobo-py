@@ -186,7 +186,7 @@ impl PyObjectProtocol for Xref {
 ///     Xref(PrefixedIdent('PSI', 'MS'))
 ///
 #[pyclass(module = "fastobo.xref")]
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, PyList)]
 pub struct XrefList {
     xrefs: Vec<Py<Xref>>,
 }

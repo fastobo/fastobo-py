@@ -6,6 +6,7 @@ import os
 import setuptools
 import setuptools_rust as rust
 from setuptools.command.sdist import sdist as _sdist
+from setuptools_rust.utils import get_rust_version
 
 
 class sdist(_sdist):
@@ -23,6 +24,12 @@ class sdist(_sdist):
         _sdist.run(self)
 
 
+if "nightly" in get_rust_version().prerelease:
+    features = ["extension-module", "nightly"]
+else:
+    features = ["extension-module"]
+
+
 setuptools.setup(
     setup_requires=["setuptools", "setuptools_rust"],
     cmdclass=dict(sdist=sdist),
@@ -31,6 +38,6 @@ setuptools.setup(
         path="Cargo.toml",
         binding=rust.Binding.PyO3,
         strip=rust.Strip.Debug,
-        features=["extension-module"],
+        features=features,
     )],
 )

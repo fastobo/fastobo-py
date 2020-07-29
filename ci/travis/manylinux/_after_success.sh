@@ -9,6 +9,8 @@ export PYTHON_LIB=$(${PYBIN}/python -c "import sysconfig; print(sysconfig.get_co
 export LIBRARY_PATH="$LIBRARY_PATH:$PYTHON_LIB"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PYTHON_LIB"
 
+pip install -U auditwheel
+
 # compile wheels
 cd /io
 python setup.py sdist bdist_wheel
@@ -25,5 +27,5 @@ done
 
 # Fix potentially invalid tags in wheel name
 for whl in /tmp/repaired/*.whl; do
-  auditwheel addtag "$whl" -w /io/dist
+  auditwheel addtag "$whl" -w /io/dist || cp "$whl" -t /io/dist
 done

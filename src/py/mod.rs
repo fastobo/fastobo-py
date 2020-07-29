@@ -83,7 +83,6 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     add_submodule!(py, m, typedef);
     add_submodule!(py, m, xref);
 
-
     /// iter(fh, ordered=True)
     /// --
     ///
@@ -184,7 +183,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             let mut reader = InternalParser::with_thread_count(bf, threads)?;
             // set the `ordered` flag and parse the document using the reader
             reader.ordered(ordered);
-            match reader.try_into_doc() {
+            match py.allow_threads(|| reader.try_into_doc()) {
                 Ok(doc) => Ok(doc.into_py(py)),
                 Err(e) => Error::from(e).with_path(path).into(),
             }
@@ -256,7 +255,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         let cursor = std::io::Cursor::new(document);
         let mut reader = InternalParser::with_thread_count(cursor, threads)?;
         reader.ordered(ordered);
-        match reader.try_into_doc() {
+        match py.allow_threads(|| reader.try_into_doc()) {
             Ok(doc) => Ok(doc.into_py(py)),
             Err(e) => Error::from(e).into(),
         }
@@ -305,7 +304,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             // Argument is a string, assumed to be a path: open the file.
             // and extract the graph
             let path = s.to_string()?;
-            fastobo_graphs::from_file(path.as_ref())
+            py.allow_threads(|| fastobo_graphs::from_file(path.as_ref()))
                 .map_err(|e| PyErr::from(GraphError::from(e)))?
         } else {
             // Argument is not a string, check if it is a file-handle.
@@ -323,7 +322,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
 
         // Convert the graph to an OBO document
         let graph = doc.graphs.into_iter().next().unwrap();
-        let doc = obo::OboDoc::from_graph(graph).map_err(GraphError::from)?;
+        let doc = py.allow_threads(|| obo::OboDoc::from_graph(graph))
+            .map_err(GraphError::from)?;
 
         // Convert the OBO document to a Python `OboDoc` class
         Ok(OboDoc::from_py(doc, py))
@@ -358,14 +358,15 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "dump_graph")]
     fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
         // Convert OBO document to an OBO Graph document.
-        let doc = obo::OboDoc::from_py(obj.clone_py(py), py).into_graph()
+        let doc = obo::OboDoc::from_py(obj.clone_py(py), py);
+        let graph = py.allow_threads(|| doc.into_graph())
             .map_err(|e| PyErr::from(GraphError::from(e)))?;
 
         // Write the document
         if let Ok(s) = fh.cast_as::<PyString>() {
             // Write into a file if given a path as a string.
             let path = s.to_string()?;
-            fastobo_graphs::to_file(path.as_ref(), &doc)
+            py.allow_threads(|| fastobo_graphs::to_file(path.as_ref(), &graph))
                 .map_err(|e| PyErr::from(GraphError::from(e)))
         } else {
             // Write into the handle if given a writable file.
@@ -376,7 +377,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                 }
             };
             // Write the graph
-            match fastobo_graphs::to_writer(&mut f, &doc) {
+            match fastobo_graphs::to_writer(&mut f, &graph) {
                 Ok(()) => Ok(()),
                 Err(_) if PyErr::occurred(py) => Err(PyErr::fetch(py)),
                 Err(e) => Err(PyErr::from(GraphError::from(e))),

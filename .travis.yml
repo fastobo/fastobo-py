@@ -37,6 +37,7 @@ stages:
 .test-python-osx: &test-python-osx
   stage: osx
   os: osx
+  osx_image: xcode7.3
   language: generic
   cache:
     directories:

@@ -15,8 +15,14 @@ chandler push --github="$TRAVIS_REPO_SLUG" --changelog="CHANGELOG.md"
 
 # --- Deploy to PyPI ---------------------------------------------------------
 
+if [ "$TRAVIS_OS_NAME" = "osx" ] && [ ! "$PYTHON" = "pypy3.7" ]; then
+  log Activating pyenv
+  eval "$(pyenv init -)"
+  pyenv shell $(pyenv versions --bare)
+fi
+
 log Checking twine is installed
-python3 -m pip install twine
+python -m pip install twine
 
 log Deploying to PyPI
-python3 -m twine upload --skip-existing dist/*.whl dist/*.tar.gz
+python -m twine upload --skip-existing dist/*.whl dist/*.tar.gz

@@ -66,7 +66,7 @@ class build_rust(_build_rust):
             with open(rustup_sh, "wb") as dst:
                 shutil.copyfileobj(res, dst)
 
-        self.announce(f"installing Rust compiler to {self.build_temp}", level=INFO)
+        self.announce("installing Rust compiler to {}".format(self.build_temp), level=INFO)
         subprocess.call([
             "sh",
             rustup_sh,
@@ -78,7 +78,7 @@ class build_rust(_build_rust):
             "--no-modify-path"
         ])
 
-        self.announce(f"updating $PATH variable to use local Rust compiler", level=INFO)
+        self.announce("updating $PATH variable to use local Rust compiler", level=INFO)
         os.environ["PATH"] = ":".join([
             os.path.abspath(os.path.join(os.environ["CARGO_HOME"], "bin")),
             os.environ["PATH"]

@@ -86,25 +86,27 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
             IsAnonymous(b) => {
                 Py::new(py, IsAnonymousClause::new(b)).map(TypedefClause::IsAnonymous)
             }
-            Name(n) => Py::new(py, NameClause::new(n)).map(TypedefClause::Name),
+            Name(n) => Py::new(py, NameClause::new(*n)).map(TypedefClause::Name),
             Namespace(ns) => {
-                Py::new(py, NamespaceClause::new(py, ns)).map(TypedefClause::Namespace)
+                Py::new(py, NamespaceClause::new(py, *ns)).map(TypedefClause::Namespace)
             }
-            AltId(id) => Py::new(py, AltIdClause::new(py, id)).map(TypedefClause::AltId),
-            Def(desc, xrefs) => {
-                Py::new(py, DefClause::new(py, desc, xrefs)).map(TypedefClause::Def)
+            AltId(id) => Py::new(py, AltIdClause::new(py, *id)).map(TypedefClause::AltId),
+            Def(mut def) => {
+                let text = std::mem::take(def.text_mut());
+                let xrefs = std::mem::take(def.xrefs_mut());
+                Py::new(py, DefClause::new(py, text, xrefs)).map(TypedefClause::Def)
             }
-            Comment(c) => Py::new(py, CommentClause::new(c)).map(TypedefClause::Comment),
-            Subset(s) => Py::new(py, SubsetClause::new(py, s)).map(TypedefClause::Subset),
-            Synonym(s) => Py::new(py, SynonymClause::new(py, s)).map(TypedefClause::Synonym),
-            Xref(x) => Py::new(py, XrefClause::new(py, x)).map(TypedefClause::Xref),
+            Comment(c) => Py::new(py, CommentClause::new(*c)).map(TypedefClause::Comment),
+            Subset(s) => Py::new(py, SubsetClause::new(py, *s)).map(TypedefClause::Subset),
+            Synonym(s) => Py::new(py, SynonymClause::new(py, *s)).map(TypedefClause::Synonym),
+            Xref(x) => Py::new(py, XrefClause::new(py, *x)).map(TypedefClause::Xref),
             PropertyValue(pv) => {
-                Py::new(py, PropertyValueClause::new(py, pv)).map(TypedefClause::PropertyValue)
+                Py::new(py, PropertyValueClause::new(py, *pv)).map(TypedefClause::PropertyValue)
             }
-            Domain(id) => Py::new(py, DomainClause::new(py, id)).map(TypedefClause::Domain),
-            Range(id) => Py::new(py, RangeClause::new(py, id)).map(TypedefClause::Range),
+            Domain(id) => Py::new(py, DomainClause::new(py, *id)).map(TypedefClause::Domain),
+            Range(id) => Py::new(py, RangeClause::new(py, *id)).map(TypedefClause::Range),
             Builtin(b) => Py::new(py, BuiltinClause::new(b)).map(TypedefClause::Builtin),
-            HoldsOverChain(r1, r2) => Py::new(py, HoldsOverChainClause::new(py, r1, r2))
+            HoldsOverChain(r1, r2) => Py::new(py, HoldsOverChainClause::new(py, *r1, *r2))
                 .map(TypedefClause::HoldsOverChain),
             IsAntiSymmetric(b) => {
                 Py::new(py, IsAntiSymmetricClause::new(b)).map(TypedefClause::IsAntiSymmetric)
@@ -127,48 +129,48 @@ impl FromPy<fastobo::ast::TypedefClause> for TypedefClause {
             }
             IsInverseFunctional(b) => Py::new(py, IsInverseFunctionalClause::new(b))
                 .map(TypedefClause::IsInverseFunctional),
-            IsA(id) => Py::new(py, IsAClause::new(py, id)).map(TypedefClause::IsA),
+            IsA(id) => Py::new(py, IsAClause::new(py, *id)).map(TypedefClause::IsA),
             IntersectionOf(r) => {
-                Py::new(py, IntersectionOfClause::new(py, r)).map(TypedefClause::IntersectionOf)
+                Py::new(py, IntersectionOfClause::new(py, *r)).map(TypedefClause::IntersectionOf)
             }
-            UnionOf(cls) => Py::new(py, UnionOfClause::new(py, cls)).map(TypedefClause::UnionOf),
+            UnionOf(cls) => Py::new(py, UnionOfClause::new(py, *cls)).map(TypedefClause::UnionOf),
             EquivalentTo(cls) => {
-                Py::new(py, EquivalentToClause::new(py, cls)).map(TypedefClause::EquivalentTo)
+                Py::new(py, EquivalentToClause::new(py, *cls)).map(TypedefClause::EquivalentTo)
             }
             DisjointFrom(cls) => {
-                Py::new(py, DisjointFromClause::new(py, cls)).map(TypedefClause::DisjointFrom)
+                Py::new(py, DisjointFromClause::new(py, *cls)).map(TypedefClause::DisjointFrom)
             }
             TransitiveOver(r) => {
-                Py::new(py, TransitiveOverClause::new(py, r)).map(TypedefClause::TransitiveOver)
+                Py::new(py, TransitiveOverClause::new(py, *r)).map(TypedefClause::TransitiveOver)
             }
-            EquivalentToChain(r1, r2) => Py::new(py, EquivalentToChainClause::new(py, r1, r2))
+            EquivalentToChain(r1, r2) => Py::new(py, EquivalentToChainClause::new(py, *r1, *r2))
                 .map(TypedefClause::EquivalentToChain),
             DisjointOver(r) => {
-                Py::new(py, DisjointOverClause::new(py, r)).map(TypedefClause::DisjointOver)
+                Py::new(py, DisjointOverClause::new(py, *r)).map(TypedefClause::DisjointOver)
             }
             InverseOf(cls) => {
-                Py::new(py, InverseOfClause::new(py, cls)).map(TypedefClause::InverseOf)
+                Py::new(py, InverseOfClause::new(py, *cls)).map(TypedefClause::InverseOf)
             }
             Relationship(r, id) => {
-                Py::new(py, RelationshipClause::new(py, r, id)).map(TypedefClause::Relationship)
+                Py::new(py, RelationshipClause::new(py, *r, *id)).map(TypedefClause::Relationship)
             }
             IsObsolete(b) => {
                 Py::new(py, IsObsoleteClause::new(b)).map(TypedefClause::IsObsolete)
             }
             ReplacedBy(id) => {
-                Py::new(py, ReplacedByClause::new(py, id)).map(TypedefClause::ReplacedBy)
+                Py::new(py, ReplacedByClause::new(py, *id)).map(TypedefClause::ReplacedBy)
             }
-            Consider(id) => Py::new(py, ConsiderClause::new(py, id)).map(TypedefClause::Consider),
+            Consider(id) => Py::new(py, ConsiderClause::new(py, *id)).map(TypedefClause::Consider),
             CreatedBy(name) => {
-                Py::new(py, CreatedByClause::new(name)).map(TypedefClause::CreatedBy)
+                Py::new(py, CreatedByClause::new(*name)).map(TypedefClause::CreatedBy)
             }
             CreationDate(dt) => {
-                Py::new(py, CreationDateClause::new(py, dt)).map(TypedefClause::CreationDate)
+                Py::new(py, CreationDateClause::new(py, *dt)).map(TypedefClause::CreationDate)
             }
-            ExpandAssertionTo(d, xrefs) => Py::new(py, ExpandAssertionToClause::new(py, d, xrefs))
+            ExpandAssertionTo(d, xrefs) => Py::new(py, ExpandAssertionToClause::new(py, *d, *xrefs))
                 .map(TypedefClause::ExpandAssertionTo),
             ExpandExpressionTo(d, xrefs) => {
-                Py::new(py, ExpandExpressionToClause::new(py, d, xrefs))
+                Py::new(py, ExpandExpressionToClause::new(py, *d, *xrefs))
                     .map(TypedefClause::ExpandExpressionTo)
             }
             IsMetadataTag(b) => {
@@ -277,13 +279,13 @@ impl Display for NameClause {
 
 impl From<NameClause> for fastobo::ast::TypedefClause {
     fn from(clause: NameClause) -> Self {
-        fastobo::ast::TypedefClause::Name(clause.name)
+        fastobo::ast::TypedefClause::Name(Box::new(clause.name))
     }
 }
 
 impl FromPy<NameClause> for fastobo::ast::TypedefClause {
-    fn from_py(clause: NameClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::from(clause)
+    fn from_py(clause: NameClause, _py: Python) -> Self {
+        clause.into()
     }
 }
 
@@ -367,7 +369,7 @@ impl Display for NamespaceClause {
 impl FromPy<NamespaceClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: NamespaceClause, py: Python) -> Self {
         let ns = fastobo::ast::NamespaceIdent::from_py(clause.namespace, py);
-        fastobo::ast::TypedefClause::Namespace(ns)
+        fastobo::ast::TypedefClause::Namespace(Box::new(ns))
     }
 }
 
@@ -448,7 +450,7 @@ impl Display for AltIdClause {
 
 impl FromPy<AltIdClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: AltIdClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::AltId(clause.alt_id.into_py(py))
+        fastobo::ast::TypedefClause::AltId(Box::new(clause.alt_id.into_py(py)))
     }
 }
 
@@ -537,7 +539,9 @@ impl Display for DefClause {
 
 impl FromPy<DefClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: DefClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::Def(clause.definition, clause.xrefs.into_py(py))
+        let xrefs = fastobo::ast::XrefList::from_py(clause.xrefs, py);
+        let def = fastobo::ast::Definition::with_xrefs(clause.definition, xrefs);
+        fastobo::ast::TypedefClause::Def(Box::new(def))
     }
 }
 
@@ -618,13 +622,13 @@ impl Display for CommentClause {
 
 impl From<CommentClause> for fastobo::ast::TypedefClause {
     fn from(clause: CommentClause) -> Self {
-        fastobo::ast::TypedefClause::Comment(clause.comment)
+        fastobo::ast::TypedefClause::Comment(Box::new(clause.comment))
     }
 }
 
 impl FromPy<CommentClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: CommentClause, _py: Python) -> Self {
-        fastobo::ast::TypedefClause::Comment(clause.comment)
+        fastobo::ast::TypedefClause::Comment(Box::new(clause.comment))
     }
 }
 
@@ -707,7 +711,7 @@ impl Display for SubsetClause {
 
 impl FromPy<SubsetClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: SubsetClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::Subset(clause.subset.into_py(py))
+        fastobo::ast::TypedefClause::Subset(Box::new(clause.subset.into_py(py)))
     }
 }
 
@@ -788,7 +792,7 @@ impl Display for SynonymClause {
 impl FromPy<SynonymClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: SynonymClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::Synonym(
-            clause.synonym.as_ref(py).borrow().clone_py(py).into_py(py)
+            Box::new(clause.synonym.as_ref(py).borrow().clone_py(py).into_py(py))
         )
     }
 }
@@ -870,7 +874,7 @@ impl Display for XrefClause {
 impl FromPy<XrefClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: XrefClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::Xref(
-            clause.xref.as_ref(py).borrow().clone_py(py).into_py(py)
+            Box::new(clause.xref.as_ref(py).borrow().clone_py(py).into_py(py))
         )
     }
 }
@@ -968,7 +972,7 @@ impl Display for PropertyValueClause {
 
 impl FromPy<PropertyValueClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: PropertyValueClause, py: Python) -> ast::TypedefClause {
-        ast::TypedefClause::PropertyValue(clause.inner.into_py(py))
+        fastobo::ast::TypedefClause::PropertyValue(Box::new(clause.inner.into_py(py)))
     }
 }
 
@@ -1047,7 +1051,7 @@ impl Display for DomainClause {
 
 impl FromPy<DomainClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: DomainClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::Domain(clause.domain.into_py(py))
+        fastobo::ast::TypedefClause::Domain(Box::new(clause.domain.into_py(py)))
     }
 }
 
@@ -1126,7 +1130,7 @@ impl Display for RangeClause {
 
 impl FromPy<RangeClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: RangeClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::Range(clause.range.into_py(py))
+        fastobo::ast::TypedefClause::Range(Box::new(clause.range.into_py(py)))
     }
 }
 
@@ -1275,8 +1279,8 @@ impl Display for HoldsOverChainClause {
 impl FromPy<HoldsOverChainClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: HoldsOverChainClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::HoldsOverChain(
-            clause.first.into_py(py),
-            clause.last.into_py(py),
+            Box::new(clause.first.into_py(py)),
+            Box::new(clause.last.into_py(py)),
         )
     }
 }
@@ -1864,7 +1868,7 @@ impl ClonePy for IsAClause {
 
 impl FromPy<IsAClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IsAClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::IsA(clause.typedef.into_py(py))
+        ast::TypedefClause::IsA(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -1943,7 +1947,7 @@ impl Display for IntersectionOfClause {
 
 impl FromPy<IntersectionOfClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: IntersectionOfClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::IntersectionOf(clause.typedef.into_py(py))
+        ast::TypedefClause::IntersectionOf(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -2021,7 +2025,7 @@ impl Display for UnionOfClause {
 
 impl FromPy<UnionOfClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: UnionOfClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::UnionOf(clause.typedef.into_py(py))
+        ast::TypedefClause::UnionOf(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -2100,7 +2104,7 @@ impl Display for EquivalentToClause {
 
 impl FromPy<EquivalentToClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: EquivalentToClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::EquivalentTo(clause.typedef.into_py(py))
+        ast::TypedefClause::EquivalentTo(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -2179,7 +2183,7 @@ impl Display for DisjointFromClause {
 
 impl FromPy<DisjointFromClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: DisjointFromClause, py: Python) -> Self {
-        ast::TypedefClause::DisjointFrom(clause.typedef.into_py(py))
+        ast::TypedefClause::DisjointFrom(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -2258,7 +2262,7 @@ impl Display for InverseOfClause {
 
 impl FromPy<InverseOfClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: InverseOfClause, py: Python) -> Self {
-        ast::TypedefClause::InverseOf(clause.typedef.into_py(py))
+        ast::TypedefClause::InverseOf(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -2337,7 +2341,7 @@ impl Display for TransitiveOverClause {
 
 impl FromPy<TransitiveOverClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: TransitiveOverClause, py: Python) -> Self {
-        ast::TypedefClause::TransitiveOver(clause.typedef.into_py(py))
+        ast::TypedefClause::TransitiveOver(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -2422,8 +2426,8 @@ impl Display for EquivalentToChainClause {
 impl FromPy<EquivalentToChainClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: EquivalentToChainClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::EquivalentToChain(
-            clause.first.into_py(py),
-            clause.last.into_py(py),
+            Box::new(clause.first.into_py(py)),
+            Box::new(clause.last.into_py(py)),
         )
     }
 }
@@ -2509,7 +2513,7 @@ impl Display for DisjointOverClause {
 
 impl FromPy<DisjointOverClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: DisjointOverClause, py: Python) -> Self {
-        ast::TypedefClause::DisjointOver(clause.typedef.into_py(py))
+        ast::TypedefClause::DisjointOver(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -2593,7 +2597,7 @@ impl Display for RelationshipClause {
 
 impl FromPy<RelationshipClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: RelationshipClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::Relationship(clause.typedef.into_py(py), clause.target.into_py(py))
+        ast::TypedefClause::Relationship(Box::new(clause.typedef.into_py(py)), Box::new(clause.target.into_py(py)))
     }
 }
 
@@ -2739,7 +2743,7 @@ impl Display for ReplacedByClause {
 
 impl FromPy<ReplacedByClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ReplacedByClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::ReplacedBy(clause.typedef.into_py(py))
+        ast::TypedefClause::ReplacedBy(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -2818,7 +2822,7 @@ impl Display for ConsiderClause {
 
 impl FromPy<ConsiderClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ConsiderClause, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::Consider(clause.typedef.into_py(py))
+        ast::TypedefClause::Consider(Box::new(clause.typedef.into_py(py)))
     }
 }
 
@@ -2882,7 +2886,7 @@ impl Display for CreatedByClause {
 
 impl From<CreatedByClause> for fastobo::ast::TypedefClause {
     fn from(clause: CreatedByClause) -> Self {
-        fastobo::ast::TypedefClause::CreatedBy(clause.creator)
+        fastobo::ast::TypedefClause::CreatedBy(Box::new(clause.creator))
     }
 }
 
@@ -2964,7 +2968,7 @@ impl Display for CreationDateClause {
 
 impl From<CreationDateClause> for fastobo::ast::TypedefClause {
     fn from(clause: CreationDateClause) -> Self {
-        fastobo::ast::TypedefClause::CreationDate(clause.date)
+        fastobo::ast::TypedefClause::CreationDate(Box::new(clause.date))
     }
 }
 
@@ -3061,7 +3065,10 @@ impl Display for ExpandAssertionToClause {
 
 impl FromPy<ExpandAssertionToClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ExpandAssertionToClause, py: Python) -> Self {
-        fastobo::ast::TypedefClause::ExpandAssertionTo(clause.definition, clause.xrefs.into_py(py))
+        fastobo::ast::TypedefClause::ExpandAssertionTo(
+            Box::new(clause.definition),
+            Box::new(clause.xrefs.into_py(py))
+        )
     }
 }
 
@@ -3168,8 +3175,8 @@ impl Display for ExpandExpressionToClause {
 impl FromPy<ExpandExpressionToClause> for fastobo::ast::TypedefClause {
     fn from_py(clause: ExpandExpressionToClause, py: Python) -> Self {
         fastobo::ast::TypedefClause::ExpandExpressionTo(
-            clause.definition,
-            clause.xrefs.into_py(py),
+            Box::new(clause.definition),
+            Box::new(clause.xrefs.into_py(py)),
         )
     }
 }

@@ -142,7 +142,7 @@ impl From<Error> for PyErr {
                         // SUPER UNSAFE: check the struct has not changed when
                         //               updating! Using private fields is out of
                         //               semver so any update is dangerous.
-                        let pe: PestError = unsafe { std::mem::transmute(error) };
+                        let pe: PestError = unsafe { std::mem::transmute(*error) };
                         let msg = pe.message();
                         let path = pe.path.unwrap_or_else(|| String::from("<stdin>"));
                         let (l, c) = match pe.line_col {

@@ -58,15 +58,15 @@ impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
     fn from_py(frame: fastobo::ast::EntityFrame, py: Python) -> Self {
         match frame {
             fastobo::ast::EntityFrame::Term(frame) => {
-                Py::new(py, TermFrame::from_py(frame, py))
+                Py::new(py, TermFrame::from_py(*frame, py))
                     .map(EntityFrame::Term)
             }
             fastobo::ast::EntityFrame::Typedef(frame) => {
-                Py::new(py, TypedefFrame::from_py(frame, py))
+                Py::new(py, TypedefFrame::from_py(*frame, py))
                     .map(EntityFrame::Typedef)
             }
             fastobo::ast::EntityFrame::Instance(frame) => {
-                Py::new(py, InstanceFrame::from_py(frame, py))
+                Py::new(py, InstanceFrame::from_py(*frame, py))
                     .map(EntityFrame::Instance)
             },
         }

@@ -71,42 +71,46 @@ impl FromPy<fastobo::ast::TermClause> for TermClause {
             IsAnonymous(b) => {
                 Py::new(py, IsAnonymousClause::new(b)).map(TermClause::IsAnonymous)
             }
-            Name(n) => Py::new(py, NameClause::new(n)).map(TermClause::Name),
-            Namespace(ns) => Py::new(py, NamespaceClause::new(py, ns)).map(TermClause::Namespace),
-            AltId(id) => Py::new(py, AltIdClause::new(py, id)).map(TermClause::AltId),
-            Def(desc, xrefs) => Py::new(py, DefClause::new(py, desc, xrefs)).map(TermClause::Def),
-            Comment(c) => Py::new(py, CommentClause::new(c)).map(TermClause::Comment),
-            Subset(s) => Py::new(py, SubsetClause::new(py, s)).map(TermClause::Subset),
-            Synonym(s) => Py::new(py, SynonymClause::new(py, s)).map(TermClause::Synonym),
-            Xref(x) => Py::new(py, XrefClause::new(py, x)).map(TermClause::Xref),
+            Name(n) => Py::new(py, NameClause::new(*n)).map(TermClause::Name),
+            Namespace(ns) => Py::new(py, NamespaceClause::new(py, *ns)).map(TermClause::Namespace),
+            AltId(id) => Py::new(py, AltIdClause::new(py, *id)).map(TermClause::AltId),
+            Def(mut def) => {
+                let text = std::mem::take(def.text_mut());
+                let xrefs = std::mem::take(def.xrefs_mut());
+                Py::new(py, DefClause::new(py, text, xrefs)).map(TermClause::Def)
+            }
+            Comment(c) => Py::new(py, CommentClause::new(*c)).map(TermClause::Comment),
+            Subset(s) => Py::new(py, SubsetClause::new(py, *s)).map(TermClause::Subset),
+            Synonym(s) => Py::new(py, SynonymClause::new(py, *s)).map(TermClause::Synonym),
+            Xref(x) => Py::new(py, XrefClause::new(py, *x)).map(TermClause::Xref),
             Builtin(b) => Py::new(py, BuiltinClause::new(b)).map(TermClause::Builtin),
             PropertyValue(pv) => {
-                Py::new(py, PropertyValueClause::new(py, pv)).map(TermClause::PropertyValue)
+                Py::new(py, PropertyValueClause::new(py, *pv)).map(TermClause::PropertyValue)
             }
-            IsA(id) => Py::new(py, IsAClause::new(py, id)).map(TermClause::IsA),
+            IsA(id) => Py::new(py, IsAClause::new(py, *id)).map(TermClause::IsA),
             IntersectionOf(r, cls) => {
-                Py::new(py, IntersectionOfClause::new(py, r, cls)).map(TermClause::IntersectionOf)
+                Py::new(py, IntersectionOfClause::new(py, r.map(|id| *id), *cls)).map(TermClause::IntersectionOf)
             }
-            UnionOf(cls) => Py::new(py, UnionOfClause::new(py, cls)).map(TermClause::UnionOf),
+            UnionOf(cls) => Py::new(py, UnionOfClause::new(py, *cls)).map(TermClause::UnionOf),
             EquivalentTo(cls) => {
-                Py::new(py, EquivalentToClause::new(py, cls)).map(TermClause::EquivalentTo)
+                Py::new(py, EquivalentToClause::new(py, *cls)).map(TermClause::EquivalentTo)
             }
             DisjointFrom(cls) => {
-                Py::new(py, DisjointFromClause::new(py, cls)).map(TermClause::DisjointFrom)
+                Py::new(py, DisjointFromClause::new(py, *cls)).map(TermClause::DisjointFrom)
             }
             Relationship(r, id) => {
-                Py::new(py, RelationshipClause::new(py, r, id)).map(TermClause::Relationship)
+                Py::new(py, RelationshipClause::new(py, *r, *id)).map(TermClause::Relationship)
             }
             IsObsolete(b) => Py::new(py, IsObsoleteClause::new(b)).map(TermClause::IsObsolete),
             ReplacedBy(id) => {
-                Py::new(py, ReplacedByClause::new(py, id)).map(TermClause::ReplacedBy)
+                Py::new(py, ReplacedByClause::new(py, *id)).map(TermClause::ReplacedBy)
             }
-            Consider(id) => Py::new(py, ConsiderClause::new(py, id)).map(TermClause::Consider),
+            Consider(id) => Py::new(py, ConsiderClause::new(py, *id)).map(TermClause::Consider),
             CreatedBy(name) => {
-                Py::new(py, CreatedByClause::new(name)).map(TermClause::CreatedBy)
+                Py::new(py, CreatedByClause::new(*name)).map(TermClause::CreatedBy)
             }
             CreationDate(dt) => {
-                Py::new(py, CreationDateClause::new(py, dt)).map(TermClause::CreationDate)
+                Py::new(py, CreationDateClause::new(py, *dt)).map(TermClause::CreationDate)
             }
         }
         .expect("could not allocate memory for `TermClause` in Python heap")
@@ -209,7 +213,7 @@ impl Display for NameClause {
 
 impl From<NameClause> for fastobo::ast::TermClause {
     fn from(clause: NameClause) -> Self {
-        fastobo::ast::TermClause::Name(clause.name)
+        fastobo::ast::TermClause::Name(Box::new(clause.name))
     }
 }
 
@@ -299,7 +303,7 @@ impl Display for NamespaceClause {
 impl FromPy<NamespaceClause> for fastobo::ast::TermClause {
     fn from_py(clause: NamespaceClause, py: Python) -> Self {
         let ns = fastobo::ast::NamespaceIdent::from_py(clause.namespace, py);
-        fastobo::ast::TermClause::Namespace(ns)
+        fastobo::ast::TermClause::Namespace(Box::new(ns))
     }
 }
 
@@ -382,7 +386,7 @@ impl Display for AltIdClause {
 
 impl FromPy<AltIdClause> for fastobo::ast::TermClause {
     fn from_py(clause: AltIdClause, py: Python) -> Self {
-        fastobo::ast::TermClause::AltId(clause.alt_id.into_py(py))
+        fastobo::ast::TermClause::AltId(Box::new(clause.alt_id.into_py(py)))
     }
 }
 
@@ -471,7 +475,9 @@ impl Display for DefClause {
 
 impl FromPy<DefClause> for fastobo::ast::TermClause {
     fn from_py(clause: DefClause, py: Python) -> Self {
-        fastobo::ast::TermClause::Def(clause.definition, clause.xrefs.into_py(py))
+        let xrefs = fastobo::ast::XrefList::from_py(clause.xrefs, py);
+        let def = fastobo::ast::Definition::with_xrefs(clause.definition, xrefs);
+        fastobo::ast::TermClause::Def(Box::new(def))
     }
 }
 
@@ -553,7 +559,7 @@ impl Display for CommentClause {
 
 impl From<CommentClause> for fastobo::ast::TermClause {
     fn from(clause: CommentClause) -> Self {
-        fastobo::ast::TermClause::Comment(clause.comment)
+        fastobo::ast::TermClause::Comment(Box::new(clause.comment))
     }
 }
 
@@ -642,7 +648,7 @@ impl Display for SubsetClause {
 
 impl FromPy<SubsetClause> for fastobo::ast::TermClause {
     fn from_py(clause: SubsetClause, py: Python) -> Self {
-        fastobo::ast::TermClause::Subset(clause.subset.into_py(py))
+        fastobo::ast::TermClause::Subset(Box::new(clause.subset.into_py(py)))
     }
 }
 
@@ -722,7 +728,7 @@ impl Display for SynonymClause {
 impl FromPy<SynonymClause> for fastobo::ast::TermClause {
     fn from_py(clause: SynonymClause, py: Python) -> Self {
         fastobo::ast::TermClause::Synonym(
-            clause.synonym.as_ref(py).borrow().clone_py(py).into_py(py)
+            Box::new(clause.synonym.as_ref(py).borrow().clone_py(py).into_py(py))
         )
     }
 }
@@ -808,7 +814,7 @@ impl Display for XrefClause {
 impl FromPy<XrefClause> for fastobo::ast::TermClause {
     fn from_py(clause: XrefClause, py: Python) -> Self {
         fastobo::ast::TermClause::Xref(
-            clause.xref.as_ref(py).borrow().clone_py(py).into_py(py)
+            Box::new(clause.xref.as_ref(py).borrow().clone_py(py).into_py(py))
         )
     }
 }
@@ -975,7 +981,7 @@ impl Display for PropertyValueClause {
 
 impl FromPy<PropertyValueClause> for fastobo::ast::TermClause {
     fn from_py(clause: PropertyValueClause, py: Python) -> ast::TermClause {
-        ast::TermClause::PropertyValue(clause.inner.into_py(py))
+        ast::TermClause::PropertyValue(Box::new(clause.inner.into_py(py)))
     }
 }
 
@@ -1054,7 +1060,7 @@ impl Display for IsAClause {
 
 impl FromPy<IsAClause> for fastobo::ast::TermClause {
     fn from_py(clause: IsAClause, py: Python) -> fastobo::ast::TermClause {
-        ast::TermClause::IsA(clause.term.into_py(py))
+        ast::TermClause::IsA(Box::new(clause.term.into_py(py)))
     }
 }
 
@@ -1161,8 +1167,8 @@ impl Display for IntersectionOfClause {
 impl FromPy<IntersectionOfClause> for fastobo::ast::TermClause {
     fn from_py(clause: IntersectionOfClause, py: Python) -> fastobo::ast::TermClause {
         ast::TermClause::IntersectionOf(
-            clause.typedef.map(|id| id.into_py(py)),
-            clause.term.into_py(py),
+            clause.typedef.map(|id| Box::new(id.into_py(py))),
+            Box::new(clause.term.into_py(py)),
         )
     }
 }
@@ -1255,7 +1261,7 @@ impl Display for UnionOfClause {
 
 impl FromPy<UnionOfClause> for fastobo::ast::TermClause {
     fn from_py(clause: UnionOfClause, py: Python) -> fastobo::ast::TermClause {
-        ast::TermClause::UnionOf(clause.term.into_py(py))
+        ast::TermClause::UnionOf(Box::new(clause.term.into_py(py)))
     }
 }
 
@@ -1334,7 +1340,7 @@ impl Display for EquivalentToClause {
 
 impl FromPy<EquivalentToClause> for fastobo::ast::TermClause {
     fn from_py(clause: EquivalentToClause, py: Python) -> fastobo::ast::TermClause {
-        ast::TermClause::EquivalentTo(clause.term.into_py(py))
+        ast::TermClause::EquivalentTo(Box::new(clause.term.into_py(py)))
     }
 }
 
@@ -1413,7 +1419,7 @@ impl Display for DisjointFromClause {
 
 impl FromPy<DisjointFromClause> for fastobo::ast::TermClause {
     fn from_py(clause: DisjointFromClause, py: Python) -> fastobo::ast::TermClause {
-        ast::TermClause::DisjointFrom(clause.term.into_py(py))
+        fastobo::ast::TermClause::DisjointFrom(Box::new(clause.term.into_py(py)))
     }
 }
 
@@ -1497,7 +1503,7 @@ impl Display for RelationshipClause {
 
 impl FromPy<RelationshipClause> for fastobo::ast::TermClause {
     fn from_py(clause: RelationshipClause, py: Python) -> fastobo::ast::TermClause {
-        ast::TermClause::Relationship(clause.typedef.into_py(py), clause.term.into_py(py))
+        ast::TermClause::Relationship(Box::new(clause.typedef.into_py(py)), Box::new(clause.term.into_py(py)))
     }
 }
 
@@ -1643,7 +1649,7 @@ impl Display for ReplacedByClause {
 
 impl FromPy<ReplacedByClause> for fastobo::ast::TermClause {
     fn from_py(clause: ReplacedByClause, py: Python) -> fastobo::ast::TermClause {
-        ast::TermClause::ReplacedBy(clause.term.into_py(py))
+        fastobo::ast::TermClause::ReplacedBy(Box::new(clause.term.into_py(py)))
     }
 }
 
@@ -1721,7 +1727,7 @@ impl Display for ConsiderClause {
 
 impl FromPy<ConsiderClause> for fastobo::ast::TermClause {
     fn from_py(clause: ConsiderClause, py: Python) -> fastobo::ast::TermClause {
-        ast::TermClause::Consider(clause.term.into_py(py))
+        ast::TermClause::Consider(Box::new(clause.term.into_py(py)))
     }
 }
 
@@ -1785,7 +1791,7 @@ impl Display for CreatedByClause {
 
 impl From<CreatedByClause> for fastobo::ast::TermClause {
     fn from(clause: CreatedByClause) -> Self {
-        fastobo::ast::TermClause::CreatedBy(clause.creator)
+        fastobo::ast::TermClause::CreatedBy(Box::new(clause.creator))
     }
 }
 
@@ -1874,7 +1880,7 @@ impl FromPy<CreationDateClause> for fastobo::ast::TermClause {
 
 impl From<CreationDateClause> for fastobo::ast::TermClause {
     fn from(clause: CreationDateClause) -> fastobo::ast::TermClause {
-        fastobo::ast::TermClause::CreationDate(clause.date)
+        fastobo::ast::TermClause::CreationDate(Box::new(clause.date))
     }
 }
 

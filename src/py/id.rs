@@ -95,7 +95,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "is_valid")]
     fn is_valid(_py: Python, s: &str) -> bool {
         let rule = fastobo::syntax::Rule::Id;
-        match fastobo::syntax::Lexer::parse(rule, s) {
+        match fastobo::syntax::Lexer::tokenize(rule, s) {
             Err(e) => false,
             Ok(pairs) => pairs.as_str().len() == s.len(),
         }
@@ -110,14 +110,14 @@ macro_rules! impl_convert {
     ($base:ident, $cls:ident) => {
         impl FromPy<$crate::fastobo::ast::$base> for $cls {
             fn from_py(id: $crate::fastobo::ast::$base, py: Python) -> $cls {
-                let ident: ast::Ident = id.into();
+                let ident: $crate::fastobo::ast::Ident = id.into();
                 $cls::from_py(ident, py)
             }
         }
 
         impl FromPy<$cls> for $crate::fastobo::ast::$base {
             fn from_py(id: $cls, py: Python) -> $crate::fastobo::ast::$base {
-                let ident: ast::Ident = id.into_py(py);
+                let ident: $crate::fastobo::ast::Ident = id.into_py(py);
                 $crate::fastobo::ast::$base::from(ident)
             }
         }
@@ -149,17 +149,17 @@ impl FromPy<fastobo::ast::Ident> for Ident {
     fn from_py(ident: fastobo::ast::Ident, py: Python) -> Self {
         match ident {
             ast::Ident::Unprefixed(id) => {
-                Py::new(py, UnprefixedIdent::new(id))
+                Py::new(py, UnprefixedIdent::new(*id))
                     .map(Ident::Unprefixed)
                     .expect("could not allocate on Python heap")
             }
             ast::Ident::Prefixed(id) => {
-                Py::new(py, PrefixedIdent::from_py(id, py))
+                Py::new(py, PrefixedIdent::from_py(*id, py))
                     .map(Ident::Prefixed)
                     .expect("could not allocate on Python heap")
             }
             ast::Ident::Url(id) => {
-                Py::new(py, Url::from_py(id, py))
+                Py::new(py, Url::from_py(*id, py))
                     .map(Ident::Url)
                     .expect("could not allocate on Python heap")
             }
@@ -172,19 +172,19 @@ impl FromPy<Ident> for fastobo::ast::Ident {
         match ident {
             Ident::Unprefixed(id) => {
                 let i = id.as_ref(py).borrow();
-                ast::Ident::Unprefixed((*i).inner.clone())
+                ast::Ident::from((*i).inner.clone())
             }
             Ident::Prefixed(id) => {
                 let i = id.as_ref(py).borrow();
                 let p = i.prefix.as_ref(py).borrow();
                 let l = i.local.as_ref(py).borrow();
-                ast::Ident::Prefixed(
+                ast::Ident::from(
                     ast::PrefixedIdent::new((*p).inner.clone(), (*l).inner.clone())
                 )
             }
             Ident::Url(id) => {
                 let i = id.as_ref(py).borrow();
-                ast::Ident::Url((*i).inner.clone())
+                ast::Ident::from((*i).inner.clone())
             }
         }
     }
@@ -452,7 +452,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///     hello world
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, Debug, Eq, Hash, OpaqueTypedef, PartialEq, FinalClass)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, FinalClass)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
 }
@@ -495,7 +495,7 @@ impl FromPy<UnprefixedIdent> for ast::UnprefixedIdent {
 
 impl From<UnprefixedIdent> for ast::Ident {
     fn from(id: UnprefixedIdent) -> Self {
-        ast::Ident::Unprefixed(ast::UnprefixedIdent::from(id))
+        ast::Ident::from(ast::UnprefixedIdent::from(id))
     }
 }
 
@@ -598,8 +598,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///     ValueError: invalid url: ...
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd, FinalClass)]
-#[opaque_typedef(derive(FromInner, IntoInner))]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, FinalClass)]
 pub struct Url {
     inner: url::Url,
 }
@@ -622,9 +621,22 @@ impl FromPy<url::Url> for Url {
     }
 }
 
+impl From<ast::Url> for Url {
+    fn from(url: ast::Url) -> Self {
+        Self::new(url)
+    }
+}
+
+
+impl From<Url> for fastobo::ast::Url {
+    fn from(url: Url) -> Self {
+        url.inner
+    }
+}
+
 impl From<Url> for fastobo::ast::Ident {
     fn from(url: Url) -> Self {
-        fastobo::ast::Ident::Url(url.inner)
+        fastobo::ast::Ident::from(url.inner)
     }
 }
 
@@ -704,8 +716,7 @@ impl PyObjectProtocol for Url {
 
 /// The prefix of a prefixed identifier.
 #[pyclass(module = "fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd)]
-#[opaque_typedef(derive(FromInner, IntoInner, AsRefInner))]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct IdentPrefix {
     inner: ast::IdentPrefix,
 }
@@ -719,6 +730,18 @@ impl IdentPrefix {
 impl Display for IdentPrefix {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         self.inner.fmt(f)
+    }
+}
+
+impl From<ast::IdentPrefix> for IdentPrefix {
+    fn from(id: ast::IdentPrefix) -> Self {
+        Self::new(id)
+    }
+}
+
+impl From<IdentPrefix> for ast::IdentPrefix {
+    fn from(id: IdentPrefix) -> Self {
+        id.inner
     }
 }
 
@@ -770,8 +793,7 @@ impl PyObjectProtocol for IdentPrefix {
 
 /// The local component of a prefixed identifier.
 #[pyclass(module = "fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, OpaqueTypedef, Ord, PartialEq, PartialOrd)]
-#[opaque_typedef(derive(FromInner, IntoInner))]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct IdentLocal {
     inner: ast::IdentLocal,
 }
@@ -785,6 +807,18 @@ impl IdentLocal {
 impl Display for IdentLocal {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         self.inner.fmt(f)
+    }
+}
+
+impl From<ast::IdentLocal> for IdentLocal {
+    fn from(id: ast::IdentLocal) -> Self {
+        Self::new(id)
+    }
+}
+
+impl From<IdentLocal> for ast::IdentLocal {
+    fn from(id: IdentLocal) -> Self {
+        id.inner
     }
 }
 

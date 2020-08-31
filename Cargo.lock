@@ -214,13 +214,33 @@ dependencies = [
  "blanket",
  "crossbeam-channel",
  "err-derive",
- "fastobo-derive-internal",
- "fastobo-syntax",
+ "fastobo-derive-internal 0.10.0",
+ "fastobo-syntax 0.5.0",
  "lazy_static",
  "memchr",
  "num_cpus",
  "opaque_typedef",
  "opaque_typedef_macros",
+ "ordered-float",
+ "pest",
+ "smartstring",
+ "url",
+]
+
+[[package]]
+name = "fastobo"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da3f4eccbed513e1d21489edc9a5872526845f11ad4330f01740c042e013c5c3"
+dependencies = [
+ "blanket",
+ "crossbeam-channel",
+ "err-derive",
+ "fastobo-derive-internal 0.11.0",
+ "fastobo-syntax 0.6.1",
+ "lazy_static",
+ "memchr",
+ "num_cpus",
  "ordered-float",
  "pest",
  "smartstring",
@@ -240,13 +260,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "fastobo-derive-internal"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90110b1d88c0657073c24399ee12985b8536306c3dd95d369a89ace9c70bd24c"
+dependencies = [
+ "darling",
+ "heck",
+ "quote 1.0.7",
+ "syn 1.0.36",
+]
+
+[[package]]
 name = "fastobo-graphs"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b9cfd09eaa8d7fbddbce8954d6159de5f3c164a82f58899ebe91fcc1656e56c"
 dependencies = [
  "err-derive",
- "fastobo",
+ "fastobo 0.10.0",
  "mashup",
  "serde",
  "serde_json",
@@ -258,7 +290,7 @@ name = "fastobo-py"
 version = "0.9.1"
 dependencies = [
  "built",
- "fastobo",
+ "fastobo 0.11.0",
  "fastobo-graphs",
  "fastobo-py-derive-internal",
  "lazy_static",
@@ -285,6 +317,16 @@ name = "fastobo-syntax"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6adbea98fe992ccbb3cf7ffbff380608d2de41660ed7a08ec1b379d6ed72652c"
+dependencies = [
+ "pest",
+ "pest_derive",
+]
+
+[[package]]
+name = "fastobo-syntax"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8c7315e0017be8cf253f2c16ec5b95d44c7e44e6b277b91e3da17da8c1b7ef8"
 dependencies = [
  "pest",
  "pest_derive",

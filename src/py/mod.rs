@@ -287,7 +287,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> url = "http://purl.obolibrary.org/obo/pato.json"
     ///     >>> doc = fastobo.load_graph(urlopen(url))
     ///     >>> doc[0]
-    ///     TypedefFrame(UnprefixedIdent('has_part'))
+    ///     TermFrame(PrefixedIdent('BFO', '0000002'))
     ///
     #[pyfn(m, "load_graph")]
     #[text_signature = "(fh)"]

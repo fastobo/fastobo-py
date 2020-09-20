@@ -48,6 +48,12 @@ Functions
 .. autofunction:: fastobo.load_graph
 
 
+``fastobo.id.is_valid``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: fastobo.id.is_valid
+
+
 ``fastobo.id.parse``
 ^^^^^^^^^^^^^^^^^^^^
 

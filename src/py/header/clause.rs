@@ -12,11 +12,8 @@ use fastobo::ast::UnquotedString;
 
 use pyo3::class::basic::CompareOp;
 use pyo3::class::gc::PyVisit;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::NotImplementedError;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyTypeError;
+use pyo3::exceptions::PyValueError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
@@ -89,52 +86,54 @@ impl IntoPy<HeaderClause> for fastobo::ast::HeaderClause {
             }
             Import(i) => Py::new(py, ImportClause::new(*i)).map(HeaderClause::Import),
             Subsetdef(s, q) => {
-                Py::new(py, SubsetdefClause::new(py, *s, *q)).map(HeaderClause::Subsetdef)
+                Py::new(py, SubsetdefClause::new(s.into_py(py), *q)).map(HeaderClause::Subsetdef)
             }
             SynonymTypedef(ty, desc, scope) => {
-                Py::new(py, SynonymTypedefClause::with_scope(py, *ty, *desc, scope.map(|s| *s)))
+                Py::new(py, SynonymTypedefClause::with_scope(ty.into_py(py), *desc, scope.map(|s| s.into_py(py))))
                     .map(HeaderClause::SynonymTypedef)
             }
             DefaultNamespace(ns) => {
-                Py::new(py, DefaultNamespaceClause::new(py, *ns)).map(HeaderClause::DefaultNamespace)
+                Py::new(py, DefaultNamespaceClause::new(ns.into_py(py))).map(HeaderClause::DefaultNamespace)
             }
             NamespaceIdRule(r) => {
                 Py::new(py, NamespaceIdRuleClause::new(*r)).map(HeaderClause::NamespaceIdRule)
             }
             Idspace(prefix, url, desc) => {
-                Py::new(py, IdspaceClause::with_description(py, *prefix, *url, desc.map(|d| *d)))
-                    .map(HeaderClause::Idspace)
+                    Py::new(py, url.into_py(py))
+                        .map(|url| IdspaceClause::with_description(prefix.into_py(py), url, desc.map(|d| *d)))
+                        .and_then(|clause| Py::new(py, clause))
+                        .map(HeaderClause::Idspace)
             }
             TreatXrefsAsEquivalent(prefix) => {
-                Py::new(py, TreatXrefsAsEquivalentClause::new(py, *prefix))
+                Py::new(py, TreatXrefsAsEquivalentClause::new(prefix.into_py(py)))
                     .map(HeaderClause::TreatXrefsAsEquivalent)
             }
             TreatXrefsAsGenusDifferentia(p, r, c) => {
-                Py::new(py, TreatXrefsAsGenusDifferentiaClause::new(py, *p, *r, *c))
+                Py::new(py, TreatXrefsAsGenusDifferentiaClause::new((*p).into_py(py), r.into_py(py), c.into_py(py)))
                     .map(HeaderClause::TreatXrefsAsGenusDifferentia)
             }
             TreatXrefsAsReverseGenusDifferentia(p, r, c) => Py::new(
                 py,
-                TreatXrefsAsReverseGenusDifferentiaClause::new(py, *p, *r, *c),
+                TreatXrefsAsReverseGenusDifferentiaClause::new((*p).into_py(py), r.into_py(py), c.into_py(py)),
             )
             .map(HeaderClause::TreatXrefsAsReverseGenusDifferentia),
             TreatXrefsAsRelationship(p, r) => {
-                Py::new(py, TreatXrefsAsRelationshipClause::new(py, *p, *r))
+                Py::new(py, TreatXrefsAsRelationshipClause::new((*p).into_py(py), r.into_py(py)))
                     .map(HeaderClause::TreatXrefsAsRelationship)
             }
             TreatXrefsAsIsA(p) => {
-                Py::new(py, TreatXrefsAsIsAClause::new(py, *p)).map(HeaderClause::TreatXrefsAsIsA)
+                Py::new(py, TreatXrefsAsIsAClause::new((*p).into_py(py))).map(HeaderClause::TreatXrefsAsIsA)
             }
-            TreatXrefsAsHasSubclass(p) => Py::new(py, TreatXrefsAsHasSubclassClause::new(py, *p))
+            TreatXrefsAsHasSubclass(p) => Py::new(py, TreatXrefsAsHasSubclassClause::new((*p).into_py(py)))
                 .map(HeaderClause::TreatXrefsAsHasSubclass),
             PropertyValue(pv) => {
-                Py::new(py, PropertyValueClause::new(py, *pv)).map(HeaderClause::PropertyValue)
+                Py::new(py, PropertyValueClause::new(pv.into_py(py))).map(HeaderClause::PropertyValue)
             }
             Remark(r) => Py::new(py, RemarkClause::new(*r)).map(HeaderClause::Remark),
             Ontology(ont) => Py::new(py, OntologyClause::new(*ont)).map(HeaderClause::Ontology),
             OwlAxioms(ax) => Py::new(py, OwlAxiomsClause::new(*ax)).map(HeaderClause::OwlAxioms),
             Unreserved(tag, value) => {
-                Py::new(py, UnreservedClause::new(py, *tag, *value)).map(HeaderClause::Unreserved)
+                Py::new(py, UnreservedClause::new(*tag, *value)).map(HeaderClause::Unreserved)
             }
         }
         .expect("could not allocate memory in Python heap")
@@ -143,7 +142,7 @@ impl IntoPy<HeaderClause> for fastobo::ast::HeaderClause {
 
 impl IntoPy<fastobo::ast::HeaderClause> for HeaderClause {
     fn into_py(self, py: Python) -> fastobo::ast::HeaderClause {
-        fastobo::ast::HeaderClause::from_py(&clause, py)
+        (&self).into_py(py)
     }
 }
 
@@ -609,7 +608,7 @@ impl ImportClause {
         } else if let Ok(id) = obo::Ident::from_str(reference) {
             Ok(Self::new(obo::Import::Abbreviated(Box::new(id))).into())
         } else {
-            ValueError::into(format!("invalid import: {:?}", reference))
+            Err(PyValueError::new_err(format!("invalid import: {:?}", reference)))
         }
     }
 
@@ -656,14 +655,8 @@ pub struct SubsetdefClause {
 }
 
 impl SubsetdefClause {
-    pub fn new<I>(py: Python, subset: I, description: QuotedString) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            subset: subset.into_py(py),
-            description,
-        }
+    pub fn new(subset: Ident, description: QuotedString) -> Self {
+        Self { subset, description }
     }
 }
 
@@ -680,14 +673,15 @@ impl Display for SubsetdefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
 impl IntoPy<obo::HeaderClause> for SubsetdefClause {
     fn into_py(self, py: Python) -> obo::HeaderClause {
         obo::HeaderClause::Subsetdef(
-            Box::new(obo::SubsetIdent::from_py(self.subset, py)),
+            Box::new(self.subset.into_py(py)),
             Box::new(self.description),
         )
     }
@@ -697,8 +691,7 @@ impl IntoPy<obo::HeaderClause> for SubsetdefClause {
 impl SubsetdefClause {
     #[new]
     fn __init__(subset: Ident, description: String) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), subset, QuotedString::new(description)).into()
+        Self::new(subset, QuotedString::new(description)).into()
     }
 
     /// `~fastobo.id.Ident`: the identifier of the declared subset.
@@ -753,33 +746,16 @@ pub struct SynonymTypedefClause {
     #[pyo3(set)]
     typedef: Ident,
     description: QuotedString,
-    scope: Option<SynonymScope>, // FIXME: Python type
+    scope: Option<SynonymScope>,
 }
 
 impl SynonymTypedefClause {
-    pub fn new<T, D>(py: Python, typedef: T, description: D) -> Self
-    where
-        T: IntoPy<Ident>,
-        D: Into<QuotedString>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-            description: description.into(),
-            scope: None,
-        }
+    pub fn new(typedef: Ident, description: QuotedString) -> Self {
+        Self::with_scope(typedef, description, None)
     }
 
-    pub fn with_scope<T, D, S>(py: Python, typedef: T, description: D, scope: Option<S>) -> Self
-    where
-        T: IntoPy<Ident>,
-        D: Into<QuotedString>,
-        S: IntoPy<SynonymScope>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-            description: description.into(),
-            scope: scope.map(|s| s.into_py(py)),
-        }
+    pub fn with_scope(typedef: Ident, description: QuotedString, scope: Option<SynonymScope>) -> Self {
+        Self { typedef, description, scope }
     }
 }
 
@@ -797,7 +773,8 @@ impl Display for SynonymTypedefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -814,11 +791,14 @@ impl IntoPy<obo::HeaderClause> for SynonymTypedefClause {
 #[pymethods]
 impl SynonymTypedefClause {
     #[new]
-    fn __init__(typedef: Ident, description: String, scope: Option<String>) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
+    fn __init__(typedef: Ident, description: String, scope: Option<&PyString>) -> PyResult<PyClassInitializer<Self>> {
         let desc = fastobo::ast::QuotedString::new(description);
-        let sc = scope.map(|s| fastobo::ast::SynonymScope::from_str(&s).unwrap()); // FIXME
-        Self::with_scope(gil.python(), typedef, desc, sc).into()
+        // FIXME
+        let sc = match scope {
+            Some(s) => Some(SynonymScope::from_str(s.to_str()?)?),
+            None => None,
+        };
+        Ok(Self::with_scope(typedef, desc, sc).into())
     }
 
     /// `~fastobo.id.Ident`: the identifier of the declared synonym type.
@@ -911,13 +891,8 @@ pub struct DefaultNamespaceClause {
 }
 
 impl DefaultNamespaceClause {
-    pub fn new<I>(py: Python, namespace: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            namespace: namespace.into_py(py),
-        }
+    pub fn new(namespace: Ident) -> Self {
+        Self { namespace }
     }
 }
 
@@ -933,7 +908,8 @@ impl Display for DefaultNamespaceClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -950,13 +926,13 @@ impl DefaultNamespaceClause {
         let gil = Python::acquire_gil();
         let py = gil.python();
         if py.is_instance::<BaseIdent, PyAny>(namespace)? {
-            Ident::extract(namespace).map(|id| Self::new(py, id).into())
+            Ident::extract(namespace).map(|id| Self::new(id).into())
         } else if py.is_instance::<PyString, PyAny>(namespace)? {
             let s: &PyString = FromPyObject::extract(namespace)?;
-            let id = ast::Ident::from_str(&s.to_string()?).unwrap(); // FIXME
-            Ok(Self::new(py, Ident::from_py(id, py)).into())
+            let id = ast::Ident::from_str(&s.to_str()?).unwrap(); // FIXME
+            Ok(Self::new(id.into_py(py)).into())
         } else {
-            TypeError::into("expected str or Ident for 'namespace'")
+            Err(PyTypeError::new_err("expected str or Ident for 'namespace'"))
         }
     }
 
@@ -1014,7 +990,8 @@ impl Display for NamespaceIdRuleClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1089,27 +1066,12 @@ pub struct IdspaceClause {
 }
 
 impl IdspaceClause {
-    pub fn new<I, U>(py: Python, prefix: I, url: U) -> Self
-    where
-        I: Into<IdentPrefix>,
-        U: Into<Url>,
-    {
-        Self::with_description(py, prefix, url, None)
+    pub fn new(prefix: IdentPrefix, url: Py<Url>) -> Self {
+        Self::with_description(prefix, url, None)
     }
 
-    pub fn with_description<I, U, D>(py: Python, prefix: I, url: U, description: D) -> Self
-    where
-        I: Into<IdentPrefix>,
-        U: Into<Url>,
-        D: Into<Option<QuotedString>>,
-    {
-        let cell = Py::new(py, url.into())
-            .expect("cannot allocate to Python heap");
-        Self {
-            prefix: prefix.into(),
-            url: cell,
-            description: description.into(),
-        }
+    pub fn with_description(prefix: IdentPrefix, url: Py<Url>, description: Option<QuotedString>) -> Self {
+        Self { prefix, url, description }
     }
 }
 
@@ -1127,7 +1089,8 @@ impl Display for IdspaceClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1225,13 +1188,8 @@ pub struct TreatXrefsAsEquivalentClause {
 }
 
 impl TreatXrefsAsEquivalentClause {
-    pub fn new<I>(_py: Python, idspace: I) -> Self
-    where
-        I: Into<IdentPrefix>,
-    {
-        Self {
-            idspace: idspace.into(),
-        }
+    pub fn new(idspace: IdentPrefix) -> Self {
+        Self { idspace }
     }
 }
 
@@ -1295,17 +1253,8 @@ pub struct TreatXrefsAsGenusDifferentiaClause {
 }
 
 impl TreatXrefsAsGenusDifferentiaClause {
-    pub fn new<I, R, F>(py: Python, idspace: I, relation: R, filler: F) -> Self
-    where
-        I: Into<IdentPrefix>,
-        R: IntoPy<Ident>,
-        F: IntoPy<Ident>,
-    {
-        Self {
-            idspace: idspace.into(),
-            relation: relation.into_py(py),
-            filler: filler.into_py(py),
-        }
+    pub fn new(idspace: IdentPrefix, relation: Ident, filler: Ident) -> Self {
+        Self { idspace, relation, filler }
     }
 }
 
@@ -1323,7 +1272,8 @@ impl Display for TreatXrefsAsGenusDifferentiaClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1388,17 +1338,8 @@ pub struct TreatXrefsAsReverseGenusDifferentiaClause {
 }
 
 impl TreatXrefsAsReverseGenusDifferentiaClause {
-    pub fn new<I, R, F>(py: Python, idspace: I, relation: R, filler: F) -> Self
-    where
-        I: Into<IdentPrefix>,
-        R: IntoPy<Ident>,
-        F: IntoPy<Ident>,
-    {
-        Self {
-            idspace: idspace.into(),
-            relation: relation.into_py(py),
-            filler: filler.into_py(py),
-        }
+    pub fn new(idspace: IdentPrefix, relation: Ident, filler: Ident) -> Self {
+        Self { idspace, relation, filler }
     }
 }
 
@@ -1416,7 +1357,8 @@ impl Display for TreatXrefsAsReverseGenusDifferentiaClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1480,15 +1422,8 @@ pub struct TreatXrefsAsRelationshipClause {
 }
 
 impl TreatXrefsAsRelationshipClause {
-    pub fn new<I, R>(py: Python, idspace: I, relation: R) -> Self
-    where
-        I: Into<IdentPrefix>,
-        R: IntoPy<Ident>,
-    {
-        Self {
-            idspace: idspace.into(),
-            relation: relation.into_py(py),
-        }
+    pub fn new(idspace: IdentPrefix, relation: Ident) -> Self {
+        Self { idspace, relation }
     }
 }
 
@@ -1505,7 +1440,8 @@ impl Display for TreatXrefsAsRelationshipClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1566,13 +1502,8 @@ pub struct TreatXrefsAsIsAClause {
 }
 
 impl TreatXrefsAsIsAClause {
-    pub fn new<I>(_py: Python, idspace: I) -> Self
-    where
-        I: Into<IdentPrefix>,
-    {
-        Self {
-            idspace: idspace.into(),
-        }
+    pub fn new(idspace: IdentPrefix) -> Self {
+        Self { idspace }
     }
 }
 
@@ -1580,7 +1511,8 @@ impl Display for TreatXrefsAsIsAClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        obo::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1636,13 +1568,8 @@ pub struct TreatXrefsAsHasSubclassClause {
 }
 
 impl TreatXrefsAsHasSubclassClause {
-    pub fn new<I>(_py: Python, idspace: I) -> Self
-    where
-        I: Into<IdentPrefix>,
-    {
-        Self {
-            idspace: idspace.into(),
-        }
+    pub fn new(idspace: IdentPrefix) -> Self {
+        Self { idspace }
     }
 }
 
@@ -1710,12 +1637,9 @@ pub struct PropertyValueClause {
 }
 
 impl PropertyValueClause {
-    fn new<P>(py: Python, property_value: P) -> Self
-    where
-        P: IntoPy<PropertyValue>,
-    {
+    fn new(property_value: PropertyValue) -> Self {
         Self {
-            inner: property_value.into_py(py),
+            inner: property_value
         }
     }
 }
@@ -1732,12 +1656,13 @@ impl Display for PropertyValueClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::HeaderClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
 impl IntoPy<ast::HeaderClause> for PropertyValueClause {
-    fn from_py(self, py: Python) -> ast::HeaderClause {
+    fn into_py(self, py: Python) -> ast::HeaderClause {
         ast::HeaderClause::PropertyValue(Box::new(self.inner.into_py(py)))
     }
 }
@@ -1746,8 +1671,7 @@ impl IntoPy<ast::HeaderClause> for PropertyValueClause {
 impl PropertyValueClause {
     #[new]
     fn __init__(property_value: PropertyValue) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), property_value).into()
+        Self::new(property_value).into()
     }
 
     #[getter]
@@ -1807,7 +1731,7 @@ impl From<RemarkClause> for obo::HeaderClause {
 }
 
 impl IntoPy<obo::HeaderClause> for RemarkClause {
-    fn from_py(self, _py: Python) -> obo::HeaderClause {
+    fn into_py(self, _py: Python) -> obo::HeaderClause {
         obo::HeaderClause::from(self)
     }
 }
@@ -2021,7 +1945,7 @@ pub struct UnreservedClause {
 }
 
 impl UnreservedClause {
-    pub fn new(_py: Python, tag: UnquotedString, value: UnquotedString) -> Self {
+    pub fn new(tag: UnquotedString, value: UnquotedString) -> Self {
         Self { tag, value }
     }
 }
@@ -2048,12 +1972,7 @@ impl Display for UnreservedClause {
 impl UnreservedClause {
     #[new]
     fn __init__(tag: String, value: String) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(
-            gil.python(),
-            UnquotedString::new(tag),
-            UnquotedString::new(value),
-        ).into()
+        Self::new(UnquotedString::new(tag), UnquotedString::new(value)).into()
     }
 
     #[getter]

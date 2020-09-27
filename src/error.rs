@@ -18,7 +18,7 @@ use fastobo::syntax::Rule;
 #[macro_export]
 macro_rules! raise(
     ($py:expr, $error_type:ident ($msg:expr) from $inner:expr ) => ({
-        let err = $error_type::py_err($msg).to_object($py);
+        let err = $error_type::new_err($msg).to_object($py);
         err.call_method1(
             $py,
             "__setattr__",
@@ -149,10 +149,10 @@ impl From<Error> for PyErr {
                             LineColLocation::Pos((l, c)) => (l, c),
                             LineColLocation::Span((l, c), _) => (l, c),
                         };
-                        PySyntaxError::py_err((msg, (path, l, c, pe.line)))
+                        PySyntaxError::new_err((msg, (path, l, c, pe.line)))
                     }
                     fastobo::error::SyntaxError::UnexpectedRule { expected, actual } => {
-                        PyRuntimeError::py_err("unexpected rule")
+                        PyRuntimeError::new_err("unexpected rule")
                     }
                 }
             }
@@ -160,13 +160,13 @@ impl From<Error> for PyErr {
             fastobo::error::Error::IOError { error: ioerror } => {
                 let desc = ioerror.to_string();
                 match ioerror.raw_os_error() {
-                    Some(2) => PyFileNotFoundError::py_err((2, desc, error.path)),
-                    Some(code) => PyOSError::py_err((code, desc, error.path)),
-                    None => PyOSError::py_err((desc,))
+                    Some(2) => PyFileNotFoundError::new_err((2, desc, error.path)),
+                    Some(code) => PyOSError::new_err((code, desc, error.path)),
+                    None => PyOSError::new_err((desc,))
                 }
             }
 
-            other => PyRuntimeError::py_err(format!("{}", other)),
+            other => PyRuntimeError::new_err(format!("{}", other)),
         }
     }
 }
@@ -197,11 +197,11 @@ impl From<GraphError> for PyErr {
             fastobo_graphs::error::Error::IOError(error) => {
                 let desc = error.to_string();
                 match error.raw_os_error() {
-                    Some(code) => PyOSError::py_err((code, desc)),
-                    None => PyOSError::py_err((desc,)),
+                    Some(code) => PyOSError::new_err((code, desc)),
+                    None => PyOSError::new_err((desc,)),
                 }
             }
-            other => PyValueError::py_err(other.to_string()),
+            other => PyValueError::new_err(other.to_string()),
         }
     }
 }

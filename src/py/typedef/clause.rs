@@ -5,8 +5,6 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 use pyo3::class::basic::CompareOp;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyDateTime;
@@ -88,25 +86,35 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
             }
             Name(n) => Py::new(py, NameClause::new(*n)).map(TypedefClause::Name),
             Namespace(ns) => {
-                Py::new(py, NamespaceClause::new(py, *ns)).map(TypedefClause::Namespace)
+                Py::new(py, NamespaceClause::new(ns.into_py(py))).map(TypedefClause::Namespace)
             }
-            AltId(id) => Py::new(py, AltIdClause::new(py, *id)).map(TypedefClause::AltId),
+            AltId(id) => Py::new(py, AltIdClause::new(id.into_py(py))).map(TypedefClause::AltId),
             Def(mut def) => {
                 let text = std::mem::take(def.text_mut());
-                let xrefs = std::mem::take(def.xrefs_mut());
-                Py::new(py, DefClause::new(py, text, xrefs)).map(TypedefClause::Def)
+                let xrefs = std::mem::take(def.xrefs_mut()).into_py(py);
+                Py::new(py, DefClause::new(text, xrefs)).map(TypedefClause::Def)
             }
             Comment(c) => Py::new(py, CommentClause::new(*c)).map(TypedefClause::Comment),
-            Subset(s) => Py::new(py, SubsetClause::new(py, *s)).map(TypedefClause::Subset),
-            Synonym(s) => Py::new(py, SynonymClause::new(py, *s)).map(TypedefClause::Synonym),
-            Xref(x) => Py::new(py, XrefClause::new(py, *x)).map(TypedefClause::Xref),
-            PropertyValue(pv) => {
-                Py::new(py, PropertyValueClause::new(py, *pv)).map(TypedefClause::PropertyValue)
+            Subset(s) => Py::new(py, SubsetClause::new(s.into_py(py))).map(TypedefClause::Subset),
+            Synonym(s) => {
+                Py::new(py, s.into_py(py))
+                    .map(SynonymClause::new)
+                    .and_then(|clause| Py::new(py, clause))
+                    .map(TypedefClause::Synonym)
             }
-            Domain(id) => Py::new(py, DomainClause::new(py, *id)).map(TypedefClause::Domain),
-            Range(id) => Py::new(py, RangeClause::new(py, *id)).map(TypedefClause::Range),
+            Xref(x) => {
+                Py::new(py, x.into_py(py))
+                    .map(XrefClause::new)
+                    .and_then(|clause| Py::new(py, clause))
+                    .map(TypedefClause::Xref)
+            }
+            PropertyValue(pv) => {
+                Py::new(py, PropertyValueClause::new(pv.into_py(py))).map(TypedefClause::PropertyValue)
+            }
+            Domain(id) => Py::new(py, DomainClause::new(id.into_py(py))).map(TypedefClause::Domain),
+            Range(id) => Py::new(py, RangeClause::new(id.into_py(py))).map(TypedefClause::Range),
             Builtin(b) => Py::new(py, BuiltinClause::new(b)).map(TypedefClause::Builtin),
-            HoldsOverChain(r1, r2) => Py::new(py, HoldsOverChainClause::new(py, *r1, *r2))
+            HoldsOverChain(r1, r2) => Py::new(py, HoldsOverChainClause::new(r1.into_py(py), r2.into_py(py)))
                 .map(TypedefClause::HoldsOverChain),
             IsAntiSymmetric(b) => {
                 Py::new(py, IsAntiSymmetricClause::new(b)).map(TypedefClause::IsAntiSymmetric)
@@ -129,48 +137,48 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
             }
             IsInverseFunctional(b) => Py::new(py, IsInverseFunctionalClause::new(b))
                 .map(TypedefClause::IsInverseFunctional),
-            IsA(id) => Py::new(py, IsAClause::new(py, *id)).map(TypedefClause::IsA),
+            IsA(id) => Py::new(py, IsAClause::new(id.into_py(py))).map(TypedefClause::IsA),
             IntersectionOf(r) => {
-                Py::new(py, IntersectionOfClause::new(py, *r)).map(TypedefClause::IntersectionOf)
+                Py::new(py, IntersectionOfClause::new(r.into_py(py))).map(TypedefClause::IntersectionOf)
             }
-            UnionOf(cls) => Py::new(py, UnionOfClause::new(py, *cls)).map(TypedefClause::UnionOf),
+            UnionOf(cls) => Py::new(py, UnionOfClause::new(cls.into_py(py))).map(TypedefClause::UnionOf),
             EquivalentTo(cls) => {
-                Py::new(py, EquivalentToClause::new(py, *cls)).map(TypedefClause::EquivalentTo)
+                Py::new(py, EquivalentToClause::new(cls.into_py(py))).map(TypedefClause::EquivalentTo)
             }
             DisjointFrom(cls) => {
-                Py::new(py, DisjointFromClause::new(py, *cls)).map(TypedefClause::DisjointFrom)
+                Py::new(py, DisjointFromClause::new(cls.into_py(py))).map(TypedefClause::DisjointFrom)
             }
             TransitiveOver(r) => {
-                Py::new(py, TransitiveOverClause::new(py, *r)).map(TypedefClause::TransitiveOver)
+                Py::new(py, TransitiveOverClause::new(r.into_py(py))).map(TypedefClause::TransitiveOver)
             }
-            EquivalentToChain(r1, r2) => Py::new(py, EquivalentToChainClause::new(py, *r1, *r2))
+            EquivalentToChain(r1, r2) => Py::new(py, EquivalentToChainClause::new(r1.into_py(py), r2.into_py(py)))
                 .map(TypedefClause::EquivalentToChain),
             DisjointOver(r) => {
-                Py::new(py, DisjointOverClause::new(py, *r)).map(TypedefClause::DisjointOver)
+                Py::new(py, DisjointOverClause::new(r.into_py(py))).map(TypedefClause::DisjointOver)
             }
-            InverseOf(cls) => {
-                Py::new(py, InverseOfClause::new(py, *cls)).map(TypedefClause::InverseOf)
+            InverseOf(r) => {
+                Py::new(py, InverseOfClause::new(r.into_py(py))).map(TypedefClause::InverseOf)
             }
             Relationship(r, id) => {
-                Py::new(py, RelationshipClause::new(py, *r, *id)).map(TypedefClause::Relationship)
+                Py::new(py, RelationshipClause::new(r.into_py(py), id.into_py(py))).map(TypedefClause::Relationship)
             }
             IsObsolete(b) => {
                 Py::new(py, IsObsoleteClause::new(b)).map(TypedefClause::IsObsolete)
             }
             ReplacedBy(id) => {
-                Py::new(py, ReplacedByClause::new(py, *id)).map(TypedefClause::ReplacedBy)
+                Py::new(py, ReplacedByClause::new(id.into_py(py))).map(TypedefClause::ReplacedBy)
             }
-            Consider(id) => Py::new(py, ConsiderClause::new(py, *id)).map(TypedefClause::Consider),
+            Consider(id) => Py::new(py, ConsiderClause::new(id.into_py(py))).map(TypedefClause::Consider),
             CreatedBy(name) => {
                 Py::new(py, CreatedByClause::new(*name)).map(TypedefClause::CreatedBy)
             }
             CreationDate(dt) => {
-                Py::new(py, CreationDateClause::new(py, *dt)).map(TypedefClause::CreationDate)
+                Py::new(py, CreationDateClause::new(*dt)).map(TypedefClause::CreationDate)
             }
-            ExpandAssertionTo(d, xrefs) => Py::new(py, ExpandAssertionToClause::new(py, *d, *xrefs))
+            ExpandAssertionTo(d, xrefs) => Py::new(py, ExpandAssertionToClause::new(*d, xrefs.into_py(py)))
                 .map(TypedefClause::ExpandAssertionTo),
             ExpandExpressionTo(d, xrefs) => {
-                Py::new(py, ExpandExpressionToClause::new(py, *d, *xrefs))
+                Py::new(py, ExpandExpressionToClause::new(*d, xrefs.into_py(py)))
                     .map(TypedefClause::ExpandExpressionTo)
             }
             IsMetadataTag(b) => {
@@ -340,13 +348,8 @@ pub struct NamespaceClause {
 }
 
 impl NamespaceClause {
-    pub fn new<I>(py: Python, ns: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            namespace: ns.into_py(py),
-        }
+    pub fn new(namespace: Ident) -> Self {
+        Self { namespace }
     }
 }
 
@@ -362,13 +365,14 @@ impl Display for NamespaceClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
 impl IntoPy<fastobo::ast::TypedefClause> for NamespaceClause {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
-        let ns = fastobo::ast::NamespaceIdent::from_py(self.namespace, py);
+        let ns: fastobo::ast::NamespaceIdent = self.namespace.into_py(py);
         fastobo::ast::TypedefClause::Namespace(Box::new(ns))
     }
 }
@@ -377,8 +381,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for NamespaceClause {
 impl NamespaceClause {
     #[new]
     fn __init__(namespace: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), namespace).into()
+        Self::new(namespace).into()
     }
 
     #[getter]
@@ -424,11 +427,8 @@ pub struct AltIdClause {
 }
 
 impl AltIdClause {
-    pub fn new<I>(py: Python, alt_id: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self { alt_id: alt_id.into_py(py) }
+    pub fn new(alt_id: Ident) -> Self {
+        Self { alt_id }
     }
 }
 
@@ -444,7 +444,8 @@ impl Display for AltIdClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -458,8 +459,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for AltIdClause {
 impl AltIdClause {
     #[new]
     fn __init__(alt_id: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), alt_id).into()
+        Self::new(alt_id).into()
     }
 
     #[getter]
@@ -509,14 +509,8 @@ pub struct DefClause {
 }
 
 impl DefClause {
-    pub fn new<X>(py: Python, definition: fastobo::ast::QuotedString, xrefs: X) -> Self
-    where
-        X: IntoPy<XrefList>,
-    {
-        Self {
-            definition,
-            xrefs: xrefs.into_py(py),
-        }
+    pub fn new(definition: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
+        Self { definition, xrefs }
     }
 }
 
@@ -533,13 +527,14 @@ impl Display for DefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
 impl IntoPy<fastobo::ast::TypedefClause> for DefClause {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
-        let xrefs = fastobo::ast::XrefList::from_py(self.xrefs, py);
+        let xrefs: fastobo::ast::XrefList = self.xrefs.into_py(py);
         let def = fastobo::ast::Definition::with_xrefs(self.definition, xrefs);
         fastobo::ast::TypedefClause::Def(Box::new(def))
     }
@@ -557,7 +552,7 @@ impl DefClause {
             .transpose()?
             .unwrap_or_else(|| XrefList::new(Vec::new()));
 
-        Ok(Self::new(py, def, list).into())
+        Ok(Self::new(def, list).into())
     }
 
     #[getter]
@@ -683,13 +678,8 @@ pub struct SubsetClause {
 }
 
 impl SubsetClause {
-    pub fn new<I>(py: Python, subset: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            subset: subset.into_py(py),
-        }
+    pub fn new(subset: Ident) -> Self {
+        Self { subset }
     }
 }
 
@@ -705,7 +695,8 @@ impl Display for SubsetClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -719,8 +710,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for SubsetClause {
 impl SubsetClause {
     #[new]
     fn __init__(subset: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), subset).into()
+        Self::new(subset).into()
     }
 
     #[getter]
@@ -763,13 +753,8 @@ pub struct SynonymClause {
 }
 
 impl SynonymClause {
-    pub fn new<S>(py: Python, synonym: S) -> Self
-    where
-        S: IntoPy<Synonym>,
-    {
-        Self {
-            synonym: Py::new(py, synonym.into_py(py)).unwrap(),
-        }
+    pub fn new(synonym: Py<Synonym>) -> Self {
+        Self { synonym }
     }
 }
 
@@ -785,7 +770,8 @@ impl Display for SynonymClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -803,9 +789,7 @@ impl SynonymClause {
     fn __init__(synonym: Py<Synonym>) -> PyClassInitializer<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        Self {
-            synonym: synonym.clone_ref(py)
-        }.into()
+        Self::new(synonym.clone_ref(py)).into()
     }
 
     fn raw_value(&self) -> PyResult<String> {
@@ -847,11 +831,8 @@ pub struct XrefClause {
 }
 
 impl XrefClause {
-    pub fn new<X>(py: Python, xref: X) -> Self
-    where
-        X: IntoPy<Xref>,
-    {
-        Self::from_py(xref.into_py(py), py)
+    pub fn new(xref: Py<Xref>) -> Self {
+        Self { xref }
     }
 }
 
@@ -867,7 +848,8 @@ impl Display for XrefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -944,12 +926,9 @@ pub struct PropertyValueClause {
 }
 
 impl PropertyValueClause {
-    pub fn new<P>(py: Python, property_value: P) -> Self
-    where
-        P: IntoPy<PropertyValue>,
-    {
+    pub fn new(property_value: PropertyValue) -> Self {
         Self {
-            inner: property_value.into_py(py),
+            inner: property_value,
         }
     }
 }
@@ -966,7 +945,8 @@ impl Display for PropertyValueClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -980,8 +960,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for PropertyValueClause {
 impl PropertyValueClause {
     #[new]
     pub fn __init__(pv: PropertyValue) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), pv).into()
+        Self::new(pv).into()
     }
 
     #[getter]
@@ -1023,13 +1002,8 @@ pub struct DomainClause {
 }
 
 impl DomainClause {
-    pub fn new<I>(py: Python, domain: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            domain: domain.into_py(py),
-        }
+    pub fn new(domain: Ident) -> Self {
+        Self { domain }
     }
 }
 
@@ -1045,7 +1019,8 @@ impl Display for DomainClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1059,8 +1034,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for DomainClause {
 impl DomainClause {
     #[new]
     fn __init__(domain: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), domain).into()
+        Self::new(domain).into()
     }
 
     /// `~fastobo.id.Ident`: the identifier of the domain of the relation.
@@ -1102,13 +1076,8 @@ pub struct RangeClause {
 }
 
 impl RangeClause {
-    pub fn new<I>(py: Python, range: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            range: range.into_py(py),
-        }
+    pub fn new(range: Ident) -> Self {
+        Self { range }
     }
 }
 
@@ -1124,7 +1093,8 @@ impl Display for RangeClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1138,8 +1108,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for RangeClause {
 impl RangeClause {
     #[new]
     fn __init__(range: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), range).into()
+        Self::new(range).into()
     }
 
     #[getter]
@@ -1247,15 +1216,8 @@ pub struct HoldsOverChainClause {
 }
 
 impl HoldsOverChainClause {
-    pub fn new<R1, R2>(py: Python, first: R1, last: R2) -> Self
-    where
-        R1: IntoPy<Ident>,
-        R2: IntoPy<Ident>,
-    {
-        Self {
-            first: first.into_py(py),
-            last: last.into_py(py),
-        }
+    pub fn new(first: Ident, last: Ident) -> Self {
+        Self { first, last }
     }
 }
 
@@ -1272,7 +1234,8 @@ impl Display for HoldsOverChainClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1289,8 +1252,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for HoldsOverChainClause {
 impl HoldsOverChainClause {
     #[new]
     fn __init__(first: Ident, last: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), first, last).into()
+        Self::new(first, last).into()
     }
 
     #[getter]
@@ -1482,7 +1444,7 @@ impl From<IsReflexiveClause> for fastobo::ast::TypedefClause {
 }
 
 impl IntoPy<fastobo::ast::TypedefClause> for IsReflexiveClause {
-    fn into_py(self, _py: Python) -> Self {
+    fn into_py(self, _py: Python) -> fastobo::ast::TypedefClause {
         fastobo::ast::TypedefClause::from(self)
     }
 }
@@ -1842,11 +1804,8 @@ pub struct IsAClause {
 }
 
 impl IsAClause {
-    pub fn new<I>(py: Python, typedef: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self { typedef: typedef.into_py(py) }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -1854,7 +1813,8 @@ impl Display for IsAClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1876,8 +1836,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for IsAClause {
 impl IsAClause {
     #[new]
     fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef).into()
+        Self::new(typedef).into()
     }
 
     #[getter]
@@ -1919,13 +1878,8 @@ pub struct IntersectionOfClause {
 }
 
 impl IntersectionOfClause {
-    pub fn new<R>(py: Python, typedef: R) -> Self
-    where
-        R: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-        }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -1941,7 +1895,8 @@ impl Display for IntersectionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1955,8 +1910,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for IntersectionOfClause {
 impl IntersectionOfClause {
     #[new]
     fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef).into()
+        Self::new(typedef).into()
     }
 
     #[getter]
@@ -1997,13 +1951,8 @@ pub struct UnionOfClause {
 }
 
 impl UnionOfClause {
-    pub fn new<I>(py: Python, typedef: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-        }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -2019,7 +1968,8 @@ impl Display for UnionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2033,8 +1983,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for UnionOfClause {
 impl UnionOfClause {
     #[new]
     fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef).into()
+        Self::new(typedef).into()
     }
 
     #[getter]
@@ -2076,13 +2025,8 @@ pub struct EquivalentToClause {
 }
 
 impl EquivalentToClause {
-    pub fn new<I>(py: Python, typedef: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-        }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -2098,7 +2042,8 @@ impl Display for EquivalentToClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2112,8 +2057,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for EquivalentToClause {
 impl EquivalentToClause {
     #[new]
     fn __init__(id: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), id).into()
+        Self::new(id).into()
     }
 
     #[getter]
@@ -2155,13 +2099,8 @@ pub struct DisjointFromClause {
 }
 
 impl DisjointFromClause {
-    pub fn new<I>(py: Python, typedef: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-        }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -2177,7 +2116,8 @@ impl Display for DisjointFromClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2191,8 +2131,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for DisjointFromClause {
 impl DisjointFromClause {
     #[new]
     fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef).into()
+        Self::new(typedef).into()
     }
 
     #[getter]
@@ -2234,13 +2173,8 @@ pub struct InverseOfClause {
 }
 
 impl InverseOfClause {
-    pub fn new<R>(py: Python, typedef: R) -> Self
-    where
-        R: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-        }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -2256,7 +2190,8 @@ impl Display for InverseOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2270,8 +2205,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for InverseOfClause {
 impl InverseOfClause {
     #[new]
     fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef).into()
+        Self::new(typedef).into()
     }
 
     #[getter]
@@ -2313,13 +2247,8 @@ pub struct TransitiveOverClause {
 }
 
 impl TransitiveOverClause {
-    pub fn new<R>(py: Python, typedef: R) -> Self
-    where
-        R: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-        }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -2335,7 +2264,8 @@ impl Display for TransitiveOverClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2349,8 +2279,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for TransitiveOverClause {
 impl TransitiveOverClause {
     #[new]
     fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef).into()
+        Self::new(typedef).into()
     }
 
     #[getter]
@@ -2394,15 +2323,8 @@ pub struct EquivalentToChainClause {
 }
 
 impl EquivalentToChainClause {
-    pub fn new<R1, R2>(py: Python, first: R1, last: R2) -> Self
-    where
-        R1: IntoPy<Ident>,
-        R2: IntoPy<Ident>,
-    {
-        Self {
-            first: first.into_py(py),
-            last: last.into_py(py),
-        }
+    pub fn new(first: Ident, last: Ident) -> Self {
+        Self { first, last }
     }
 }
 
@@ -2419,7 +2341,8 @@ impl Display for EquivalentToChainClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2436,8 +2359,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for EquivalentToChainClause {
 impl EquivalentToChainClause {
     #[new]
     fn __init__(first: Ident, last: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), first, last).into()
+        Self::new(first, last).into()
     }
 
     #[getter]
@@ -2485,13 +2407,8 @@ pub struct DisjointOverClause {
 }
 
 impl DisjointOverClause {
-    pub fn new<R>(py: Python, typedef: R) -> Self
-    where
-        R: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-        }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -2507,7 +2424,8 @@ impl Display for DisjointOverClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2521,8 +2439,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for DisjointOverClause {
 impl DisjointOverClause {
     #[new]
     fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef).into()
+        Self::new(typedef).into()
     }
 
     #[getter]
@@ -2566,15 +2483,8 @@ pub struct RelationshipClause {
 }
 
 impl RelationshipClause {
-    pub fn new<R, T>(py: Python, typedef: R, target: T) -> Self
-    where
-        R: IntoPy<Ident>,
-        T: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-            target: target.into_py(py),
-        }
+    pub fn new(typedef: Ident, target: Ident) -> Self {
+        Self { typedef, target }
     }
 }
 
@@ -2591,7 +2501,8 @@ impl Display for RelationshipClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2608,8 +2519,7 @@ impl_raw_value!(RelationshipClause, "{} {}", self.typedef, self.target);
 impl RelationshipClause {
     #[new]
     fn __init__(typedef: Ident, target: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef, target).into()
+        Self::new(typedef, target).into()
     }
 
     #[getter]
@@ -2669,8 +2579,8 @@ impl From<IsObsoleteClause> for fastobo::ast::TypedefClause {
     }
 }
 
-impl IntoPy<IsObsoleteClause> for fastobo::ast::TypedefClause {
-    fn into_py(self, _py: Python) -> fastobo::ast::TypedefClause {
+impl IntoPy<fastobo::ast::TypedefClause> for IsObsoleteClause {
+    fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
         fastobo::ast::TypedefClause::from(self)
     }
 }
@@ -2715,13 +2625,8 @@ pub struct ReplacedByClause {
 }
 
 impl ReplacedByClause {
-    pub fn new<I>(py: Python, typedef: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-        }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -2737,7 +2642,8 @@ impl Display for ReplacedByClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2754,8 +2660,7 @@ impl_raw_value!(ReplacedByClause, "{}", self.typedef);
 impl ReplacedByClause {
     #[new]
     fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef).into()
+        Self::new(typedef).into()
     }
 
     #[getter]
@@ -2794,13 +2699,8 @@ pub struct ConsiderClause {
 }
 
 impl ConsiderClause {
-    pub fn new<I>(py: Python, typedef: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-        }
+    pub fn new(typedef: Ident) -> Self {
+        Self { typedef }
     }
 }
 
@@ -2816,7 +2716,8 @@ impl Display for ConsiderClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -2833,8 +2734,7 @@ impl_raw_value!(ConsiderClause, "{}", self.typedef);
 impl ConsiderClause {
     #[new]
     fn __init__(typedef: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef).into()
+        Self::new(typedef).into()
     }
 
     #[getter]
@@ -2955,7 +2855,7 @@ pub struct CreationDateClause {
 }
 
 impl CreationDateClause {
-    pub fn new(_py: Python, date: fastobo::ast::IsoDateTime) -> Self {
+    pub fn new(date: fastobo::ast::IsoDateTime) -> Self {
         Self { date }
     }
 }
@@ -3035,13 +2935,10 @@ pub struct ExpandAssertionToClause {
 }
 
 impl ExpandAssertionToClause {
-    pub fn new<X>(py: Python, desc: fastobo::ast::QuotedString, xrefs: X) -> Self
-    where
-        X: IntoPy<XrefList>,
-    {
+    pub fn new(desc: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
         Self {
             definition: desc,
-            xrefs: xrefs.into_py(py),
+            xrefs
         }
     }
 }
@@ -3059,7 +2956,8 @@ impl Display for ExpandAssertionToClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -3085,7 +2983,7 @@ impl ExpandAssertionToClause {
             None => XrefList::new(Vec::new()),
         };
 
-        Ok(Self::new(py, def, list).into())
+        Ok(Self::new(def, list).into())
     }
 
     #[getter]
@@ -3108,7 +3006,7 @@ impl ExpandAssertionToClause {
     pub fn raw_value(&self) -> PyResult<String> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        let xrefs = fastobo::ast::XrefList::from_py(self.xrefs.clone_py(py), py);
+        let xrefs: fastobo::ast::XrefList = self.xrefs.clone_py(py).into_py(py);
         Ok(format!("{} {}", self.definition, xrefs))
     }
 }
@@ -3144,13 +3042,10 @@ pub struct ExpandExpressionToClause {
 }
 
 impl ExpandExpressionToClause {
-    pub fn new<X>(py: Python, desc: fastobo::ast::QuotedString, xrefs: X) -> Self
-    where
-        X: IntoPy<XrefList>,
-    {
+    pub fn new(desc: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
         Self {
             definition: desc,
-            xrefs: xrefs.into_py(py),
+            xrefs,
         }
     }
 }
@@ -3168,7 +3063,8 @@ impl Display for ExpandExpressionToClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TypedefClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -3194,7 +3090,7 @@ impl ExpandExpressionToClause {
             None => XrefList::new(Vec::new()),
         };
 
-        Ok(Self::new(py, def, list).into())
+        Ok(Self::new(def, list).into())
     }
 
     #[getter]
@@ -3217,7 +3113,7 @@ impl ExpandExpressionToClause {
     pub fn raw_value(&self) -> PyResult<String> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        let xrefs = fastobo::ast::XrefList::from_py(self.xrefs.clone_py(py), py);
+        let xrefs: fastobo::ast::XrefList = self.xrefs.clone_py(py).into_py(py);
         Ok(format!("{} {}", self.definition, xrefs))
     }
 }
@@ -3334,7 +3230,7 @@ impl From<IsClassLevelClause> for fastobo::ast::TypedefClause {
 }
 
 impl IntoPy<fastobo::ast::TypedefClause> for IsClassLevelClause {
-    fn from_py(self, _py: Python) -> fastobo::ast::TypedefClause {
+    fn into_py(self, _py: Python) -> fastobo::ast::TypedefClause {
         fastobo::ast::TypedefClause::from(self)
     }
 }

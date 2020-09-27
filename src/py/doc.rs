@@ -55,19 +55,26 @@ impl IntoPy<EntityFrame> for fastobo::ast::EntityFrame {
     fn into_py(self, py: Python) -> EntityFrame {
         match self {
             fastobo::ast::EntityFrame::Term(frame) => {
-                Py::new(py, TermFrame::from_py(*frame, py))
-                    .map(EntityFrame::Term)
+                Py::new(py, frame.into_py(py)).map(EntityFrame::Term)
             }
             fastobo::ast::EntityFrame::Typedef(frame) => {
-                Py::new(py, TypedefFrame::from_py(*frame, py))
-                    .map(EntityFrame::Typedef)
+                Py::new(py, frame.into_py(py)).map(EntityFrame::Typedef)
             }
             fastobo::ast::EntityFrame::Instance(frame) => {
-                Py::new(py, InstanceFrame::from_py(*frame, py))
-                    .map(EntityFrame::Instance)
+                Py::new(py, frame.into_py(py)).map(EntityFrame::Instance)
             },
         }
         .expect("could not allocate on Python heap")
+    }
+}
+
+impl IntoPy<fastobo::ast::EntityFrame> for EntityFrame {
+    fn into_py(self, py: Python) -> fastobo::ast::EntityFrame {
+        match self {
+            EntityFrame::Term(t) => t.borrow(py).clone_py(py).into_py(py),
+            EntityFrame::Typedef(t) => t.borrow(py).clone_py(py).into_py(py),
+            EntityFrame::Instance(i) => i.borrow(py).clone_py(py).into_py(py),
+        }
     }
 }
 
@@ -116,17 +123,18 @@ impl Display for OboDoc {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::OboDoc::from_py(self.clone_py(py), py).fmt(f)
+        let doc: fastobo::ast::OboDoc = self.clone_py(py).into_py(py);
+        doc.fmt(f)
     }
 }
 
 impl IntoPy<OboDoc> for fastobo::ast::OboDoc {
-    fn into_py(self, py: Python) -> OboDoc {
+    fn into_py(mut self, py: Python) -> OboDoc {
         // Take ownership of header and entities w/o reallocation or clone.
         let h: HeaderFrame = take(self.header_mut()).into_py(py);
         let entities = take(self.entities_mut())
             .into_iter()
-            .map(|frame| EntityFrame::from_py(frame, py))
+            .map(|frame| <fastobo::ast::EntityFrame as IntoPy<EntityFrame>>::into_py(frame, py))
             .collect();
 
         let header = Py::new(py,h)
@@ -137,11 +145,11 @@ impl IntoPy<OboDoc> for fastobo::ast::OboDoc {
 }
 
 impl IntoPy<fastobo::ast::OboDoc> for OboDoc {
-    fn from_py(self, py: Python) -> fastobo::ast::OboDoc {
+    fn into_py(self, py: Python) -> fastobo::ast::OboDoc {
         let header: HeaderFrame = self.header.as_ref(py).borrow().clone_py(py);
         self.entities
             .iter()
-            .map(|frame| fastobo::ast::EntityFrame::from_py(frame, py))
+            .map(|frame| <EntityFrame as IntoPy<fastobo::ast::EntityFrame>>::into_py(frame.clone_py(py), py))
             .collect::<fastobo::ast::OboDoc>()
             .and_header(header.into_py(py))
     }
@@ -209,7 +217,7 @@ impl OboDoc {
     fn compact_ids(&self) -> PyResult<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        let mut doc = obo::OboDoc::from_py(self.clone_py(py), py);
+        let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
         py.allow_threads(|| fastobo::visit::IdCompactor::new().visit_doc(&mut doc));
         Ok(doc.into_py(py))
     }
@@ -246,7 +254,7 @@ impl OboDoc {
     fn decompact_ids(&self) -> PyResult<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        let mut doc = obo::OboDoc::from_py(self.clone_py(py), py);
+        let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
         py.allow_threads(|| fastobo::visit::IdDecompactor::new().visit_doc(&mut doc));
         Ok(doc.into_py(py))
     }
@@ -272,7 +280,7 @@ impl PySequenceProtocol for OboDoc {
             let item = &self.entities[index as usize];
             Ok(item.to_object(py))
         } else {
-            PyIndexError::into("list index out of range")
+            Err(PyIndexError::new_err("list index out of range"))
         }
     }
 }

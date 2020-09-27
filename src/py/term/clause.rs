@@ -7,8 +7,6 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 use pyo3::class::basic::CompareOp;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyDateAccess;
@@ -65,52 +63,62 @@ pub enum TermClause {
 }
 
 impl IntoPy<TermClause> for fastobo::ast::TermClause {
-    fn into_py(self, py: Python) -> Self {
+    fn into_py(self, py: Python) -> TermClause {
         use fastobo::ast::TermClause::*;
         match self {
             IsAnonymous(b) => {
                 Py::new(py, IsAnonymousClause::new(b)).map(TermClause::IsAnonymous)
             }
             Name(n) => Py::new(py, NameClause::new(*n)).map(TermClause::Name),
-            Namespace(ns) => Py::new(py, NamespaceClause::new(py, *ns)).map(TermClause::Namespace),
-            AltId(id) => Py::new(py, AltIdClause::new(py, *id)).map(TermClause::AltId),
+            Namespace(ns) => Py::new(py, NamespaceClause::new(ns.into_py(py))).map(TermClause::Namespace),
+            AltId(id) => Py::new(py, AltIdClause::new(id.into_py(py))).map(TermClause::AltId),
             Def(mut def) => {
                 let text = std::mem::take(def.text_mut());
-                let xrefs = std::mem::take(def.xrefs_mut());
-                Py::new(py, DefClause::new(py, text, xrefs)).map(TermClause::Def)
+                let xrefs = std::mem::take(def.xrefs_mut()).into_py(py);
+                Py::new(py, DefClause::new(text, xrefs)).map(TermClause::Def)
             }
             Comment(c) => Py::new(py, CommentClause::new(*c)).map(TermClause::Comment),
-            Subset(s) => Py::new(py, SubsetClause::new(py, *s)).map(TermClause::Subset),
-            Synonym(s) => Py::new(py, SynonymClause::new(py, *s)).map(TermClause::Synonym),
-            Xref(x) => Py::new(py, XrefClause::new(py, *x)).map(TermClause::Xref),
+            Subset(s) => Py::new(py, SubsetClause::new(s.into_py(py))).map(TermClause::Subset),
+            Synonym(s) => {
+                Py::new(py, s.into_py(py))
+                    .map(SynonymClause::new)
+                    .and_then(|clause| Py::new(py, clause))
+                    .map(TermClause::Synonym)
+            }
+            Xref(x) => {
+                Py::new(py, x.into_py(py))
+                    .map(XrefClause::new)
+                    .and_then(|clause| Py::new(py, clause))
+                    .map(TermClause::Xref)
+            }
             Builtin(b) => Py::new(py, BuiltinClause::new(b)).map(TermClause::Builtin),
             PropertyValue(pv) => {
-                Py::new(py, PropertyValueClause::new(py, *pv)).map(TermClause::PropertyValue)
+                Py::new(py, PropertyValueClause::new(pv.into_py(py))).map(TermClause::PropertyValue)
             }
-            IsA(id) => Py::new(py, IsAClause::new(py, *id)).map(TermClause::IsA),
+            IsA(id) => Py::new(py, IsAClause::new(id.into_py(py))).map(TermClause::IsA),
             IntersectionOf(r, cls) => {
-                Py::new(py, IntersectionOfClause::new(py, r.map(|id| *id), *cls)).map(TermClause::IntersectionOf)
+                Py::new(py, IntersectionOfClause::new(r.map(|id| id.into_py(py)), cls.into_py(py))).map(TermClause::IntersectionOf)
             }
-            UnionOf(cls) => Py::new(py, UnionOfClause::new(py, *cls)).map(TermClause::UnionOf),
+            UnionOf(cls) => Py::new(py, UnionOfClause::new(cls.into_py(py))).map(TermClause::UnionOf),
             EquivalentTo(cls) => {
-                Py::new(py, EquivalentToClause::new(py, *cls)).map(TermClause::EquivalentTo)
+                Py::new(py, EquivalentToClause::new(cls.into_py(py))).map(TermClause::EquivalentTo)
             }
             DisjointFrom(cls) => {
-                Py::new(py, DisjointFromClause::new(py, *cls)).map(TermClause::DisjointFrom)
+                Py::new(py, DisjointFromClause::new(cls.into_py(py))).map(TermClause::DisjointFrom)
             }
             Relationship(r, id) => {
-                Py::new(py, RelationshipClause::new(py, *r, *id)).map(TermClause::Relationship)
+                Py::new(py, RelationshipClause::new(r.into_py(py), id.into_py(py))).map(TermClause::Relationship)
             }
             IsObsolete(b) => Py::new(py, IsObsoleteClause::new(b)).map(TermClause::IsObsolete),
             ReplacedBy(id) => {
-                Py::new(py, ReplacedByClause::new(py, *id)).map(TermClause::ReplacedBy)
+                Py::new(py, ReplacedByClause::new(id.into_py(py))).map(TermClause::ReplacedBy)
             }
-            Consider(id) => Py::new(py, ConsiderClause::new(py, *id)).map(TermClause::Consider),
+            Consider(id) => Py::new(py, ConsiderClause::new(id.into_py(py))).map(TermClause::Consider),
             CreatedBy(name) => {
                 Py::new(py, CreatedByClause::new(*name)).map(TermClause::CreatedBy)
             }
             CreationDate(dt) => {
-                Py::new(py, CreationDateClause::new(py, *dt)).map(TermClause::CreationDate)
+                Py::new(py, CreationDateClause::new(*dt)).map(TermClause::CreationDate)
             }
         }
         .expect("could not allocate memory for `TermClause` in Python heap")
@@ -274,13 +282,8 @@ pub struct NamespaceClause {
 }
 
 impl NamespaceClause {
-    pub fn new<I>(py: Python, ns: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            namespace: ns.into_py(py),
-        }
+    pub fn new(namespace: Ident) -> Self {
+        Self { namespace }
     }
 }
 
@@ -296,13 +299,14 @@ impl Display for NamespaceClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
 impl IntoPy<fastobo::ast::TermClause> for NamespaceClause {
     fn into_py(self, py: Python) -> fastobo::ast::TermClause {
-        let ns = fastobo::ast::NamespaceIdent::from_py(self.namespace, py);
+        let ns: fastobo::ast::NamespaceIdent = self.namespace.into_py(py);
         fastobo::ast::TermClause::Namespace(Box::new(ns))
     }
 }
@@ -311,8 +315,7 @@ impl IntoPy<fastobo::ast::TermClause> for NamespaceClause {
 impl NamespaceClause {
     #[new]
     fn __init__(namespace: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), namespace).into()
+        Self::new(namespace).into()
     }
 
     #[getter]
@@ -358,13 +361,8 @@ pub struct AltIdClause {
 }
 
 impl AltIdClause {
-    pub fn new<I>(py: Python, id: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            alt_id: id.into_py(py),
-        }
+    pub fn new(alt_id: Ident) -> Self {
+        Self { alt_id }
     }
 }
 
@@ -380,7 +378,8 @@ impl Display for AltIdClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -394,8 +393,7 @@ impl IntoPy<fastobo::ast::TermClause> for AltIdClause {
 impl AltIdClause {
     #[new]
     fn __init__(alt_id: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), alt_id).into()
+        Self::new(alt_id).into()
     }
 
     #[getter]
@@ -445,13 +443,10 @@ pub struct DefClause {
 }
 
 impl DefClause {
-    pub fn new<X>(py: Python, definition: fastobo::ast::QuotedString, xrefs: X) -> Self
-    where
-        X: IntoPy<XrefList>,
-    {
+    pub fn new(definition: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
         Self {
             definition,
-            xrefs: xrefs.into_py(py),
+            xrefs,
         }
     }
 }
@@ -469,7 +464,8 @@ impl Display for DefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -494,7 +490,7 @@ impl DefClause {
             None => XrefList::new(Vec::new()),
         };
 
-        Ok(Self::new(py, def, list).into())
+        Ok(Self::new(def, list).into())
     }
 
     #[getter]
@@ -620,13 +616,8 @@ pub struct SubsetClause {
 }
 
 impl SubsetClause {
-    pub fn new<I>(py: Python, subset: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            subset: subset.into_py(py),
-        }
+    pub fn new(subset: Ident) -> Self {
+        Self { subset }
     }
 }
 
@@ -642,7 +633,8 @@ impl Display for SubsetClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -656,8 +648,7 @@ impl IntoPy<fastobo::ast::TermClause> for SubsetClause {
 impl SubsetClause {
     #[new]
     fn __init__(subset: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), subset).into()
+        Self::new(subset).into()
     }
 
     #[getter]
@@ -699,13 +690,8 @@ pub struct SynonymClause {
 }
 
 impl SynonymClause {
-    pub fn new<S>(py: Python, synonym: S) -> Self
-    where
-        S: IntoPy<Synonym>,
-    {
-        Self {
-            synonym: Py::new(py, synonym.into_py(py)).unwrap(),
-        }
+    pub fn new(synonym: Py<Synonym>) -> Self {
+        Self { synonym }
     }
 }
 
@@ -721,7 +707,8 @@ impl Display for SynonymClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -738,10 +725,10 @@ impl_raw_tag!(SynonymClause, "synonym");
 #[pymethods]
 impl SynonymClause {
     #[new]
-    fn __init__(synonym: &Synonym) -> PyClassInitializer<Self> {
+    fn __init__(synonym: Py<Synonym>) -> PyClassInitializer<Self> {
         let gil = Python::acquire_gil();
-        let s = synonym.clone_py(gil.python());
-        Self::new(gil.python(), s).into()
+        let py = gil.python();
+        Self::new(synonym.clone_ref(py)).into()
     }
 
     #[getter]
@@ -787,11 +774,8 @@ pub struct XrefClause {
 }
 
 impl XrefClause {
-    pub fn new<X>(py: Python, xref: X) -> Self
-    where
-        X: IntoPy<Xref>,
-    {
-        Self::from_py(xref.into_py(py), py)
+    pub fn new(xref: Py<Xref>) -> Self {
+        Self { xref }
     }
 }
 
@@ -807,7 +791,8 @@ impl Display for XrefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -953,12 +938,9 @@ pub struct PropertyValueClause {
 }
 
 impl PropertyValueClause {
-    pub fn new<P>(py: Python, property_value: P) -> Self
-    where
-        P: IntoPy<PropertyValue>,
-    {
+    pub fn new(property_value: PropertyValue) -> Self {
         Self {
-            inner: property_value.into_py(py),
+            inner: property_value,
         }
     }
 }
@@ -975,7 +957,8 @@ impl Display for PropertyValueClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -989,8 +972,7 @@ impl IntoPy<fastobo::ast::TermClause> for PropertyValueClause {
 impl PropertyValueClause {
     #[new]
     pub fn __init__(property_value: PropertyValue) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), property_value).into()
+        Self::new(property_value).into()
     }
 
     #[getter]
@@ -1032,13 +1014,8 @@ pub struct IsAClause {
 }
 
 impl IsAClause {
-    pub fn new<I>(py: Python, term: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            term: term.into_py(py),
-        }
+    pub fn new(term: Ident) -> Self {
+        Self { term }
     }
 }
 
@@ -1054,7 +1031,8 @@ impl Display for IsAClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1068,8 +1046,7 @@ impl IntoPy<fastobo::ast::TermClause> for IsAClause {
 impl IsAClause {
     #[new]
     fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), term).into()
+        Self::new(term).into()
     }
 
     #[getter]
@@ -1135,14 +1112,10 @@ pub struct IntersectionOfClause {
 }
 
 impl IntersectionOfClause {
-    pub fn new<R, T>(py: Python, typedef: Option<R>, term: T) -> Self
-    where
-        R: IntoPy<Ident>,
-        T: IntoPy<Ident>,
-    {
+    pub fn new(typedef: Option<Ident>, term: Ident) -> Self {
         Self {
-            typedef: typedef.map(|id| id.into_py(py)),
-            term: term.into_py(py),
+            typedef,
+            term,
         }
     }
 }
@@ -1160,7 +1133,8 @@ impl Display for IntersectionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1177,8 +1151,7 @@ impl IntoPy<fastobo::ast::TermClause> for IntersectionOfClause {
 impl IntersectionOfClause {
     #[new]
     fn __init__(typedef: Option<Ident>, term: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef, term).into()
+        Self::new(typedef, term).into()
     }
 
     #[getter]
@@ -1233,13 +1206,8 @@ pub struct UnionOfClause {
 }
 
 impl UnionOfClause {
-    pub fn new<I>(py: Python, term: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            term: term.into_py(py),
-        }
+    pub fn new(term: Ident) -> Self {
+        Self { term }
     }
 }
 
@@ -1255,7 +1223,8 @@ impl Display for UnionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1269,8 +1238,7 @@ impl IntoPy<fastobo::ast::TermClause> for UnionOfClause {
 impl UnionOfClause {
     #[new]
     fn __init__(id: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), id).into()
+        Self::new(id).into()
     }
 
     #[getter]
@@ -1312,13 +1280,8 @@ pub struct EquivalentToClause {
 }
 
 impl EquivalentToClause {
-    pub fn new<I>(py: Python, term: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            term: term.into_py(py),
-        }
+    pub fn new(term: Ident) -> Self {
+        Self { term }
     }
 }
 
@@ -1334,7 +1297,8 @@ impl Display for EquivalentToClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1348,8 +1312,7 @@ impl IntoPy<fastobo::ast::TermClause> for EquivalentToClause {
 impl EquivalentToClause {
     #[new]
     fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), term).into()
+        Self::new(term).into()
     }
 
     #[getter]
@@ -1391,13 +1354,8 @@ pub struct DisjointFromClause {
 }
 
 impl DisjointFromClause {
-    pub fn new<I>(py: Python, term: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            term: term.into_py(py),
-        }
+    pub fn new(term: Ident) -> Self {
+        Self { term }
     }
 }
 
@@ -1413,7 +1371,8 @@ impl Display for DisjointFromClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1427,8 +1386,7 @@ impl IntoPy<fastobo::ast::TermClause> for DisjointFromClause {
 impl DisjointFromClause {
     #[new]
     fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), term).into()
+        Self::new(term).into()
     }
 
     #[getter]
@@ -1472,15 +1430,8 @@ pub struct RelationshipClause {
 }
 
 impl RelationshipClause {
-    pub fn new<R, T>(py: Python, typedef: R, term: T) -> Self
-    where
-        R: IntoPy<Ident>,
-        T: IntoPy<Ident>,
-    {
-        Self {
-            typedef: typedef.into_py(py),
-            term: term.into_py(py),
-        }
+    pub fn new(typedef: Ident, term: Ident) -> Self {
+        Self { typedef, term }
     }
 }
 
@@ -1497,7 +1448,8 @@ impl Display for RelationshipClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1517,8 +1469,7 @@ impl_raw_value!(RelationshipClause, "{} {}", self.typedef, self.term);
 impl RelationshipClause {
     #[new]
     fn __init__(typedef: Ident, term: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), typedef, term).into()
+        Self::new(typedef, term).into()
     }
 
     #[getter]
@@ -1624,13 +1575,8 @@ pub struct ReplacedByClause {
 }
 
 impl ReplacedByClause {
-    pub fn new<I>(py: Python, term: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            term: term.into_py(py),
-        }
+    pub fn new(term: Ident) -> Self {
+        Self { term }
     }
 }
 
@@ -1646,7 +1592,8 @@ impl Display for ReplacedByClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1663,8 +1610,7 @@ impl_raw_value!(ReplacedByClause, "{}", self.term);
 impl ReplacedByClause {
     #[new]
     fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), term).into()
+        Self::new(term).into()
     }
 
     #[getter]
@@ -1702,13 +1648,8 @@ pub struct ConsiderClause {
 }
 
 impl ConsiderClause {
-    pub fn new<I>(py: Python, term: I) -> Self
-    where
-        I: IntoPy<Ident>,
-    {
-        Self {
-            term: term.into_py(py),
-        }
+    pub fn new(term: Ident) -> Self {
+        Self { term }
     }
 }
 
@@ -1724,7 +1665,8 @@ impl Display for ConsiderClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1741,8 +1683,7 @@ impl_raw_value!(ConsiderClause, "{}", self.term);
 impl ConsiderClause {
     #[new]
     fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        Self::new(gil.python(), term).into()
+        Self::new(term).into()
     }
 
     #[getter]
@@ -1788,7 +1729,8 @@ impl Display for CreatedByClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TermClause::from_py(self.clone_py(py), py).fmt(f)
+        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        clause.fmt(f)
     }
 }
 
@@ -1864,7 +1806,7 @@ pub struct CreationDateClause {
 }
 
 impl CreationDateClause {
-    pub fn new(_py: Python, date: fastobo::ast::IsoDateTime) -> Self {
+    pub fn new(date: fastobo::ast::IsoDateTime) -> Self {
         Self { date }
     }
 }

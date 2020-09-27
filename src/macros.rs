@@ -80,7 +80,7 @@ macro_rules! add_submodule {
         module.add("__package__", $sup.get("__package__")?)?;
 
         // add the submodule to the supermodule
-        $sup.add(stringify!($sub), &module)?;
+        $sup.add(stringify!($sub), module)?;
 
         // add the submodule to the `sys.modules` index
         $py.import("sys")?

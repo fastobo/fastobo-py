@@ -5,8 +5,8 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 use pyo3::class::basic::CompareOp;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyTypeError;
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
@@ -63,10 +63,10 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "parse")]
     fn parse(py: Python, s: &str) -> PyResult<Ident> {
         match fastobo::ast::Ident::from_str(s) {
-            Ok(id) => Ok(Ident::from_py(id, py)),
+            Ok(id) => Ok(id.into_py(py)),
             Err(e) => {
                 let err = PyErr::from(Error::from(e));
-                raise!(py, ValueError("could not parse identifier") from err)
+                raise!(py, PyValueError("could not parse identifier") from err)
             }
         }
     }
@@ -147,22 +147,10 @@ impl Display for Ident {
 impl IntoPy<Ident> for fastobo::ast::Ident {
     fn into_py(self, py: Python) -> Ident {
         match self {
-            ast::Ident::Unprefixed(id) => {
-                Py::new(py, UnprefixedIdent::new(*id))
-                    .map(Ident::Unprefixed)
-                    .expect("could not allocate on Python heap")
-            }
-            ast::Ident::Prefixed(id) => {
-                Py::new(py, PrefixedIdent::from_py(*id, py))
-                    .map(Ident::Prefixed)
-                    .expect("could not allocate on Python heap")
-            }
-            ast::Ident::Url(id) => {
-                Py::new(py, Url::from_py(*id, py))
-                    .map(Ident::Url)
-                    .expect("could not allocate on Python heap")
-            }
-        }
+            ast::Ident::Unprefixed(id) => Py::new(py, id.into_py(py)).map(Ident::Unprefixed),
+            ast::Ident::Prefixed(id) => Py::new(py, id.into_py(py)).map(Ident::Prefixed),
+            ast::Ident::Url(id) => Py::new(py, id.into_py(py)).map(Ident::Url),
+        }.expect("could not allocate on Python heap")
     }
 }
 
@@ -280,7 +268,7 @@ impl IntoPy<ast::PrefixedIdent> for PrefixedIdent {
 
 impl IntoPy<ast::Ident> for PrefixedIdent {
     fn into_py(self, py: Python) -> ast::Ident {
-        ast::Ident::from(ast::PrefixedIdent::from_py(self, py))
+        ast::Ident::Prefixed(Box::new(self.into_py(py)))
     }
 }
 
@@ -320,7 +308,7 @@ impl PrefixedIdent {
         } else {
             let ty = prefix.get_type().name();
             let msg = format!("expected IdentPrefix or str, found {}", ty);
-            return TypeError::into(msg);
+            return Err(PyTypeError::new_err(msg));
         };
 
         let l = if let Ok(local) = local.extract::<Py<IdentLocal>>() {
@@ -331,7 +319,7 @@ impl PrefixedIdent {
         } else {
             let ty = local.get_type().name();
             let msg = format!("expected IdentLocal or str, found {}", ty);
-            return TypeError::into(msg);
+            return Err(PyTypeError::new_err(msg));
         };
 
         Ok(
@@ -357,7 +345,7 @@ impl PrefixedIdent {
         } else {
             let ty = prefix.get_type().name();
             let msg = format!("expected IdentPrefix or str, found {}", ty);
-            return TypeError::into(msg);
+            return Err(PyTypeError::new_err(msg));
         };
         Ok(())
     }
@@ -379,7 +367,7 @@ impl PrefixedIdent {
         } else {
             let ty = local.get_type().name();
             let msg = format!("expected IdentLocal or str, found {}", ty);
-            return TypeError::into(msg);
+            return Err(PyTypeError::new_err(msg));
         };
         Ok(())
     }
@@ -431,7 +419,7 @@ impl PyObjectProtocol for PrefixedIdent {
                 _ => {
                     let n = other.get_type().name();
                     let msg = format!("expected PrefixedIdent, found {}", n);
-                    TypeError::into(msg)
+                    Err(PyTypeError::new_err(msg))
                 }
             }
         }
@@ -573,7 +561,7 @@ impl PyObjectProtocol for UnprefixedIdent {
                 _ => {
                     let n = other.get_type().name();
                     let msg = format!("expected UnprefixedIdent, found {}", n);
-                    TypeError::into(msg)
+                    Err(PyTypeError::new_err(msg))
                 }
             }
         }
@@ -666,7 +654,7 @@ impl Url {
         let init = PyClassInitializer::from(BaseIdent {});
         match url::Url::from_str(value) {
             Ok(url) => Ok(init.add_subclass(Url::new(url))),
-            Err(e) => ValueError::into(format!("invalid url: {}", e)),
+            Err(e) => Err(PyValueError::new_err(format!("invalid url: {}", e))),
         }
     }
 }
@@ -704,7 +692,7 @@ impl PyObjectProtocol for Url {
                 _ => {
                     let n = other.get_type().name();
                     let msg = format!("expected str or Url, found {}", n);
-                    TypeError::into(msg)
+                    Err(PyTypeError::new_err(msg))
                 }
             }
         }
@@ -741,6 +729,18 @@ impl From<ast::IdentPrefix> for IdentPrefix {
 impl From<IdentPrefix> for ast::IdentPrefix {
     fn from(id: IdentPrefix) -> Self {
         id.inner
+    }
+}
+
+impl IntoPy<IdentPrefix> for ast::IdentPrefix {
+    fn into_py(self, _py: Python) -> IdentPrefix {
+        self.into()
+    }
+}
+
+impl IntoPy<ast::IdentPrefix> for IdentPrefix {
+    fn into_py(self, _py: Python) -> ast::IdentPrefix {
+        self.into()
     }
 }
 

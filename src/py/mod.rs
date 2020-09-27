@@ -118,8 +118,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     #[text_signature = "(fh, ordered=True, threads=0)"]
     fn iter(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<FrameReader> {
         if let Ok(s) = fh.cast_as::<PyString>() {
-            let path = s.to_string()?;
-            FrameReader::from_path(path.as_ref(), ordered, threads)
+            let path = s.to_str()?;
+            FrameReader::from_path(path, ordered, threads)
         } else {
             match FrameReader::from_handle(fh, ordered, threads) {
                 Ok(r) => Ok(r),
@@ -167,7 +167,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         if let Ok(s) = fh.cast_as::<PyString>() {
             // get a buffered reader to the resources pointed by `path`
-            let path = s.to_string()?;
+            let path = s.to_str()?;
             let bf = match std::fs::File::open(&*path) {
                 Ok(f) => std::io::BufReader::new(f),
                 Err(e) => return Err(PyErr::from(Error::from(e))),
@@ -292,8 +292,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         let doc: GraphDocument = if let Ok(s) = fh.cast_as::<PyString>() {
             // Argument is a string, assumed to be a path: open the file.
             // and extract the graph
-            let path = s.to_string()?;
-            py.allow_threads(|| fastobo_graphs::from_file(path.as_ref()))
+            let path = s.to_str()?;
+            py.allow_threads(|| fastobo_graphs::from_file(path))
                 .map_err(|e| PyErr::from(GraphError::from(e)))?
         } else {
             // Argument is not a string, check if it is a file-handle.
@@ -315,7 +315,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             .map_err(GraphError::from)?;
 
         // Convert the OBO document to a Python `OboDoc` class
-        Ok(OboDoc::from_py(doc, py))
+        Ok(doc.into_py(py))
     }
 
     /// Dump an OBO graph into the given writer or file handle, serialized
@@ -345,15 +345,15 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     #[text_signature = "(doc, fh)"]
     fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
         // Convert OBO document to an OBO Graph document.
-        let doc = obo::OboDoc::from_py(obj.clone_py(py), py);
+        let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
         let graph = py.allow_threads(|| doc.into_graph())
             .map_err(|e| PyErr::from(GraphError::from(e)))?;
 
         // Write the document
         if let Ok(s) = fh.cast_as::<PyString>() {
             // Write into a file if given a path as a string.
-            let path = s.to_string()?;
-            py.allow_threads(|| fastobo_graphs::to_file(path.as_ref(), &graph))
+            let path = s.to_str()?;
+            py.allow_threads(|| fastobo_graphs::to_file(path, &graph))
                 .map_err(|e| PyErr::from(GraphError::from(e)))
         } else {
             // Write into the handle if given a writable file.

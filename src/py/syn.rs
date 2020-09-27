@@ -7,10 +7,7 @@ use std::string::ToString;
 
 use pyo3::class::basic::CompareOp;
 use pyo3::class::gc::PyVisit;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyValueError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
@@ -78,10 +75,14 @@ impl FromStr for SynonymScope {
             "BROAD" => Ok(Self::new(fastobo::ast::SynonymScope::Broad)),
             "NARROW" => Ok(Self::new(fastobo::ast::SynonymScope::Narrow)),
             "RELATED" => Ok(Self::new(fastobo::ast::SynonymScope::Related)),
-            _ => ValueError::into(format!(
-                "expected 'EXACT', 'BROAD', 'NARROW' or 'RELATED', found {:?}",
-                s
-            )),
+            invalid => {
+                Err(PyValueError::new_err(
+                    format!(
+                        "expected 'EXACT', 'BROAD', 'NARROW' or 'RELATED', found {:?}",
+                        invalid
+                    )
+                ))
+            }
         }
     }
 }
@@ -131,7 +132,8 @@ impl Display for Synonym {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::Synonym::from_py(self.clone_py(py), py).fmt(f)
+        let syn: fastobo::ast::Synonym = self.clone_py(py).into_py(py);
+        syn.fmt(f)
     }
 }
 
@@ -143,7 +145,7 @@ impl IntoPy<Synonym> for fastobo::ast::Synonym {
             ty: self.ty().map(|id| id.clone().into_py(py)),
             xrefs: Py::new(
                 py,
-                XrefList::from_py(std::mem::take(self.xrefs_mut()), py)
+                std::mem::take(self.xrefs_mut()).into_py(py),
             ).expect("failed allocating memory on Python heap")
         }
     }
@@ -155,7 +157,7 @@ impl IntoPy<fastobo::ast::Synonym> for Synonym {
             self.desc,
             self.scope.inner,
             self.ty.map(|ty| ty.into_py(py)),
-            fastobo::ast::XrefList::from_py(&*self.xrefs.as_ref(py).borrow(), py)
+            (&*self.xrefs.as_ref(py).borrow()).into_py(py)
         )
     }
 }

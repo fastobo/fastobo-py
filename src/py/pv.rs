@@ -4,8 +4,7 @@ use std::fmt::Result as FmtResult;
 use std::ops::Deref;
 use std::str::FromStr;
 
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
@@ -55,10 +54,10 @@ impl IntoPy<PropertyValue> for fastobo::ast::PropertyValue {
     fn into_py(self, py: Python) -> PropertyValue {
         match self {
             fastobo::ast::PropertyValue::Literal(lpv) => {
-                Py::new(py, LiteralPropertyValue::from_py(*lpv, py)).map(PropertyValue::Literal)
+                Py::new(py, lpv.into_py(py)).map(PropertyValue::Literal)
             }
             fastobo::ast::PropertyValue::Resource(rpv) => {
-                Py::new(py, ResourcePropertyValue::from_py(*rpv, py)).map(PropertyValue::Resource)
+                Py::new(py, rpv.into_py(py)).map(PropertyValue::Resource)
             }
         }
         .expect("could not allocate on Python heap")
@@ -69,10 +68,10 @@ impl IntoPy<fastobo::ast::PropertyValue> for PropertyValue {
     fn into_py(self, py: Python) -> fastobo::ast::PropertyValue {
         match self {
             PropertyValue::Literal(t) => {
-                Self::from_py(t.as_ref(py).borrow().deref().clone_py(py), py)
+                t.as_ref(py).borrow().deref().clone_py(py).into_py(py)
             }
             PropertyValue::Resource(r) => {
-                Self::from_py(r.as_ref(py).borrow().deref().clone_py(py), py)
+                r.as_ref(py).borrow().deref().clone_py(py).into_py(py)
             }
         }
     }
@@ -101,17 +100,8 @@ pub struct LiteralPropertyValue {
 }
 
 impl LiteralPropertyValue {
-    pub fn new<R, V, D>(py: Python, relation: R, value: V, datatype: D) -> Self
-    where
-        R: IntoPy<Ident>,
-        V: Into<fastobo::ast::QuotedString>,
-        D: IntoPy<Ident>,
-    {
-        LiteralPropertyValue {
-            relation: relation.into_py(py),
-            value: value.into(),
-            datatype: datatype.into_py(py),
-        }
+    pub fn new(relation: Ident, value: fastobo::ast::QuotedString, datatype: Ident) -> Self {
+        LiteralPropertyValue { relation, value, datatype }
     }
 }
 
@@ -146,18 +136,16 @@ impl IntoPy<fastobo::ast::LiteralPropertyValue> for LiteralPropertyValue {
 
 impl IntoPy<fastobo::ast::PropertyValue> for LiteralPropertyValue {
     fn into_py(self, py: Python) -> fastobo::ast::PropertyValue {
-        fastobo::ast::PropertyValue::from(
-            fastobo::ast::LiteralPropertyValue::from_py(self, py)
-        )
+        fastobo::ast::PropertyValue::Literal(Box::new(self.into_py(py)))
     }
 }
 
 impl IntoPy<LiteralPropertyValue> for fastobo::ast::LiteralPropertyValue {
-    fn into_py(self, py: Python) -> LiteralPropertyValue {
+    fn into_py(mut self, py: Python) -> LiteralPropertyValue {
         let value = std::mem::take(self.literal_mut());
-        let datatype = self.datatype().clone();
-        let relation = self.property().clone();
-        LiteralPropertyValue::new(py, relation, value, datatype)
+        let datatype = self.datatype().clone().into_py(py);
+        let relation = self.property().clone().into_py(py);
+        LiteralPropertyValue::new(relation, value, datatype)
     }
 }
 
@@ -171,13 +159,14 @@ impl LiteralPropertyValue {
     ) -> PyResult<PyClassInitializer<Self>> {
         let r = relation.extract::<Ident>()?;
         let v = if let Ok(s) = value.extract::<&PyString>() {
-            ast::QuotedString::new(s.to_string()?.to_string())
+            ast::QuotedString::new(s.to_str()?.to_string())
         } else {
             let n = value.get_type().name();
-            return TypeError::into(format!("expected str for value, found {}", n));
+            let msg = format!("expected str for value, found {}", n);
+            return Err(PyTypeError::new_err(msg));
         };
         let dt = datatype.extract::<Ident>()?;
-        Ok(Self::new(relation.py(), r, v, dt).into())
+        Ok(Self::new(r, v, dt).into())
     }
 
     #[getter]
@@ -249,14 +238,10 @@ pub struct ResourcePropertyValue {
 }
 
 impl ResourcePropertyValue {
-    pub fn new<R, V>(py: Python, relation: R, value: V) -> Self
-    where
-        R: IntoPy<Ident>,
-        V: IntoPy<Ident>,
-    {
+    pub fn new(relation: Ident, value: Ident) -> Self {
         ResourcePropertyValue {
-            relation: relation.into_py(py),
-            value: value.into_py(py),
+            relation,
+            value,
         }
     }
 }
@@ -288,17 +273,15 @@ impl IntoPy<fastobo::ast::ResourcePropertyValue> for ResourcePropertyValue {
 
 impl IntoPy<fastobo::ast::PropertyValue> for ResourcePropertyValue {
     fn into_py(self, py: Python) -> fastobo::ast::PropertyValue {
-        fastobo::ast::PropertyValue::from(
-            fastobo::ast::ResourcePropertyValue::from_py(self, py)
-        )
+        fastobo::ast::PropertyValue::Resource(Box::new(self.into_py(py)))
     }
 }
 
 impl IntoPy<ResourcePropertyValue> for fastobo::ast::ResourcePropertyValue {
     fn into_py(self, py: Python) -> ResourcePropertyValue {
-        let relation = self.property().clone();
-        let value = self.target().clone();
-        ResourcePropertyValue::new(py, relation, value)
+        let relation = self.property().clone().into_py(py);
+        let value = self.target().clone().into_py(py);
+        ResourcePropertyValue::new(relation, value)
     }
 }
 
@@ -307,7 +290,7 @@ impl ResourcePropertyValue {
     #[new]
     fn __init__(relation: Ident, value: Ident) -> PyClassInitializer<Self> {
         let gil = Python::acquire_gil();
-        Self::new(gil.python(), relation, value).into()
+        Self::new(relation, value).into()
     }
 
     #[getter]

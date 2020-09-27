@@ -3,9 +3,7 @@ use std::iter::IntoIterator;
 
 use fastobo::ast as obo;
 use pyo3::class::gc::PyVisit;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::TypeError;
+use pyo3::exceptions::PyIndexError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
@@ -60,20 +58,20 @@ impl FromIterator<HeaderClause> for HeaderFrame {
 }
 
 impl IntoPy<HeaderFrame> for fastobo::ast::HeaderFrame {
-    fn into_py(frame: fastobo::ast::HeaderFrame, py: Python) -> HeaderFrame {
-        frame
+    fn into_py(self, py: Python) -> HeaderFrame {
+        self
             .into_iter()
-            .map(|clause| HeaderClause::from_py(clause, py))
+            .map(|clause| clause.into_py(py))
             .collect()
     }
 }
 
 impl IntoPy<obo::HeaderFrame> for HeaderFrame {
     fn into_py(self, py: Python) -> obo::HeaderFrame {
-        frame
+        self
             .clauses
             .into_iter()
-            .map(|clause| obo::HeaderClause::from_py(clause, py))
+            .map(|clause| clause.into_py(py))
             .collect()
     }
 }
@@ -130,13 +128,13 @@ impl PySequenceProtocol for HeaderFrame {
             let item = &self.clauses[index as usize];
             Ok(item.to_object(py))
         } else {
-            IndexError::into("list index out of range")
+            Err(PyIndexError::new_err("list index out of range"))
         }
     }
 
     fn __setitem__(&mut self, index: isize, elem: &PyAny) -> PyResult<()> {
         if index as usize > self.clauses.len() {
-            return IndexError::into("list index out of range");
+            return Err(PyIndexError::new_err("list index out of range"));
         }
         let clause = HeaderClause::extract(elem)?;
         self.clauses[index as usize] = clause;
@@ -145,7 +143,7 @@ impl PySequenceProtocol for HeaderFrame {
 
     fn __delitem__(&mut self, index: isize) -> PyResult<()> {
         if index as usize > self.clauses.len() {
-            return IndexError::into("list index out of range");
+            return Err(PyIndexError::new_err("list index out of range"));
         }
         self.clauses.remove(index as usize);
         Ok(())

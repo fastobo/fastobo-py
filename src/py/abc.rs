@@ -83,7 +83,7 @@ impl AbstractEntityFrame {
     /// `~fastobo.id.Ident`: the identifier of the described entity.
     #[getter]
     pub fn get_id(&self) -> PyResult<Ident> {
-        PyNotImplementedError::into("AbstractEntityFrame.raw_tag")
+        Err(PyNotImplementedError::new_err("AbstractEntityFrame.raw_tag"))
     }
 }
 
@@ -131,7 +131,7 @@ impl AbstractClause {
     ///     >>> str(clause)
     ///     'ontology: test'
     pub fn raw_tag(&self) -> PyResult<String> {
-        PyNotImplementedError::into("BaseHeaderClause.raw_tag")
+        Err(PyNotImplementedError::new_err("BaseHeaderClause.raw_tag"))
     }
 
     /// Get the raw value of the header clause.
@@ -148,7 +148,7 @@ impl AbstractClause {
     ///     >>> clause.raw_value()
     ///     '29:04:2019 21:52'
     pub fn raw_value(&self) -> PyResult<String> {
-        PyNotImplementedError::into("BaseHeaderClause.raw_value")
+        Err(PyNotImplementedError::new_err("BaseHeaderClause.raw_value"))
     }
 }
 

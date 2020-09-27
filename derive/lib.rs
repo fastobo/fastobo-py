@@ -199,7 +199,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             #lit => if #path::is_exact_instance(ob) {
                 Ok(#wrapped::#name(pyo3::Py::from_borrowed_ptr(ob.py(), ob.as_ptr())))
             } else {
-                pyo3::exceptions::TypeError::into("extraction of subclass failed")
+                Err(pyo3::exceptions::PyTypeError::new_err("extraction of subclass failed"))
             }
         ));
     }
@@ -245,14 +245,14 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
                     unsafe {
                         match ty.as_ref() {
                             #(#variants,)*
-                            _ => pyo3::exceptions::TypeError::into(#err_sub)
+                            _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
                         }
                     }
                 } else {
-                    pyo3::exceptions::TypeError::into(format!(
+                    Err(pyo3::exceptions::PyTypeError::new_err(format!(
                         #err_ty,
                         ob.get_type().name(),
-                    ))
+                    )))
                 }
             }
         }
@@ -417,7 +417,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                 if index >= 0 && index < self.#attr.len() as isize {
                     Ok(self.#attr.remove(index as usize))
                 } else {
-                    pyo3::exceptions::PyIndexError::into("pop index out of range")
+                    Err(pyo3::exceptions::PyIndexError::new_err("pop index out of range"))
                 }
             }
 

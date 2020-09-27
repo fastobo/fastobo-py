@@ -6,10 +6,8 @@ use std::str::FromStr;
 use std::string::ToString;
 
 use pyo3::class::gc::PyVisit;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyIndexError;
+use pyo3::exceptions::PyTypeError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
@@ -61,14 +59,8 @@ impl Xref {
         Self { id, desc: None }
     }
 
-    pub fn with_desc<D>(py: Python, id: Ident, desc: Option<D>) -> Self
-    where
-        D: IntoPy<fastobo::ast::QuotedString>,
-    {
-        Self {
-            id,
-            desc: desc.map(|d| d.into_py(py)),
-        }
+    pub fn with_desc(id: Ident, desc: Option<fastobo::ast::QuotedString>) -> Self {
+        Self { id, desc }
     }
 }
 
@@ -85,12 +77,13 @@ impl Display for Xref {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::Xref::from_py(self.clone_py(py), py).fmt(f)
+        let xref: fastobo::ast::Xref = self.clone_py(py).into_py(py);
+        xref.fmt(f)
     }
 }
 
 impl IntoPy<Xref> for fastobo::ast::Xref {
-    fn into_py(self, py: Python) -> Xref {
+    fn into_py(mut self, py: Python) -> Xref {
         // Take ownership over `xref.description` w/o reallocation or clone.
         let empty = fastobo::ast::QuotedString::new(String::new());
         let desc = self.description_mut().map(|d| std::mem::replace(d, empty));
@@ -99,14 +92,14 @@ impl IntoPy<Xref> for fastobo::ast::Xref {
         let empty = fastobo::ast::UnprefixedIdent::new(String::new());
         let id = std::mem::replace(self.id_mut(), empty.into());
 
-        Xref::with_desc(py, id.into_py(py), desc)
+        Xref::with_desc(id.into_py(py), desc)
     }
 }
 
 impl IntoPy<fastobo::ast::Xref> for Xref {
-    fn into_py(self, py: Python) -> Xref {
+    fn into_py(self, py: Python) -> fastobo::ast::Xref {
         let id: fastobo::ast::Ident = self.id.into_py(py);
-        Xref::with_desc(id, self.desc)
+        fastobo::ast::Xref::with_desc(id, self.desc)
     }
 }
 
@@ -121,11 +114,7 @@ impl Xref {
     fn __init__(id: Ident, desc: Option<String>) -> Self {
         if let Some(s) = desc {
             let gil = Python::acquire_gil();
-            Self::with_desc(
-                gil.python(),
-                id,
-                Some(fastobo::ast::QuotedString::new(s))
-            )
+            Self::with_desc(id, Some(fastobo::ast::QuotedString::new(s)))
         } else {
             Self::new(id)
         }
@@ -206,7 +195,8 @@ impl XrefList {
                 vec.push(xref.clone_ref(py));
             } else {
                 let ty = i.get_type().name();
-                return TypeError::into(format!("expected Xref, found {}", ty));
+                let msg = format!("expected Xref, found {}", ty);
+                return Err(PyTypeError::new_err(msg));
             }
         }
         Ok(Self { xrefs: vec })
@@ -225,9 +215,9 @@ impl IntoPy<XrefList> for fastobo::ast::XrefList {
     fn into_py(self, py: Python) -> XrefList {
         let mut xrefs = Vec::with_capacity((&self).len());
         for xref in self.into_iter() {
-            xrefs.push(Py::new(py, Xref::from_py(xref, py)).unwrap())
+            xrefs.push(Py::new(py, xref.into_py(py)).unwrap())
         }
-        Self::new(xrefs)
+        XrefList::new(xrefs)
     }
 }
 
@@ -298,7 +288,7 @@ impl PySequenceProtocol for XrefList {
         if index < self.xrefs.len() as isize {
             Ok(self.xrefs[index as usize].clone_ref(py))
         } else {
-            IndexError::into("list index out of range")
+            Err(PyIndexError::new_err("list index out of range"))
         }
     }
 
@@ -309,7 +299,7 @@ impl PySequenceProtocol for XrefList {
         } else {
             let ty = item.get_type().name();
             let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);
-            TypeError::into(msg)
+            Err(PyTypeError::new_err(msg))
         }
     }
 }

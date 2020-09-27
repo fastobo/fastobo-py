@@ -4,9 +4,9 @@ use std::fmt::Result as FmtResult;
 use std::fmt::Write;
 use std::str::FromStr;
 
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyIndexError;
+use pyo3::exceptions::PyTypeError;
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
@@ -57,17 +57,18 @@ impl Display for TypedefFrame {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::TypedefFrame::from_py(self.clone_py(py), py).fmt(f)
+        let frame: fastobo::ast::TypedefFrame = self.clone_py(py).into_py(py);
+        frame.fmt(f)
     }
 }
 
 impl IntoPy<TypedefFrame> for fastobo::ast::TypedefFrame {
     fn into_py(self, py: Python) -> TypedefFrame {
         TypedefFrame::with_clauses(
-            Ident::from_py(self.id().as_ref().clone(), py),
+            self.id().as_ref().clone().into_py(py),
             self
                 .into_iter()
-                .map(|line| TypedefClause::from_py(line.into_inner(), py))
+                .map(|line| line.into_inner().into_py(py))
                 .collect(),
         )
     }
@@ -80,8 +81,8 @@ impl IntoPy<fastobo::ast::TypedefFrame> for TypedefFrame {
             self
                 .clauses
                 .iter()
-                .map(|f| fastobo::ast::TypedefClause::from_py(f, py))
-                .map(fastobo::ast::Line::from)
+                .map(|f| f.into_py(py))
+                .map(|c| fastobo::ast::Line::new().and_inner(c))
                 .collect(),
         )
     }
@@ -89,7 +90,8 @@ impl IntoPy<fastobo::ast::TypedefFrame> for TypedefFrame {
 
 impl IntoPy<fastobo::ast::EntityFrame> for TypedefFrame {
     fn into_py(self, py: Python) -> fastobo::ast::EntityFrame {
-        fastobo::ast::EntityFrame::from(fastobo::ast::TypedefFrame::from_py(self, py))
+        let frame: fastobo::ast::TypedefFrame = self.into_py(py);
+        fastobo::ast::EntityFrame::from(frame)
     }
 }
 
@@ -135,13 +137,13 @@ impl PySequenceProtocol for TypedefFrame {
             let item = &self.clauses[index as usize];
             Ok(item.to_object(py))
         } else {
-            IndexError::into("list index out of range")
+            Err(PyIndexError::new_err("list index out of range"))
         }
     }
 
     fn __setitem__(&mut self, index: isize, elem: &PyAny) -> PyResult<()> {
         if index as usize > self.clauses.len() {
-            return IndexError::into("list index out of range");
+            return Err(PyIndexError::new_err("list index out of range"));
         }
         let clause = TypedefClause::extract(elem)?;
         self.clauses[index as usize] = clause;
@@ -150,7 +152,7 @@ impl PySequenceProtocol for TypedefFrame {
 
     fn __delitem__(&mut self, index: isize) -> PyResult<()> {
         if index as usize > self.clauses.len() {
-            return IndexError::into("list index out of range");
+            return Err(PyIndexError::new_err("list index out of range"));
         }
         self.clauses.remove(index as usize);
         Ok(())

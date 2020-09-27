@@ -15,7 +15,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use pyo3::AsPyPointer;
 use pyo3::PyDowncastError;
-use pyo3::PyErrValue;
 use pyo3::PyObject;
 use pyo3::PyNativeType;
 
@@ -27,11 +26,9 @@ macro_rules! transmute_file_error {
         // Attempt to transmute the Python OSError to an actual
         // Rust `std::io::Error` using `from_raw_os_error`.
         if $e.is_instance::<PyOSError>($py) {
-            if let PyErrValue::Value(obj) = &$e.pvalue($py) {
-                if let Ok(code) = obj.getattr($py, "errno") {
-                    if let Ok(n) = code.extract::<i32>($py) {
-                        return Err(IoError::from_raw_os_error(n));
-                    }
+            if let Ok(code) = &$e.pvalue($py).getattr("errno") {
+                if let Ok(n) = code.extract::<i32>() {
+                    return Err(IoError::from_raw_os_error(n));
                 }
             }
         }
@@ -58,7 +55,7 @@ impl<'p> PyFileRead<'p> {
             Ok(PyFileRead { file })
         } else {
             let ty = res.get_type().name().to_string();
-            Err(TypeError::new_err(format!("expected bytes, found {}", ty)))
+            Err(PyTypeError::new_err(format!("expected bytes, found {}", ty)))
         }
     }
 }
@@ -75,7 +72,7 @@ impl<'p> Read for PyFileRead<'p> {
                 } else {
                     let ty = obj.get_type().name().to_string();
                     let msg = format!("expected bytes, found {}", ty);
-                    TypeError::py_err(msg).restore(self.file.py());
+                    PyTypeError::new_err(msg).restore(self.file.py());
                     Err(IoError::new(
                         std::io::ErrorKind::Other,
                         "fh.read did not return bytes",
@@ -116,7 +113,7 @@ impl<'p> Write for PyFileWrite<'p> {
                 } else {
                     let ty = obj.get_type().name().to_string();
                     let msg = format!("expected int, found {}", ty);
-                    TypeError::py_err(msg).restore(self.file.py());
+                    PyTypeError::new_err(msg).restore(self.file.py());
                     Err(IoError::new(
                         std::io::ErrorKind::Other,
                         "write method did not return int",
@@ -159,7 +156,7 @@ impl PyFileGILRead {
             })
         } else {
             let ty = res.get_type().name().to_string();
-            Err(TypeError::new_err(format!("expected bytes, found {}", ty)))
+            Err(PyTypeError::new_err(format!("expected bytes, found {}", ty)))
         }
     }
 
@@ -183,7 +180,7 @@ impl Read for PyFileGILRead {
                 } else {
                     let ty = obj.as_ref(py).get_type().name().to_string();
                     let msg = format!("expected bytes, found {}", ty);
-                    TypeError::py_err(msg).restore(py);
+                    PyTypeError::new_err(msg).restore(py);
                     Err(IoError::new(
                         std::io::ErrorKind::Other,
                         "fh.read did not return bytes",

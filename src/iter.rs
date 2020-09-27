@@ -18,7 +18,6 @@ use pyo3::types::PyString;
 use pyo3::types::PyBytes;
 use pyo3::PyIterProtocol;
 use pyo3::PyObjectProtocol;
-use pyo3::PyErrValue;
 use pyo3::AsPyPointer;
 use pyo3::PyGCProtocol;
 
@@ -194,7 +193,7 @@ impl FrameReader {
             .map_err(Error::from)?
             .into_header_frame()
             .unwrap();
-        let header = Py::new(py, HeaderFrame::from_py(frame, py))?;
+        let header = Py::new(py, frame.into_py(py))?;
 
         Ok(Self { inner, header })
     }

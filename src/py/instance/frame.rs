@@ -4,9 +4,6 @@ use std::fmt::Result as FmtResult;
 use std::fmt::Write;
 use std::str::FromStr;
 
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
@@ -56,34 +53,20 @@ impl Display for InstanceFrame {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        fastobo::ast::InstanceFrame::from_py(self.clone_py(py), py).fmt(f)
+        let frame: fastobo::ast::InstanceFrame = self.clone_py(py).into_py(py);
+        frame.fmt(f)
     }
 }
 
 impl IntoPy<InstanceFrame> for fastobo::ast::InstanceFrame {
     fn into_py(self, py: Python) -> InstanceFrame {
-        // Self::with_clauses(
-        //     Ident::from_py(frame.id().as_ref().clone(), py),
-        //     frame
-        //         .into_iter()
-        //         .map(|line| TypedefClause::from_py(line.into_inner(), py))
-        //         .collect(),
-        // )
-        InstanceFrame::new(Ident::from_py(self.id().as_ref().clone(), py))
+        let id: Ident = self.id().as_ref().clone().into_py(py);
+        InstanceFrame::new(id)
     }
 }
 
 impl IntoPy<fastobo::ast::InstanceFrame> for InstanceFrame {
     fn into_py(self, py: Python) -> fastobo::ast::InstanceFrame {
-        // fastobo::ast::InstanceFrame::with_clauses(
-        //     fastobo::ast::InstanceIdent::new(frame.id.into_py(py)),
-        //     frame
-        //         .clauses
-        //         .iter()
-        //         .map(|f| fastobo::ast::InstanceClause::from_py(f, py))
-        //         .map(fastobo::ast::Line::from)
-        //         .collect(),
-        // )
         fastobo::ast::InstanceFrame::new(
             fastobo::ast::InstanceIdent::new(self.id.into_py(py))
         )
@@ -92,6 +75,7 @@ impl IntoPy<fastobo::ast::InstanceFrame> for InstanceFrame {
 
 impl IntoPy<fastobo::ast::EntityFrame> for InstanceFrame {
     fn into_py(self, py: Python) -> fastobo::ast::EntityFrame {
-        fastobo::ast::EntityFrame::from(fastobo::ast::InstanceFrame::from_py(self, py))
+        let frame: fastobo::ast::InstanceFrame = self.into_py(py);
+        fastobo::ast::EntityFrame::from(frame)
     }
 }

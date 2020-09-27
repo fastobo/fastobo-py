@@ -82,7 +82,7 @@ impl<B: BufRead> InternalParser<B> {
     pub fn with_thread_count(stream: B, n: i16) -> Result<Self, PyErr> {
         match n {
             0 => Ok(InternalParser::Threaded(ThreadedParser::new(stream))),
-            1 => Ok(InternalParser::Sequential(Parser::new(stream))),
+            1 => Ok(InternalParser::Sequential(SequentialParser::new(stream))),
             n if n < 0 => {
                 Err(PyValueError::new_err("threads count must be positive or null"))
             },

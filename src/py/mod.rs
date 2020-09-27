@@ -55,6 +55,7 @@ pub mod typedef;
 pub mod xref;
 
 use self::doc::OboDoc;
+use self::doc::EntityFrame;
 use super::built;
 
 // --- Module export ---------------------------------------------------------
@@ -165,21 +166,18 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, "load", ordered="true", threads="0")]
     #[text_signature = "(fh, threads=0)"]
     fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc> {
-        if let Ok(s) = fh.cast_as::<PyString>() {
+        // extract either a path or a file-handle from the arguments
+        let path: Option<String>;
+        let boxed: Box<dyn BufRead> = if let Ok(s) = fh.cast_as::<PyString>() {
             // get a buffered reader to the resources pointed by `path`
-            let path = s.to_str()?;
-            let bf = match std::fs::File::open(&*path) {
+            let bf = match std::fs::File::open(s.to_str()?) {
                 Ok(f) => std::io::BufReader::new(f),
                 Err(e) => return Err(PyErr::from(Error::from(e))),
             };
+            // store the path for later
+            path = Some(s.to_str()?.to_string());
             // use a sequential or a threaded reader depending on `threads`.
-            let mut reader = InternalParser::with_thread_count(bf, threads)?;
-            // set the `ordered` flag and parse the document using the reader
-            reader.ordered(ordered);
-            match py.allow_threads(|| reader.try_into_doc()) {
-                Ok(doc) => Ok(doc.into_py(py)),
-                Err(e) => Error::from(e).with_path(path).into(),
-            }
+            Box::new(bf)
         } else {
             // get a buffered reader by wrapping the given file handle
             let bf = match PyFileRead::from_ref(fh) {
@@ -192,16 +190,44 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                     raise!(py, PyTypeError("expected path or binary file handle") from e)
                 }
             };
+            // extract the path from the `name` attribute
+            path = fh
+                .getattr("name")
+                .and_then(|n| n.downcast::<PyString>().map_err(PyErr::from))
+                .and_then(|s| s.to_str())
+                .map(|s| s.to_string())
+                .ok();
             // use a sequential or a threaded reader depending on `threads`.
-            let mut reader = InternalParser::with_thread_count(bf, threads)?;
-            // set the `ordered` flag
-            reader.ordered(ordered);
-            //  and parse the document, check the result and extract the
-            // internal Python error if the parser failed,
-            match reader.try_into_doc() {
-                Ok(doc) => Ok(doc.into_py(py)),
-                Err(e) if PyErr::occurred(py) => Err(PyErr::fetch(py)),
-                Err(e) => Err(Error::from(e).into())
+            Box::new(bf)
+        };
+
+        // create the reader and set the `ordered` flag
+        let mut reader = InternalParser::with_thread_count(boxed, threads)?;
+        reader.ordered(ordered);
+
+        // read the header and check it did not error
+        let header = match reader.next().unwrap() {
+            Ok(frame) => Ok(frame.into_header_frame().unwrap().into_py(py)),
+            Err(e) if PyErr::occurred(py) => Err(PyErr::fetch(py)),
+            Err(e) => match &path {
+                Some(p) => Err(Error::from(e).with_path(p).into()),
+                None => Err(Error::from(e).into()),
+            }
+        }?;
+
+        // read the rest while transforming it to Python
+        let frames = reader
+            .map(|res| res.map(|frame| frame.into_entity_frame().unwrap()))
+            .map(|res| res.map(|entity| entity.into_py(py)))
+            .collect::<fastobo::error::Result<Vec<EntityFrame>>>();
+
+        // propagate the Python error if any error occurred
+        match frames {
+            Ok(entities) => Ok(OboDoc::with_entities(Py::new(py, header)?, entities)),
+            Err(e) if PyErr::occurred(py) => Err(PyErr::fetch(py)),
+            Err(e) => match &path {
+                Some(p) => Err(Error::from(e).with_path(p).into()),
+                None => Err(Error::from(e).into()),
             }
         }
     }
@@ -242,8 +268,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///
     #[pyfn(m, "loads", ordered="true", threads="0")]
     #[text_signature = "(document)"]
-    fn loads(py: Python, document: &str, ordered: bool, threads: i16) -> PyResult<OboDoc> {
-        let cursor = std::io::Cursor::new(document);
+    fn loads(py: Python, document: &PyString, ordered: bool, threads: i16) -> PyResult<OboDoc> {
+        let cursor = std::io::Cursor::new(document.to_str()?);
         let mut reader = InternalParser::with_thread_count(cursor, threads)?;
         reader.ordered(ordered);
         match py.allow_threads(|| reader.try_into_doc()) {

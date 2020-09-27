@@ -4,11 +4,11 @@ use std::path::Path;
 use pest::error::ErrorVariant;
 use pest::error::InputLocation;
 use pest::error::LineColLocation;
-use pyo3::exceptions::FileNotFoundError;
-use pyo3::exceptions::OSError;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::SyntaxError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyFileNotFoundError;
+use pyo3::exceptions::PyOSError;
+use pyo3::exceptions::PyRuntimeError;
+use pyo3::exceptions::PySyntaxError;
+use pyo3::exceptions::PyValueError;
 use pyo3::PyErr;
 
 use fastobo::syntax::Rule;
@@ -149,10 +149,10 @@ impl From<Error> for PyErr {
                             LineColLocation::Pos((l, c)) => (l, c),
                             LineColLocation::Span((l, c), _) => (l, c),
                         };
-                        SyntaxError::py_err((msg, (path, l, c, pe.line)))
+                        PySyntaxError::py_err((msg, (path, l, c, pe.line)))
                     }
                     fastobo::error::SyntaxError::UnexpectedRule { expected, actual } => {
-                        RuntimeError::py_err("unexpected rule")
+                        PyRuntimeError::py_err("unexpected rule")
                     }
                 }
             }
@@ -160,13 +160,13 @@ impl From<Error> for PyErr {
             fastobo::error::Error::IOError { error: ioerror } => {
                 let desc = ioerror.to_string();
                 match ioerror.raw_os_error() {
-                    Some(2) => FileNotFoundError::py_err((2, desc, error.path)),
-                    Some(code) => OSError::py_err((code, desc, error.path)),
-                    None => OSError::py_err((desc,))
+                    Some(2) => PyFileNotFoundError::py_err((2, desc, error.path)),
+                    Some(code) => PyOSError::py_err((code, desc, error.path)),
+                    None => PyOSError::py_err((desc,))
                 }
             }
 
-            other => RuntimeError::py_err(format!("{}", other)),
+            other => PyRuntimeError::py_err(format!("{}", other)),
         }
     }
 }
@@ -197,11 +197,11 @@ impl From<GraphError> for PyErr {
             fastobo_graphs::error::Error::IOError(error) => {
                 let desc = error.to_string();
                 match error.raw_os_error() {
-                    Some(code) => OSError::py_err((code, desc)),
-                    None => OSError::py_err((desc,)),
+                    Some(code) => PyOSError::py_err((code, desc)),
+                    None => PyOSError::py_err((desc,)),
                 }
             }
-            other => ValueError::py_err(other.to_string()),
+            other => PyValueError::py_err(other.to_string()),
         }
     }
 }

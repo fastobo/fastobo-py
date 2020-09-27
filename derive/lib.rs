@@ -79,7 +79,7 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(aspyptr_impl_enum(&ast, &e));
-        output.extend(frompy_impl_enum(&ast, &e));
+        output.extend(intopy_impl_enum(&ast, &e));
         // output.extend(pyobjectprotocol_impl_enum(&ast, &e))
     } else {
         panic!("only supports enums");
@@ -261,14 +261,14 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     expanded
 }
 
-fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
+fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     let mut variants = Vec::new();
 
-    // Build clone for each variant
+    // Build IntoPy for each variant
     for variant in &en.variants {
         let name = &variant.ident;
         variants.push(quote!(
-            #name(x) => Self::from_py((&x.as_ref(py).borrow()).clone_py(py), py)
+            #name(x) => (&x.as_ref(py).borrow()).clone_py(py).into_py(py)
         ));
     }
 
@@ -276,11 +276,11 @@ fn frompy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
-        impl pyo3::FromPy<&#name> for fastobo::ast::#name {
-            fn from_py(obj: &#name, py: Python) -> Self {
+        impl pyo3::IntoPy<fastobo::ast::#name> for &#name {
+            fn into_py(self, py: Python) -> fastobo::ast::#name {
                 use std::ops::Deref;
                 use self::#name::*;
-                match obj {
+                match self {
                     #(#variants,)*
                 }
             }
@@ -417,7 +417,7 @@ fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStre
                 if index >= 0 && index < self.#attr.len() as isize {
                     Ok(self.#attr.remove(index as usize))
                 } else {
-                    IndexError::into("pop index out of range")
+                    pyo3::exceptions::PyIndexError::into("pop index out of range")
                 }
             }
 

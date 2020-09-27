@@ -2,7 +2,6 @@ use std::ops::Deref;
 
 use pyo3::ffi::PyObject;
 use pyo3::AsPyPointer;
-use pyo3::AsPyRef;
 use pyo3::Py;
 use pyo3::PyRef;
 use pyo3::PyTypeInfo;

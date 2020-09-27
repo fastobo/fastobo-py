@@ -12,10 +12,7 @@ use std::str::FromStr;
 use std::string::ToString;
 
 use pyo3::class::gc::PyVisit;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyTypeError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
@@ -127,7 +124,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             match FrameReader::from_handle(fh, ordered, threads) {
                 Ok(r) => Ok(r),
                 Err(inner) => {
-                    raise!(py, TypeError("expected path or binary file handle") from inner);
+                    raise!(py, PyTypeError("expected path or binary file handle") from inner);
                 }
             }
         }
@@ -192,7 +189,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                 // Object is not a binary file-handle: wrap the inner error
                 // into a `TypeError` and raise that error.
                 Err(e) => {
-                    raise!(py, TypeError("expected path or binary file handle") from e)
+                    raise!(py, PyTypeError("expected path or binary file handle") from e)
                 }
             };
             // use a sequential or a threaded reader depending on `threads`.
@@ -302,7 +299,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             // Argument is not a string, check if it is a file-handle.
             let mut f = match PyFileRead::from_ref(fh) {
                 Ok(f) => f,
-                Err(e) => raise!(py, TypeError("expected path or binary file handle") from e)
+                Err(e) => raise!(py, PyTypeError("expected path or binary file handle") from e)
             };
             // Extract the graph
             match fastobo_graphs::from_reader(&mut f) {
@@ -363,7 +360,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             let mut f = match PyFileWrite::from_ref(fh) {
                 Ok(f) => f,
                 Err(e) => {
-                    raise!(py, TypeError("expected path or binary file handle") from e)
+                    raise!(py, PyTypeError("expected path or binary file handle") from e)
                 }
             };
             // Write the graph

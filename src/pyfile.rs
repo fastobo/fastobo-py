@@ -6,8 +6,8 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use pyo3::exceptions::OSError;
-use pyo3::exceptions::TypeError;
+use pyo3::exceptions::PyOSError;
+use pyo3::exceptions::PyTypeError;
 use pyo3::gc::PyGCProtocol;
 use pyo3::gc::PyTraverseError;
 use pyo3::gc::PyVisit;
@@ -26,8 +26,8 @@ macro_rules! transmute_file_error {
     ($self:ident, $e:ident, $msg:expr, $py:expr) => ({
         // Attempt to transmute the Python OSError to an actual
         // Rust `std::io::Error` using `from_raw_os_error`.
-        if $e.is_instance::<OSError>($py) {
-            if let PyErrValue::Value(obj) = &$e.pvalue {
+        if $e.is_instance::<PyOSError>($py) {
+            if let PyErrValue::Value(obj) = &$e.pvalue($py) {
                 if let Ok(code) = obj.getattr($py, "errno") {
                     if let Ok(n) = code.extract::<i32>($py) {
                         return Err(IoError::from_raw_os_error(n));
@@ -58,7 +58,7 @@ impl<'p> PyFileRead<'p> {
             Ok(PyFileRead { file })
         } else {
             let ty = res.get_type().name().to_string();
-            TypeError::into(format!("expected bytes, found {}", ty))
+            Err(TypeError::new_err(format!("expected bytes, found {}", ty)))
         }
     }
 }
@@ -159,7 +159,7 @@ impl PyFileGILRead {
             })
         } else {
             let ty = res.get_type().name().to_string();
-            TypeError::into(format!("expected bytes, found {}", ty))
+            Err(TypeError::new_err(format!("expected bytes, found {}", ty)))
         }
     }
 

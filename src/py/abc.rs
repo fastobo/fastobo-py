@@ -6,11 +6,7 @@ use std::str::FromStr;
 use std::string::ToString;
 
 use pyo3::class::gc::PyVisit;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
-use pyo3::exceptions::NotImplementedError;
+use pyo3::exceptions::PyNotImplementedError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
@@ -87,7 +83,7 @@ impl AbstractEntityFrame {
     /// `~fastobo.id.Ident`: the identifier of the described entity.
     #[getter]
     pub fn get_id(&self) -> PyResult<Ident> {
-        NotImplementedError::into("AbstractEntityFrame.raw_tag")
+        PyNotImplementedError::into("AbstractEntityFrame.raw_tag")
     }
 }
 
@@ -135,7 +131,7 @@ impl AbstractClause {
     ///     >>> str(clause)
     ///     'ontology: test'
     pub fn raw_tag(&self) -> PyResult<String> {
-        NotImplementedError::into("BaseHeaderClause.raw_tag")
+        PyNotImplementedError::into("BaseHeaderClause.raw_tag")
     }
 
     /// Get the raw value of the header clause.
@@ -152,7 +148,7 @@ impl AbstractClause {
     ///     >>> clause.raw_value()
     ///     '29:04:2019 21:52'
     pub fn raw_value(&self) -> PyResult<String> {
-        NotImplementedError::into("BaseHeaderClause.raw_value")
+        PyNotImplementedError::into("BaseHeaderClause.raw_value")
     }
 }
 

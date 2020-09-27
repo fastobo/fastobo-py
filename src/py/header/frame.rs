@@ -59,8 +59,8 @@ impl FromIterator<HeaderClause> for HeaderFrame {
     }
 }
 
-impl FromPy<obo::HeaderFrame> for HeaderFrame {
-    fn from_py(frame: fastobo::ast::HeaderFrame, py: Python) -> Self {
+impl IntoPy<HeaderFrame> for fastobo::ast::HeaderFrame {
+    fn into_py(frame: fastobo::ast::HeaderFrame, py: Python) -> HeaderFrame {
         frame
             .into_iter()
             .map(|clause| HeaderClause::from_py(clause, py))
@@ -68,8 +68,8 @@ impl FromPy<obo::HeaderFrame> for HeaderFrame {
     }
 }
 
-impl FromPy<HeaderFrame> for obo::HeaderFrame {
-    fn from_py(frame: HeaderFrame, py: Python) -> Self {
+impl IntoPy<obo::HeaderFrame> for HeaderFrame {
+    fn into_py(self, py: Python) -> obo::HeaderFrame {
         frame
             .clauses
             .into_iter()

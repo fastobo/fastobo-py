@@ -60,8 +60,8 @@ impl Display for InstanceFrame {
     }
 }
 
-impl FromPy<fastobo::ast::InstanceFrame> for InstanceFrame {
-    fn from_py(frame: fastobo::ast::InstanceFrame, py: Python) -> Self {
+impl IntoPy<InstanceFrame> for fastobo::ast::InstanceFrame {
+    fn into_py(self, py: Python) -> InstanceFrame {
         // Self::with_clauses(
         //     Ident::from_py(frame.id().as_ref().clone(), py),
         //     frame
@@ -69,12 +69,12 @@ impl FromPy<fastobo::ast::InstanceFrame> for InstanceFrame {
         //         .map(|line| TypedefClause::from_py(line.into_inner(), py))
         //         .collect(),
         // )
-        Self::new(Ident::from_py(frame.id().as_ref().clone(), py))
+        InstanceFrame::new(Ident::from_py(self.id().as_ref().clone(), py))
     }
 }
 
-impl FromPy<InstanceFrame> for fastobo::ast::InstanceFrame {
-    fn from_py(frame: InstanceFrame, py: Python) -> Self {
+impl IntoPy<fastobo::ast::InstanceFrame> for InstanceFrame {
+    fn into_py(self, py: Python) -> fastobo::ast::InstanceFrame {
         // fastobo::ast::InstanceFrame::with_clauses(
         //     fastobo::ast::InstanceIdent::new(frame.id.into_py(py)),
         //     frame
@@ -85,13 +85,13 @@ impl FromPy<InstanceFrame> for fastobo::ast::InstanceFrame {
         //         .collect(),
         // )
         fastobo::ast::InstanceFrame::new(
-            fastobo::ast::InstanceIdent::new(frame.id.into_py(py))
+            fastobo::ast::InstanceIdent::new(self.id.into_py(py))
         )
     }
 }
 
-impl FromPy<InstanceFrame> for fastobo::ast::EntityFrame {
-    fn from_py(frame: InstanceFrame, py: Python) -> Self {
-        Self::from(fastobo::ast::InstanceFrame::from_py(frame, py))
+impl IntoPy<fastobo::ast::EntityFrame> for InstanceFrame {
+    fn into_py(self, py: Python) -> fastobo::ast::EntityFrame {
+        fastobo::ast::EntityFrame::from(fastobo::ast::InstanceFrame::from_py(self, py))
     }
 }

@@ -89,24 +89,24 @@ impl Display for Xref {
     }
 }
 
-impl FromPy<fastobo::ast::Xref> for Xref {
-    fn from_py(mut xref: fastobo::ast::Xref, py: Python) -> Self {
+impl IntoPy<Xref> for fastobo::ast::Xref {
+    fn into_py(self, py: Python) -> Xref {
         // Take ownership over `xref.description` w/o reallocation or clone.
         let empty = fastobo::ast::QuotedString::new(String::new());
-        let desc = xref.description_mut().map(|d| std::mem::replace(d, empty));
+        let desc = self.description_mut().map(|d| std::mem::replace(d, empty));
 
         // Take ownership over `xref.id` w/o reallocation or clone.
         let empty = fastobo::ast::UnprefixedIdent::new(String::new());
-        let id = std::mem::replace(xref.id_mut(), empty.into());
+        let id = std::mem::replace(self.id_mut(), empty.into());
 
-        Self::with_desc(py, id.into_py(py), desc)
+        Xref::with_desc(py, id.into_py(py), desc)
     }
 }
 
-impl FromPy<Xref> for fastobo::ast::Xref {
-    fn from_py(xref: Xref, py: Python) -> Self {
-        let id: fastobo::ast::Ident = xref.id.into_py(py);
-        Self::with_desc(id, xref.desc)
+impl IntoPy<fastobo::ast::Xref> for Xref {
+    fn into_py(self, py: Python) -> Xref {
+        let id: fastobo::ast::Ident = self.id.into_py(py);
+        Xref::with_desc(id, self.desc)
     }
 }
 
@@ -221,25 +221,25 @@ impl ClonePy for XrefList {
     }
 }
 
-impl FromPy<fastobo::ast::XrefList> for XrefList {
-    fn from_py(list: fastobo::ast::XrefList, py: Python) -> Self {
-        let mut xrefs = Vec::with_capacity((&list).len());
-        for xref in list.into_iter() {
+impl IntoPy<XrefList> for fastobo::ast::XrefList {
+    fn into_py(self, py: Python) -> XrefList {
+        let mut xrefs = Vec::with_capacity((&self).len());
+        for xref in self.into_iter() {
             xrefs.push(Py::new(py, Xref::from_py(xref, py)).unwrap())
         }
         Self::new(xrefs)
     }
 }
 
-impl FromPy<XrefList> for fastobo::ast::XrefList {
-    fn from_py(list: XrefList, py: Python) -> Self {
-        Self::from_py(&list, py)
+impl IntoPy<fastobo::ast::XrefList> for XrefList {
+    fn into_py(self, py: Python) -> fastobo::ast::XrefList {
+        (&self).into_py(py)
     }
 }
 
-impl FromPy<&XrefList> for fastobo::ast::XrefList {
-    fn from_py(list: &XrefList, py: Python) -> Self {
-        list.xrefs
+impl IntoPy<fastobo::ast::XrefList> for &XrefList {
+    fn into_py(self, py: Python) -> fastobo::ast::XrefList {
+        self.xrefs
             .iter()
             .map(|xref| xref.as_ref(py).borrow().clone_py(py).into_py(py))
             .collect()

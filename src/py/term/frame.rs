@@ -62,11 +62,11 @@ impl Display for TermFrame {
     }
 }
 
-impl FromPy<fastobo::ast::TermFrame> for TermFrame {
-    fn from_py(frame: fastobo::ast::TermFrame, py: Python) -> Self {
-        Self::with_clauses(
-            Ident::from_py(frame.id().as_ref().clone(), py),
-            frame
+impl IntoPy<TermFrame> for fastobo::ast::TermFrame {
+    fn into_py(self, py: Python) -> TermFrame {
+        TermFrame::with_clauses(
+            Ident::from_py(self.id().as_ref().clone(), py),
+            self
                 .into_iter()
                 .map(|line| TermClause::from_py(line.into_inner(), py))
                 .collect(),
@@ -74,11 +74,11 @@ impl FromPy<fastobo::ast::TermFrame> for TermFrame {
     }
 }
 
-impl FromPy<TermFrame> for fastobo::ast::TermFrame {
-    fn from_py(frame: TermFrame, py: Python) -> Self {
+impl IntoPy<fastobo::ast::TermFrame> for TermFrame {
+    fn into_py(self, py: Python) -> fastobo::ast::TermFrame {
         fastobo::ast::TermFrame::with_clauses(
-            fastobo::ast::ClassIdent::new(frame.id.into_py(py)),
-            frame
+            fastobo::ast::ClassIdent::new(self.id.into_py(py)),
+            self
                 .clauses
                 .iter()
                 .map(|f| fastobo::ast::TermClause::from_py(f, py))
@@ -88,9 +88,9 @@ impl FromPy<TermFrame> for fastobo::ast::TermFrame {
     }
 }
 
-impl FromPy<TermFrame> for fastobo::ast::EntityFrame {
-    fn from_py(frame: TermFrame, py: Python) -> Self {
-        fastobo::ast::TermFrame::from_py(frame, py).into()
+impl IntoPy<fastobo::ast::EntityFrame> for TermFrame {
+    fn into_py(self, py: Python) -> fastobo::ast::EntityFrame {
+        fastobo::ast::TermFrame::from_py(self, py).into()
     }
 }
 

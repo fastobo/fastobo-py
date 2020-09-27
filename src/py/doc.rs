@@ -7,10 +7,7 @@ use std::str::FromStr;
 use std::string::ToString;
 
 use pyo3::class::gc::PyVisit;
-use pyo3::exceptions::IndexError;
-use pyo3::exceptions::RuntimeError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyIndexError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
@@ -54,9 +51,9 @@ pub enum EntityFrame {
     Instance(Py<InstanceFrame>),
 }
 
-impl FromPy<fastobo::ast::EntityFrame> for EntityFrame {
-    fn from_py(frame: fastobo::ast::EntityFrame, py: Python) -> Self {
-        match frame {
+impl IntoPy<EntityFrame> for fastobo::ast::EntityFrame {
+    fn into_py(self, py: Python) -> EntityFrame {
+        match self {
             fastobo::ast::EntityFrame::Term(frame) => {
                 Py::new(py, TermFrame::from_py(*frame, py))
                     .map(EntityFrame::Term)
@@ -123,11 +120,11 @@ impl Display for OboDoc {
     }
 }
 
-impl FromPy<obo::OboDoc> for OboDoc {
-    fn from_py(mut doc: fastobo::ast::OboDoc, py: Python) -> Self {
+impl IntoPy<OboDoc> for fastobo::ast::OboDoc {
+    fn into_py(self, py: Python) -> OboDoc {
         // Take ownership of header and entities w/o reallocation or clone.
-        let h: HeaderFrame = take(doc.header_mut()).into_py(py);
-        let entities = take(doc.entities_mut())
+        let h: HeaderFrame = take(self.header_mut()).into_py(py);
+        let entities = take(self.entities_mut())
             .into_iter()
             .map(|frame| EntityFrame::from_py(frame, py))
             .collect();
@@ -135,14 +132,14 @@ impl FromPy<obo::OboDoc> for OboDoc {
         let header = Py::new(py,h)
             .expect("could not move header to Python heap");
 
-        Self { header, entities }
+        OboDoc { header, entities }
     }
 }
 
-impl FromPy<OboDoc> for fastobo::ast::OboDoc {
-    fn from_py(doc: OboDoc, py: Python) -> Self {
-        let header: HeaderFrame = doc.header.as_ref(py).borrow().clone_py(py);
-        doc.entities
+impl IntoPy<fastobo::ast::OboDoc> for OboDoc {
+    fn from_py(self, py: Python) -> fastobo::ast::OboDoc {
+        let header: HeaderFrame = self.header.as_ref(py).borrow().clone_py(py);
+        self.entities
             .iter()
             .map(|frame| fastobo::ast::EntityFrame::from_py(frame, py))
             .collect::<fastobo::ast::OboDoc>()
@@ -275,7 +272,7 @@ impl PySequenceProtocol for OboDoc {
             let item = &self.entities[index as usize];
             Ok(item.to_object(py))
         } else {
-            IndexError::into("list index out of range")
+            PyIndexError::into("list index out of range")
         }
     }
 }

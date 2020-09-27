@@ -11,7 +11,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::AsPyRef;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
@@ -108,16 +107,16 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 
 macro_rules! impl_convert {
     ($base:ident, $cls:ident) => {
-        impl FromPy<$crate::fastobo::ast::$base> for $cls {
-            fn from_py(id: $crate::fastobo::ast::$base, py: Python) -> $cls {
-                let ident: $crate::fastobo::ast::Ident = id.into();
-                $cls::from_py(ident, py)
+        impl IntoPy<$cls> for $crate::fastobo::ast::$base {
+            fn into_py(self, py: Python) -> $cls {
+                let ident: $crate::fastobo::ast::Ident = self.into();
+                ident.into_py(py)
             }
         }
 
-        impl FromPy<$cls> for $crate::fastobo::ast::$base {
-            fn from_py(id: $cls, py: Python) -> $crate::fastobo::ast::$base {
-                let ident: $crate::fastobo::ast::Ident = id.into_py(py);
+        impl IntoPy<$crate::fastobo::ast::$base> for $cls {
+            fn into_py(self, py: Python) -> $crate::fastobo::ast::$base {
+                let ident: $crate::fastobo::ast::Ident = self.into_py(py);
                 $crate::fastobo::ast::$base::from(ident)
             }
         }
@@ -145,9 +144,9 @@ impl Display for Ident {
     }
 }
 
-impl FromPy<fastobo::ast::Ident> for Ident {
-    fn from_py(ident: fastobo::ast::Ident, py: Python) -> Self {
-        match ident {
+impl IntoPy<Ident> for fastobo::ast::Ident {
+    fn into_py(self, py: Python) -> Ident {
+        match self {
             ast::Ident::Unprefixed(id) => {
                 Py::new(py, UnprefixedIdent::new(*id))
                     .map(Ident::Unprefixed)
@@ -167,9 +166,9 @@ impl FromPy<fastobo::ast::Ident> for Ident {
     }
 }
 
-impl FromPy<Ident> for fastobo::ast::Ident {
-    fn from_py(ident: Ident, py: Python) -> Self {
-        match ident {
+impl IntoPy<fastobo::ast::Ident> for Ident {
+    fn into_py(self, py: Python) -> fastobo::ast::Ident {
+        match self {
             Ident::Unprefixed(id) => {
                 let i = id.as_ref(py).borrow();
                 ast::Ident::from((*i).inner.clone())
@@ -270,27 +269,27 @@ impl PartialEq for PrefixedIdent {
 
 impl Eq for PrefixedIdent {}
 
-impl FromPy<PrefixedIdent> for ast::PrefixedIdent {
-    fn from_py(ident: PrefixedIdent, py: Python) -> Self {
+impl IntoPy<ast::PrefixedIdent> for PrefixedIdent {
+    fn into_py(self, py: Python) -> ast::PrefixedIdent {
         ast::PrefixedIdent::new(
-            ident.prefix.as_ref(py).borrow().clone(),
-            ident.local.as_ref(py).borrow().clone(),
+            self.prefix.as_ref(py).borrow().clone(),
+            self.local.as_ref(py).borrow().clone(),
         )
     }
 }
 
-impl FromPy<PrefixedIdent> for ast::Ident {
-    fn from_py(ident: PrefixedIdent, py: Python) -> Self {
-        Self::from(ast::PrefixedIdent::from_py(ident, py))
+impl IntoPy<ast::Ident> for PrefixedIdent {
+    fn into_py(self, py: Python) -> ast::Ident {
+        ast::Ident::from(ast::PrefixedIdent::from_py(self, py))
     }
 }
 
-impl FromPy<ast::PrefixedIdent> for PrefixedIdent {
-    fn from_py(id: ast::PrefixedIdent, py: Python) -> Self {
-        let prefix: IdentPrefix = id.prefix().clone().into();
-        let local: IdentLocal = id.local().clone().into();
+impl IntoPy<PrefixedIdent> for ast::PrefixedIdent {
+    fn into_py(self, py: Python) -> PrefixedIdent {
+        let prefix: IdentPrefix = self.prefix().clone().into();
+        let local: IdentLocal = self.local().clone().into();
 
-        Self::new(
+        PrefixedIdent::new(
             Py::new(py, prefix).expect("could not allocate on Python heap"),
             Py::new(py, local).expect("could not allocate on Python heap"),
         )
@@ -487,9 +486,9 @@ impl From<UnprefixedIdent> for ast::UnprefixedIdent {
     }
 }
 
-impl FromPy<UnprefixedIdent> for ast::UnprefixedIdent {
-    fn from_py(id: UnprefixedIdent, _py: Python) -> Self {
-        Self::from(id)
+impl IntoPy<ast::UnprefixedIdent> for UnprefixedIdent {
+    fn into_py(self, py: Python) -> ast::UnprefixedIdent {
+        ast::UnprefixedIdent::from(self)
     }
 }
 
@@ -499,9 +498,9 @@ impl From<UnprefixedIdent> for ast::Ident {
     }
 }
 
-impl FromPy<UnprefixedIdent> for ast::Ident {
-    fn from_py(id: UnprefixedIdent, _py: Python) -> Self {
-        Self::from(id)
+impl IntoPy<ast::Ident> for UnprefixedIdent {
+    fn into_py(self, py: Python) -> ast::Ident {
+        ast::Ident::from(self)
     }
 }
 
@@ -511,9 +510,9 @@ impl From<ast::UnprefixedIdent> for UnprefixedIdent {
     }
 }
 
-impl FromPy<ast::UnprefixedIdent> for UnprefixedIdent {
-    fn from_py(id: ast::UnprefixedIdent, _py: Python) -> Self {
-        Self::from(id)
+impl IntoPy<UnprefixedIdent> for ast::UnprefixedIdent {
+    fn into_py(self, py: Python) -> UnprefixedIdent {
+        UnprefixedIdent::from(self)
     }
 }
 
@@ -615,12 +614,6 @@ impl Display for Url {
     }
 }
 
-impl FromPy<url::Url> for Url {
-    fn from_py(url: url::Url, _py: Python) -> Self {
-        Self::new(url)
-    }
-}
-
 impl From<ast::Url> for Url {
     fn from(url: ast::Url) -> Self {
         Self::new(url)
@@ -640,15 +633,21 @@ impl From<Url> for fastobo::ast::Ident {
     }
 }
 
-impl FromPy<Url> for fastobo::ast::Ident {
-    fn from_py(url: Url, _py: Python) -> Self {
-        Self::from(url)
+impl IntoPy<Url> for url::Url {
+    fn into_py(self, _py: Python) -> Url {
+        Url::new(self)
     }
 }
 
-impl FromPy<Url> for url::Url {
-    fn from_py(url: Url, _py: Python) -> Self {
-        url.inner
+impl IntoPy<fastobo::ast::Ident> for Url {
+    fn into_py(self, _py: Python) -> fastobo::ast::Ident {
+        fastobo::ast::Ident::from(self)
+    }
+}
+
+impl IntoPy<url::Url> for Url {
+    fn into_py(self, _py: Python) -> url::Url {
+        self.inner
     }
 }
 

@@ -61,11 +61,11 @@ impl Display for TypedefFrame {
     }
 }
 
-impl FromPy<fastobo::ast::TypedefFrame> for TypedefFrame {
-    fn from_py(frame: fastobo::ast::TypedefFrame, py: Python) -> Self {
-        Self::with_clauses(
-            Ident::from_py(frame.id().as_ref().clone(), py),
-            frame
+impl IntoPy<TypedefFrame> for fastobo::ast::TypedefFrame {
+    fn into_py(self, py: Python) -> TypedefFrame {
+        TypedefFrame::with_clauses(
+            Ident::from_py(self.id().as_ref().clone(), py),
+            self
                 .into_iter()
                 .map(|line| TypedefClause::from_py(line.into_inner(), py))
                 .collect(),
@@ -73,11 +73,11 @@ impl FromPy<fastobo::ast::TypedefFrame> for TypedefFrame {
     }
 }
 
-impl FromPy<TypedefFrame> for fastobo::ast::TypedefFrame {
-    fn from_py(frame: TypedefFrame, py: Python) -> Self {
+impl IntoPy<fastobo::ast::TypedefFrame> for TypedefFrame {
+    fn into_py(self, py: Python) -> fastobo::ast::TypedefFrame {
         fastobo::ast::TypedefFrame::with_clauses(
-            fastobo::ast::RelationIdent::new(frame.id.into_py(py)),
-            frame
+            fastobo::ast::RelationIdent::new(self.id.into_py(py)),
+            self
                 .clauses
                 .iter()
                 .map(|f| fastobo::ast::TypedefClause::from_py(f, py))
@@ -87,9 +87,9 @@ impl FromPy<TypedefFrame> for fastobo::ast::TypedefFrame {
     }
 }
 
-impl FromPy<TypedefFrame> for fastobo::ast::EntityFrame {
-    fn from_py(frame: TypedefFrame, py: Python) -> Self {
-        Self::from(fastobo::ast::TypedefFrame::from_py(frame, py))
+impl IntoPy<fastobo::ast::EntityFrame> for TypedefFrame {
+    fn into_py(self, py: Python) -> fastobo::ast::EntityFrame {
+        fastobo::ast::EntityFrame::from(fastobo::ast::TypedefFrame::from_py(self, py))
     }
 }
 

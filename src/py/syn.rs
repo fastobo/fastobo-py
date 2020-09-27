@@ -64,21 +64,9 @@ impl From<fastobo::ast::SynonymScope> for SynonymScope {
     }
 }
 
-impl FromPy<fastobo::ast::SynonymScope> for SynonymScope {
-    fn from_py(scope: fastobo::ast::SynonymScope, _py: Python) -> Self {
-        Self::from(scope)
-    }
-}
-
 impl From<SynonymScope> for fastobo::ast::SynonymScope {
     fn from(scope: SynonymScope) -> Self {
         scope.inner
-    }
-}
-
-impl FromPy<SynonymScope> for fastobo::ast::SynonymScope {
-    fn from_py(scope: SynonymScope, _py: Python) -> Self {
-        Self::from(scope)
     }
 }
 
@@ -95,6 +83,18 @@ impl FromStr for SynonymScope {
                 s
             )),
         }
+    }
+}
+
+impl IntoPy<SynonymScope> for fastobo::ast::SynonymScope {
+    fn into_py(self, _py: Python) -> SynonymScope {
+        SynonymScope::from(self)
+    }
+}
+
+impl IntoPy<fastobo::ast::SynonymScope> for SynonymScope {
+    fn into_py(self, _py: Python) -> fastobo::ast::SynonymScope {
+        self.inner
     }
 }
 
@@ -135,36 +135,27 @@ impl Display for Synonym {
     }
 }
 
-impl FromPy<fastobo::ast::Synonym> for Synonym {
-    fn from_py(mut syn: fastobo::ast::Synonym, py: Python) -> Self {
-        Self {
-            desc: std::mem::replace(
-                syn.description_mut(),
-                fastobo::ast::QuotedString::new(String::new()),
-            ),
-            scope: SynonymScope::new(syn.scope().clone()),
-            ty: syn.ty().map(|id| id.clone().into_py(py)),
+impl IntoPy<Synonym> for fastobo::ast::Synonym {
+    fn into_py(mut self, py: Python) -> Synonym {
+        Synonym {
+            desc: std::mem::take(self.description_mut()),
+            scope: SynonymScope::new(self.scope().clone()),
+            ty: self.ty().map(|id| id.clone().into_py(py)),
             xrefs: Py::new(
                 py,
-                XrefList::from_py(
-                    std::mem::replace(
-                        syn.xrefs_mut(),
-                        fastobo::ast::XrefList::new(Vec::new())
-                    ),
-                    py
-                )
+                XrefList::from_py(std::mem::take(self.xrefs_mut()), py)
             ).expect("failed allocating memory on Python heap")
         }
     }
 }
 
-impl FromPy<Synonym> for fastobo::ast::Synonym {
-    fn from_py(syn: Synonym, py: Python) -> Self {
-        Self::with_type_and_xrefs(
-            syn.desc,
-            syn.scope.inner,
-            syn.ty.map(|ty| ty.into_py(py)),
-            fastobo::ast::XrefList::from_py(&*syn.xrefs.as_ref(py).borrow(), py)
+impl IntoPy<fastobo::ast::Synonym> for Synonym {
+    fn into_py(self, py: Python) -> fastobo::ast::Synonym {
+        fastobo::ast::Synonym::with_type_and_xrefs(
+            self.desc,
+            self.scope.inner,
+            self.ty.map(|ty| ty.into_py(py)),
+            fastobo::ast::XrefList::from_py(&*self.xrefs.as_ref(py).borrow(), py)
         )
     }
 }

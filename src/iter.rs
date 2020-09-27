@@ -12,9 +12,7 @@ use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
-use pyo3::exceptions::OSError;
-use pyo3::exceptions::TypeError;
-use pyo3::exceptions::ValueError;
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
 use pyo3::types::PyBytes;
@@ -87,7 +85,7 @@ impl<B: BufRead> InternalParser<B> {
             0 => Ok(InternalParser::Threaded(ThreadedParser::new(stream))),
             1 => Ok(InternalParser::Sequential(Parser::new(stream))),
             n if n < 0 => {
-                ValueError::into("threads count must be positive or null")
+                Err(PyValueError::new_err("threads count must be positive or null"))
             },
             n => {
                 let t = std::num::NonZeroUsize::new(n as usize).unwrap();
@@ -246,7 +244,7 @@ impl PyIterProtocol for FrameReader {
             Some(Ok(frame)) => {
                 let gil = Python::acquire_gil();
                 let entity = frame.into_entity_frame().unwrap();
-                Ok(Some(EntityFrame::from_py(entity, gil.python())))
+                Ok(Some(entity.into_py(gil.python())))
             },
             Some(Err(e)) => {
                 let gil = Python::acquire_gil();

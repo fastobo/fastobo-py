@@ -51,9 +51,9 @@ impl Display for PropertyValue {
     }
 }
 
-impl FromPy<fastobo::ast::PropertyValue> for PropertyValue {
-    fn from_py(pv: fastobo::ast::PropertyValue, py: Python) -> Self {
-        match pv {
+impl IntoPy<PropertyValue> for fastobo::ast::PropertyValue {
+    fn into_py(self, py: Python) -> PropertyValue {
+        match self {
             fastobo::ast::PropertyValue::Literal(lpv) => {
                 Py::new(py, LiteralPropertyValue::from_py(*lpv, py)).map(PropertyValue::Literal)
             }
@@ -65,9 +65,9 @@ impl FromPy<fastobo::ast::PropertyValue> for PropertyValue {
     }
 }
 
-impl FromPy<PropertyValue> for fastobo::ast::PropertyValue {
-    fn from_py(pv: PropertyValue, py: Python) -> Self {
-        match pv {
+impl IntoPy<fastobo::ast::PropertyValue> for PropertyValue {
+    fn into_py(self, py: Python) -> fastobo::ast::PropertyValue {
+        match self {
             PropertyValue::Literal(t) => {
                 Self::from_py(t.as_ref(py).borrow().deref().clone_py(py), py)
             }
@@ -134,30 +134,30 @@ impl Display for LiteralPropertyValue {
     }
 }
 
-impl FromPy<LiteralPropertyValue> for fastobo::ast::LiteralPropertyValue {
-    fn from_py(pv: LiteralPropertyValue, py: Python) -> Self {
+impl IntoPy<fastobo::ast::LiteralPropertyValue> for LiteralPropertyValue {
+    fn into_py(self, py: Python) -> fastobo::ast::LiteralPropertyValue {
         fastobo::ast::LiteralPropertyValue::new(
-            pv.relation.into_py(py),
-            pv.value,
-            pv.datatype.into_py(py)
+            self.relation.into_py(py),
+            self.value,
+            self.datatype.into_py(py)
         )
     }
 }
 
-impl FromPy<LiteralPropertyValue> for fastobo::ast::PropertyValue {
-    fn from_py(pv: LiteralPropertyValue, py: Python) -> Self {
+impl IntoPy<fastobo::ast::PropertyValue> for LiteralPropertyValue {
+    fn into_py(self, py: Python) -> fastobo::ast::PropertyValue {
         fastobo::ast::PropertyValue::from(
-            fastobo::ast::LiteralPropertyValue::from_py(pv, py)
+            fastobo::ast::LiteralPropertyValue::from_py(self, py)
         )
     }
 }
 
-impl FromPy<fastobo::ast::LiteralPropertyValue> for LiteralPropertyValue {
-    fn from_py(mut pv: fastobo::ast::LiteralPropertyValue, py: Python) -> Self {
-        let value = std::mem::take(pv.literal_mut());
-        let datatype = pv.datatype().clone();
-        let relation = pv.property().clone();
-        Self::new(py, relation, value, datatype)
+impl IntoPy<LiteralPropertyValue> for fastobo::ast::LiteralPropertyValue {
+    fn into_py(self, py: Python) -> LiteralPropertyValue {
+        let value = std::mem::take(self.literal_mut());
+        let datatype = self.datatype().clone();
+        let relation = self.property().clone();
+        LiteralPropertyValue::new(py, relation, value, datatype)
     }
 }
 
@@ -280,24 +280,24 @@ impl Display for ResourcePropertyValue {
     }
 }
 
-impl FromPy<ResourcePropertyValue> for fastobo::ast::ResourcePropertyValue {
-    fn from_py(pv: ResourcePropertyValue, py: Python) -> Self {
-        Self::new(pv.relation.into_py(py), pv.value.into_py(py))
+impl IntoPy<fastobo::ast::ResourcePropertyValue> for ResourcePropertyValue {
+    fn into_py(self, py: Python) -> fastobo::ast::ResourcePropertyValue {
+        fastobo::ast::ResourcePropertyValue::new(self.relation.into_py(py), self.value.into_py(py))
     }
 }
 
-impl FromPy<ResourcePropertyValue> for fastobo::ast::PropertyValue {
-    fn from_py(pv: ResourcePropertyValue, py: Python) -> Self {
+impl IntoPy<fastobo::ast::PropertyValue> for ResourcePropertyValue {
+    fn into_py(self, py: Python) -> fastobo::ast::PropertyValue {
         fastobo::ast::PropertyValue::from(
-            fastobo::ast::ResourcePropertyValue::from_py(pv, py)
+            fastobo::ast::ResourcePropertyValue::from_py(self, py)
         )
     }
 }
 
-impl FromPy<fastobo::ast::ResourcePropertyValue> for ResourcePropertyValue {
-    fn from_py(pv: fastobo::ast::ResourcePropertyValue, py: Python) -> Self {
-        let relation = pv.property().clone();
-        let value = pv.target().clone();
+impl IntoPy<ResourcePropertyValue> for fastobo::ast::ResourcePropertyValue {
+    fn into_py(self, py: Python) -> ResourcePropertyValue {
+        let relation = self.property().clone();
+        let value = self.target().clone();
         ResourcePropertyValue::new(py, relation, value)
     }
 }

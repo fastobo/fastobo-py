@@ -85,8 +85,7 @@ impl Display for Xref {
 impl IntoPy<Xref> for fastobo::ast::Xref {
     fn into_py(mut self, py: Python) -> Xref {
         // Take ownership over `xref.description` w/o reallocation or clone.
-        let empty = fastobo::ast::QuotedString::new(String::new());
-        let desc = self.description_mut().map(|d| std::mem::replace(d, empty));
+        let desc = self.description_mut().map(|d| std::mem::take(d));
 
         // Take ownership over `xref.id` w/o reallocation or clone.
         let empty = fastobo::ast::UnprefixedIdent::new(String::new());

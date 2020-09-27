@@ -102,10 +102,14 @@ pub struct OboDoc {
 
 impl OboDoc {
     /// Create an empty `OboDoc` with only the given header frame.
-    pub fn with_header(header: Py<HeaderFrame>) -> Self {
+    pub fn new(header: Py<HeaderFrame>) -> Self {
+        Self::with_entities(header, Vec::new())
+    }
+
+    pub fn with_entities(header: Py<HeaderFrame>, entities: Vec<EntityFrame>) -> Self {
         Self {
             header,
-            entities: Vec::new(),
+            entities
         }
     }
 }
@@ -167,7 +171,7 @@ impl OboDoc {
             .map(|h| h.clone_py(py))
             .unwrap_or_else(HeaderFrame::empty);
         // create doc and extract entities
-        let mut doc = OboDoc::with_header(Py::from(PyCell::new(py, header)?));
+        let mut doc = OboDoc::new(Py::from(PyCell::new(py, header)?));
         if let Some(any) = entities {
             for res in PyIterator::from_object(py, &any.to_object(py))? {
                 doc.entities.push(EntityFrame::extract(res?)?);

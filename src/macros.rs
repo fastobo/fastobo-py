@@ -61,6 +61,20 @@ macro_rules! impl_raw_tag {
     };
 }
 
+macro_rules! impl_gc {
+    ($cls:ty, self . $field:ident $(, self . $other:ident)* ) => (
+        #[cfg(feature = "gc")]
+        #[pyproto]
+        impl PyGCProtocol for $cls {
+            fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+                visit.call(&self.$field)
+                    $( .and_then(|_| visit.call(&self.$other)) )*
+            }
+            fn __clear__(&mut self) {}
+        }
+    )
+}
+
 macro_rules! register {
     ($py:ident, $m:ident, $cls:ident, $module:expr, $metacls:ident) => {
         $py.import($module)?

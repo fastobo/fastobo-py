@@ -141,15 +141,7 @@ impl Xref {
     }
 }
 
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for Xref {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.id)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(Xref, self.id);
 
 #[pyproto]
 impl PyObjectProtocol for Xref {

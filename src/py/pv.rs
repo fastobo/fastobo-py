@@ -206,17 +206,7 @@ impl LiteralPropertyValue {
     }
 }
 
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for LiteralPropertyValue {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.relation)
-            // .and_then(|_| visit.call(&self.value))
-            .and_then(|_| visit.call(&self.datatype))
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(LiteralPropertyValue, self.relation, self.datatype);
 
 #[pyproto]
 impl PyObjectProtocol for LiteralPropertyValue {
@@ -331,15 +321,7 @@ impl ResourcePropertyValue {
     }
 }
 
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for ResourcePropertyValue {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.relation).and_then(|_| visit.call(&self.value))
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(ResourcePropertyValue, self.relation, self.value);
 
 #[pyproto]
 impl PyObjectProtocol for ResourcePropertyValue {

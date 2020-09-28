@@ -376,15 +376,7 @@ impl PrefixedIdent {
     }
 }
 
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for PrefixedIdent {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.prefix).and_then(|_| visit.call(&self.local))
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(PrefixedIdent, self.prefix, self.local);
 
 #[pyproto]
 impl PyObjectProtocol for PrefixedIdent {

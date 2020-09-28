@@ -4,6 +4,9 @@ use std::fmt::Result as FmtResult;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use pyo3::gc::PyGCProtocol;
+use pyo3::gc::PyTraverseError;
+use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
@@ -79,3 +82,5 @@ impl IntoPy<fastobo::ast::EntityFrame> for InstanceFrame {
         fastobo::ast::EntityFrame::from(frame)
     }
 }
+
+impl_gc!(InstanceFrame, self.id);

@@ -331,16 +331,7 @@ impl NamespaceClause {
 
 impl_raw_tag!(NamespaceClause, "namespace");
 impl_raw_value!(NamespaceClause, "{}", self.namespace);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for NamespaceClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.namespace)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(NamespaceClause, self.namespace);
 
 #[pyproto]
 impl PyObjectProtocol for NamespaceClause {
@@ -419,16 +410,7 @@ impl AltIdClause {
 
 impl_raw_tag!(AltIdClause, "alt_id");
 impl_raw_value!(AltIdClause, "{}", self.alt_id);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for AltIdClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.alt_id)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(AltIdClause, self.alt_id);
 
 #[pyproto]
 impl PyObjectProtocol for AltIdClause {
@@ -538,16 +520,7 @@ impl DefClause {
 
 impl_raw_tag!(DefClause, "def");
 impl_raw_value!(DefClause, "{}", self.definition);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for DefClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.xrefs)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(DefClause, self.xrefs);
 
 #[pyproto]
 impl PyObjectProtocol for DefClause {
@@ -695,16 +668,7 @@ impl SubsetClause {
 
 impl_raw_tag!(SubsetClause, "subset");
 impl_raw_value!(SubsetClause, "{}", self.subset);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for SubsetClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.subset)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(SubsetClause, self.subset);
 
 #[pyproto]
 impl PyObjectProtocol for SubsetClause {
@@ -765,8 +729,6 @@ impl IntoPy<fastobo::ast::TermClause> for SynonymClause {
     }
 }
 
-impl_raw_tag!(SynonymClause, "synonym");
-
 #[pymethods]
 impl SynonymClause {
     #[new]
@@ -789,15 +751,8 @@ impl SynonymClause {
     }
 }
 
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for SynonymClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.synonym)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_raw_tag!(SynonymClause, "synonym");
+impl_gc!(SynonymClause, self.synonym);
 
 #[pyproto]
 impl PyObjectProtocol for SynonymClause {
@@ -889,16 +844,7 @@ impl XrefClause {
 }
 
 impl_raw_tag!(XrefClause, "xref");
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for XrefClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.xref)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(XrefClause, self.xref);
 
 #[pyproto]
 impl PyObjectProtocol for XrefClause {
@@ -1049,16 +995,7 @@ impl PropertyValueClause {
 
 impl_raw_tag!(PropertyValueClause, "property_value");
 impl_raw_value!(PropertyValueClause, "{}", self.inner);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for PropertyValueClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.inner)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(PropertyValueClause, self.inner);
 
 #[cfg(debug_assertions)]
 #[pyproto]
@@ -1134,16 +1071,7 @@ impl IsAClause {
 
 impl_raw_tag!(IsAClause, "is_a");
 impl_raw_value!(IsAClause, "{}", self.term);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for IsAClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.term)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(IsAClause, self.term);
 
 #[pyproto]
 impl PyObjectProtocol for IsAClause {
@@ -1349,16 +1277,7 @@ impl UnionOfClause {
 
 impl_raw_tag!(UnionOfClause, "union_of");
 impl_raw_value!(UnionOfClause, "{}", self.term);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for UnionOfClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.term)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(UnionOfClause, self.term);
 
 #[pyproto]
 impl PyObjectProtocol for UnionOfClause {
@@ -1433,16 +1352,7 @@ impl EquivalentToClause {
 
 impl_raw_tag!(EquivalentToClause, "equivalent_to");
 impl_raw_value!(EquivalentToClause, "{}", self.term);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for EquivalentToClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.term)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(EquivalentToClause, self.term);
 
 #[pyproto]
 impl PyObjectProtocol for EquivalentToClause {
@@ -1517,16 +1427,7 @@ impl DisjointFromClause {
 
 impl_raw_tag!(DisjointFromClause, "disjoint_from");
 impl_raw_value!(DisjointFromClause, "{}", self.term);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for DisjointFromClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.term)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(DisjointFromClause, self.term);
 
 #[pyproto]
 impl PyObjectProtocol for DisjointFromClause {
@@ -1611,17 +1512,7 @@ impl RelationshipClause {
 
 impl_raw_tag!(RelationshipClause, "relationship");
 impl_raw_value!(RelationshipClause, "{} {}", self.typedef, self.term);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for RelationshipClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.typedef)?;
-        visit.call(&self.term)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(RelationshipClause, self.typedef, self.term);
 
 #[pyproto]
 impl PyObjectProtocol for RelationshipClause {
@@ -1743,9 +1634,6 @@ impl IntoPy<fastobo::ast::TermClause> for ReplacedByClause {
     }
 }
 
-impl_raw_tag!(ReplacedByClause, "replaced_by");
-impl_raw_value!(ReplacedByClause, "{}", self.term);
-
 #[pymethods]
 impl ReplacedByClause {
     #[new]
@@ -1760,15 +1648,9 @@ impl ReplacedByClause {
     }
 }
 
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for ReplacedByClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.term)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_raw_tag!(ReplacedByClause, "replaced_by");
+impl_raw_value!(ReplacedByClause, "{}", self.term);
+impl_gc!(ReplacedByClause, self.term);
 
 #[pyproto]
 impl PyObjectProtocol for ReplacedByClause {
@@ -1841,16 +1723,7 @@ impl ConsiderClause {
 
 impl_raw_tag!(ConsiderClause, "consider");
 impl_raw_value!(ConsiderClause, "{}", self.term);
-
-#[cfg(feature = "gc")]
-#[pyproto]
-impl PyGCProtocol for ConsiderClause {
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.term)
-    }
-
-    fn __clear__(&mut self) {}
-}
+impl_gc!(ConsiderClause, self.term);
 
 #[pyproto]
 impl PyObjectProtocol for ConsiderClause {

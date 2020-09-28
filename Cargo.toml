@@ -40,3 +40,7 @@ path = "./derive"
 default = []
 extension-module = ["pyo3/extension-module"]
 nightly = ["pyo3/nightly"]
+gc = []
+
+[profile.dev]
+opt-level = 3

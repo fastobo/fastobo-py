@@ -222,6 +222,21 @@ impl Synonym {
     }
 }
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for Synonym {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        // visit.call(self.desc)?;
+        // visit.call(&self.scope)?;
+        if let Some(ty) = &self.ty {
+            visit.call(ty)?;
+        }
+        visit.call(&self.xrefs)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for Synonym {
     fn __repr__(&self) -> PyResult<PyObject> {

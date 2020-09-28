@@ -144,7 +144,7 @@ impl<'p> Write for PyFileWrite<'p> {
 
 /// A wrapper for a Python file that can outlive the GIL.
 pub struct PyFileGILRead {
-    file: Mutex<PyObject>,
+    pub file: Mutex<PyObject>,
 }
 
 impl PyFileGILRead {

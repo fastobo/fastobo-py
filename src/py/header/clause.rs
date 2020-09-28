@@ -715,6 +715,16 @@ impl SubsetdefClause {
 impl_raw_tag!(SubsetdefClause, "subsetdef");
 impl_raw_value!(SubsetdefClause, "{} {}", self.subset, self.description);
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for SubsetdefClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.subset)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for SubsetdefClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -841,6 +851,16 @@ impl SynonymTypedefClause {
 
 impl_raw_tag!(SynonymTypedefClause, "synonymtypedef");
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for SynonymTypedefClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.typedef)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for SynonymTypedefClause {
     fn __str__(&self) -> PyResult<String> {
@@ -945,6 +965,16 @@ impl DefaultNamespaceClause {
 
 impl_raw_tag!(DefaultNamespaceClause, "default-namespace");
 impl_raw_value!(DefaultNamespaceClause, "{}", self.namespace);
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for DefaultNamespaceClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.namespace)
+    }
+
+    fn __clear__(&mut self) {}
+}
 
 #[pyproto]
 impl PyObjectProtocol for DefaultNamespaceClause {
@@ -1148,6 +1178,16 @@ impl IdspaceClause {
 
 impl_raw_tag!(IdspaceClause, "idspace");
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for IdspaceClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.url)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for IdspaceClause {
     fn __str__(&self) -> PyResult<String> {
@@ -1308,6 +1348,16 @@ impl_raw_value!(
     self.filler
 );
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for TreatXrefsAsGenusDifferentiaClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.relation).and_then(|_| visit.call(&self.filler))
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1393,6 +1443,16 @@ impl_raw_value!(
     self.filler
 );
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.relation).and_then(|_| visit.call(&self.filler))
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1473,6 +1533,16 @@ impl_raw_value!(
     self.idspace,
     self.relation
 );
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for TreatXrefsAsRelationshipClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.relation)
+    }
+
+    fn __clear__(&mut self) {}
+}
 
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsRelationshipClause {
@@ -1683,6 +1753,16 @@ impl PropertyValueClause {
 
 impl_raw_tag!(PropertyValueClause, "property_value");
 impl_raw_value!(PropertyValueClause, "{}", self.inner);
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for PropertyValueClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.inner)
+    }
+
+    fn __clear__(&mut self) {}
+}
 
 #[pyproto]
 impl PyObjectProtocol for PropertyValueClause {

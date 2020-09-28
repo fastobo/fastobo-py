@@ -4,12 +4,15 @@ use std::fmt::Result as FmtResult;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use pyo3::class::gc::PyVisit;
+use pyo3::gc::PyTraverseError;
 use pyo3::exceptions::PyIndexError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
+use pyo3::PyGCProtocol;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PySequenceProtocol;
@@ -106,6 +109,22 @@ impl TermFrame {
     /// `~fastobo.id.Ident`: the identifier of the term frame.
     fn get_id(&self) -> PyResult<&Ident> {
         Ok(&self.id)
+    }
+}
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for TermFrame {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.id)?;
+        for clause in self.clauses.iter() {
+            visit.call(clause)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.clauses.clear();
     }
 }
 

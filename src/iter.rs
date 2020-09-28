@@ -12,14 +12,16 @@ use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::ops::DerefMut;
 
+use pyo3::class::gc::PyVisit;
 use pyo3::exceptions::PyValueError;
+use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
 use pyo3::types::PyBytes;
-use pyo3::PyIterProtocol;
-use pyo3::PyObjectProtocol;
 use pyo3::AsPyPointer;
 use pyo3::PyGCProtocol;
+use pyo3::PyIterProtocol;
+use pyo3::PyObjectProtocol;
 
 use fastobo::parser::Parser;
 use fastobo::parser::ThreadedParser;
@@ -219,6 +221,22 @@ impl FrameReader {
     fn header<'py>(&self, py: Python<'py>) -> Py<HeaderFrame> {
         self.header.clone_py(py)
     }
+}
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for FrameReader {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.header)?;
+        if let Handle::PyFile(f) = self.inner.as_ref().get_ref() {
+            if let Ok(guard) = f.file.lock() {
+                visit.call(&*guard)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {}
 }
 
 #[pyproto]

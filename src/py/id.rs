@@ -4,13 +4,16 @@ use std::fmt::Result as FmtResult;
 use std::fmt::Write;
 use std::str::FromStr;
 
+use pyo3::class::gc::PyVisit;
 use pyo3::class::basic::CompareOp;
 use pyo3::exceptions::PyTypeError;
 use pyo3::exceptions::PyValueError;
+use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
+use pyo3::PyGCProtocol;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
@@ -371,6 +374,16 @@ impl PrefixedIdent {
         };
         Ok(())
     }
+}
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for PrefixedIdent {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.prefix).and_then(|_| visit.call(&self.local))
+    }
+
+    fn __clear__(&mut self) {}
 }
 
 #[pyproto]

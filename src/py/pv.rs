@@ -4,10 +4,13 @@ use std::fmt::Result as FmtResult;
 use std::ops::Deref;
 use std::str::FromStr;
 
+use pyo3::class::gc::PyVisit;
 use pyo3::exceptions::PyTypeError;
+use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
+use pyo3::PyGCProtocol;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
@@ -203,6 +206,18 @@ impl LiteralPropertyValue {
     }
 }
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for LiteralPropertyValue {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.relation)
+            // .and_then(|_| visit.call(&self.value))
+            .and_then(|_| visit.call(&self.datatype))
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for LiteralPropertyValue {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -314,6 +329,16 @@ impl ResourcePropertyValue {
         self.value = value;
         Ok(())
     }
+}
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for ResourcePropertyValue {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.relation).and_then(|_| visit.call(&self.value))
+    }
+
+    fn __clear__(&mut self) {}
 }
 
 #[pyproto]

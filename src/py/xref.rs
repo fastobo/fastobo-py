@@ -141,6 +141,16 @@ impl Xref {
     }
 }
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for Xref {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.id)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for Xref {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -255,6 +265,21 @@ impl XrefList {
         } else {
             Ok(Self::new(Vec::new()))
         }
+    }
+}
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for XrefList {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        for xref in self.xrefs.iter() {
+            visit.call(xref)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.xrefs.clear();
     }
 }
 

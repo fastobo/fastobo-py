@@ -7,6 +7,8 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 use pyo3::class::basic::CompareOp;
+use pyo3::class::gc::PyVisit;
+use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyDateAccess;
@@ -15,6 +17,7 @@ use pyo3::types::PyString;
 use pyo3::types::PyTimeAccess;
 use pyo3::types::PyTzInfo;
 use pyo3::AsPyPointer;
+use pyo3::PyGCProtocol;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
@@ -73,9 +76,10 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
             Namespace(ns) => Py::new(py, NamespaceClause::new(ns.into_py(py))).map(TermClause::Namespace),
             AltId(id) => Py::new(py, AltIdClause::new(id.into_py(py))).map(TermClause::AltId),
             Def(mut def) => {
-                let text = std::mem::take(def.text_mut());
-                let xrefs = std::mem::take(def.xrefs_mut()).into_py(py);
-                Py::new(py, DefClause::new(text, xrefs)).map(TermClause::Def)
+                Py::new(py, std::mem::take(def.xrefs_mut()).into_py(py))
+                    .map(|xrefs| DefClause::new(std::mem::take(def.text_mut()), xrefs))
+                    .and_then(|clause| Py::new(py, clause))
+                    .map(TermClause::Def)
             }
             Comment(c) => Py::new(py, CommentClause::new(*c)).map(TermClause::Comment),
             Subset(s) => Py::new(py, SubsetClause::new(s.into_py(py))).map(TermClause::Subset),
@@ -328,6 +332,16 @@ impl NamespaceClause {
 impl_raw_tag!(NamespaceClause, "namespace");
 impl_raw_value!(NamespaceClause, "{}", self.namespace);
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for NamespaceClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.namespace)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for NamespaceClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -406,6 +420,16 @@ impl AltIdClause {
 impl_raw_tag!(AltIdClause, "alt_id");
 impl_raw_value!(AltIdClause, "{}", self.alt_id);
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for AltIdClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.alt_id)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for AltIdClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -439,11 +463,11 @@ impl PyObjectProtocol for AltIdClause {
 #[derive(Debug, FinalClass)]
 pub struct DefClause {
     definition: fastobo::ast::QuotedString,
-    xrefs: XrefList,
+    xrefs: Py<XrefList>,
 }
 
 impl DefClause {
-    pub fn new(definition: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
+    pub fn new(definition: fastobo::ast::QuotedString, xrefs: Py<XrefList>) -> Self {
         Self {
             definition,
             xrefs,
@@ -471,7 +495,8 @@ impl Display for DefClause {
 
 impl IntoPy<fastobo::ast::TermClause> for DefClause {
     fn into_py(self, py: Python) -> fastobo::ast::TermClause {
-        let xrefs: fastobo::ast::XrefList = self.xrefs.into_py(py);
+        let list: &XrefList = &*self.xrefs.borrow(py);
+        let xrefs = list.into_py(py);
         let def = fastobo::ast::Definition::with_xrefs(self.definition, xrefs);
         fastobo::ast::TermClause::Def(Box::new(def))
     }
@@ -490,7 +515,7 @@ impl DefClause {
             None => XrefList::new(Vec::new()),
         };
 
-        Ok(Self::new(def, list).into())
+        Ok(Self::new(def, Py::new(py, list)?).into())
     }
 
     #[getter]
@@ -506,13 +531,23 @@ impl DefClause {
 
     #[getter]
     /// `~fastobo.xrefs.XrefList`: a list of xrefs supporting the definition.
-    fn get_xrefs<'py>(&self, py: Python<'py>) -> XrefList {
-        self.xrefs.clone_py(py)
+    fn get_xrefs<'py>(&self, py: Python<'py>) -> Py<XrefList> {
+        self.xrefs.clone_ref(py)
     }
 }
 
 impl_raw_tag!(DefClause, "def");
 impl_raw_value!(DefClause, "{}", self.definition);
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for DefClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.xrefs)
+    }
+
+    fn __clear__(&mut self) {}
+}
 
 #[pyproto]
 impl PyObjectProtocol for DefClause {
@@ -661,6 +696,16 @@ impl SubsetClause {
 impl_raw_tag!(SubsetClause, "subset");
 impl_raw_value!(SubsetClause, "{}", self.subset);
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for SubsetClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.subset)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for SubsetClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -742,6 +787,16 @@ impl SynonymClause {
         let py = gil.python();
         Ok(format!("{}", &*self.synonym.as_ref(py).borrow()))
     }
+}
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for SynonymClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.synonym)
+    }
+
+    fn __clear__(&mut self) {}
 }
 
 #[pyproto]
@@ -834,6 +889,16 @@ impl XrefClause {
 }
 
 impl_raw_tag!(XrefClause, "xref");
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for XrefClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.xref)
+    }
+
+    fn __clear__(&mut self) {}
+}
 
 #[pyproto]
 impl PyObjectProtocol for XrefClause {
@@ -985,6 +1050,17 @@ impl PropertyValueClause {
 impl_raw_tag!(PropertyValueClause, "property_value");
 impl_raw_value!(PropertyValueClause, "{}", self.inner);
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for PropertyValueClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.inner)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
+#[cfg(debug_assertions)]
 #[pyproto]
 impl PyObjectProtocol for PropertyValueClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1058,6 +1134,16 @@ impl IsAClause {
 
 impl_raw_tag!(IsAClause, "is_a");
 impl_raw_value!(IsAClause, "{}", self.term);
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for IsAClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.term)
+    }
+
+    fn __clear__(&mut self) {}
+}
 
 #[pyproto]
 impl PyObjectProtocol for IsAClause {
@@ -1177,6 +1263,19 @@ impl IntersectionOfClause {
 
 impl_raw_tag!(IntersectionOfClause, "intersection_of");
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for IntersectionOfClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref rel) = self.typedef {
+            visit.call(rel)?;
+        }
+        visit.call(&self.term)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for IntersectionOfClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1250,6 +1349,16 @@ impl UnionOfClause {
 
 impl_raw_tag!(UnionOfClause, "union_of");
 impl_raw_value!(UnionOfClause, "{}", self.term);
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for UnionOfClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.term)
+    }
+
+    fn __clear__(&mut self) {}
+}
 
 #[pyproto]
 impl PyObjectProtocol for UnionOfClause {
@@ -1325,6 +1434,16 @@ impl EquivalentToClause {
 impl_raw_tag!(EquivalentToClause, "equivalent_to");
 impl_raw_value!(EquivalentToClause, "{}", self.term);
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for EquivalentToClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.term)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for EquivalentToClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1399,6 +1518,16 @@ impl DisjointFromClause {
 impl_raw_tag!(DisjointFromClause, "disjoint_from");
 impl_raw_value!(DisjointFromClause, "{}", self.term);
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for DisjointFromClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.term)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for DisjointFromClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1462,9 +1591,6 @@ impl IntoPy<fastobo::ast::TermClause> for RelationshipClause{
     }
 }
 
-impl_raw_tag!(RelationshipClause, "relationship");
-impl_raw_value!(RelationshipClause, "{} {}", self.typedef, self.term);
-
 #[pymethods]
 impl RelationshipClause {
     #[new]
@@ -1481,6 +1607,20 @@ impl RelationshipClause {
     fn get_term<'py>(&self, py: Python<'py>) -> PyResult<Ident> {
         Ok(self.term.clone_py(py))
     }
+}
+
+impl_raw_tag!(RelationshipClause, "relationship");
+impl_raw_value!(RelationshipClause, "{} {}", self.typedef, self.term);
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for RelationshipClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.typedef)?;
+        visit.call(&self.term)
+    }
+
+    fn __clear__(&mut self) {}
 }
 
 #[pyproto]
@@ -1620,6 +1760,16 @@ impl ReplacedByClause {
     }
 }
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for ReplacedByClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.term)
+    }
+
+    fn __clear__(&mut self) {}
+}
+
 #[pyproto]
 impl PyObjectProtocol for ReplacedByClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1676,9 +1826,6 @@ impl IntoPy<fastobo::ast::TermClause> for ConsiderClause {
     }
 }
 
-impl_raw_tag!(ConsiderClause, "consider");
-impl_raw_value!(ConsiderClause, "{}", self.term);
-
 #[pymethods]
 impl ConsiderClause {
     #[new]
@@ -1690,6 +1837,19 @@ impl ConsiderClause {
     fn get_term(&self) -> &Ident {
         &self.term
     }
+}
+
+impl_raw_tag!(ConsiderClause, "consider");
+impl_raw_value!(ConsiderClause, "{}", self.term);
+
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for ConsiderClause {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.term)
+    }
+
+    fn __clear__(&mut self) {}
 }
 
 #[pyproto]

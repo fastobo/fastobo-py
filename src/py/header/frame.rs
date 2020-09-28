@@ -96,6 +96,21 @@ impl HeaderFrame {
     }
 }
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for HeaderFrame {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        for clause in self.clauses.iter() {
+            visit.call(clause)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.clauses.clear();
+    }
+}
+
 #[pyproto]
 impl PyObjectProtocol for HeaderFrame {
     fn __repr__(&self) -> PyResult<PyObject> {

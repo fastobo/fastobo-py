@@ -264,6 +264,22 @@ impl OboDoc {
     }
 }
 
+#[cfg(feature = "gc")]
+#[pyproto]
+impl PyGCProtocol for OboDoc {
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.header)?;
+        for frame in self.entities.iter() {
+            visit.call(frame)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.entities.clear();
+    }
+}
+
 #[pyproto]
 impl PyObjectProtocol for OboDoc {
     fn __str__(&self) -> PyResult<String> {

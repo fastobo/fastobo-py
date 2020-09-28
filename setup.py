@@ -47,26 +47,29 @@ class build_rust(_build_rust):
 
         if self.inplace:
             self.extensions[0].strip = rust.Strip.No
+        if self.debug:
+            self.extensions[0].debug = True
+            self.extensions[0].features.append("gc")
         if nightly:
             self.extensions[0].features.append("nightly")
 
         _build_rust.run(self)
 
-
     def setup_temp_rustc_unix(self, toolchain, profile):
-
+        # setup temporary Rust folders
         rustup_sh = os.path.join(self.build_temp, "rustup.sh")
         os.environ["CARGO_HOME"] = os.path.join(self.build_temp, "cargo")
         os.environ["RUSTUP_HOME"] = os.path.join(self.build_temp, "rustup")
-
         self.mkpath(os.environ["CARGO_HOME"])
         self.mkpath(os.environ["RUSTUP_HOME"])
 
+        # download install script
         self.announce("downloading rustup.sh install script", level=INFO)
         with urllib.request.urlopen("https://sh.rustup.rs") as res:
             with open(rustup_sh, "wb") as dst:
                 shutil.copyfileobj(res, dst)
 
+        # install the compiler to the temporary folders
         self.announce("installing Rust compiler to {}".format(self.build_temp), level=INFO)
         subprocess.call([
             "sh",
@@ -79,13 +82,12 @@ class build_rust(_build_rust):
             "--no-modify-path"
         ])
 
+        # path `$PATH` to use the local Rust compiler
         self.announce("updating $PATH variable to use local Rust compiler", level=INFO)
         os.environ["PATH"] = ":".join([
             os.path.abspath(os.path.join(os.environ["CARGO_HOME"], "bin")),
             os.environ["PATH"]
         ])
-
-
 
 
 setuptools.setup(

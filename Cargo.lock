@@ -266,7 +266,6 @@ dependencies = [
  "pest",
  "pyo3",
  "pyo3-built",
- "url",
 ]
 
 [[package]]
@@ -280,9 +279,9 @@ dependencies = [
 
 [[package]]
 name = "fastobo-syntax"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8c7315e0017be8cf253f2c16ec5b95d44c7e44e6b277b91e3da17da8c1b7ef8"
+checksum = "82baa32d8af195e89e664a96f93c0d07a39bff19b8520d4a6a318bedd836f1af"
 dependencies = [
  "pest",
  "pest_derive",

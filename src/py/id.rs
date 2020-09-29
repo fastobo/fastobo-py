@@ -387,11 +387,14 @@ impl PyObjectProtocol for PrefixedIdent {
         // extract inner references
         let pref = self.prefix.as_ref(py);
         let lref = self.local.as_ref(py);
+        // extract local identifier
+        let lref_borrow = lref.borrow();
+        let lref_str: &str = &lref_borrow.inner.as_str();
         // get the formatted `repr` string
         let fmt = PyString::new(py, "PrefixedIdent({!r}, {!r})");
         let repr = fmt.call_method1(
             "format",
-            (pref.borrow().inner.as_str(), lref.borrow().inner.as_str())
+            (pref.borrow().inner.as_str(), lref_str)
         );
         // convert to an object before releasing the GIL
         Ok(repr?.to_object(py))
@@ -592,11 +595,11 @@ impl PyObjectProtocol for UnprefixedIdent {
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, FinalClass)]
 pub struct Url {
-    inner: url::Url,
+    inner: ast::Url,
 }
 
 impl Url {
-    pub fn new(url: url::Url) -> Self {
+    pub fn new(url: ast::Url) -> Self {
         Self { inner: url }
     }
 }
@@ -626,7 +629,7 @@ impl From<Url> for fastobo::ast::Ident {
     }
 }
 
-impl IntoPy<Url> for url::Url {
+impl IntoPy<Url> for ast::Url {
     fn into_py(self, _py: Python) -> Url {
         Url::new(self)
     }
@@ -638,8 +641,8 @@ impl IntoPy<fastobo::ast::Ident> for Url {
     }
 }
 
-impl IntoPy<url::Url> for Url {
-    fn into_py(self, _py: Python) -> url::Url {
+impl IntoPy<ast::Url> for Url {
+    fn into_py(self, _py: Python) -> ast::Url {
         self.inner
     }
 }
@@ -657,7 +660,7 @@ impl Url {
     #[new]
     fn __new__(value: &str) -> PyResult<PyClassInitializer<Self>> {
         let init = PyClassInitializer::from(BaseIdent {});
-        match url::Url::from_str(value) {
+        match ast::Url::from_str(value) {
             Ok(url) => Ok(init.add_subclass(Url::new(url))),
             Err(e) => Err(PyValueError::new_err(format!("invalid url: {}", e))),
         }
@@ -842,8 +845,8 @@ impl IdentLocal {
 
     /// `str`: the unescaped representation of the identifier.
     #[getter]
-    fn get_unescaped(&self) -> PyResult<&str> {
-        Ok(self.inner.as_str())
+    fn get_unescaped<'py>(&self, py: Python<'py>) -> &'py PyString {
+        PyString::new(py, &self.inner.as_str())
     }
 }
 
@@ -852,11 +855,13 @@ impl PyObjectProtocol for IdentLocal {
     fn __repr__(&self) -> PyResult<PyObject> {
         let gil = Python::acquire_gil();
         let py = gil.python();
+        let pref_str: &str = &self.inner.as_str();
         let fmt = PyString::new(py, "IdentLocal({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.inner.as_str(),))
+        fmt.call_method1(py, "format", (pref_str,))
     }
 
-    fn __str__(&'p self) -> PyResult<&'p str> {
-        Ok(self.inner.as_ref())
+    fn __str__(&'p self) -> &'p PyString {
+        let py = unsafe { Python::assume_gil_acquired() };
+        PyString::new(py, &self.inner.as_str())
     }
 }

@@ -4,6 +4,6 @@ sphinx_bootstrap_theme ~=0.7
 fastobo ~=0.9.0
 ipykernel ~=5.3
 ipython ~=7.15
-nbsphinx ~=0.7
+nbsphinx ~=0.8
 pygments-style-monokailight ~=0.4
 semantic_version ~=2.8

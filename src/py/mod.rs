@@ -154,14 +154,14 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     *other*: any exception raised by ``fh.read``.
     ///
     /// Example:
-    ///     Use ``urllib`` and ``fastobo`` to parse an ontology downloaded
-    ///     from the Berkeley BOP portal:
+    ///     Use `~urllib.request.urlopen` and `fastobo.load` to parse an
+    ///     ontology downloaded from the OBO Library:
     ///
     ///     >>> from urllib.request import urlopen
-    ///     >>> url = "http://purl.obolibrary.org/obo/eco.obo"
+    ///     >>> url = "http://purl.obolibrary.org/obo/po.obo"
     ///     >>> doc = fastobo.load(urlopen(url))
     ///     >>> doc.header[3]
-    ///     SavedByClause('rctauber')
+    ///     SubsetdefClause(UnprefixedIdent('Angiosperm'), 'Term for angiosperms')
     ///
     #[pyfn(m, "load", ordered="true", threads="0")]
     #[text_signature = "(fh, threads=0)"]

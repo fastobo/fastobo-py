@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.9.3...HEAD
+
+### [v0.9.3] - 2020-12-04
+[v0.9.3]: https://github.com/fastobo/fastobo-py/compare/v0.9.2...v0.9.3
+### Fixed
+- `setup.py` crashing when compiling from source on a platform with stable 
+  Rust as the default toolchain ([#182](https://github.com/fastobo/fastobo-py/pull/182), 
+  thanks to [@alexhenrie](https://github.com/alexhenrie)).
 
 ### [v0.9.2] - 2020-09-04
 [v0.9.2]: https://github.com/fastobo/fastobo-py/compare/v0.9.1...v0.9.2

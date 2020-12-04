@@ -68,6 +68,10 @@ you need to report or ask something. If you are filling in on a bug, please incl
 information as you can about the issue, and try to recreate the same bug in a simple, easily
 reproducible situation.
 
+The following people have contributed to this project:
+
+- Alex Henrie ([@alexhenrie](https://github.com/alexhenrie))
+
 
 ## About
 

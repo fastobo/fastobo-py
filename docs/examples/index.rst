@@ -6,5 +6,8 @@ with `nbsphinx <nbsphinx.readthedocs.io/>`_ against the latest version of
 ``fastobo``.
 
 .. toctree::
+   :maxdepth: 1
 
    descriptions
+   obsolete
+   graph

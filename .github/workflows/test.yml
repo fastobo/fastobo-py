@@ -1,0 +1,124 @@
+name: Test
+
+on:
+  - push
+  - pull_request
+
+jobs:
+
+  test_linux:
+    name: Test (Linux)
+    runs-on: ubuntu-latest
+    env:
+      OS: Linux
+    strategy:
+      matrix:
+        include:
+        - python-version: 3.5
+          python-release: v3.5
+          python-impl: CPython
+        - python-version: 3.6
+          python-release: v3.6
+          python-impl: CPython
+        - python-version: 3.7
+          python-release: v3.7
+          python-impl: CPython
+        - python-version: 3.8
+          python-release: v3.8
+          python-impl: CPython
+        - python-version: 3.9
+          python-release: v3.9
+          python-impl: CPython
+        - python-version: pypy-3.6
+          python-release: v3.6
+          python-impl: PyPy
+        - python-version: pypy-3.7
+          python-release: v3.7
+          python-impl: PyPy
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v1
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Setup Rust nightly
+      uses: ATiltedTree/setup-rust@v1
+      with:
+        rust-version: nightly
+    - name: Update CI requirements
+      run: python -m pip install -U -r ci/requirements.txt
+    - name: Build Rust extension
+      run: python setup.py build_ext --inplace --debug
+    - name: Test Rust extension
+      run: python -m unittest discover -vv
+
+  test_osx:
+    name: Test (OSX)
+    runs-on: macos-latest
+    env:
+      OS: OSX
+    strategy:
+      matrix:
+        include:
+        - python-version: 3.5
+          python-release: v3.5
+          python-impl: CPython
+        - python-version: 3.6
+          python-release: v3.6
+          python-impl: CPython
+        - python-version: 3.7
+          python-release: v3.7
+          python-impl: CPython
+        - python-version: 3.8
+          python-release: v3.8
+          python-impl: CPython
+        - python-version: 3.9
+          python-release: v3.9
+          python-impl: CPython
+        - python-version: pypy-3.6
+          python-release: v3.6
+          python-impl: PyPy
+        - python-version: pypy-3.7
+          python-release: v3.7
+          python-impl: PyPy
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v1
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Setup Rust nightly
+      uses: ATiltedTree/setup-rust@v1
+      with:
+        rust-version: nightly
+    - name: Update CI requirements
+      run: python -m pip install -U -r ci/requirements.txt
+    - name: Build Rust extension
+      run: python setup.py build_ext --inplace --debug
+    - name: Test Rust extension
+      run: python -m unittest discover -vv
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v1
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Setup Rust nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        override: true
+    - name: Measure code coverage
+      uses: actions-rs/tarpaulin@v0.1
+      with:
+        version: '0.16.0'
+        args: '--lib -v --out Xml --ciserver github-actions'
+    - name: Upload coverage statistics
+      uses: codecov/codecov-action@v1

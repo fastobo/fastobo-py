@@ -7,3 +7,5 @@ ipython ~=7.15
 nbsphinx ~=0.7
 pygments-style-monokailight ~=0.4
 semantic_version ~=2.8
+networkx ~=2.5
+pygraphviz ~=1.7

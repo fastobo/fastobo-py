@@ -30,7 +30,7 @@ version = "0.13.2"
 version = "0.11.2"
 features = ["threading", "smartstring"]
 [dependencies.fastobo-graphs]
-version = "0.4.1"
+version = "0.4.2"
 features = ["obo"]
 [dependencies.fastobo-py-derive-internal]
 version = "0.9.3"

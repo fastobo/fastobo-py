@@ -222,7 +222,7 @@ dependencies = [
  "blanket",
  "crossbeam-channel",
  "err-derive",
- "fastobo-derive-internal",
+ "fastobo-derive-internal 0.11.2",
  "fastobo-syntax",
  "lazy_static",
  "memchr",
@@ -231,6 +231,25 @@ dependencies = [
  "pest",
  "smartstring",
  "url",
+]
+
+[[package]]
+name = "fastobo"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c807ff15a025a8365fde046c3d7580e44aeb2e2944b0d008d0ea2bacf23481d"
+dependencies = [
+ "blanket",
+ "crossbeam-channel",
+ "err-derive",
+ "fastobo-derive-internal 0.12.0",
+ "fastobo-syntax",
+ "lazy_static",
+ "memchr",
+ "num_cpus",
+ "ordered-float",
+ "pest",
+ "smartstring",
 ]
 
 [[package]]
@@ -246,17 +265,29 @@ dependencies = [
 ]
 
 [[package]]
-name = "fastobo-graphs"
-version = "0.4.1"
+name = "fastobo-derive-internal"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1b199e34983d42e0500ebb9aae340050373a902aa40dea72d93edfa3ce5a821"
+checksum = "c7c71e76eda2678fc85b949c627f1af0956a61ea0d6aa7a61b1119b8eb38f3d4"
 dependencies = [
- "err-derive",
- "fastobo",
+ "darling",
+ "heck",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "fastobo-graphs"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edc5150f98bfe190d153a4fc62d9e51bece108d42f9c0ee110e9dcc506b3f3c3"
+dependencies = [
+ "fastobo 0.12.0",
  "mashup",
  "serde",
  "serde_json",
  "serde_yaml",
+ "thiserror",
 ]
 
 [[package]]
@@ -264,7 +295,7 @@ name = "fastobo-py"
 version = "0.9.3"
 dependencies = [
  "built",
- "fastobo",
+ "fastobo 0.11.2",
  "fastobo-graphs",
  "fastobo-py-derive-internal",
  "lazy_static",
@@ -286,9 +317,9 @@ dependencies = [
 
 [[package]]
 name = "fastobo-syntax"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8c7315e0017be8cf253f2c16ec5b95d44c7e44e6b277b91e3da17da8c1b7ef8"
+checksum = "82baa32d8af195e89e664a96f93c0d07a39bff19b8520d4a6a318bedd836f1af"
 dependencies = [
  "pest",
  "pest_derive",
@@ -911,9 +942,9 @@ checksum = "6446ced80d6c486436db5c078dde11a9f73d42b57fb273121e160b84f63d894c"
 
 [[package]]
 name = "syn"
-version = "1.0.42"
+version = "1.0.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c51d92969d209b54a98397e1b91c8ae82d8c87a7bb87df0b29aa2ad81454228"
+checksum = "c700597eca8a5a762beb35753ef6b94df201c81cca676604f547495a0d7f0081"
 dependencies = [
  "proc-macro2 1.0.23",
  "quote",
@@ -930,6 +961,26 @@ dependencies = [
  "quote",
  "syn",
  "unicode-xid 0.2.1",
+]
+
+[[package]]
+name = "thiserror"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76cc616c6abf8c8928e2fdcc0dbfab37175edd8fb49a4641066ad1364fdab146"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9be73a2caec27583d0046ef3796c3794f868a5bc813db689eed00c7631275cd1"
+dependencies = [
+ "proc-macro2 1.0.23",
+ "quote",
+ "syn",
 ]
 
 [[package]]

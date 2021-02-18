@@ -8,7 +8,6 @@ extern crate pyo3;
 extern crate pyo3_built;
 extern crate libc;
 extern crate pest;
-extern crate url;
 #[macro_use]
 extern crate fastobo_py_derive_internal;
 extern crate fastobo_graphs;

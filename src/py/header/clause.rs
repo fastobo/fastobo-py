@@ -603,7 +603,7 @@ impl ImportClause {
     // FIXME(@althonos): should not be implicit here ?
     #[new]
     pub fn __init__(reference: &str) -> PyResult<PyClassInitializer<Self>> {
-        if let Ok(url) = url::Url::from_str(reference) {
+        if let Ok(url) = ast::Url::from_str(reference) {
             Ok(Self::new(obo::Import::Url(Box::new(url))).into())
         } else if let Ok(id) = obo::Ident::from_str(reference) {
             Ok(Self::new(obo::Import::Abbreviated(Box::new(id))).into())

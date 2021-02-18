@@ -5,6 +5,7 @@ members = ["derive"]
 name = "fastobo-py"
 version = "0.9.3"
 authors = ["Martin Larralde <martin.larralde@embl.de>"]
+license = "MIT"
 publish = false
 build = "src/build.rs"
 

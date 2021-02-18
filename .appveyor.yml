@@ -2,7 +2,7 @@ version: '0.9.0-rev{build}'
 clone_depth: 5
 environment:
   TARGET: x86_64-pc-windows-msvc
-  RUST_TOOLCHAIN: nightly-2020-06-02
+  RUST_TOOLCHAIN: nightly
   RUST_BACKTRACE: full
   matrix:
   - PYTHON: "C:\\Python36-x64"

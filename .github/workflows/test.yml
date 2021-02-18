@@ -113,6 +113,6 @@ jobs:
       uses: actions-rs/tarpaulin@v0.1
       with:
         version: '0.16.0'
-        args: '--lib -v --out Xml --ciserver github-actions'
+        args: '-v --out Xml --ciserver github-actions'
     - name: Upload coverage statistics
       uses: codecov/codecov-action@v1

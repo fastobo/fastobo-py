@@ -222,7 +222,7 @@ dependencies = [
  "blanket",
  "crossbeam-channel",
  "err-derive",
- "fastobo-derive-internal",
+ "fastobo-derive-internal 0.11.2",
  "fastobo-syntax",
  "lazy_static",
  "memchr",
@@ -231,6 +231,25 @@ dependencies = [
  "pest",
  "smartstring",
  "url",
+]
+
+[[package]]
+name = "fastobo"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c807ff15a025a8365fde046c3d7580e44aeb2e2944b0d008d0ea2bacf23481d"
+dependencies = [
+ "blanket",
+ "crossbeam-channel",
+ "err-derive",
+ "fastobo-derive-internal 0.12.0",
+ "fastobo-syntax",
+ "lazy_static",
+ "memchr",
+ "num_cpus",
+ "ordered-float",
+ "pest",
+ "smartstring",
 ]
 
 [[package]]
@@ -246,13 +265,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "fastobo-derive-internal"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7c71e76eda2678fc85b949c627f1af0956a61ea0d6aa7a61b1119b8eb38f3d4"
+dependencies = [
+ "darling",
+ "heck",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "fastobo-graphs"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1b199e34983d42e0500ebb9aae340050373a902aa40dea72d93edfa3ce5a821"
 dependencies = [
  "err-derive",
- "fastobo",
+ "fastobo 0.11.2",
  "mashup",
  "serde",
  "serde_json",
@@ -264,7 +295,7 @@ name = "fastobo-py"
 version = "0.9.3"
 dependencies = [
  "built",
- "fastobo",
+ "fastobo 0.12.0",
  "fastobo-graphs",
  "fastobo-py-derive-internal",
  "lazy_static",
@@ -286,9 +317,9 @@ dependencies = [
 
 [[package]]
 name = "fastobo-syntax"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8c7315e0017be8cf253f2c16ec5b95d44c7e44e6b277b91e3da17da8c1b7ef8"
+checksum = "82baa32d8af195e89e664a96f93c0d07a39bff19b8520d4a6a318bedd836f1af"
 dependencies = [
  "pest",
  "pest_derive",

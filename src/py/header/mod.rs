@@ -32,7 +32,6 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
 
     register!(py, m, HeaderFrame, "collections.abc", MutableSequence);
 
-    m.add("__package__", "fastobo")?;
     m.add("__name__", "fastobo.header")?;
 
     Ok(())

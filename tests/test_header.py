@@ -2,6 +2,7 @@
 
 import datetime
 import unittest
+import sys
 
 import fastobo
 
@@ -52,7 +53,10 @@ class _TestUnquotedStringClause(object):
 
     def test_repr(self):
         x = self.type("abc")
-        self.assertEqual(repr(x), "{}('abc')".format(self.type.__name__))
+        r = self.type.__name__
+        if sys.implementation.name == "pypy":
+            r = r.split(".")[-1]
+        self.assertEqual(repr(x), "{}('abc')".format(r))
 
     def test_eq(self):
         x = self.type("1.2")

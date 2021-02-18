@@ -195,13 +195,9 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             path.segments.iter().next().unwrap().ident.span(),
         );
 
-        variants.push(quote!(
-            #lit => if #path::is_exact_instance(ob) {
-                Ok(#wrapped::#name(pyo3::Py::from_borrowed_ptr(ob.py(), ob.as_ptr())))
-            } else {
-                Err(pyo3::exceptions::PyTypeError::new_err("extraction of subclass failed"))
-            }
-        ));
+        variants.push(
+            quote!(#lit => ob.extract::<pyo3::Py<#path>>().map(#wrapped::#name))
+        );
     }
 
     let meta = ast
@@ -235,23 +231,21 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             fn extract(ob: &'source pyo3::types::PyAny) -> pyo3::PyResult<Self> {
                 use pyo3::AsPyPointer;
 
-                let qualname = ob.get_type().name();
+                let qualname = ob.get_type().name()?;
                 let ty = match qualname.rfind('.') {
                     Some(idx) => &qualname[idx+1..],
                     None => &qualname,
                 };
 
                 if ob.py().is_instance::<#base, _>(ob)? {
-                    unsafe {
-                        match ty.as_ref() {
-                            #(#variants,)*
-                            _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
-                        }
+                    match ty.as_ref() {
+                        #(#variants,)*
+                        _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
                     }
                 } else {
                     Err(pyo3::exceptions::PyTypeError::new_err(format!(
                         #err_ty,
-                        ob.get_type().name(),
+                        ob.get_type().name()?,
                     )))
                 }
             }

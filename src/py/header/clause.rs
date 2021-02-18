@@ -925,14 +925,16 @@ impl DefaultNamespaceClause {
     fn __init__(namespace: &PyAny) -> PyResult<PyClassInitializer<Self>> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        if py.is_instance::<BaseIdent, PyAny>(namespace)? {
+        if namespace.is_instance::<BaseIdent>()? {
             Ident::extract(namespace).map(|id| Self::new(id).into())
-        } else if py.is_instance::<PyString, PyAny>(namespace)? {
+        } else if namespace.is_instance::<PyString>()? {
             let s: &PyString = FromPyObject::extract(namespace)?;
             let id = ast::Ident::from_str(&s.to_str()?).unwrap(); // FIXME
             Ok(Self::new(id.into_py(py)).into())
         } else {
-            Err(PyTypeError::new_err("expected str or Ident for 'namespace'"))
+            let ty = namespace.get_type().name()?;
+            let msg = format!("expected str or Ident for 'namespace', found {}", ty);
+            Err(PyTypeError::new_err(msg))
         }
     }
 

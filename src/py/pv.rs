@@ -161,7 +161,7 @@ impl LiteralPropertyValue {
         let v = if let Ok(s) = value.extract::<&PyString>() {
             ast::QuotedString::new(s.to_str()?.to_string())
         } else {
-            let n = value.get_type().name();
+            let n = value.get_type().name()?;
             let msg = format!("expected str for value, found {}", n);
             return Err(PyTypeError::new_err(msg));
         };

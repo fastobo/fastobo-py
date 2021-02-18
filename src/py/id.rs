@@ -306,7 +306,7 @@ impl PrefixedIdent {
             let string = s.to_string();
             Py::new(py, IdentPrefix::new(ast::IdentPrefix::new(string)))?
         } else {
-            let ty = prefix.get_type().name();
+            let ty = prefix.get_type().name()?;
             let msg = format!("expected IdentPrefix or str, found {}", ty);
             return Err(PyTypeError::new_err(msg));
         };
@@ -317,7 +317,7 @@ impl PrefixedIdent {
             let string = s.to_string();
             Py::new(py, IdentLocal::new(ast::IdentLocal::new(string)))?
         } else {
-            let ty = local.get_type().name();
+            let ty = local.get_type().name()?;
             let msg = format!("expected IdentLocal or str, found {}", ty);
             return Err(PyTypeError::new_err(msg));
         };
@@ -343,7 +343,7 @@ impl PrefixedIdent {
             let string = s.to_string();
             Py::new(py, IdentPrefix::new(ast::IdentPrefix::new(string)))?
         } else {
-            let ty = prefix.get_type().name();
+            let ty = prefix.get_type().name()?;
             let msg = format!("expected IdentPrefix or str, found {}", ty);
             return Err(PyTypeError::new_err(msg));
         };
@@ -365,7 +365,7 @@ impl PrefixedIdent {
             let string = s.to_string();
             Py::new(py, IdentLocal::new(ast::IdentLocal::new(string)))?
         } else {
-            let ty = local.get_type().name();
+            let ty = local.get_type().name()?;
             let msg = format!("expected IdentLocal or str, found {}", ty);
             return Err(PyTypeError::new_err(msg));
         };
@@ -417,7 +417,7 @@ impl PyObjectProtocol for PrefixedIdent {
                 CompareOp::Eq => Ok(false),
                 CompareOp::Ne => Ok(true),
                 _ => {
-                    let n = other.get_type().name();
+                    let n = other.get_type().name()?;
                     let msg = format!("expected PrefixedIdent, found {}", n);
                     Err(PyTypeError::new_err(msg))
                 }
@@ -559,7 +559,7 @@ impl PyObjectProtocol for UnprefixedIdent {
                 CompareOp::Eq => Ok(false),
                 CompareOp::Ne => Ok(true),
                 _ => {
-                    let n = other.get_type().name();
+                    let n = other.get_type().name()?;
                     let msg = format!("expected UnprefixedIdent, found {}", n);
                     Err(PyTypeError::new_err(msg))
                 }
@@ -690,7 +690,7 @@ impl PyObjectProtocol for Url {
                 CompareOp::Eq => Ok(false),
                 CompareOp::Ne => Ok(true),
                 _ => {
-                    let n = other.get_type().name();
+                    let n = other.get_type().name()?;
                     let msg = format!("expected str or Url, found {}", n);
                     Err(PyTypeError::new_err(msg))
                 }

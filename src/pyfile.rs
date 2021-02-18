@@ -54,7 +54,7 @@ impl<'p> PyFileRead<'p> {
         if res.cast_as::<PyBytes>().is_ok() {
             Ok(PyFileRead { file })
         } else {
-            let ty = res.get_type().name().to_string();
+            let ty = res.get_type().name()?.to_string();
             Err(PyTypeError::new_err(format!("expected bytes, found {}", ty)))
         }
     }
@@ -70,7 +70,7 @@ impl<'p> Read for PyFileRead<'p> {
                     (&mut buf[..b.len()]).copy_from_slice(b);
                     Ok(b.len())
                 } else {
-                    let ty = obj.get_type().name().to_string();
+                    let ty = obj.get_type().name()?.to_string();
                     let msg = format!("expected bytes, found {}", ty);
                     PyTypeError::new_err(msg).restore(self.file.py());
                     Err(IoError::new(
@@ -111,7 +111,7 @@ impl<'p> Write for PyFileWrite<'p> {
                 if let Ok(len) = usize::extract(&obj) {
                     Ok(len)
                 } else {
-                    let ty = obj.get_type().name().to_string();
+                    let ty = obj.get_type().name()?.to_string();
                     let msg = format!("expected int, found {}", ty);
                     PyTypeError::new_err(msg).restore(self.file.py());
                     Err(IoError::new(
@@ -155,7 +155,7 @@ impl PyFileGILRead {
                 file: Mutex::new(file.to_object(file.py())),
             })
         } else {
-            let ty = res.get_type().name().to_string();
+            let ty = res.get_type().name()?.to_string();
             Err(PyTypeError::new_err(format!("expected bytes, found {}", ty)))
         }
     }
@@ -178,7 +178,7 @@ impl Read for PyFileGILRead {
                     (&mut buf[..b.len()]).copy_from_slice(b);
                     Ok(b.len())
                 } else {
-                    let ty = obj.as_ref(py).get_type().name().to_string();
+                    let ty = obj.as_ref(py).get_type().name()?.to_string();
                     let msg = format!("expected bytes, found {}", ty);
                     PyTypeError::new_err(msg).restore(py);
                     Err(IoError::new(

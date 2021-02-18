@@ -74,7 +74,7 @@ impl AbstractClass for AbstractFrame {
 /// relations (typedefs) and instances. All OBO entities have an identifier,
 /// which is supposedly unique, that can be accessed through the ``id``
 /// property in any concrete subclass.
-#[pyclass(extends=AbstractFrame, module="fastobo.abc")]
+#[pyclass(subclass, extends=AbstractFrame, module="fastobo.abc")]
 #[derive(Default, AbstractClass)]
 pub struct AbstractEntityFrame {}
 
@@ -153,6 +153,6 @@ impl AbstractClause {
 }
 
 /// An abstract entity clause.
-#[pyclass(extends=AbstractClause, module="fastobo.abc")]
+#[pyclass(subclass, extends=AbstractClause, module="fastobo.abc")]
 #[derive(Default, AbstractClass)]
 pub struct AbstractEntityClause {}

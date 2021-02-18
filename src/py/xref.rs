@@ -193,7 +193,7 @@ impl XrefList {
             if let Ok(xref) = i.extract::<Py<Xref>>() {
                 vec.push(xref.clone_ref(py));
             } else {
-                let ty = i.get_type().name();
+                let ty = i.get_type().name()?;
                 let msg = format!("expected Xref, found {}", ty);
                 return Err(PyTypeError::new_err(msg));
             }
@@ -296,7 +296,7 @@ impl PySequenceProtocol for XrefList {
             let py = item.py();
             Ok(self.xrefs.iter().any(|x| *x.as_ref(py).borrow() == *xref.as_ref(py).borrow()))
         } else {
-            let ty = item.get_type().name();
+            let ty = item.get_type().name()?;
             let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);
             Err(PyTypeError::new_err(msg))
         }

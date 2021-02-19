@@ -6,7 +6,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.9.3...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.10.0...HEAD
+
+## [v0.10.0] - 2021-02-19
+[v0.10.0]: https://github.com/fastobo/fastobo-py/compare/v0.9.3...v0.10.0
+### Added
+- `__hash__` implementation to `fastobo.id.BaseIdent` subclasses.
+- `__init__` method to classes missing one in `fastobo.header`.
+### Changed
+- Bumped `pyo3` dependency to `v0.13.2`.
+- Bumped `fastobo` dependency to `v0.13.0`.
+### Fixed
+- Broken `__repr__` implementation for some types.
+### Removed
+- `unsafe` blocks in derive macros implementation of `IntoPyObject` for OBO clauses.
+- Support for Python 3.5.
+- `fastobo.id.IdentPrefix` and `fastobo.id.IdentLocal` classes.
 
 ### [v0.9.3] - 2020-12-04
 [v0.9.3]: https://github.com/fastobo/fastobo-py/compare/v0.9.2...v0.9.3

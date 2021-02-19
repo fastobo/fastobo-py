@@ -3,7 +3,7 @@ members = ["derive"]
 
 [package]
 name = "fastobo-py"
-version = "0.9.3"
+version = "0.10.0"
 authors = ["Martin Larralde <martin.larralde@embl.de>"]
 license = "MIT"
 publish = false
@@ -33,7 +33,7 @@ features = ["threading", "smartstring"]
 version = "0.4.3"
 features = ["obo"]
 [dependencies.fastobo-py-derive-internal]
-version = "0.9.3"
+version = "0.10.0"
 path = "./derive"
 
 [features]

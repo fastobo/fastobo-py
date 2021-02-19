@@ -315,17 +315,7 @@ impl PrefixedIdent {
 #[pyproto]
 impl PyObjectProtocol for PrefixedIdent {
     fn __repr__(&self) -> PyResult<PyObject> {
-        // acquire the GIL
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        // get the formatted `repr` string
-        let fmt = PyString::new(py, "PrefixedIdent({!r}, {!r})");
-        let res = fmt.call_method1(
-            "format",
-            (self.inner.prefix(), self.inner.local())
-        )?;
-        // convert to an object before releasing the GIL
-        Ok(res.to_object(py))
+        impl_repr!(self, PrefixedIdent(self.inner.prefix(), self.inner.local()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -469,10 +459,7 @@ impl UnprefixedIdent {
 #[pyproto]
 impl PyObjectProtocol for UnprefixedIdent {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "UnprefixedIdent({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.inner.as_str(),))
+        impl_repr!(self, UnprefixedIdent(self.inner.as_str()))
     }
 
     fn __str__(&'p self) -> PyResult<&'p str> {
@@ -598,10 +585,7 @@ impl Url {
 #[pyproto]
 impl PyObjectProtocol for Url {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "Url({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.inner.as_str(),))
+        impl_repr!(self, Url(self.inner.as_str()))
     }
 
     /// Retrieve the URL in a serialized form.

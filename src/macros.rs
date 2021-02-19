@@ -23,19 +23,15 @@ macro_rules! impl_richmp {
 }
 
 macro_rules! impl_repr {
-    ($self:ident, $cls:ident($(self . $attr:ident),*)) => ({
+    ($self:ident, $cls:ident($($field:expr),*)) => ({
         let gil = Python::acquire_gil();
         let py = gil.python();
 
-        let fmt = PyString::new(
-            py,
-            concat!(stringify!($cls), "({!r})")
-        ).to_object(py);
+        let args = &[
+            $($field.to_object(py).as_ref(py).repr()?.to_str()?,)*
+        ].join(", ");
 
-        fmt.call_method1(
-            py, "format",
-            ($($self . $attr . to_object(py) ,)*)
-        )
+        Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).to_object(py))
     })
 }
 

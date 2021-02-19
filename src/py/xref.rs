@@ -200,6 +200,11 @@ impl XrefList {
         }
         Ok(Self { xrefs: vec })
     }
+
+    /// Check whether the `XrefList` is empty
+    pub fn is_empty(&self) -> bool {
+        self.xrefs.is_empty()
+    }
 }
 
 impl ClonePy for XrefList {
@@ -263,8 +268,13 @@ impl PyObjectProtocol for XrefList {
     fn __repr__(&self) -> PyResult<PyObject> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        let fmt = PyString::new(py, "XrefList({!r})").to_object(py);
-        fmt.call_method1(py, "format", (&self.xrefs.to_object(py),))
+        if self.xrefs.is_empty() {
+            Ok("XrefList()".to_object(py))
+        } else {
+            let fmt = PyString::new(py, "XrefList({!r})").to_object(py);
+            fmt.call_method1(py, "format", (&self.xrefs.to_object(py),))
+        }
+
     }
 
     fn __str__(&self) -> PyResult<String> {

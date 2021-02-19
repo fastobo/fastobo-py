@@ -44,6 +44,27 @@ class TestTermFrame(unittest.TestCase):
         self.assertRaises(TypeError, self.type, self.id, "abc")
 
 
+# --- DefClause ---------------------------------------------------------
+
+class TestDefClause(unittest.TestCase):
+
+    type = fastobo.term.DefClause
+
+    def test_repr(self):
+        clause = self.type("definition")
+        self.assertEqual(repr(clause), "DefClause('definition')")
+
+        id_ = fastobo.id.PrefixedIdent('ISBN', '0321842685')
+        desc = "Hacker's Delight (2nd Edition)"
+        x = fastobo.xref.Xref(id_, desc)
+
+        clause = self.type("definition", fastobo.xref.XrefList([x]))
+        self.assertEqual(repr(clause), "DefClause('definition', XrefList([{!r}]))".format(x))
+
+
+
+
+
 # --- ConsiderClause ---------------------------------------------------------
 
 class TestConsiderClause(unittest.TestCase):

@@ -628,10 +628,7 @@ impl PyObjectProtocol for ImportClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "SubsetdefClause({})").to_object(py);
-        fmt.call_method1(py, "format", (self.reference.to_string(),))
+        impl_repr!(self, SubsetdefClause(self.reference.to_string()))
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
@@ -717,11 +714,7 @@ impl_raw_value!(SubsetdefClause, "{} {}", self.subset, self.description);
 #[pyproto]
 impl PyObjectProtocol for SubsetdefClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let r = self.subset.to_object(py).call_method0(py, "__repr__")?;
-        let fmt = PyString::new(py, "SubsetdefClause({}, {!r})").to_object(py);
-        fmt.call_method1(py, "format", (r, self.description.as_str()))
+        impl_repr!(self, SubsetdefClause(self.subset, self.description.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -847,22 +840,10 @@ impl PyObjectProtocol for SynonymTypedefClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
         if let Some(ref scope) = self.scope {
-            let fmt = PyString::new(py, "SynonymTypedefClause({!r}, {!r}, {!r})").to_object(py);
-            fmt.call_method1(
-                py,
-                "format",
-                (
-                    &self.typedef,
-                    self.description.as_str(),
-                    scope.to_object(py),
-                ),
-            )
+            impl_repr!(self, SynonymTypedefClause(self.typedef, self.description.as_str(), scope))
         } else {
-            let fmt = PyString::new(py, "SynonymTypedefClause({!r}, {!r})").to_object(py);
-            fmt.call_method1(py, "format", (&self.typedef, self.description.as_str()))
+            impl_repr!(self, SynonymTypedefClause(self.typedef, self.description.as_str()))
         }
     }
 
@@ -950,12 +931,7 @@ impl_raw_value!(DefaultNamespaceClause, "{}", self.namespace);
 #[pyproto]
 impl PyObjectProtocol for DefaultNamespaceClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let ns = self.namespace.to_object(py);
-        let nsref = ns.as_ref(py);
-        let fmt = PyString::new(py, "DefaultNamespaceClause({})").to_object(py);
-        fmt.call_method1(py, "format", (nsref.repr()?,))
+        impl_repr!(self, DefaultNamespaceClause(self.namespace))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1033,10 +1009,7 @@ impl_raw_value!(NamespaceIdRuleClause, "{}", self.rule);
 #[pyproto]
 impl PyObjectProtocol for NamespaceIdRuleClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "NamespaceIdRuleClause({})").to_object(py);
-        fmt.call_method1(py, "format", (self.rule.as_str(),))
+        impl_repr!(self, NamespaceIdRuleClause(self.rule.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1162,18 +1135,10 @@ impl PyObjectProtocol for IdspaceClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
-        let pref = self.prefix.as_str();
-        let url = self.url.as_ref(py).borrow().__repr__()?;
-
         if let Some(ref desc) = self.description {
-            let fmt = PyString::new(py, "IdspaceClause({!r}, {}, {!r})").to_object(py);
-            fmt.call_method1(py, "format", (pref, url, desc.as_str()))
+            impl_repr!(self, IdspaceClause(self.prefix.as_str(), self.url, desc.as_str()))
         } else {
-            let fmt = PyString::new(py, "IdspaceClause({!r}, {})").to_object(py);
-            fmt.call_method1(py, "format", (pref, url))
+            impl_repr!(self, IdspaceClause(self.prefix.as_str(), self.url))
         }
     }
 
@@ -1238,10 +1203,7 @@ impl_raw_value!(TreatXrefsAsEquivalentClause, "{}", self.idspace);
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsEquivalentClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "TreatXrefsAsEquivalentClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.idspace.as_str(),))
+        impl_repr!(self, TreatXrefsAsEquivalentClause(self.idspace.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1331,13 +1293,7 @@ impl_raw_value!(
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "TreatXrefsAsGenusDifferentiaClause({!r}, {!r}, {!r})").to_object(py);
-        fmt.call_method1(
-            py, "format",
-            (self.idspace.as_str(), self.relation.clone_py(py), self.filler.clone_py(py))
-        )
+        impl_repr!(self, TreatXrefsAsGenusDifferentiaClause(self.idspace.as_str(), self.relation, self.filler))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1427,13 +1383,7 @@ impl_raw_value!(
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "TreatXrefsAsReverseGenusDifferentiaClause({!r}, {!r}, {!r})").to_object(py);
-        fmt.call_method1(
-            py, "format",
-            (self.idspace.as_str(), self.relation.clone_py(py), self.filler.clone_py(py))
-        )
+        impl_repr!(self, TreatXrefsAsReverseGenusDifferentiaClause(self.idspace.as_str(), self.relation, self.filler))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1519,13 +1469,7 @@ impl_raw_value!(
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsRelationshipClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "TreatXrefsAsRelationshipClause({!r}, {!r})").to_object(py);
-        fmt.call_method1(
-            py, "format",
-            (self.idspace.as_str(), self.relation.clone_py(py))
-        )
+        impl_repr!(self, TreatXrefsAsRelationshipClause(self.idspace.as_str(), self.relation))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1594,10 +1538,7 @@ impl_raw_value!(TreatXrefsAsIsAClause, "{}", self.idspace);
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsIsAClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "TreatXrefsAsIsAClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.idspace.as_str(),))
+        impl_repr!(self, TreatXrefsAsIsAClause(self.idspace.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1668,10 +1609,7 @@ impl_raw_tag!(TreatXrefsAsHasSubclassClause, "treat-xrefs-as-has-subclass");
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsHasSubclassClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "TreatXrefsAsHasSubclassClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.idspace.as_str(),))
+        impl_repr!(self, TreatXrefsAsHasSubclassClause(self.idspace.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1826,10 +1764,7 @@ impl_raw_value!(RemarkClause, "{}", self.remark);
 #[pyproto]
 impl PyObjectProtocol for RemarkClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "RemarkClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.remark.as_str(),))
+        impl_repr!(self, RemarkClause(self.remark.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1902,10 +1837,7 @@ impl_raw_value!(OntologyClause, "{}", self.ontology);
 #[pyproto]
 impl PyObjectProtocol for OntologyClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "OntologyClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.ontology.as_str(),))
+        impl_repr!(self, OntologyClause(self.ontology.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1985,10 +1917,7 @@ impl PyObjectProtocol for OwlAxiomsClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "OwlAxiomsClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.axioms.as_str(),))
+        impl_repr!(self, OwlAxiomsClause(self.axioms.as_str()))
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
@@ -2072,10 +2001,7 @@ impl_raw_value!(UnreservedClause, "{}", self.value);
 #[pyproto]
 impl PyObjectProtocol for UnreservedClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "UnreservedClause({!r}, {!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.tag.as_str(), self.value.as_str()))
+        impl_repr!(self, UnreservedClause(self.tag.as_str(), self.value.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {

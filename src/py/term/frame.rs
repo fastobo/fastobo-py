@@ -112,11 +112,7 @@ impl TermFrame {
 #[pyproto]
 impl PyObjectProtocol for TermFrame {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        PyString::new(py, "TermFrame({!r})")
-            .to_object(py)
-            .call_method1(py, "format", (&self.id,))
+        impl_repr!(self, TermFrame(self.id))
     }
 
     fn __str__(&self) -> PyResult<String> {

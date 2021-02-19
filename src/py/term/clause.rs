@@ -331,11 +331,7 @@ impl_raw_value!(NamespaceClause, "{}", self.namespace);
 #[pyproto]
 impl PyObjectProtocol for NamespaceClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let r = self.namespace.to_object(py).call_method0(py, "__repr__")?;
-        let fmt = PyString::new(py, "NamespaceClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (&self.namespace,))
+        impl_repr!(self, NamespaceClause(self.namespace))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -517,7 +513,11 @@ impl_raw_value!(DefClause, "{}", self.definition);
 #[pyproto]
 impl PyObjectProtocol for DefClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DefClause(self.definition, self.xrefs))
+        if self.xrefs.is_empty() {
+            impl_repr!(self, DefClause(self.definition))
+        } else {
+            impl_repr!(self, DefClause(self.definition, self.xrefs))
+        }
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1180,7 +1180,6 @@ impl_raw_tag!(IntersectionOfClause, "intersection_of");
 #[pyproto]
 impl PyObjectProtocol for IntersectionOfClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        // TODO
         impl_repr!(self, IntersectionOfClause(self.typedef, self.term))
     }
 

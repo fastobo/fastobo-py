@@ -99,10 +99,7 @@ impl HeaderFrame {
 #[pyproto]
 impl PyObjectProtocol for HeaderFrame {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "HeaderFrame({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.to_object(py),))
+        impl_repr!(self, HeaderFrame(self))
     }
 
     fn __str__(&self) -> PyResult<String> {

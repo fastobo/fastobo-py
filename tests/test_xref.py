@@ -84,3 +84,9 @@ class TestXrefList(unittest.TestCase):
         l3 = self.type([x1, x2])
         self.assertIn(x1, l3)
         self.assertIn(x2, l3)
+
+    def test_repr(self):
+        x1, x2 = self.x1, self.x2
+        self.assertEqual( repr(self.type()), "XrefList()" )
+        self.assertEqual( repr(self.type([x1])), "XrefList([{!r}])".format(x1) )
+        self.assertEqual( repr(self.type([x1, x2])), "XrefList([{!r}, {!r}])".format(x1, x2) )

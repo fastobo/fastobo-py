@@ -112,11 +112,7 @@ impl TypedefFrame {
 #[pyproto]
 impl PyObjectProtocol for TypedefFrame {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        PyString::new(py, "TypedefFrame({!r})")
-            .to_object(py)
-            .call_method1(py, "format", (&self.id,))
+        impl_repr!(self, TypedefFrame(self.id))
     }
 
     fn __str__(&self) -> PyResult<String> {

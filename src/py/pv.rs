@@ -319,14 +319,7 @@ impl ResourcePropertyValue {
 #[pyproto]
 impl PyObjectProtocol for ResourcePropertyValue {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "ResourcePropertyValue({!r}, {!r})");
-        fmt.to_object(py).call_method1(
-            py,
-            "format",
-            (self.relation.to_object(py), self.value.to_object(py)),
-        )
+        impl_repr!(self, ResourcePropertyValue(self.relation, self.value))
     }
 
     fn __str__(&self) -> PyResult<String> {

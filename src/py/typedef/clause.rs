@@ -959,13 +959,13 @@ impl IntoPy<fastobo::ast::TypedefClause> for PropertyValueClause {
 #[pymethods]
 impl PropertyValueClause {
     #[new]
-    pub fn __init__(pv: PropertyValue) -> PyClassInitializer<Self> {
+    fn __init__(pv: PropertyValue) -> PyClassInitializer<Self> {
         Self::new(pv).into()
     }
 
-    #[getter]
     /// `~fastobo.pv.AbstractPropertyValue`: an annotation of the relation.
-    pub fn property_value(&self) -> &PropertyValue {
+    #[getter]
+    fn property_value(&self) -> &PropertyValue {
         &self.inner
     }
 }
@@ -1111,8 +1111,8 @@ impl RangeClause {
         Self::new(range).into()
     }
 
-    #[getter]
     /// `~fastobo.id.Ident`: the identifier of the range of the typedef.
+    #[getter]
     fn get_range(&self) -> &Ident {
         &self.range
     }

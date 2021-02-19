@@ -971,13 +971,13 @@ impl IntoPy<fastobo::ast::TermClause> for PropertyValueClause {
 #[pymethods]
 impl PropertyValueClause {
     #[new]
-    pub fn __init__(property_value: PropertyValue) -> PyClassInitializer<Self> {
+    fn __init__(property_value: PropertyValue) -> PyClassInitializer<Self> {
         Self::new(property_value).into()
     }
 
     #[getter]
     /// `~fastobo.pv.AbstractPropertyValue`: an annotation of the term.
-    pub fn get_property_value(&self) -> &PropertyValue {
+    fn get_property_value(&self) -> &PropertyValue {
         &self.inner
     }
 }

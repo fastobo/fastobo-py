@@ -1117,7 +1117,12 @@ impl IntoPy<obo::HeaderClause> for IdspaceClause {
 
 #[pymethods]
 impl IdspaceClause {
-    // TODO: missing __init__
+    #[new]
+    fn __init__(prefix: String, url: Py<Url>, description: Option<String>) -> PyClassInitializer<Self> {
+        let p = ast::IdentPrefix::new(prefix);
+        let d = description.map(QuotedString::new);
+        Self::with_description(p, url, d).into()
+    }
 
     /// `str`: the prefix used in prefixed IDs.
     #[getter]
@@ -1215,7 +1220,10 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsEquivalentClause {
 
 #[pymethods]
 impl TreatXrefsAsEquivalentClause {
-    // TODO: missing __init__
+    #[new]
+    fn __init__(prefix: String) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix)).into()
+    }
 
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
@@ -1296,7 +1304,10 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsGenusDifferentiaClause {
 
 #[pymethods]
 impl TreatXrefsAsGenusDifferentiaClause {
-    // TODO: missing __init__
+    #[new]
+    fn __init__(prefix: String, relation: Ident, filler: Ident) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix), relation, filler).into()
+    }
 
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
@@ -1389,7 +1400,10 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsReverseGenusDifferentiaClause {
 
 #[pymethods]
 impl TreatXrefsAsReverseGenusDifferentiaClause {
-    // TODO: missing __init__
+    #[new]
+    fn __init__(prefix: String, relation: Ident, filler: Ident) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix), relation, filler).into()
+    }
 
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
@@ -1479,7 +1493,10 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsRelationshipClause {
 
 #[pymethods]
 impl TreatXrefsAsRelationshipClause {
-    // TODO: missing __init__
+    #[new]
+    fn __init__(prefix: String, relation: Ident) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix), relation).into()
+    }
 
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
@@ -1559,7 +1576,10 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsIsAClause {
 
 #[pymethods]
 impl TreatXrefsAsIsAClause {
-    // TODO: missing __init__
+    #[new]
+    fn __init__(prefix: String) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix)).into()
+    }
 
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
@@ -1627,7 +1647,10 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsHasSubclassClause {
 
 #[pymethods]
 impl TreatXrefsAsHasSubclassClause {
-    // TODO: missing __init__
+    #[new]
+    fn __init__(prefix: String) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix)).into()
+    }
 
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]

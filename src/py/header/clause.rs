@@ -31,7 +31,6 @@ use pyo3::PyTypeInfo;
 use super::super::abc::AbstractClause;
 use super::super::id::BaseIdent;
 use super::super::id::Ident;
-use super::super::id::IdentPrefix;
 use super::super::id::Url;
 use super::super::pv::PropertyValue;
 use super::super::syn::SynonymScope;
@@ -100,31 +99,31 @@ impl IntoPy<HeaderClause> for fastobo::ast::HeaderClause {
             }
             Idspace(prefix, url, desc) => {
                     Py::new(py, url.into_py(py))
-                        .map(|url| IdspaceClause::with_description(prefix.into_py(py), url, desc.map(|d| *d)))
+                        .map(|url| IdspaceClause::with_description(*prefix, url, desc.map(|d| *d)))
                         .and_then(|clause| Py::new(py, clause))
                         .map(HeaderClause::Idspace)
             }
             TreatXrefsAsEquivalent(prefix) => {
-                Py::new(py, TreatXrefsAsEquivalentClause::new(prefix.into_py(py)))
+                Py::new(py, TreatXrefsAsEquivalentClause::new(*prefix))
                     .map(HeaderClause::TreatXrefsAsEquivalent)
             }
             TreatXrefsAsGenusDifferentia(p, r, c) => {
-                Py::new(py, TreatXrefsAsGenusDifferentiaClause::new((*p).into_py(py), r.into_py(py), c.into_py(py)))
+                Py::new(py, TreatXrefsAsGenusDifferentiaClause::new(*p, r.into_py(py), c.into_py(py)))
                     .map(HeaderClause::TreatXrefsAsGenusDifferentia)
             }
             TreatXrefsAsReverseGenusDifferentia(p, r, c) => Py::new(
                 py,
-                TreatXrefsAsReverseGenusDifferentiaClause::new((*p).into_py(py), r.into_py(py), c.into_py(py)),
+                TreatXrefsAsReverseGenusDifferentiaClause::new(*p, r.into_py(py), c.into_py(py)),
             )
             .map(HeaderClause::TreatXrefsAsReverseGenusDifferentia),
             TreatXrefsAsRelationship(p, r) => {
-                Py::new(py, TreatXrefsAsRelationshipClause::new((*p).into_py(py), r.into_py(py)))
+                Py::new(py, TreatXrefsAsRelationshipClause::new(*p, r.into_py(py)))
                     .map(HeaderClause::TreatXrefsAsRelationship)
             }
             TreatXrefsAsIsA(p) => {
-                Py::new(py, TreatXrefsAsIsAClause::new((*p).into_py(py))).map(HeaderClause::TreatXrefsAsIsA)
+                Py::new(py, TreatXrefsAsIsAClause::new(*p)).map(HeaderClause::TreatXrefsAsIsA)
             }
-            TreatXrefsAsHasSubclass(p) => Py::new(py, TreatXrefsAsHasSubclassClause::new((*p).into_py(py)))
+            TreatXrefsAsHasSubclass(p) => Py::new(py, TreatXrefsAsHasSubclassClause::new(*p))
                 .map(HeaderClause::TreatXrefsAsHasSubclass),
             PropertyValue(pv) => {
                 Py::new(py, PropertyValueClause::new(pv.into_py(py))).map(HeaderClause::PropertyValue)
@@ -1060,19 +1059,19 @@ impl PyObjectProtocol for NamespaceIdRuleClause {
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
 #[derive(Debug, FinalClass)]
 pub struct IdspaceClause {
-    prefix: IdentPrefix,
-    #[pyo3(get, set)]
+    prefix: ast::IdentPrefix,
     /// `~fastobo.id.Url`: the URL used to expand IDs of this IDspace.
+    #[pyo3(get, set)]
     url: Py<Url>,
     description: Option<QuotedString>,
 }
 
 impl IdspaceClause {
-    pub fn new(prefix: IdentPrefix, url: Py<Url>) -> Self {
+    pub fn new(prefix: ast::IdentPrefix, url: Py<Url>) -> Self {
         Self::with_description(prefix, url, None)
     }
 
-    pub fn with_description(prefix: IdentPrefix, url: Py<Url>, description: Option<QuotedString>) -> Self {
+    pub fn with_description(prefix: ast::IdentPrefix, url: Py<Url>, description: Option<QuotedString>) -> Self {
         Self { prefix, url, description }
     }
 }
@@ -1080,7 +1079,7 @@ impl IdspaceClause {
 impl ClonePy for IdspaceClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            prefix: self.prefix.clone_py(py),
+            prefix: self.prefix.clone(),
             url: self.url.clone(),
             description: self.description.clone(),
         }
@@ -1103,7 +1102,7 @@ impl From<IdspaceClause> for obo::HeaderClause {
         let url = clause.url.as_ref(py).borrow().clone_py(py).into();
 
         obo::HeaderClause::Idspace(
-            Box::new(clause.prefix.into()),
+            Box::new(clause.prefix.clone()),
             Box::new(url),
             clause.description.map(Box::new)
         )
@@ -1120,10 +1119,10 @@ impl IntoPy<obo::HeaderClause> for IdspaceClause {
 impl IdspaceClause {
     // TODO: missing __init__
 
-    /// `~fastobo.id.IdentPrefix`: the prefix used in prefixed IDs.
+    /// `str`: the prefix used in prefixed IDs.
     #[getter]
-    fn get_prefix(&self, py: Python) -> PyResult<IdentPrefix> {
-        Ok(self.prefix.clone_py(py))
+    fn get_prefix(&self) -> &str {
+        self.prefix.as_str()
     }
 
     /// `str`, optional: a description of this IDspace.
@@ -1139,6 +1138,7 @@ impl IdspaceClause {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
+        // FIXME: self.prefix may need to be escaped
         let url = &*self.url.as_ref(py).borrow();
         if let Some(desc) = &self.description {
             Ok(format!("{} {} {}", self.prefix, url, desc))
@@ -1160,7 +1160,7 @@ impl PyObjectProtocol for IdspaceClause {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
-        let pref = self.prefix.escaped()?;
+        let pref = self.prefix.as_str();
         let url = self.url.as_ref(py).borrow().__repr__()?;
 
         if let Some(ref desc) = self.description {
@@ -1186,11 +1186,11 @@ impl PyObjectProtocol for IdspaceClause {
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct TreatXrefsAsEquivalentClause {
-    idspace: IdentPrefix,
+    idspace: ast::IdentPrefix,
 }
 
 impl TreatXrefsAsEquivalentClause {
-    pub fn new(idspace: IdentPrefix) -> Self {
+    pub fn new(idspace: ast::IdentPrefix) -> Self {
         Self { idspace }
     }
 }
@@ -1203,7 +1203,7 @@ impl Display for TreatXrefsAsEquivalentClause {
 
 impl From<TreatXrefsAsEquivalentClause> for obo::HeaderClause {
     fn from(clause: TreatXrefsAsEquivalentClause) -> Self {
-        obo::HeaderClause::TreatXrefsAsEquivalent(Box::new(clause.idspace.into()))
+        obo::HeaderClause::TreatXrefsAsEquivalent(Box::new(clause.idspace.clone()))
     }
 }
 
@@ -1215,10 +1215,12 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsEquivalentClause {
 
 #[pymethods]
 impl TreatXrefsAsEquivalentClause {
-    /// `~fastobo.id.IdentPrefix`: the ID prefix to select some Xrefs with.
+    // TODO: missing __init__
+
+    /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
-    fn get_idspace<'py>(&self, py: Python<'py>) -> PyResult<IdentPrefix> {
-        Ok(self.idspace.clone_py(py))
+    fn get_idspace(&self) -> &str {
+        self.idspace.as_str()
     }
 }
 
@@ -1228,7 +1230,10 @@ impl_raw_value!(TreatXrefsAsEquivalentClause, "{}", self.idspace);
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsEquivalentClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsEquivalentClause(self.idspace))
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "TreatXrefsAsEquivalentClause({!r})").to_object(py);
+        fmt.call_method1(py, "format", (self.idspace.as_str(),))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1249,13 +1254,13 @@ impl PyObjectProtocol for TreatXrefsAsEquivalentClause {
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
 #[derive(Debug, FinalClass)]
 pub struct TreatXrefsAsGenusDifferentiaClause {
-    idspace: IdentPrefix,
+    idspace: ast::IdentPrefix,
     relation: Ident,
     filler: Ident,
 }
 
 impl TreatXrefsAsGenusDifferentiaClause {
-    pub fn new(idspace: IdentPrefix, relation: Ident, filler: Ident) -> Self {
+    pub fn new(idspace: ast::IdentPrefix, relation: Ident, filler: Ident) -> Self {
         Self { idspace, relation, filler }
     }
 }
@@ -1291,10 +1296,12 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsGenusDifferentiaClause {
 
 #[pymethods]
 impl TreatXrefsAsGenusDifferentiaClause {
-    /// `~fastobo.id.IdentPrefix`: the ID prefix to select some Xrefs with.
+    // TODO: missing __init__
+
+    /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
-    fn get_idspace<'py>(&self, py: Python<'py>) -> PyResult<IdentPrefix> {
-        Ok(self.idspace.clone_py(py))
+    fn get_idspace(&self) -> &str {
+        self.idspace.as_str()
     }
 }
 
@@ -1313,7 +1320,13 @@ impl_raw_value!(
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsGenusDifferentiaClause(self.idspace, self.relation, self.filler))
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "TreatXrefsAsGenusDifferentiaClause({!r}, {!r}, {!r})").to_object(py);
+        fmt.call_method1(
+            py, "format",
+            (self.idspace.as_str(), self.relation.clone_py(py), self.filler.clone_py(py))
+        )
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1334,13 +1347,13 @@ impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
 #[derive(Debug, FinalClass)]
 pub struct TreatXrefsAsReverseGenusDifferentiaClause {
-    idspace: IdentPrefix,
+    idspace: ast::IdentPrefix,
     relation: Ident,      // Should be `RelationId`
     filler: Ident,        // Should be `ClassId`
 }
 
 impl TreatXrefsAsReverseGenusDifferentiaClause {
-    pub fn new(idspace: IdentPrefix, relation: Ident, filler: Ident) -> Self {
+    pub fn new(idspace: ast::IdentPrefix, relation: Ident, filler: Ident) -> Self {
         Self { idspace, relation, filler }
     }
 }
@@ -1367,7 +1380,7 @@ impl Display for TreatXrefsAsReverseGenusDifferentiaClause {
 impl IntoPy<obo::HeaderClause> for TreatXrefsAsReverseGenusDifferentiaClause {
     fn into_py(self, py: Python) -> obo::HeaderClause {
         obo::HeaderClause::TreatXrefsAsReverseGenusDifferentia(
-            Box::new(self.idspace.into()),
+            Box::new(self.idspace.clone()),
             Box::new(self.relation.into_py(py)),
             Box::new(self.filler.into_py(py)),
         )
@@ -1376,10 +1389,12 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsReverseGenusDifferentiaClause {
 
 #[pymethods]
 impl TreatXrefsAsReverseGenusDifferentiaClause {
-    /// `~fastobo.id.IdentPrefix`: the ID prefix to select some Xrefs with.
+    // TODO: missing __init__
+
+    /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
-    fn get_idspace<'py>(&self, py: Python<'py>) -> PyResult<IdentPrefix> {
-        Ok(self.idspace.clone_py(py))
+    fn get_idspace(&self) -> &str {
+        self.idspace.as_str()
     }
 }
 
@@ -1398,7 +1413,13 @@ impl_raw_value!(
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsReverseGenusDifferentiaClause(self.idspace, self.relation, self.filler))
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "TreatXrefsAsReverseGenusDifferentiaClause({!r}, {!r}, {!r})").to_object(py);
+        fmt.call_method1(
+            py, "format",
+            (self.idspace.as_str(), self.relation.clone_py(py), self.filler.clone_py(py))
+        )
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1419,12 +1440,12 @@ impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
 #[derive(Debug, FinalClass)]
 pub struct TreatXrefsAsRelationshipClause {
-    idspace: IdentPrefix,
+    idspace: ast::IdentPrefix,
     relation: Ident,
 }
 
 impl TreatXrefsAsRelationshipClause {
-    pub fn new(idspace: IdentPrefix, relation: Ident) -> Self {
+    pub fn new(idspace: ast::IdentPrefix, relation: Ident) -> Self {
         Self { idspace, relation }
     }
 }
@@ -1432,7 +1453,7 @@ impl TreatXrefsAsRelationshipClause {
 impl ClonePy for TreatXrefsAsRelationshipClause {
     fn clone_py(&self, py: Python) -> Self {
         Self {
-            idspace: self.idspace.clone_py(py),
+            idspace: self.idspace.clone(),
             relation: self.relation.clone_py(py),
         }
     }
@@ -1450,7 +1471,7 @@ impl Display for TreatXrefsAsRelationshipClause {
 impl IntoPy<obo::HeaderClause> for TreatXrefsAsRelationshipClause {
     fn into_py(self, py: Python) -> obo::HeaderClause {
         obo::HeaderClause::TreatXrefsAsRelationship(
-            Box::new(self.idspace.into()),
+            Box::new(self.idspace.clone()),
             Box::new(self.relation.into_py(py)),
         )
     }
@@ -1458,10 +1479,12 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsRelationshipClause {
 
 #[pymethods]
 impl TreatXrefsAsRelationshipClause {
-    /// `~fastobo.id.IdentPrefix`: the ID prefix to select some Xrefs with.
+    // TODO: missing __init__
+
+    /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
-    fn get_idspace<'py>(&self, py: Python<'py>) -> PyResult<IdentPrefix> {
-        Ok(self.idspace.clone_py(py))
+    fn get_idspace(&self) -> &str {
+        self.idspace.as_str()
     }
 }
 
@@ -1479,7 +1502,13 @@ impl_raw_value!(
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsRelationshipClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsRelationshipClause(self.idspace, self.relation))
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "TreatXrefsAsRelationshipClause({!r}, {!r})").to_object(py);
+        fmt.call_method1(
+            py, "format",
+            (self.idspace.as_str(), self.relation.clone_py(py))
+        )
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1500,27 +1529,25 @@ impl PyObjectProtocol for TreatXrefsAsRelationshipClause {
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct TreatXrefsAsIsAClause {
-    idspace: IdentPrefix,
+    idspace: ast::IdentPrefix,
 }
 
 impl TreatXrefsAsIsAClause {
-    pub fn new(idspace: IdentPrefix) -> Self {
+    pub fn new(idspace: ast::IdentPrefix) -> Self {
         Self { idspace }
     }
 }
 
 impl Display for TreatXrefsAsIsAClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = self.clone().into();
         clause.fmt(f)
     }
 }
 
 impl From<TreatXrefsAsIsAClause> for obo::HeaderClause {
     fn from(clause: TreatXrefsAsIsAClause) -> obo::HeaderClause {
-        obo::HeaderClause::TreatXrefsAsIsA(Box::new(clause.idspace.into()))
+        obo::HeaderClause::TreatXrefsAsIsA(Box::new(clause.idspace.clone()))
     }
 }
 
@@ -1532,10 +1559,12 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsIsAClause {
 
 #[pymethods]
 impl TreatXrefsAsIsAClause {
-    /// `~fastobo.id.IdentPrefix`: the ID prefix to select some Xrefs with.
+    // TODO: missing __init__
+
+    /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
-    fn get_idspace<'py>(&self, py: Python<'py>) -> PyResult<IdentPrefix> {
-        Ok(self.idspace.clone_py(py))
+    fn get_idspace(&self) -> &str {
+        self.idspace.as_str()
     }
 }
 
@@ -1545,7 +1574,10 @@ impl_raw_value!(TreatXrefsAsIsAClause, "{}", self.idspace);
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsIsAClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsIsAClause(self.idspace))
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "TreatXrefsAsIsAClause({!r})").to_object(py);
+        fmt.call_method1(py, "format", (self.idspace.as_str(),))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1566,11 +1598,11 @@ impl PyObjectProtocol for TreatXrefsAsIsAClause {
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
 pub struct TreatXrefsAsHasSubclassClause {
-    idspace: IdentPrefix,
+    idspace: ast::IdentPrefix,
 }
 
 impl TreatXrefsAsHasSubclassClause {
-    pub fn new(idspace: IdentPrefix) -> Self {
+    pub fn new(idspace: ast::IdentPrefix) -> Self {
         Self { idspace }
     }
 }
@@ -1583,7 +1615,7 @@ impl Display for TreatXrefsAsHasSubclassClause {
 
 impl From<TreatXrefsAsHasSubclassClause> for obo::HeaderClause {
     fn from(clause: TreatXrefsAsHasSubclassClause) -> Self {
-        obo::HeaderClause::TreatXrefsAsHasSubclass(Box::new(clause.idspace.into()))
+        obo::HeaderClause::TreatXrefsAsHasSubclass(Box::new(clause.idspace.clone()))
     }
 }
 
@@ -1595,20 +1627,28 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsHasSubclassClause {
 
 #[pymethods]
 impl TreatXrefsAsHasSubclassClause {
-    /// `~fastobo.id.IdentPrefix`: the ID prefix to select some Xrefs with.
+    // TODO: missing __init__
+
+    /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
-    fn get_idspace<'py>(&self, py: Python<'py>) -> PyResult<IdentPrefix> {
-        Ok(self.idspace.clone_py(py))
+    fn get_idspace(&self) -> &str {
+        self.idspace.as_str()
+    }
+
+    pub fn raw_value(&self) -> String {
+        self.idspace.to_string()
     }
 }
 
 impl_raw_tag!(TreatXrefsAsHasSubclassClause, "treat-xrefs-as-has-subclass");
-impl_raw_value!(TreatXrefsAsHasSubclassClause, "{}", self.idspace);
 
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsHasSubclassClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsHasSubclassClause(self.idspace))
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "TreatXrefsAsHasSubclassClause({!r})").to_object(py);
+        fmt.call_method1(py, "format", (self.idspace.as_str(),))
     }
 
     fn __str__(&self) -> PyResult<String> {

@@ -35,19 +35,3 @@ Identifier
 .. autoclass:: Url(BaseIdent)
    :members:
    :special-members:
-
-
-``IdentPrefix``
----------------
-
-.. autoclass:: IdentPrefix
-   :members:
-   :special-members:
-
-
-``IdentLocal``
---------------
-
-.. autoclass:: IdentLocal
-   :members:
-   :special-members:

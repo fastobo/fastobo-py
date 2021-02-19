@@ -31,7 +31,6 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::BaseIdent>()?;
     m.add_class::<self::PrefixedIdent>()?;
     m.add_class::<self::UnprefixedIdent>()?;
-    m.add_class::<self::IdentPrefix>()?;
     m.add_class::<self::Url>()?;
     m.add("__name__", "fastobo.id")?;
 
@@ -633,94 +632,5 @@ impl PyObjectProtocol for Url {
                 }
             }
         }
-    }
-}
-
-// --- IdentPrefix -----------------------------------------------------------
-
-/// The prefix of a prefixed identifier.
-#[pyclass(module = "fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct IdentPrefix {
-    inner: ast::IdentPrefix,
-}
-
-impl IdentPrefix {
-    pub fn new(prefix: ast::IdentPrefix) -> Self {
-        Self { inner: prefix }
-    }
-}
-
-impl Display for IdentPrefix {
-    fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        self.inner.fmt(f)
-    }
-}
-
-impl From<ast::IdentPrefix> for IdentPrefix {
-    fn from(id: ast::IdentPrefix) -> Self {
-        Self::new(id)
-    }
-}
-
-impl From<IdentPrefix> for ast::IdentPrefix {
-    fn from(id: IdentPrefix) -> Self {
-        id.inner
-    }
-}
-
-impl IntoPy<IdentPrefix> for ast::IdentPrefix {
-    fn into_py(self, _py: Python) -> IdentPrefix {
-        self.into()
-    }
-}
-
-impl IntoPy<ast::IdentPrefix> for IdentPrefix {
-    fn into_py(self, _py: Python) -> ast::IdentPrefix {
-        self.into()
-    }
-}
-
-impl ToPyObject for IdentPrefix {
-    fn to_object(&self, py: pyo3::Python<'_>) -> PyObject {
-        self.inner.as_str().to_object(py)
-    }
-}
-
-#[pymethods]
-impl IdentPrefix {
-    /// Create a new `IdentPrefix` instance.
-    ///
-    /// Arguments:
-    ///     value (`str`): the unescaped representation of the prefix.
-    #[new]
-    fn __init__(value: String) -> Self {
-        Self::new(ast::IdentPrefix::new(value))
-    }
-
-    /// `str`: the escaped representation of the identifier.
-    #[getter]
-    pub fn escaped(&self) -> PyResult<String> {
-        Ok(self.inner.to_string())
-    }
-
-    /// `str`: the unescaped representation of the identifier.
-    #[getter]
-    pub fn unescaped(&self) -> PyResult<&str> {
-        Ok(self.inner.as_str())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for IdentPrefix {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "IdentPrefix({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.inner.as_str(),))
-    }
-
-    fn __str__(&'p self) -> PyResult<&'p str> {
-        Ok(self.inner.as_str())
     }
 }

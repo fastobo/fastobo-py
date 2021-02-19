@@ -98,8 +98,6 @@ Identifier (`fastobo.id`)
     fastobo.id.PrefixedIdent
     fastobo.id.UnprefixedIdent
     fastobo.id.Url
-    fastobo.id.IdentPrefix
-    fastobo.id.IdentLocal
 
 
 Header (`fastobo.header`)

@@ -62,9 +62,6 @@ class TestDefClause(unittest.TestCase):
         self.assertEqual(repr(clause), "DefClause('definition', XrefList([{!r}]))".format(x))
 
 
-
-
-
 # --- ConsiderClause ---------------------------------------------------------
 
 class TestConsiderClause(unittest.TestCase):

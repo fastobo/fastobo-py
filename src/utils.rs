@@ -46,3 +46,7 @@ pub trait AbstractClass: PyClass {
 }
 
 pub trait FinalClass: PyClass {}
+
+// ---
+
+pub type Hasher = std::collections::hash_map::DefaultHasher;

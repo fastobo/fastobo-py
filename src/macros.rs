@@ -1,3 +1,13 @@
+macro_rules! impl_hash {
+    ($($field:expr),*) => ({
+        use std::hash::Hasher;
+        use std::hash::Hash;
+        let mut hasher = crate::utils::Hasher::default();
+        $($field.hash(&mut hasher);)*
+        hasher.finish()
+    });
+}
+
 macro_rules! impl_richmp {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
         match $op {

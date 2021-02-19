@@ -314,6 +314,10 @@ impl PrefixedIdent {
 
 #[pyproto]
 impl PyObjectProtocol for PrefixedIdent {
+    fn __hash__(&self) -> u64 {
+        impl_hash!(self.inner.prefix(), ":", self.inner.local())
+    }
+
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, PrefixedIdent(self.inner.prefix(), self.inner.local()))
     }
@@ -458,6 +462,10 @@ impl UnprefixedIdent {
 
 #[pyproto]
 impl PyObjectProtocol for UnprefixedIdent {
+    fn __hash__(&self) -> u64 {
+        impl_hash!(self.inner.as_str())
+    }
+
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, UnprefixedIdent(self.inner.as_str()))
     }
@@ -584,6 +592,10 @@ impl Url {
 
 #[pyproto]
 impl PyObjectProtocol for Url {
+    fn __hash__(&self) -> u64 {
+        impl_hash!(self.inner.as_str())
+    }
+
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, Url(self.inner.as_str()))
     }

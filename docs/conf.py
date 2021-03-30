@@ -170,7 +170,7 @@ html_theme_options = {
     "navbar_pagenav": False,
     # A list of tuples containing pages or urls to link to.
     "navbar_links": [
-        ("GitHub", _parser.get("metadata", "home-page").strip(), True)
+        ("GitHub", _parser.get("metadata", "home_page").strip(), True)
     ] + [
         (k, v, True) for k, v in project_urls.items()
         if k not in {"Documentation", "Changelog", "Bug Tracker"}

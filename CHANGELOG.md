@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.10.1...HEAD
+
+## [v0.10.1] - 2021-03-30
+[v0.10.1]: https://github.com/fastobo/fastobo-py/compare/v0.10.0...v0.10.1
+### Changed
+- Bumped `fastobo` dependency to `v0.13.1`.
+### Fixed
+- Curly braces not being properly escaped when writing unquoted strings.
 
 ## [v0.10.0] - 2021-02-19
 [v0.10.0]: https://github.com/fastobo/fastobo-py/compare/v0.9.3...v0.10.0

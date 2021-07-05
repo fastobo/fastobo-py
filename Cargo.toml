@@ -16,9 +16,6 @@ doctest = false
 
 [dev-dependencies]
 lazy_static = "1.4.0"
-[dev-dependencies.pyo3]
-version = "0.14.1"
-features = ["auto-initialize"]
 
 [build-dependencies]
 built = { version  = "0.4.1", features = ["chrono"] }

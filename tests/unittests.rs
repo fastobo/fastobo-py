@@ -17,6 +17,9 @@ macro_rules! unittest {
     ($name:ident) => {
         #[test]
         fn $name() {
+            // initialize
+            pyo3::prepare_freethreaded_python();
+
             // acquire Python only one test at a time
             let success = {
                 let _l = LOCK.lock().unwrap();

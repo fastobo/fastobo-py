@@ -342,7 +342,7 @@ fn listlike_impl_methods(field: &syn::Ident, ty: &syn::Type, mut imp: syn::ItemI
         ///     TypeError: when the object is not of the right type for
         ///         this container (see type-level documentation for the
         ///         required type).
-        #[text_signature = "(self, object)"]
+        #[pyo3(text_signature = "(self, object)")]
         fn append(&mut self, object: &PyAny) -> PyResult<()> {
             let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
             self.#field.push(item);
@@ -351,14 +351,14 @@ fn listlike_impl_methods(field: &syn::Ident, ty: &syn::Type, mut imp: syn::ItemI
     });
     imp.items.push(parse_quote! {
         /// Remove all items from list.
-        #[text_signature = "(self)"]
+        #[pyo3(text_signature = "(self)")]
         fn clear(&mut self) {
             self.#field.clear();
         }
     });
     imp.items.push(parse_quote! {
         /// Return a shallow copy of the list.
-        #[text_signature = "(self)"]
+        #[pyo3(text_signature = "(self)")]
         fn copy(&self) -> PyResult<Py<Self>> {
             let gil = Python::acquire_gil();
             let copy = self.clone_py(gil.python());
@@ -372,7 +372,7 @@ fn listlike_impl_methods(field: &syn::Ident, ty: &syn::Type, mut imp: syn::ItemI
         ///     TypeError: when the object is not of the right type for
         ///         this container (see type-level documentation for the
         ///         required type).
-        #[text_signature = "(self, value)"]
+        #[pyo3(text_signature = "(self, value)")]
         fn count(&mut self, value: &PyAny) -> PyResult<usize> {
             let item = <#ty as pyo3::prelude::FromPyObject>::extract(value)?;
             Ok(self.#field.iter().filter(|&x| *x == item).count())
@@ -391,7 +391,7 @@ fn listlike_impl_methods(field: &syn::Ident, ty: &syn::Type, mut imp: syn::ItemI
         ///
         /// If `index` is greater than the number of elements in the list,
         /// `object` will be added at the end of the list.
-        #[text_signature = "(self, index, object)"]
+        #[pyo3(text_signature = "(self, index, object)")]
         fn insert(&mut self, mut index: isize, object: &PyAny) -> PyResult<()> {
             let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
             if index >= self.#field.len() as isize {
@@ -411,7 +411,7 @@ fn listlike_impl_methods(field: &syn::Ident, ty: &syn::Type, mut imp: syn::ItemI
         /// Raises:
         ///     IndexError: when list is empty or index is out of range.
         #[args(index="-1")]
-        #[text_signature = "(self, index=-1)"]
+        #[pyo3(text_signature = "(self, index=-1)")]
         fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
             // Wrap once to allow negative indexing
             if index < 0 {
@@ -431,7 +431,7 @@ fn listlike_impl_methods(field: &syn::Ident, ty: &syn::Type, mut imp: syn::ItemI
     // |      Raises ValueError if the value is not present.
     imp.items.push(parse_quote! {
         /// Reverse *IN PLACE*.
-        #[text_signature = "(self)"]
+        #[pyo3(text_signature = "(self)")]
         fn reverse(&mut self) {
             self.#field.reverse()
         }

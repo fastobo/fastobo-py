@@ -34,7 +34,8 @@ use super::instance::frame::InstanceFrame;
 
 // --- Module export ---------------------------------------------------------
 
-#[pymodule(doc)]
+#[pymodule]
+#[pyo3(name = "doc")]
 pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::OboDoc>()?;
     m.add("__name__", "fastobo.doc")?;
@@ -218,7 +219,7 @@ impl OboDoc {
     ///     <http://owlcollab.github.io/oboformat/doc/obo-syntax.html#5.9>`_
     ///     section of the OBO format version 1.4 specification.
     ///
-    #[text_signature = "(self, /)"]
+    #[pyo3(text_signature = "(self, /)")]
     fn compact_ids(&self) -> PyResult<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();
@@ -255,7 +256,7 @@ impl OboDoc {
     ///     <http://owlcollab.github.io/oboformat/doc/obo-syntax.html#5.9>`_
     ///     section of the OBO format version 1.4 specification.
     ///
-    #[text_signature = "(self, /)"]
+    #[pyo3(text_signature = "(self, /)")]
     fn decompact_ids(&self) -> PyResult<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();

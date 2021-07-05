@@ -27,7 +27,8 @@ use crate::utils::ClonePy;
 
 // --- Module export ---------------------------------------------------------
 
-#[pymodule(syn)]
+#[pymodule]
+#[pyo3(name = "syn")]
 pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::Synonym>()?;
     m.add_class::<self::SynonymScope>()?;

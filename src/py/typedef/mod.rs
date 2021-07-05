@@ -3,7 +3,8 @@ pub mod frame;
 
 use pyo3::prelude::*;
 
-#[pymodule(typedef)]
+#[pymodule]
+#[pyo3(name = "typedef")]
 pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::frame::TypedefFrame>()?;
     m.add_class::<self::clause::BaseTypedefClause>()?;

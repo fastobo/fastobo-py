@@ -40,7 +40,8 @@ use super::typedef::frame::TypedefFrame;
 /// in particular, collections such as `~fastobo.doc.OboDoc`) will not work,
 /// and is likely to cause an undefined behaviour.
 ///
-#[pymodule(abc)]
+#[pymodule]
+#[pyo3(name = "abc")]
 pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::AbstractFrame>()?;
     m.add_class::<self::AbstractEntityFrame>()?;

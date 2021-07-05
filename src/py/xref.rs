@@ -26,7 +26,8 @@ use crate::utils::ClonePy;
 
 // --- Module export ---------------------------------------------------------
 
-#[pymodule(xref)]
+#[pymodule]
+#[pyo3(name = "xref")]
 pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::Xref>()?;
     m.add_class::<self::XrefList>()?;

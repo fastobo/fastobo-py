@@ -26,7 +26,8 @@ use crate::utils::AbstractClass;
 
 // --- Module export ----------------------------------------------------------
 
-#[pymodule(id)]
+#[pymodule]
+#[pyo3(name = "id")]
 pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::BaseIdent>()?;
     m.add_class::<self::PrefixedIdent>()?;
@@ -58,7 +59,8 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> fastobo.id.parse("http://purl.obolibrary.org/obo/IAO_0000231")
     ///     Url('http://purl.obolibrary.org/obo/IAO_0000231')
     ///
-    #[pyfn(m, "parse")]
+    #[pyfn(m)]
+    #[pyo3(name = "parse")]
     fn parse(py: Python, s: &str) -> PyResult<Ident> {
         match fastobo::ast::Ident::from_str(s) {
             Ok(id) => Ok(id.into_py(py)),
@@ -89,7 +91,8 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     ///     True
     ///     >>> fastobo.id.is_valid("definitely not an identifier")
     ///     False
-    #[pyfn(m, "is_valid")]
+    #[pyfn(m)]
+    #[pyo3(name = "is_valid")]
     fn is_valid(_py: Python, s: &str) -> bool {
         let rule = fastobo::syntax::Rule::Id;
         match fastobo::syntax::Lexer::tokenize(rule, s) {

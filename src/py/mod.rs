@@ -63,7 +63,8 @@ use super::built;
 /// The Faultless AST for Open Biomedical Ontologies.
 ///
 ///
-#[pymodule(fastobo)]
+#[pymodule]
+#[pyo3(name = "fastobo")]
 pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     m.add("__package__", "fastobo")?;
     m.add("__build__", pyo3_built!(py, built))?;
@@ -115,8 +116,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> list(reader)
     ///     [TermFrame(PrefixedIdent('MS', '1000001')), ...]
     ///
-    #[pyfn(m, "iter", ordered="true", threads="0")]
-    #[text_signature = "(fh, ordered=True, threads=0)"]
+    #[pyfn(m, ordered="true", threads="0")]
+    #[pyo3(name = "iter", text_signature = "(fh, ordered=True, threads=0)")]
     fn iter(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<FrameReader> {
         if let Ok(s) = fh.cast_as::<PyString>() {
             let path = s.to_str()?;
@@ -163,8 +164,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc.header[3]
     ///     SubsetdefClause(UnprefixedIdent('Angiosperm'), 'Term for angiosperms')
     ///
-    #[pyfn(m, "load", ordered="true", threads="0")]
-    #[text_signature = "(fh, threads=0)"]
+    #[pyfn(m, ordered="true", threads="0")]
+    #[pyo3(name = "load", text_signature = "(fh, threads=0)")]
     fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         // extract either a path or a file-handle from the arguments
         let path: Option<String>;
@@ -266,8 +267,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc[0][0]
     ///     NameClause('test item')
     ///
-    #[pyfn(m, "loads", ordered="true", threads="0")]
-    #[text_signature = "(document)"]
+    #[pyfn(m, ordered="true", threads="0")]
+    #[pyo3(name = "loads", text_signature = "(document)")]
     fn loads(py: Python, document: &PyString, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         let cursor = std::io::Cursor::new(document.to_str()?);
         let mut reader = InternalParser::with_thread_count(cursor, threads)?;
@@ -312,8 +313,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc[0]
     ///     TermFrame(PrefixedIdent('BFO', '0000002'))
     ///
-    #[pyfn(m, "load_graph")]
-    #[text_signature = "(fh)"]
+    #[pyfn(m)]
+    #[pyo3(name = "load_graph", text_signature = "(fh)")]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
         let doc: GraphDocument = if let Ok(s) = fh.cast_as::<PyString>() {
             // Argument is a string, assumed to be a path: open the file.
@@ -367,8 +368,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc = fastobo.load("tests/data/plana.obo")
     ///     >>> fastobo.dump_graph(doc, "tests/data/plana.json")
     ///
-    #[pyfn(m, "dump_graph")]
-    #[text_signature = "(doc, fh)"]
+    #[pyfn(m)]
+    #[pyo3(name = "dump_graph", text_signature = "(doc, fh)")]
     fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
         // Convert OBO document to an OBO Graph document.
         let doc: obo::OboDoc = obj.clone_py(py).into_py(py);

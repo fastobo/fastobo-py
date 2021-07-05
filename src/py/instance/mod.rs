@@ -3,7 +3,8 @@ pub mod frame;
 
 use pyo3::prelude::*;
 
-#[pymodule(instance)]
+#[pymodule]
+#[pyo3(name = "instance")]
 pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<self::frame::InstanceFrame>()?;
 

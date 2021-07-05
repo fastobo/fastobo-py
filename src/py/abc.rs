@@ -76,6 +76,7 @@ impl AbstractClass for AbstractFrame {
 /// property in any concrete subclass.
 #[pyclass(subclass, extends=AbstractFrame, module="fastobo.abc")]
 #[derive(Default, AbstractClass)]
+#[base(AbstractFrame)]
 pub struct AbstractEntityFrame {}
 
 #[pymethods]
@@ -155,4 +156,5 @@ impl AbstractClause {
 /// An abstract entity clause.
 #[pyclass(subclass, extends=AbstractClause, module="fastobo.abc")]
 #[derive(Default, AbstractClass)]
+#[base(AbstractClause)]
 pub struct AbstractEntityClause {}

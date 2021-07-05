@@ -24,6 +24,7 @@ use crate::utils::AbstractClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.instance")]
 #[derive(Debug, FinalClass)]
+#[base(AbstractEntityFrame)]
 pub struct InstanceFrame {
     id: Ident,
     //clauses: Vec<InstanceClause>,

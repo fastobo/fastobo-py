@@ -25,7 +25,8 @@ use crate::utils::FinalClass;
 use crate::utils::AbstractClass;
 
 #[pyclass(extends=AbstractFrame, module="fastobo.header")]
-#[derive(Debug, PyList, FinalClass)]
+#[derive(Debug, FinalClass)]
+#[base(AbstractFrame)]
 pub struct HeaderFrame {
     clauses: Vec<HeaderClause>,
 }
@@ -82,6 +83,7 @@ impl ToPyObject for HeaderFrame {
     }
 }
 
+#[listlike(field = "clauses", type = "HeaderClause")]
 #[pymethods]
 impl HeaderFrame {
     #[new]

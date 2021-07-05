@@ -206,6 +206,7 @@ impl AbstractClass for BaseIdent {
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Debug, FinalClass, Clone, PartialEq, Eq)]
+#[base(BaseIdent)]
 pub struct PrefixedIdent {
     inner: ast::PrefixedIdent,
 }
@@ -370,6 +371,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Clone, Debug, Eq, Hash, PartialEq, FinalClass)]
+#[base(BaseIdent)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
 }
@@ -517,6 +519,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
 #[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, FinalClass)]
+#[base(BaseIdent)]
 pub struct Url {
     inner: ast::Url,
 }

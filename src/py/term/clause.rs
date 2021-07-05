@@ -130,6 +130,7 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
 /// A term clause, appearing in an OBO term frame.
 #[pyclass(subclass, extends=AbstractEntityClause, module="fastobo.term")]
 #[derive(AbstractClass)]
+#[base(AbstractEntityClause)]
 pub struct BaseTermClause {}
 
 // --- IsAnonymous -----------------------------------------------------------
@@ -140,6 +141,7 @@ pub struct BaseTermClause {}
 /// A clause declaring whether or not the current term has an anonymous id.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct IsAnonymousClause {
     #[pyo3(get, set)]
     anonymous: bool,
@@ -175,10 +177,15 @@ impl IsAnonymousClause {
     fn __init__(anonymous: bool) -> PyClassInitializer<Self> {
         Self::new(anonymous).into()
     }
-}
 
-impl_raw_tag!(IsAnonymousClause, "is_anonymous");
-impl_raw_value!(IsAnonymousClause, "{}", self.anonymous);
+    fn raw_tag(&self) -> &str {
+        "is_anonymous"
+    }
+
+    fn raw_value(&self) -> String {
+        self.anonymous.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for IsAnonymousClause {
@@ -203,6 +210,7 @@ impl PyObjectProtocol for IsAnonymousClause {
 /// A term clause declaring the human-readable name of this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct NameClause {
     name: fastobo::ast::UnquotedString,
 }
@@ -248,10 +256,15 @@ impl NameClause {
     fn set_name(&mut self, name: String) {
         self.name = fastobo::ast::UnquotedString::new(name);
     }
-}
 
-impl_raw_tag!(NameClause, "name");
-impl_raw_value!(NameClause, "{}", self.name);
+    fn raw_tag(&self) -> &str {
+        "name"
+    }
+
+    fn raw_value(&self) -> String {
+        self.name.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for NameClause {
@@ -276,6 +289,7 @@ impl PyObjectProtocol for NameClause {
 /// A term clause declaring the namespace of this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct NamespaceClause {
     #[pyo3(set)]
     namespace: Ident,
@@ -323,10 +337,15 @@ impl NamespaceClause {
     fn get_namespace(&self) -> &Ident {
         &self.namespace
     }
-}
 
-impl_raw_tag!(NamespaceClause, "namespace");
-impl_raw_value!(NamespaceClause, "{}", self.namespace);
+    fn raw_tag(&self) -> &str {
+        "namespace"
+    }
+
+    fn raw_value(&self) -> String {
+        self.namespace.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for NamespaceClause {
@@ -351,6 +370,7 @@ impl PyObjectProtocol for NamespaceClause {
 /// A clause defines an alternate id for this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct AltIdClause {
     #[pyo3(set)]
     alt_id: Ident,
@@ -397,10 +417,15 @@ impl AltIdClause {
     fn get_alt_id(&self) -> &Ident {
         &self.alt_id
     }
-}
 
-impl_raw_tag!(AltIdClause, "alt_id");
-impl_raw_value!(AltIdClause, "{}", self.alt_id);
+    fn raw_tag(&self) -> &str {
+        "alt_id"
+    }
+
+    fn raw_value(&self) -> String {
+        self.alt_id.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for AltIdClause {
@@ -433,6 +458,7 @@ impl PyObjectProtocol for AltIdClause {
 ///
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct DefClause {
     definition: fastobo::ast::QuotedString,
     xrefs: XrefList,
@@ -505,10 +531,15 @@ impl DefClause {
     fn get_xrefs<'py>(&self, py: Python<'py>) -> XrefList {
         self.xrefs.clone_py(py)
     }
-}
 
-impl_raw_tag!(DefClause, "def");
-impl_raw_value!(DefClause, "{}", self.definition);
+    fn raw_tag(&self) -> &str {
+        "def"
+    }
+
+    fn raw_value(&self) -> String {
+        self.definition.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for DefClause {
@@ -537,6 +568,7 @@ impl PyObjectProtocol for DefClause {
 /// A clause storing a comment for this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct CommentClause {
     comment: fastobo::ast::UnquotedString,
 }
@@ -582,10 +614,15 @@ impl CommentClause {
     fn set_comment(&mut self, comment: String) {
         self.comment = fastobo::ast::UnquotedString::new(comment);
     }
-}
 
-impl_raw_tag!(CommentClause, "comment");
-impl_raw_value!(CommentClause, "{}", self.comment);
+    fn raw_tag(&self) -> &str {
+        "comment"
+    }
+
+    fn raw_value(&self) -> String {
+        self.comment.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for CommentClause {
@@ -610,6 +647,7 @@ impl PyObjectProtocol for CommentClause {
 /// A clause declaring a subset to which this term belongs.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct SubsetClause {
     #[pyo3(set)]
     subset: Ident,
@@ -656,10 +694,15 @@ impl SubsetClause {
     fn get_subset(&self) -> &Ident {
         &self.subset
     }
-}
 
-impl_raw_tag!(SubsetClause, "subset");
-impl_raw_value!(SubsetClause, "{}", self.subset);
+    fn raw_tag(&self) -> &str {
+        "subset"
+    }
+
+    fn raw_value(&self) -> String {
+        self.subset.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for SubsetClause {
@@ -684,6 +727,7 @@ impl PyObjectProtocol for SubsetClause {
 /// A clause giving a synonym for this term, with some cross-references.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct SynonymClause {
     #[pyo3(set)]
     synonym: Py<Synonym>,
@@ -720,8 +764,6 @@ impl IntoPy<fastobo::ast::TermClause> for SynonymClause {
     }
 }
 
-impl_raw_tag!(SynonymClause, "synonym");
-
 #[pymethods]
 impl SynonymClause {
     #[new]
@@ -737,10 +779,14 @@ impl SynonymClause {
         self.synonym.clone_py(py)
     }
 
-    fn raw_value(&self) -> PyResult<String> {
+    fn raw_tag(&self) -> &str {
+        "synonym"
+    }
+
+    fn raw_value(&self) -> String {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        Ok(format!("{}", &*self.synonym.as_ref(py).borrow()))
+        format!("{}", &*self.synonym.as_ref(py).borrow())
     }
 }
 
@@ -767,6 +813,7 @@ impl PyObjectProtocol for SynonymClause {
 /// A cross-reference that describes an analogous term in another vocabulary.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct XrefClause {
     #[pyo3(get, set)]
     /// `~fastobo.xref.Xref`: a cross-reference relevant to this term.
@@ -826,14 +873,16 @@ impl XrefClause {
         Self::from(xref).into()
     }
 
-    pub fn raw_value(&self) -> PyResult<String> {
+    fn raw_tag(&self) -> &str {
+        "xref"
+    }
+
+    fn raw_value(&self) -> String {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        Ok(self.xref.as_ref(py).to_string())
+        self.xref.as_ref(py).to_string()
     }
 }
-
-impl_raw_tag!(XrefClause, "xref");
 
 #[pyproto]
 impl PyObjectProtocol for XrefClause {
@@ -858,6 +907,7 @@ impl PyObjectProtocol for XrefClause {
 /// A clause declaring whether or not this term is built-in to the OBO format.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct BuiltinClause {
     #[pyo3(set)]
     builtin: bool,
@@ -899,10 +949,15 @@ impl BuiltinClause {
     fn get_builtin(&self) -> bool {
         self.builtin
     }
-}
 
-impl_raw_tag!(BuiltinClause, "builtin");
-impl_raw_value!(BuiltinClause, "{}", self.builtin);
+    fn raw_tag(&self) -> &str {
+        "builtin"
+    }
+
+    fn raw_value(&self) -> String {
+        self.builtin.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for BuiltinClause {
@@ -932,6 +987,7 @@ impl PyObjectProtocol for BuiltinClause {
 ///
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct PropertyValueClause {
     #[pyo3(set)]
     inner: PropertyValue,
@@ -980,10 +1036,15 @@ impl PropertyValueClause {
     fn get_property_value(&self) -> &PropertyValue {
         &self.inner
     }
-}
 
-impl_raw_tag!(PropertyValueClause, "property_value");
-impl_raw_value!(PropertyValueClause, "{}", self.inner);
+    fn raw_tag(&self) -> &str {
+        "property_value"
+    }
+
+    fn raw_value(&self) -> String {
+        self.inner.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for PropertyValueClause {
@@ -1008,6 +1069,7 @@ impl PyObjectProtocol for PropertyValueClause {
 /// A clause declaring this term is a subclass of another term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct IsAClause {
     #[pyo3(set)]
     term: Ident,
@@ -1054,10 +1116,15 @@ impl IsAClause {
     fn get_term(&self) -> &Ident {
         &self.term
     }
-}
 
-impl_raw_tag!(IsAClause, "is_a");
-impl_raw_value!(IsAClause, "{}", self.term);
+    fn raw_tag(&self) -> &str {
+        "is_a"
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for IsAClause {
@@ -1106,6 +1173,7 @@ impl PyObjectProtocol for IsAClause {
 ///
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct IntersectionOfClause {
     typedef: Option<Ident>,
     term: Ident,
@@ -1166,16 +1234,18 @@ impl IntersectionOfClause {
         self.typedef.as_ref()
     }
 
-    pub fn raw_value(&self) -> PyResult<String> {
+    fn raw_tag(&self) -> &str {
+        "intersection_of"
+    }
+
+    fn raw_value(&self) -> String {
         if let Some(ref rel) = self.typedef {
-            Ok(format!("{} {}", rel, &self.term))
+            format!("{} {}", rel, &self.term)
         } else {
-            Ok(format!("{}", &self.term))
+            format!("{}", &self.term)
         }
     }
 }
-
-impl_raw_tag!(IntersectionOfClause, "intersection_of");
 
 #[pyproto]
 impl PyObjectProtocol for IntersectionOfClause {
@@ -1200,6 +1270,7 @@ impl PyObjectProtocol for IntersectionOfClause {
 /// A clause indicating the term represents the union of several other terms.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct UnionOfClause {
     term: Ident,
 }
@@ -1245,10 +1316,15 @@ impl UnionOfClause {
     fn get_term(&self) -> &Ident {
         &self.term
     }
-}
 
-impl_raw_tag!(UnionOfClause, "union_of");
-impl_raw_value!(UnionOfClause, "{}", self.term);
+    fn raw_tag(&self) -> &str {
+        "union_of"
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for UnionOfClause {
@@ -1274,6 +1350,7 @@ impl PyObjectProtocol for UnionOfClause {
 /// A clause indicating the term is exactly equivalent to another term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct EquivalentToClause {
     term: Ident,
 }
@@ -1319,10 +1396,15 @@ impl EquivalentToClause {
     fn get_term(&self) -> &Ident {
         &self.term
     }
-}
 
-impl_raw_tag!(EquivalentToClause, "equivalent_to");
-impl_raw_value!(EquivalentToClause, "{}", self.term);
+    fn raw_tag(&self) -> &str {
+        "equivalent_to"
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for EquivalentToClause {
@@ -1347,6 +1429,7 @@ impl PyObjectProtocol for EquivalentToClause {
 /// A clause stating this term has no instances in common with another term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct DisjointFromClause {
     #[pyo3(set)]
     term: Ident,
@@ -1393,10 +1476,15 @@ impl DisjointFromClause {
     fn get_term(&self) -> &Ident {
         &self.term
     }
-}
 
-impl_raw_tag!(DisjointFromClause, "disjoint_from");
-impl_raw_value!(DisjointFromClause, "{}", self.term);
+    fn raw_tag(&self) -> &str {
+        "disjoint_from"
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
+    }
+}
 
 #[pyproto]
 impl PyObjectProtocol for DisjointFromClause {
@@ -1421,6 +1509,7 @@ impl PyObjectProtocol for DisjointFromClause {
 /// A clause describing a typed relationship between this term and another term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct RelationshipClause {
     #[pyo3(set)]
     typedef: Ident,
@@ -1461,9 +1550,6 @@ impl IntoPy<fastobo::ast::TermClause> for RelationshipClause{
     }
 }
 
-impl_raw_tag!(RelationshipClause, "relationship");
-impl_raw_value!(RelationshipClause, "{} {}", self.typedef, self.term);
-
 #[pymethods]
 impl RelationshipClause {
     #[new]
@@ -1479,6 +1565,14 @@ impl RelationshipClause {
     #[getter]
     fn get_term<'py>(&self, py: Python<'py>) -> PyResult<Ident> {
         Ok(self.term.clone_py(py))
+    }
+
+    fn raw_tag(&self) -> &str {
+        "relationship"
+    }
+
+    fn raw_value(&self) -> String {
+        format!("{} {}", self.typedef, self.term)
     }
 }
 
@@ -1505,6 +1599,7 @@ impl PyObjectProtocol for RelationshipClause {
 /// A clause indicating whether or not this term is obsolete.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct IsObsoleteClause {
     #[pyo3(get, set)]
     obsolete: bool,
@@ -1534,14 +1629,19 @@ impl IntoPy<fastobo::ast::TermClause> for IsObsoleteClause {
     }
 }
 
-impl_raw_tag!(IsObsoleteClause, "is_obsolete");
-impl_raw_value!(IsObsoleteClause, "{}", self.obsolete);
-
 #[pymethods]
 impl IsObsoleteClause {
     #[new]
     fn __init__(obsolete: bool) -> PyClassInitializer<Self> {
         Self::new(obsolete).into()
+    }
+
+    fn raw_tag(&self) -> &str {
+        "is_obsolete"
+    }
+
+    fn raw_value(&self) -> String {
+        self.obsolete.to_string()
     }
 }
 
@@ -1568,6 +1668,7 @@ impl PyObjectProtocol for IsObsoleteClause {
 /// A clause giving a term which replaces this obsolete term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct ReplacedByClause {
     #[pyo3(set)]
     term: Ident,
@@ -1602,9 +1703,6 @@ impl IntoPy<fastobo::ast::TermClause> for ReplacedByClause {
     }
 }
 
-impl_raw_tag!(ReplacedByClause, "replaced_by");
-impl_raw_value!(ReplacedByClause, "{}", self.term);
-
 #[pymethods]
 impl ReplacedByClause {
     #[new]
@@ -1616,6 +1714,14 @@ impl ReplacedByClause {
     /// `~fastobo.id.Ident`: the identifier of the replacement term.
     fn get_term(&self) -> &Ident {
         &self.term
+    }
+
+    fn raw_tag(&self) -> &str {
+        "replaced_by"
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
     }
 }
 
@@ -1642,6 +1748,7 @@ impl PyObjectProtocol for ReplacedByClause {
 /// A clause giving a potential substitute for an obsolete term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct ConsiderClause {
     term: Ident,
 }
@@ -1675,9 +1782,6 @@ impl IntoPy<fastobo::ast::TermClause> for ConsiderClause {
     }
 }
 
-impl_raw_tag!(ConsiderClause, "consider");
-impl_raw_value!(ConsiderClause, "{}", self.term);
-
 #[pymethods]
 impl ConsiderClause {
     #[new]
@@ -1688,6 +1792,14 @@ impl ConsiderClause {
     #[getter]
     fn get_term(&self) -> &Ident {
         &self.term
+    }
+
+    fn raw_tag(&self) -> &str {
+        "consider"
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
     }
 }
 
@@ -1714,6 +1826,7 @@ impl PyObjectProtocol for ConsiderClause {
 /// A term clause stating the name of the creator of this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct CreatedByClause {
     creator: fastobo::ast::UnquotedString,
 }
@@ -1745,9 +1858,6 @@ impl IntoPy<fastobo::ast::TermClause> for CreatedByClause {
     }
 }
 
-impl_raw_tag!(CreatedByClause, "created_by");
-impl_raw_value!(CreatedByClause, "{}", self.creator);
-
 #[pymethods]
 impl CreatedByClause {
     #[new]
@@ -1764,6 +1874,14 @@ impl CreatedByClause {
     #[setter]
     fn set_creator(&mut self, creator: String) {
         self.creator = fastobo::ast::UnquotedString::new(creator);
+    }
+
+    fn raw_tag(&self) -> &str {
+        "created_by"
+    }
+
+    fn raw_value(&self) -> String {
+        self.creator.to_string()
     }
 }
 
@@ -1800,6 +1918,7 @@ impl PyObjectProtocol for CreatedByClause {
 ///
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
+#[base(BaseTermClause)]
 pub struct CreationDateClause {
     date: fastobo::ast::IsoDateTime,
 }
@@ -1828,9 +1947,6 @@ impl IntoPy<fastobo::ast::TermClause> for CreationDateClause {
     }
 }
 
-impl_raw_tag!(CreationDateClause, "creation_date");
-impl_raw_value!(CreationDateClause, "{}", self.date);
-
 #[pymethods]
 impl CreationDateClause {
     #[new]
@@ -1850,6 +1966,14 @@ impl CreationDateClause {
     fn set_date(&mut self, datetime: &PyDateTime) -> PyResult<()> {
         self.date = datetime_to_isodate(datetime.py(), datetime)?;
         Ok(())
+    }
+
+    fn raw_tag(&self) -> &str {
+        "creation_date"
+    }
+
+    fn raw_value(&self) -> String {
+        self.date.to_string()
     }
 }
 

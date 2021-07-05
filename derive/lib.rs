@@ -6,8 +6,10 @@ extern crate quote;
 extern crate syn;
 
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use syn::parse_quote;
 use syn::spanned::Spanned;
 use syn::parse_macro_input;
 
@@ -237,7 +239,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
                     None => &qualname,
                 };
 
-                if ob.py().is_instance::<#base, _>(ob)? {
+                if ob.is_instance::<#base>()? {
                     match ty.as_ref() {
                         #(#variants,)*
                         _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
@@ -286,158 +288,163 @@ fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
 
 // ---
 
-#[proc_macro_derive(PyList)]
-pub fn pylist_derive(input: TokenStream) -> TokenStream {
-    let ast = parse_macro_input!(input as syn::DeriveInput);
-    if let syn::Data::Struct(s) = &ast.data {
-        TokenStream::from(pylist_impl_struct(&ast, &s))
+#[proc_macro_attribute]
+pub fn listlike(attr: TokenStream, input: TokenStream) -> TokenStream {
+    // extract proc-macro arguments
+    let meta = parse_macro_input!(attr as syn::AttributeArgs);
+    let field: syn::Ident = if let syn::Lit::Str(ref s) = meta
+        .iter()
+        .filter_map(|m| match m {
+            syn::NestedMeta::Meta(m) => Some(m),
+            _ => None,
+        })
+        .filter_map(|m| match m {
+            syn::Meta::NameValue(nv) => Some(nv),
+            _ => None
+        })
+        .find(|nv| nv.path.get_ident() == Some(&syn::Ident::new("field", Span::call_site())))
+        .expect("#[pylist] requires a `field` argument")
+        .lit
+    {
+        s.parse().expect("`field` argument of #[pylist] is not a valid identifier")
     } else {
-        panic!("#[derive(PyList)] only supports structs")
-    }
+        panic!("`field` argument of #[pylist] must be a string");
+    };
+    let ty: syn::Type = if let syn::Lit::Str(ref s) = meta
+        .iter()
+        .filter_map(|m| match m {
+            syn::NestedMeta::Meta(m) => Some(m),
+            _ => None,
+        })
+        .filter_map(|m| match m {
+            syn::Meta::NameValue(nv) => Some(nv),
+            _ => None
+        })
+        .find(|nv| nv.path.get_ident() == Some(&syn::Ident::new("type", Span::call_site())))
+        .expect("#[pylist] requires a `type` argument")
+        .lit
+    {
+        s.parse().expect("`type` argument of #[pylist] is not a valid type")
+    } else {
+        panic!("`type` argument of #[pylist] must be a string");
+    };
+
+    // add additional methods to the impl block
+    let ast = parse_macro_input!(input as syn::ItemImpl);
+    TokenStream::from(listlike_impl_methods(&field, &ty, ast))
 }
 
-fn pylist_impl_struct(ast: &syn::DeriveInput, st: &syn::DataStruct) -> TokenStream2 {
-    // Find the field with `Vec` type on the struct
-    let mut field = None; // the name of the Vec field
-    let mut elem = None; // the type of Vec elements
-    match &st.fields {
-        syn::Fields::Named(n) => {
-            for f in n.named.iter() {
-                if let syn::Type::Path(p) = &f.ty {
-                    if let Some(c) = p.path.segments.first() {
-                        if c.ident == "Vec" {
-                            if let syn::PathArguments::AngleBracketed(g) = &c.arguments {
-                                if let Some(syn::GenericArgument::Type(t)) = g.args.first() {
-                                    elem = Some(t.clone());
-                                    field = Some(f.ident.clone())
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+fn listlike_impl_methods(field: &syn::Ident, ty: &syn::Type, mut imp: syn::ItemImpl) -> TokenStream2 {
+    imp.items.push(parse_quote! {
+        /// Append object to the end of the list.
+        ///
+        /// Raises:
+        ///     TypeError: when the object is not of the right type for
+        ///         this container (see type-level documentation for the
+        ///         required type).
+        #[text_signature = "(self, object)"]
+        fn append(&mut self, object: &PyAny) -> PyResult<()> {
+            let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
+            self.#field.push(item);
+            Ok(())
         }
-        _ => panic!("#[derive(PyList)] only supports struct with named fields"),
-    }
-
-    // Get the arguments value.
-    let name = &ast.ident;
-    let attr = field.expect("could not find a field with `Vec` type");
-    let ty = elem.expect("could not find a field with `Vec` type");
-
-    //
-    quote! {
-        #[pymethods]
-        impl #name {
-
-            /// Append object to the end of the list.
-            ///
-            /// Raises:
-            ///     TypeError: when the object is not of the right type for
-            ///         this container (see type-level documentation for the
-            ///         required type).
-            #[text_signature = "(self, object)"]
-            fn append(&mut self, object: &PyAny) -> PyResult<()> {
-                let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
-                self.#attr.push(item);
-                Ok(())
-            }
-
-            /// Remove all items from list.
-            #[text_signature = "(self)"]
-            fn clear(&mut self) {
-                self.#attr.clear();
-            }
-
-            /// Return a shallow copy of the list.
-            #[text_signature = "(self)"]
-            fn copy(&self) -> PyResult<Py<Self>> {
-                let gil = Python::acquire_gil();
-                let copy = self.clone_py(gil.python());
-                Py::new(gil.python(), copy)
-            }
-
-            /// Return number of occurrences of value.
-            ///
-            /// Raises:
-            ///     TypeError: when the object is not of the right type for
-            ///         this container (see type-level documentation for the
-            ///         required type).
-            #[text_signature = "(self, value)"]
-            fn count(&mut self, value: &PyAny) -> PyResult<usize> {
-                let item = <#ty as pyo3::prelude::FromPyObject>::extract(value)?;
-                Ok(self.#attr.iter().filter(|&x| *x == item).count())
-            }
-
-            // |  extend($self, iterable, /)
-            // |      Extend list by appending elements from the iterable.
-            // |
-            // |  index(self, value, start=0, stop=9223372036854775807, /)
-            // |      Return first index of value.
-            // |
-            // |      Raises ValueError if the value is not present.
-            // |
-
-            /// Insert `object` before `index`.
-            ///
-            /// If `index` is greater than the number of elements in the list,
-            /// `object` will be added at the end of the list.
-            #[text_signature = "(self, index, object)"]
-            fn insert(&mut self, mut index: isize, object: &PyAny) -> PyResult<()> {
-                let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
-                if index >= self.#attr.len() as isize {
-                    self.#attr.push(item);
-                } else {
-                    if index < 0 {
-                        index %= self.#attr.len() as isize;
-                    }
-                    self.#attr.insert(index as usize, item);
-                }
-                Ok(())
-            }
-
-            /// Remove and return item at index (default last).
-            ///
-            /// Raises:
-            ///     IndexError: when list is empty or index is out of range.
-            #[args(index="-1")]
-            #[text_signature = "(self, index=-1)"]
-            fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
-                // Wrap once to allow negative indexing
+    });
+    imp.items.push(parse_quote! {
+        /// Remove all items from list.
+        #[text_signature = "(self)"]
+        fn clear(&mut self) {
+            self.#field.clear();
+        }
+    });
+    imp.items.push(parse_quote! {
+        /// Return a shallow copy of the list.
+        #[text_signature = "(self)"]
+        fn copy(&self) -> PyResult<Py<Self>> {
+            let gil = Python::acquire_gil();
+            let copy = self.clone_py(gil.python());
+            Py::new(gil.python(), copy)
+        }
+    });
+    imp.items.push(parse_quote! {
+        /// Return number of occurrences of value.
+        ///
+        /// Raises:
+        ///     TypeError: when the object is not of the right type for
+        ///         this container (see type-level documentation for the
+        ///         required type).
+        #[text_signature = "(self, value)"]
+        fn count(&mut self, value: &PyAny) -> PyResult<usize> {
+            let item = <#ty as pyo3::prelude::FromPyObject>::extract(value)?;
+            Ok(self.#field.iter().filter(|&x| *x == item).count())
+        }
+    });
+    // |  extend($self, iterable, /)
+    // |      Extend list by appending elements from the iterable.
+    // |
+    // |  index(self, value, start=0, stop=9223372036854775807, /)
+    // |      Return first index of value.
+    // |
+    // |      Raises ValueError if the value is not present.
+    // |
+    imp.items.push(parse_quote! {
+        /// Insert `object` before `index`.
+        ///
+        /// If `index` is greater than the number of elements in the list,
+        /// `object` will be added at the end of the list.
+        #[text_signature = "(self, index, object)"]
+        fn insert(&mut self, mut index: isize, object: &PyAny) -> PyResult<()> {
+            let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
+            if index >= self.#field.len() as isize {
+                self.#field.push(item);
+            } else {
                 if index < 0 {
-                    index += self.#attr.len() as isize;
+                    index %= self.#field.len() as isize;
                 }
-                // Pop if the index is in vector bounds
-                if index >= 0 && index < self.#attr.len() as isize {
-                    Ok(self.#attr.remove(index as usize))
-                } else {
-                    Err(pyo3::exceptions::PyIndexError::new_err("pop index out of range"))
-                }
+                self.#field.insert(index as usize, item);
             }
-
-            // |
-            // |  remove(self, value, /)
-            // |      Remove first occurrence of value.
-            // |
-            // |      Raises ValueError if the value is not present.
-            // |
-
-            /// Reverse *IN PLACE*.
-            #[text_signature = "(self)"]
-            fn reverse(&mut self) {
-                self.#attr.reverse()
-            }
-
-            // |  sort(self, /, *, key=None, reverse=False)
-            // |      Stable sort *IN PLACE*.
+            Ok(())
         }
-    }
+    });
+    imp.items.push(parse_quote! {
+        /// Remove and return item at index (default last).
+        ///
+        /// Raises:
+        ///     IndexError: when list is empty or index is out of range.
+        #[args(index="-1")]
+        #[text_signature = "(self, index=-1)"]
+        fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
+            // Wrap once to allow negative indexing
+            if index < 0 {
+                index += self.#field.len() as isize;
+            }
+            // Pop if the index is in vector bounds
+            if index >= 0 && index < self.#field.len() as isize {
+                Ok(self.#field.remove(index as usize))
+            } else {
+                Err(pyo3::exceptions::PyIndexError::new_err("pop index out of range"))
+            }
+        }
+    });
+    // |  remove(self, value, /)
+    // |      Remove first occurrence of value.
+    // |
+    // |      Raises ValueError if the value is not present.
+    imp.items.push(parse_quote! {
+        /// Reverse *IN PLACE*.
+        #[text_signature = "(self)"]
+        fn reverse(&mut self) {
+            self.#field.reverse()
+        }
+    });
+    // |  sort(self, /, *, key=None, reverse=False)
+    // |      Stable sort *IN PLACE*.
+    quote!(#imp)
 }
 
 
 // ---
 
-#[proc_macro_derive(FinalClass)]
+#[proc_macro_derive(FinalClass, attributes(base))]
 pub fn finalclass_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
     match &ast.data {
@@ -450,13 +457,29 @@ fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> Toke
     // Get the name of the wrapped struct.
     let name = &ast.ident;
 
+    // Get the name of the base class.
+    let meta = ast
+        .attrs
+        .iter()
+        .find(|attr| attr.path.is_ident(&syn::Ident::new("base", attr.span())))
+        .expect("could not find #[base] attribute")
+        .parse_meta()
+        .expect("could not parse #[base] argument");
+    let base = match meta {
+        syn::Meta::List(l) => match l.nested.iter().next().unwrap() {
+            syn::NestedMeta::Meta(syn::Meta::Path(p)) => p.clone(),
+            _ => panic!("#[base] argument must be a class ident"),
+        },
+        _ => panic!("#[base] argument must be a class ident"),
+    };
+
     // derive an implementation of PyClassInitializer using simply the
     // default value of the base class as the initializer value
     quote! {
         impl FinalClass for #name {}
         impl Into<pyo3::pyclass_init::PyClassInitializer<#name>> for #name {
             fn into(self) ->  pyo3::pyclass_init::PyClassInitializer<Self> {
-                <<Self as PyTypeInfo>::BaseType as AbstractClass>::initializer()
+                <#base as AbstractClass>::initializer()
                     .add_subclass(self)
             }
         }
@@ -466,7 +489,7 @@ fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> Toke
 
 // ---
 
-#[proc_macro_derive(AbstractClass)]
+#[proc_macro_derive(AbstractClass, attributes(base))]
 pub fn abstractclass_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
     match &ast.data {
@@ -479,12 +502,28 @@ fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> T
     // Get the name of the wrapped struct.
     let name = &ast.ident;
 
+    // Get the name of the base class.
+    let meta = ast
+        .attrs
+        .iter()
+        .find(|attr| attr.path.is_ident(&syn::Ident::new("base", attr.span())))
+        .expect("could not find #[base] attribute")
+        .parse_meta()
+        .expect("could not parse #[base] argument");
+    let base = match meta {
+        syn::Meta::List(l) => match l.nested.iter().next().unwrap() {
+            syn::NestedMeta::Meta(syn::Meta::Path(p)) => p.clone(),
+            _ => panic!("#[base] argument must be a class ident"),
+        },
+        _ => panic!("#[base] argument must be a class ident"),
+    };
+
     // derive an implementation of PyClassInitializer using simply the
     // default value of the base class as the initializer value
     quote! {
         impl AbstractClass for #name {
             fn initializer() -> pyo3::pyclass_init::PyClassInitializer<Self> {
-                <<Self as PyTypeInfo>::BaseType as AbstractClass>::initializer()
+                <#base as AbstractClass>::initializer()
                     .add_subclass(Self {})
             }
         }

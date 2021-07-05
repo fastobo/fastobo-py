@@ -45,34 +45,12 @@ macro_rules! impl_repr {
     })
 }
 
-macro_rules! impl_raw_value {
-    ($cls:ty, $fmt:literal, $(self . $attr:ident),*) => (
-        #[pymethods]
-        impl $cls {
-            pub fn raw_value(&self) -> PyResult<String> {
-               Ok(format!($fmt, $(self . $attr,)*))
-            }
-        }
-    )
-}
-
-macro_rules! impl_raw_tag {
-    ($cls:ty, $tag:literal) => {
-        #[pymethods]
-        impl $cls {
-            pub fn raw_tag(&self) -> PyResult<&str> {
-                Ok($tag)
-            }
-        }
-    };
-}
-
 macro_rules! register {
     ($py:ident, $m:ident, $cls:ident, $module:expr, $metacls:ident) => {
         $py.import($module)?
-            .get(stringify!($metacls))?
+            .getattr(stringify!($metacls))?
             .to_object($py)
-            .call_method1($py, "register", ($m.get(stringify!($cls))?,))?;
+            .call_method1($py, "register", ($m.getattr(stringify!($cls))?,))?;
     };
 }
 
@@ -83,14 +61,14 @@ macro_rules! add_submodule {
         // create new module object and initialize it
         let module = PyModule::new($py, stringify!($ub))?;
         self::$sub::init($py, &module)?;
-        module.add("__package__", $sup.get("__package__")?)?;
+        module.add("__package__", $sup.getattr("__package__")?)?;
 
         // add the submodule to the supermodule
         $sup.add(stringify!($sub), module)?;
 
         // add the submodule to the `sys.modules` index
         $py.import("sys")?
-            .get("modules")?
+            .getattr("modules")?
             .cast_as::<pyo3::types::PyDict>()?
             .set_item(concat!("fastobo.", stringify!($sub)), module)?;
     }};

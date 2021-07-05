@@ -50,8 +50,8 @@ pub fn isodate_to_datetime<'py>(py: Python<'py>, datetime: &fastobo::ast::IsoDat
     // Extract the timezone if there is any
     let tz = if let Some(tz) = datetime.timezone() {
         let datetime = py.import("datetime")?;
-        let timezone = datetime.get("timezone")?.to_object(py);
-        let timedelta = datetime.get("timedelta")?.to_object(py);
+        let timezone = datetime.getattr("timezone")?.to_object(py);
+        let timedelta = datetime.getattr("timedelta")?.to_object(py);
         match tz {
             Utc => Some(timezone.getattr(py, "utc")?),
             Plus(hh, mm) => {

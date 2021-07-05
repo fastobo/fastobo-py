@@ -25,7 +25,8 @@ use crate::utils::FinalClass;
 use crate::utils::AbstractClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.term")]
-#[derive(Debug, PyList, FinalClass)]
+#[derive(Debug, FinalClass)]
+#[base(AbstractEntityFrame)]
 pub struct TermFrame {
     #[pyo3(set)]
     id: Ident,
@@ -94,6 +95,7 @@ impl IntoPy<fastobo::ast::EntityFrame> for TermFrame {
     }
 }
 
+#[listlike(field = "clauses", type = "TermClause")]
 #[pymethods]
 impl TermFrame {
     // FIXME: should accept any iterable.

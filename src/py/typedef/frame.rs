@@ -27,7 +27,8 @@ use crate::utils::AbstractClass;
 use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.typedef")]
-#[derive(Debug, PyList, FinalClass)]
+#[derive(Debug, FinalClass)]
+#[base(AbstractEntityFrame)]
 pub struct TypedefFrame {
     #[pyo3(set)]
     id: Ident,
@@ -95,6 +96,7 @@ impl IntoPy<fastobo::ast::EntityFrame> for TypedefFrame {
     }
 }
 
+#[listlike(field = "clauses", type = "TypedefClause")]
 #[pymethods]
 impl TypedefFrame {
     // FIXME: should accept any iterable.

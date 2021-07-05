@@ -93,6 +93,7 @@ impl AbstractClass for AbstractPropertyValue {
 
 #[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
 #[derive(Debug, FinalClass)]
+#[base(AbstractPropertyValue)]
 pub struct LiteralPropertyValue {
     relation: Ident,
     value: ast::QuotedString,
@@ -232,6 +233,7 @@ impl PyObjectProtocol for LiteralPropertyValue {
 
 #[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
 #[derive(Debug, FinalClass)]
+#[base(AbstractPropertyValue)]
 pub struct ResourcePropertyValue {
     relation: Ident,
     value: Ident,

@@ -39,10 +39,10 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Setup Rust nightly
+    - name: Setup Rust stable
       uses: ATiltedTree/setup-rust@v1
       with:
-        rust-version: nightly
+        rust-version: stable
     - name: Update CI requirements
       run: python -m pip install -U -r ci/requirements.txt
     - name: Build Rust extension
@@ -83,10 +83,10 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Setup Rust nightly
+    - name: Setup Rust stable
       uses: ATiltedTree/setup-rust@v1
       with:
-        rust-version: nightly
+        rust-version: stable
     - name: Update CI requirements
       run: python -m pip install -U -r ci/requirements.txt
     - name: Build Rust extension

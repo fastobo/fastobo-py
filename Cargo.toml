@@ -18,7 +18,7 @@ doctest = false
 lazy_static = "1.4.0"
 
 [build-dependencies]
-built = { version  = "0.4.1", features = ["chrono"] }
+built = { version  = "0.5.1", features = ["chrono"] }
 
 [dependencies]
 libc = "0.2.70"

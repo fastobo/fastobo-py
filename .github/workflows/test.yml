@@ -49,6 +49,7 @@ jobs:
       run: python setup.py build_ext --inplace --debug
     - name: Test Rust extension
       run: python -m unittest discover -vv
+      if: ${{ matrix.python-release != 'v3.6' }}
 
   test_osx:
     name: Test (OSX)
@@ -93,6 +94,7 @@ jobs:
       run: python setup.py build_ext --inplace --debug
     - name: Test Rust extension
       run: python -m unittest discover -vv
+      if: ${{ matrix.python-release != 'v3.6' }}
 
   coverage:
     runs-on: ubuntu-latest

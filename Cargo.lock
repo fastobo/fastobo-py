@@ -220,7 +220,7 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "built",
  "fastobo",
@@ -235,7 +235,7 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py-derive-internal"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "proc-macro2 1.0.27",
  "quote",

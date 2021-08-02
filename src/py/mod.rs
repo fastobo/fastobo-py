@@ -125,6 +125,9 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         } else {
             match FrameReader::from_handle(fh, ordered, threads) {
                 Ok(r) => Ok(r),
+                Err(inner) if inner.is_instance::<pyo3::exceptions::PySyntaxError>(py) => {
+                    Err(inner)
+                }
                 Err(inner) => {
                     raise!(py, PyTypeError("expected path or binary file handle") from inner);
                 }

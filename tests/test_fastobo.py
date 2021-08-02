@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import io
 import os
 import unittest
 
@@ -73,6 +74,10 @@ class TestIter(unittest.TestCase):
 
         with open(MS) as f:
             self.assertRaises(TypeError, fastobo.iter, f)
+
+    def test_syntax_error(self):
+        f = io.BytesIO(b"format-version: 1.4\ndate: 05:20:2021 12:00\n")
+        self.assertRaises(SyntaxError, fastobo.iter, f)
 
     def test_threading_single(self):
         frame_count = sum(1 for _ in fastobo.iter(MS, threads=1))

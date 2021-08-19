@@ -624,9 +624,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-built"
-version = "0.4.5"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b01f9a39798d591d2ae7552886de8e0205a74782ab6b26f9224f190b3766d9cb"
+checksum = "843c5bf7972395017ef1e6ba68a69668a1e52da2bc1ab81545a20894b7a866cd"
 
 [[package]]
 name = "pyo3-macros"

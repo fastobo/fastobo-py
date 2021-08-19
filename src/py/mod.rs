@@ -312,9 +312,14 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///
     ///     >>> from urllib.request import urlopen
     ///     >>> url = "http://purl.obolibrary.org/obo/pato.json"
-    ///     >>> doc = fastobo.load_graph(urlopen(url))
-    ///     >>> doc[0]
-    ///     TermFrame(PrefixedIdent('BFO', '0000002'))
+    ///     >>> graph = fastobo.load_graph(urlopen(url))
+    ///     >>> terms = [
+    ///     ...     term for term in graph
+    ///     ...     if isinstance(term.id, fastobo.id.PrefixedIdent)
+    ///     ...     and term.id.prefix == "PATO"
+    ///     ... ]
+    ///     >>> min(terms, key=lambda term: str(term.id))
+    ///     TermFrame(PrefixedIdent('PATO', '0000000'))
     ///
     #[pyfn(m)]
     #[pyo3(name = "load_graph", text_signature = "(fh)")]

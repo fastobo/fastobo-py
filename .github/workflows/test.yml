@@ -52,7 +52,7 @@ jobs:
       if: ${{ matrix.python-release != 'v3.6' }}
 
   test_linux_aarch64:
-    name: "Test ${{ matrix.pyver }} aarch64"
+    name: "Test (Linux, Aarch64)"
     strategy:
       matrix:
         pyver: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]

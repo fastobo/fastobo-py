@@ -74,11 +74,11 @@ jobs:
         options: --rm -v ${{ github.workspace }}:/io:rw --workdir=/io
         shell: bash
         run: |
-          ${{ env.py }} -m venv .env
-          source .env/bin/activate
           ${{ env.pyo3-python }} -m pip install -U -r ci/requirements.txt
           ${{ env.pyo3-python }} setup.py build_ext --inplace --debug
-          ${{ env.pyo3-python }} python -m unittest discover -vv
+          if [ ${{ matrix.python-version }} != 'cp36-cp36m' ]; then
+              ${{ env.pyo3-python }} -m unittest discover -vv
+          fi
 
   test_osx:
     name: Test (OSX)

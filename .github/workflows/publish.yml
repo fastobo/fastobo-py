@@ -16,10 +16,6 @@ jobs:
         python-version: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
     env:
       pyo3-python: /opt/python/${{ matrix.python-version }}/bin/python
-        #- python-version: pypy-3.6
-        #  pyo3-python: /opt/pypy/pypy3.6-7.3.3/bin/python
-        #- python-version: pypy-3.7
-        #  pyo3-python: /opt/pypy/pypy3.7-7.3.4/bin/python
     steps:
     - name: Checkout code
       uses: actions/checkout@v1

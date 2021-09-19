@@ -1,7 +1,7 @@
 sphinx ~=3.1
 recommonmark ~=0.6
 sphinx_bootstrap_theme ~=0.7
-fastobo ~=0.10.0
+fastobo ~=0.10.2
 ipykernel ~=5.3
 ipython ~=7.15
 nbsphinx ~=0.7

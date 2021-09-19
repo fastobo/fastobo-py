@@ -39,11 +39,8 @@ class build_rust(_build_rust):
             rustc = get_rust_version()
             nightly = rustc.prerelease is not None and "nightly" in rustc.prerelease
         except DistutilsPlatformError:
-            if sys.platform in ("linux", "darwin"):
-                self.setup_temp_rustc_unix(toolchain="nightly", profile="minimal")
-                nightly = True
-            else:
-                nightly = False
+            self.setup_temp_rustc_unix(toolchain="stable", profile="minimal")
+            nightly = False
 
         if self.inplace:
             self.extensions[0].strip = rust.Strip.No

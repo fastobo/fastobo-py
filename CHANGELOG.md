@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.10.2...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.10.2-post1...HEAD
+
+## [v0.10.2-post1] - 2021-09-19
+[v0.10.2-post1]: https://github.com/fastobo/fastobo-py/compare/v0.10.2...v0.10.2-post1
+### Added
+- Aarch64 wheels built from GitHub Actions and deployed to PyPI ([#245](https://github.com/fastobo/fastobo-py/issues/245)).
 
 ## [v0.10.2] - 2021-08-02
 [v0.10.2]: https://github.com/fastobo/fastobo-py/compare/v0.10.1...v0.10.2

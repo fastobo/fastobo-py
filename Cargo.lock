@@ -14,9 +14,9 @@ checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
 name = "blanket"
-version = "0.1.5"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f05883a5637c39941c00bda3e053be07ac107499d7bc6e849dbb3764f55d56f3"
+checksum = "7b04ce3d2372d05d1ef4ea3fdf427da6ae3c17ca06d688a107b5344836276bc3"
 dependencies = [
  "proc-macro2 1.0.27",
  "quote",
@@ -175,9 +175,9 @@ checksum = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
 
 [[package]]
 name = "fastobo"
-version = "0.13.1"
+version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7501c7e77bfc063fe08c41fb5d3c6898093e8977e4b5a8db8568b4ebc99f4e17"
+checksum = "cb929fa98b03875d2c5d4514c6f982c3e517a2ec2fc47322ec1599c1cf4d97d7"
 dependencies = [
  "blanket",
  "crossbeam-channel",

@@ -7,7 +7,9 @@ use std::string::ToString;
 
 use fastobo::ast;
 use fastobo::ast as obo;
+use fastobo::ast::Date;
 use fastobo::ast::QuotedString;
+use fastobo::ast::Time;
 use fastobo::ast::UnquotedString;
 
 use pyo3::class::basic::CompareOp;
@@ -34,9 +36,9 @@ use super::super::id::Ident;
 use super::super::id::Url;
 use super::super::pv::PropertyValue;
 use super::super::syn::SynonymScope;
+use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::FinalClass;
-use crate::utils::AbstractClass;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
@@ -87,30 +89,33 @@ impl IntoPy<HeaderClause> for fastobo::ast::HeaderClause {
             Subsetdef(s, q) => {
                 Py::new(py, SubsetdefClause::new(s.into_py(py), *q)).map(HeaderClause::Subsetdef)
             }
-            SynonymTypedef(ty, desc, scope) => {
-                Py::new(py, SynonymTypedefClause::with_scope(ty.into_py(py), *desc, scope.map(|s| s.into_py(py))))
-                    .map(HeaderClause::SynonymTypedef)
-            }
-            DefaultNamespace(ns) => {
-                Py::new(py, DefaultNamespaceClause::new(ns.into_py(py))).map(HeaderClause::DefaultNamespace)
-            }
+            SynonymTypedef(ty, desc, scope) => Py::new(
+                py,
+                SynonymTypedefClause::with_scope(
+                    ty.into_py(py),
+                    *desc,
+                    scope.map(|s| s.into_py(py)),
+                ),
+            )
+            .map(HeaderClause::SynonymTypedef),
+            DefaultNamespace(ns) => Py::new(py, DefaultNamespaceClause::new(ns.into_py(py)))
+                .map(HeaderClause::DefaultNamespace),
             NamespaceIdRule(r) => {
                 Py::new(py, NamespaceIdRuleClause::new(*r)).map(HeaderClause::NamespaceIdRule)
             }
-            Idspace(prefix, url, desc) => {
-                    Py::new(py, url.into_py(py))
-                        .map(|url| IdspaceClause::with_description(*prefix, url, desc.map(|d| *d)))
-                        .and_then(|clause| Py::new(py, clause))
-                        .map(HeaderClause::Idspace)
-            }
+            Idspace(prefix, url, desc) => Py::new(py, url.into_py(py))
+                .map(|url| IdspaceClause::with_description(*prefix, url, desc.map(|d| *d)))
+                .and_then(|clause| Py::new(py, clause))
+                .map(HeaderClause::Idspace),
             TreatXrefsAsEquivalent(prefix) => {
                 Py::new(py, TreatXrefsAsEquivalentClause::new(*prefix))
                     .map(HeaderClause::TreatXrefsAsEquivalent)
             }
-            TreatXrefsAsGenusDifferentia(p, r, c) => {
-                Py::new(py, TreatXrefsAsGenusDifferentiaClause::new(*p, r.into_py(py), c.into_py(py)))
-                    .map(HeaderClause::TreatXrefsAsGenusDifferentia)
-            }
+            TreatXrefsAsGenusDifferentia(p, r, c) => Py::new(
+                py,
+                TreatXrefsAsGenusDifferentiaClause::new(*p, r.into_py(py), c.into_py(py)),
+            )
+            .map(HeaderClause::TreatXrefsAsGenusDifferentia),
             TreatXrefsAsReverseGenusDifferentia(p, r, c) => Py::new(
                 py,
                 TreatXrefsAsReverseGenusDifferentiaClause::new(*p, r.into_py(py), c.into_py(py)),
@@ -125,9 +130,8 @@ impl IntoPy<HeaderClause> for fastobo::ast::HeaderClause {
             }
             TreatXrefsAsHasSubclass(p) => Py::new(py, TreatXrefsAsHasSubclassClause::new(*p))
                 .map(HeaderClause::TreatXrefsAsHasSubclass),
-            PropertyValue(pv) => {
-                Py::new(py, PropertyValueClause::new(pv.into_py(py))).map(HeaderClause::PropertyValue)
-            }
+            PropertyValue(pv) => Py::new(py, PropertyValueClause::new(pv.into_py(py)))
+                .map(HeaderClause::PropertyValue),
             Remark(r) => Py::new(py, RemarkClause::new(*r)).map(HeaderClause::Remark),
             Ontology(ont) => Py::new(py, OntologyClause::new(*ont)).map(HeaderClause::Ontology),
             OwlAxioms(ax) => Py::new(py, OwlAxiomsClause::new(*ax)).map(HeaderClause::OwlAxioms),
@@ -352,15 +356,14 @@ impl Display for DateClause {
 impl DateClause {
     #[new]
     fn __init__(date: &PyDateTime) -> PyClassInitializer<Self> {
-        Self::new(
-            fastobo::ast::NaiveDateTime::new(
-                date.get_day() as u8,
-                date.get_month() as u8,
-                date.get_year() as u16,
-                date.get_hour() as u8,
-                date.get_minute() as u8,
-            )
-        ).into()
+        Self::new(fastobo::ast::NaiveDateTime::new(
+            date.get_day() as u8,
+            date.get_month() as u8,
+            date.get_year() as u16,
+            date.get_hour() as u8,
+            date.get_minute() as u8,
+        ))
+        .into()
     }
 
     /// `~datetime.datetime`: the date this document was last modified.
@@ -639,7 +642,10 @@ impl ImportClause {
         } else if let Ok(id) = obo::Ident::from_str(reference) {
             Ok(Self::new(obo::Import::Abbreviated(Box::new(id))).into())
         } else {
-            Err(PyValueError::new_err(format!("invalid import: {:?}", reference)))
+            Err(PyValueError::new_err(format!(
+                "invalid import: {:?}",
+                reference
+            )))
         }
     }
 
@@ -690,7 +696,10 @@ pub struct SubsetdefClause {
 
 impl SubsetdefClause {
     pub fn new(subset: Ident, description: QuotedString) -> Self {
-        Self { subset, description }
+        Self {
+            subset,
+            description,
+        }
     }
 }
 
@@ -757,7 +766,10 @@ impl SubsetdefClause {
 #[pyproto]
 impl PyObjectProtocol for SubsetdefClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SubsetdefClause(self.subset, self.description.as_str()))
+        impl_repr!(
+            self,
+            SubsetdefClause(self.subset, self.description.as_str())
+        )
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -790,8 +802,16 @@ impl SynonymTypedefClause {
         Self::with_scope(typedef, description, None)
     }
 
-    pub fn with_scope(typedef: Ident, description: QuotedString, scope: Option<SynonymScope>) -> Self {
-        Self { typedef, description, scope }
+    pub fn with_scope(
+        typedef: Ident,
+        description: QuotedString,
+        scope: Option<SynonymScope>,
+    ) -> Self {
+        Self {
+            typedef,
+            description,
+            scope,
+        }
     }
 }
 
@@ -827,7 +847,11 @@ impl IntoPy<obo::HeaderClause> for SynonymTypedefClause {
 #[pymethods]
 impl SynonymTypedefClause {
     #[new]
-    fn __init__(typedef: Ident, description: String, scope: Option<&PyString>) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__(
+        typedef: Ident,
+        description: String,
+        scope: Option<&PyString>,
+    ) -> PyResult<PyClassInitializer<Self>> {
         let desc = fastobo::ast::QuotedString::new(description);
         // FIXME
         let sc = match scope {
@@ -887,9 +911,15 @@ impl PyObjectProtocol for SynonymTypedefClause {
 
     fn __repr__(&self) -> PyResult<PyObject> {
         if let Some(ref scope) = self.scope {
-            impl_repr!(self, SynonymTypedefClause(self.typedef, self.description.as_str(), scope))
+            impl_repr!(
+                self,
+                SynonymTypedefClause(self.typedef, self.description.as_str(), scope)
+            )
         } else {
-            impl_repr!(self, SynonymTypedefClause(self.typedef, self.description.as_str()))
+            impl_repr!(
+                self,
+                SynonymTypedefClause(self.typedef, self.description.as_str())
+            )
         }
     }
 
@@ -1103,8 +1133,16 @@ impl IdspaceClause {
         Self::with_description(prefix, url, None)
     }
 
-    pub fn with_description(prefix: ast::IdentPrefix, url: Py<Url>, description: Option<QuotedString>) -> Self {
-        Self { prefix, url, description }
+    pub fn with_description(
+        prefix: ast::IdentPrefix,
+        url: Py<Url>,
+        description: Option<QuotedString>,
+    ) -> Self {
+        Self {
+            prefix,
+            url,
+            description,
+        }
     }
 }
 
@@ -1136,7 +1174,7 @@ impl From<IdspaceClause> for obo::HeaderClause {
         obo::HeaderClause::Idspace(
             Box::new(clause.prefix.clone()),
             Box::new(url),
-            clause.description.map(Box::new)
+            clause.description.map(Box::new),
         )
     }
 }
@@ -1150,7 +1188,11 @@ impl IntoPy<obo::HeaderClause> for IdspaceClause {
 #[pymethods]
 impl IdspaceClause {
     #[new]
-    fn __init__(prefix: String, url: Py<Url>, description: Option<String>) -> PyClassInitializer<Self> {
+    fn __init__(
+        prefix: String,
+        url: Py<Url>,
+        description: Option<String>,
+    ) -> PyClassInitializer<Self> {
         let p = ast::IdentPrefix::new(prefix);
         let d = description.map(QuotedString::new);
         Self::with_description(p, url, d).into()
@@ -1197,7 +1239,10 @@ impl PyObjectProtocol for IdspaceClause {
 
     fn __repr__(&self) -> PyResult<PyObject> {
         if let Some(ref desc) = self.description {
-            impl_repr!(self, IdspaceClause(self.prefix.as_str(), self.url, desc.as_str()))
+            impl_repr!(
+                self,
+                IdspaceClause(self.prefix.as_str(), self.url, desc.as_str())
+            )
         } else {
             impl_repr!(self, IdspaceClause(self.prefix.as_str(), self.url))
         }
@@ -1299,7 +1344,11 @@ pub struct TreatXrefsAsGenusDifferentiaClause {
 
 impl TreatXrefsAsGenusDifferentiaClause {
     pub fn new(idspace: ast::IdentPrefix, relation: Ident, filler: Ident) -> Self {
-        Self { idspace, relation, filler }
+        Self {
+            idspace,
+            relation,
+            filler,
+        }
     }
 }
 
@@ -1350,20 +1399,17 @@ impl TreatXrefsAsGenusDifferentiaClause {
     }
 
     fn raw_value(&self) -> String {
-        format!(
-            "{} {} {}",
-            self.idspace,
-            self.relation,
-            self.filler
-        )
+        format!("{} {} {}", self.idspace, self.relation, self.filler)
     }
 }
-
 
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsGenusDifferentiaClause(self.idspace.as_str(), self.relation, self.filler))
+        impl_repr!(
+            self,
+            TreatXrefsAsGenusDifferentiaClause(self.idspace.as_str(), self.relation, self.filler)
+        )
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1371,7 +1417,12 @@ impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.idspace && self.relation && self.filler)
+        impl_richmp!(
+            self,
+            other,
+            op,
+            self.idspace && self.relation && self.filler
+        )
     }
 }
 
@@ -1386,13 +1437,17 @@ impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
 #[base(BaseHeaderClause)]
 pub struct TreatXrefsAsReverseGenusDifferentiaClause {
     idspace: ast::IdentPrefix,
-    relation: Ident,      // Should be `RelationId`
-    filler: Ident,        // Should be `ClassId`
+    relation: Ident, // Should be `RelationId`
+    filler: Ident,   // Should be `ClassId`
 }
 
 impl TreatXrefsAsReverseGenusDifferentiaClause {
     pub fn new(idspace: ast::IdentPrefix, relation: Ident, filler: Ident) -> Self {
-        Self { idspace, relation, filler }
+        Self {
+            idspace,
+            relation,
+            filler,
+        }
     }
 }
 
@@ -1443,19 +1498,21 @@ impl TreatXrefsAsReverseGenusDifferentiaClause {
     }
 
     fn raw_value(&self) -> String {
-        format!(
-            "{} {} {}",
-            self.idspace,
-            self.relation,
-            self.filler
-        )
+        format!("{} {} {}", self.idspace, self.relation, self.filler)
     }
 }
 
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsReverseGenusDifferentiaClause(self.idspace.as_str(), self.relation, self.filler))
+        impl_repr!(
+            self,
+            TreatXrefsAsReverseGenusDifferentiaClause(
+                self.idspace.as_str(),
+                self.relation,
+                self.filler
+            )
+        )
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1463,7 +1520,12 @@ impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.idspace && self.relation && self.filler)
+        impl_richmp!(
+            self,
+            other,
+            op,
+            self.idspace && self.relation && self.filler
+        )
     }
 }
 
@@ -1532,18 +1594,17 @@ impl TreatXrefsAsRelationshipClause {
     }
 
     fn raw_value(&self) -> String {
-        format!(
-            "{} {}",
-            self.idspace,
-            self.relation
-        )
+        format!("{} {}", self.idspace, self.relation)
     }
 }
 
 #[pyproto]
 impl PyObjectProtocol for TreatXrefsAsRelationshipClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsRelationshipClause(self.idspace.as_str(), self.relation))
+        impl_repr!(
+            self,
+            TreatXrefsAsRelationshipClause(self.idspace.as_str(), self.relation)
+        )
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1726,7 +1787,7 @@ pub struct PropertyValueClause {
 impl PropertyValueClause {
     fn new(property_value: PropertyValue) -> Self {
         Self {
-            inner: property_value
+            inner: property_value,
         }
     }
 }
@@ -2111,7 +2172,10 @@ impl UnreservedClause {
 #[pyproto]
 impl PyObjectProtocol for UnreservedClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, UnreservedClause(self.tag.as_str(), self.value.as_str()))
+        impl_repr!(
+            self,
+            UnreservedClause(self.tag.as_str(), self.value.as_str())
+        )
     }
 
     fn __str__(&self) -> PyResult<String> {

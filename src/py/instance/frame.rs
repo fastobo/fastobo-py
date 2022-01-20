@@ -18,9 +18,9 @@ use fastobo::ast;
 
 use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
+use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::FinalClass;
-use crate::utils::AbstractClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.instance")]
 #[derive(Debug, FinalClass)]
@@ -68,9 +68,7 @@ impl IntoPy<InstanceFrame> for fastobo::ast::InstanceFrame {
 
 impl IntoPy<fastobo::ast::InstanceFrame> for InstanceFrame {
     fn into_py(self, py: Python) -> fastobo::ast::InstanceFrame {
-        fastobo::ast::InstanceFrame::new(
-            fastobo::ast::InstanceIdent::new(self.id.into_py(py))
-        )
+        fastobo::ast::InstanceFrame::new(fastobo::ast::InstanceIdent::new(self.id.into_py(py)))
     }
 }
 

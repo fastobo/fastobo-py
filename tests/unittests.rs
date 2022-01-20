@@ -1,13 +1,13 @@
-extern crate lazy_static;
 extern crate fastobo_py;
+extern crate lazy_static;
 extern crate pyo3;
 
 use std::sync::Mutex;
 
-use pyo3::Python;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use pyo3::types::PyModule;
+use pyo3::Python;
 
 lazy_static::lazy_static! {
     pub static ref LOCK: Mutex<()> = Mutex::new(());
@@ -57,14 +57,13 @@ macro_rules! unittest {
                     .unwrap()
                     .call(
                         "main",
-                        ( concat!("tests.", stringify!($name)), ),
-                        Some(kwargs)
+                        (concat!("tests.", stringify!($name)),),
+                        Some(kwargs),
                     )
                     .unwrap();
 
                 // check run was was successful
-                prog
-                    .getattr("result")
+                prog.getattr("result")
                     .unwrap()
                     .call_method0("wasSuccessful")
                     .unwrap()
@@ -77,7 +76,7 @@ macro_rules! unittest {
                 panic!("unittest.main failed")
             }
         }
-    }
+    };
 }
 
 unittest!(test_doc);

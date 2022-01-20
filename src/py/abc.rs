@@ -21,8 +21,8 @@ use pyo3::PyTypeInfo;
 use fastobo::ast as obo;
 
 use crate::error::Error;
-use crate::utils::ClonePy;
 use crate::utils::AbstractClass;
+use crate::utils::ClonePy;
 
 use super::header::frame::HeaderFrame;
 use super::id::Ident;
@@ -85,7 +85,9 @@ impl AbstractEntityFrame {
     /// `~fastobo.id.Ident`: the identifier of the described entity.
     #[getter]
     pub fn get_id(&self) -> PyResult<Ident> {
-        Err(PyNotImplementedError::new_err("AbstractEntityFrame.raw_tag"))
+        Err(PyNotImplementedError::new_err(
+            "AbstractEntityFrame.raw_tag",
+        ))
     }
 }
 

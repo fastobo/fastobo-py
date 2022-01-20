@@ -22,8 +22,8 @@ use fastobo::ast;
 use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use super::clause::TypedefClause;
-use crate::utils::ClonePy;
 use crate::utils::AbstractClass;
+use crate::utils::ClonePy;
 use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.typedef")]
@@ -67,8 +67,7 @@ impl IntoPy<TypedefFrame> for fastobo::ast::TypedefFrame {
     fn into_py(self, py: Python) -> TypedefFrame {
         TypedefFrame::with_clauses(
             self.id().as_ref().clone().into_py(py),
-            self
-                .into_iter()
+            self.into_iter()
                 .map(|line| line.into_inner().into_py(py))
                 .collect(),
         )
@@ -79,8 +78,7 @@ impl IntoPy<fastobo::ast::TypedefFrame> for TypedefFrame {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefFrame {
         fastobo::ast::TypedefFrame::with_clauses(
             fastobo::ast::RelationIdent::new(self.id.into_py(py)),
-            self
-                .clauses
+            self.clauses
                 .iter()
                 .map(|f| f.into_py(py))
                 .map(|c| fastobo::ast::Line::new().and_inner(c))

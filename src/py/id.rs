@@ -18,11 +18,11 @@ use pyo3::PyTypeInfo;
 use fastobo::ast;
 use fastobo::parser::FromSlice;
 
-use crate::raise;
 use crate::error::Error;
+use crate::raise;
+use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::FinalClass;
-use crate::utils::AbstractClass;
 
 // --- Module export ----------------------------------------------------------
 
@@ -151,7 +151,8 @@ impl IntoPy<Ident> for fastobo::ast::Ident {
             ast::Ident::Unprefixed(id) => Py::new(py, id.into_py(py)).map(Ident::Unprefixed),
             ast::Ident::Prefixed(id) => Py::new(py, id.into_py(py)).map(Ident::Prefixed),
             ast::Ident::Url(id) => Py::new(py, id.into_py(py)).map(Ident::Url),
-        }.expect("could not allocate on Python heap")
+        }
+        .expect("could not allocate on Python heap")
     }
 }
 
@@ -217,7 +218,7 @@ pub struct PrefixedIdent {
 impl PrefixedIdent {
     fn new(prefix: &str, local: &str) -> Self {
         PrefixedIdent {
-            inner: ast::PrefixedIdent::new(prefix, local)
+            inner: ast::PrefixedIdent::new(prefix, local),
         }
     }
 }
@@ -236,9 +237,7 @@ impl Display for PrefixedIdent {
 
 impl From<ast::PrefixedIdent> for PrefixedIdent {
     fn from(id: ast::PrefixedIdent) -> Self {
-        Self {
-            inner: id
-        }
+        Self { inner: id }
     }
 }
 
@@ -262,9 +261,7 @@ impl IntoPy<ast::Ident> for PrefixedIdent {
 
 impl IntoPy<PrefixedIdent> for ast::PrefixedIdent {
     fn into_py(self, _py: Python) -> PrefixedIdent {
-        PrefixedIdent {
-            inner: self
-        }
+        PrefixedIdent { inner: self }
     }
 }
 
@@ -281,10 +278,7 @@ impl PrefixedIdent {
     ///
     #[new]
     fn __init__(prefix: &str, local: &str) -> PyResult<PyClassInitializer<Self>> {
-        Ok(
-            PyClassInitializer::from(BaseIdent {})
-                .add_subclass(Self::new(prefix, local))
-        )
+        Ok(PyClassInitializer::from(BaseIdent {}).add_subclass(Self::new(prefix, local)))
     }
 
     /// `~fastobo.id.IdentPrefix`: the IDspace of the identifier.
@@ -295,10 +289,7 @@ impl PrefixedIdent {
 
     #[setter]
     fn set_prefix(&mut self, prefix: &str) {
-        self.inner = ast::PrefixedIdent::new(
-            prefix,
-            self.inner.local()
-        );
+        self.inner = ast::PrefixedIdent::new(prefix, self.inner.local());
     }
 
     /// `~fastobo.id.IdentLocal`: the local part of the identifier.
@@ -309,10 +300,7 @@ impl PrefixedIdent {
 
     #[setter]
     fn set_local(&mut self, local: &str) {
-        self.inner = ast::PrefixedIdent::new(
-            self.inner.prefix(),
-            local
-        );
+        self.inner = ast::PrefixedIdent::new(self.inner.prefix(), local);
     }
 }
 
@@ -448,8 +436,7 @@ impl UnprefixedIdent {
     #[new]
     fn __init__(value: &str) -> PyClassInitializer<Self> {
         let id = ast::UnprefixedIdent::new(value.to_string());
-        PyClassInitializer::from(BaseIdent {})
-            .add_subclass(UnprefixedIdent::new(id))
+        PyClassInitializer::from(BaseIdent {}).add_subclass(UnprefixedIdent::new(id))
     }
 
     /// `str`: the escaped representation of the identifier.
@@ -544,7 +531,6 @@ impl From<ast::Url> for Url {
         Self::new(url)
     }
 }
-
 
 impl From<Url> for fastobo::ast::Url {
     fn from(url: Url) -> Self {

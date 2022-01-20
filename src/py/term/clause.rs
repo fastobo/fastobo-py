@@ -1,5 +1,5 @@
-use std::cmp::Ordering;
 use std::cmp::Ord;
+use std::cmp::Ordering;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
@@ -7,8 +7,10 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 use pyo3::class::basic::CompareOp;
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
+use pyo3::types::PyDate;
 use pyo3::types::PyDateAccess;
 use pyo3::types::PyDateTime;
 use pyo3::types::PyString;
@@ -27,11 +29,14 @@ use super::super::pv::PropertyValue;
 use super::super::syn::Synonym;
 use super::super::xref::Xref;
 use super::super::xref::XrefList;
-use crate::date::datetime_to_isodate;
-use crate::date::isodate_to_datetime;
+use crate::date::date_to_isodate;
+use crate::date::datetime_to_isodatetime;
+use crate::date::isodate_to_date;
+use crate::date::isodatetime_to_datetime;
+use crate::raise;
+use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::FinalClass;
-use crate::utils::AbstractClass;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
@@ -66,11 +71,11 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
     fn into_py(self, py: Python) -> TermClause {
         use fastobo::ast::TermClause::*;
         match self {
-            IsAnonymous(b) => {
-                Py::new(py, IsAnonymousClause::new(b)).map(TermClause::IsAnonymous)
-            }
+            IsAnonymous(b) => Py::new(py, IsAnonymousClause::new(b)).map(TermClause::IsAnonymous),
             Name(n) => Py::new(py, NameClause::new(*n)).map(TermClause::Name),
-            Namespace(ns) => Py::new(py, NamespaceClause::new(ns.into_py(py))).map(TermClause::Namespace),
+            Namespace(ns) => {
+                Py::new(py, NamespaceClause::new(ns.into_py(py))).map(TermClause::Namespace)
+            }
             AltId(id) => Py::new(py, AltIdClause::new(id.into_py(py))).map(TermClause::AltId),
             Def(mut def) => {
                 let text = std::mem::take(def.text_mut());
@@ -79,27 +84,27 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
             }
             Comment(c) => Py::new(py, CommentClause::new(*c)).map(TermClause::Comment),
             Subset(s) => Py::new(py, SubsetClause::new(s.into_py(py))).map(TermClause::Subset),
-            Synonym(s) => {
-                Py::new(py, s.into_py(py))
-                    .map(SynonymClause::new)
-                    .and_then(|clause| Py::new(py, clause))
-                    .map(TermClause::Synonym)
-            }
-            Xref(x) => {
-                Py::new(py, x.into_py(py))
-                    .map(XrefClause::new)
-                    .and_then(|clause| Py::new(py, clause))
-                    .map(TermClause::Xref)
-            }
+            Synonym(s) => Py::new(py, s.into_py(py))
+                .map(SynonymClause::new)
+                .and_then(|clause| Py::new(py, clause))
+                .map(TermClause::Synonym),
+            Xref(x) => Py::new(py, x.into_py(py))
+                .map(XrefClause::new)
+                .and_then(|clause| Py::new(py, clause))
+                .map(TermClause::Xref),
             Builtin(b) => Py::new(py, BuiltinClause::new(b)).map(TermClause::Builtin),
             PropertyValue(pv) => {
                 Py::new(py, PropertyValueClause::new(pv.into_py(py))).map(TermClause::PropertyValue)
             }
             IsA(id) => Py::new(py, IsAClause::new(id.into_py(py))).map(TermClause::IsA),
-            IntersectionOf(r, cls) => {
-                Py::new(py, IntersectionOfClause::new(r.map(|id| id.into_py(py)), cls.into_py(py))).map(TermClause::IntersectionOf)
+            IntersectionOf(r, cls) => Py::new(
+                py,
+                IntersectionOfClause::new(r.map(|id| id.into_py(py)), cls.into_py(py)),
+            )
+            .map(TermClause::IntersectionOf),
+            UnionOf(cls) => {
+                Py::new(py, UnionOfClause::new(cls.into_py(py))).map(TermClause::UnionOf)
             }
-            UnionOf(cls) => Py::new(py, UnionOfClause::new(cls.into_py(py))).map(TermClause::UnionOf),
             EquivalentTo(cls) => {
                 Py::new(py, EquivalentToClause::new(cls.into_py(py))).map(TermClause::EquivalentTo)
             }
@@ -107,16 +112,17 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
                 Py::new(py, DisjointFromClause::new(cls.into_py(py))).map(TermClause::DisjointFrom)
             }
             Relationship(r, id) => {
-                Py::new(py, RelationshipClause::new(r.into_py(py), id.into_py(py))).map(TermClause::Relationship)
+                Py::new(py, RelationshipClause::new(r.into_py(py), id.into_py(py)))
+                    .map(TermClause::Relationship)
             }
             IsObsolete(b) => Py::new(py, IsObsoleteClause::new(b)).map(TermClause::IsObsolete),
             ReplacedBy(id) => {
                 Py::new(py, ReplacedByClause::new(id.into_py(py))).map(TermClause::ReplacedBy)
             }
-            Consider(id) => Py::new(py, ConsiderClause::new(id.into_py(py))).map(TermClause::Consider),
-            CreatedBy(name) => {
-                Py::new(py, CreatedByClause::new(*name)).map(TermClause::CreatedBy)
+            Consider(id) => {
+                Py::new(py, ConsiderClause::new(id.into_py(py))).map(TermClause::Consider)
             }
+            CreatedBy(name) => Py::new(py, CreatedByClause::new(*name)).map(TermClause::CreatedBy),
             CreationDate(dt) => {
                 Py::new(py, CreationDateClause::new(*dt)).map(TermClause::CreationDate)
             }
@@ -466,10 +472,7 @@ pub struct DefClause {
 
 impl DefClause {
     pub fn new(definition: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
-        Self {
-            definition,
-            xrefs,
-        }
+        Self { definition, xrefs }
     }
 }
 
@@ -758,9 +761,9 @@ impl Display for SynonymClause {
 
 impl IntoPy<fastobo::ast::TermClause> for SynonymClause {
     fn into_py(self, py: Python) -> fastobo::ast::TermClause {
-        fastobo::ast::TermClause::Synonym(
-            Box::new(self.synonym.as_ref(py).borrow().clone_py(py).into_py(py))
-        )
+        fastobo::ast::TermClause::Synonym(Box::new(
+            self.synonym.as_ref(py).borrow().clone_py(py).into_py(py),
+        ))
     }
 }
 
@@ -851,9 +854,9 @@ impl From<Py<Xref>> for XrefClause {
 
 impl IntoPy<fastobo::ast::TermClause> for XrefClause {
     fn into_py(self, py: Python) -> fastobo::ast::TermClause {
-        fastobo::ast::TermClause::Xref(
-            Box::new(self.xref.as_ref(py).borrow().clone_py(py).into_py(py))
-        )
+        fastobo::ast::TermClause::Xref(Box::new(
+            self.xref.as_ref(py).borrow().clone_py(py).into_py(py),
+        ))
     }
 }
 
@@ -1181,10 +1184,7 @@ pub struct IntersectionOfClause {
 
 impl IntersectionOfClause {
     pub fn new(typedef: Option<Ident>, term: Ident) -> Self {
-        Self {
-            typedef,
-            term,
-        }
+        Self { typedef, term }
     }
 }
 
@@ -1342,7 +1342,6 @@ impl PyObjectProtocol for UnionOfClause {
 }
 
 // --- EquivalentTo ----------------------------------------------------------
-
 
 /// EquivalentToClause(term)
 /// --
@@ -1541,11 +1540,11 @@ impl Display for RelationshipClause {
     }
 }
 
-impl IntoPy<fastobo::ast::TermClause> for RelationshipClause{
+impl IntoPy<fastobo::ast::TermClause> for RelationshipClause {
     fn into_py(self, py: Python) -> fastobo::ast::TermClause {
         ast::TermClause::Relationship(
             Box::new(self.typedef.into_py(py)),
-            Box::new(self.term.into_py(py))
+            Box::new(self.term.into_py(py)),
         )
     }
 }
@@ -1908,7 +1907,8 @@ impl PyObjectProtocol for CreatedByClause {
 /// A clause declaring the date and time a term was created.
 ///
 /// Arguments:
-///     date (~datetime.datetime): the date and time this term was created.
+///     date (~datetime.datetime or datetime.date): the date, or date and
+///         time, when this term was created.
 ///
 /// Warning:
 ///     The timezone of the `datetime` will only be extracted down to the
@@ -1920,11 +1920,11 @@ impl PyObjectProtocol for CreatedByClause {
 #[derive(Clone, ClonePy, Debug, FinalClass)]
 #[base(BaseTermClause)]
 pub struct CreationDateClause {
-    date: fastobo::ast::IsoDateTime,
+    date: fastobo::ast::CreationDate,
 }
 
 impl CreationDateClause {
-    pub fn new(date: fastobo::ast::IsoDateTime) -> Self {
+    pub fn new(date: fastobo::ast::CreationDate) -> Self {
         Self { date }
     }
 }
@@ -1950,21 +1950,49 @@ impl IntoPy<fastobo::ast::TermClause> for CreationDateClause {
 #[pymethods]
 impl CreationDateClause {
     #[new]
-    fn __init__(datetime: &PyDateTime) -> PyResult<PyClassInitializer<Self>> {
-        datetime_to_isodate(datetime.py(), datetime)
-            .map(|date| CreationDateClause { date })
-            .map(Into::into)
+    fn __init__(date: &PyDateTime) -> PyResult<PyClassInitializer<Self>> {
+        let py = date.py();
+        if let Ok(d) = date.cast_as::<PyDate>() {
+            let date = date_to_isodate(py, d).map(From::from)?;
+            Ok(CreationDateClause::new(date).into())
+        } else {
+            match date.cast_as::<PyDateTime>() {
+                Err(e) => {
+                    raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
+                }
+                Ok(dt) => {
+                    let date = datetime_to_isodatetime(py, dt).map(From::from)?;
+                    Ok(CreationDateClause::new(date).into())
+                }
+            }
+        }
     }
 
     #[getter]
     /// `datetime.datetime`: the date and time this term was created.
-    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDateTime> {
-        isodate_to_datetime(py, &self.date)
+    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
+        use fastobo::ast::CreationDate::*;
+        match &self.date {
+            DateTime(dt) => Ok(isodatetime_to_datetime(py, dt)?.to_object(py)),
+            Date(d) => Ok(isodate_to_date(py, d)?.to_object(py)),
+        }
     }
 
     #[setter]
-    fn set_date(&mut self, datetime: &PyDateTime) -> PyResult<()> {
-        self.date = datetime_to_isodate(datetime.py(), datetime)?;
+    fn set_date(&mut self, datetime: &PyAny) -> PyResult<()> {
+        let py = datetime.py();
+        if let Ok(d) = datetime.cast_as::<PyDate>() {
+            self.date = From::from(date_to_isodate(py, d)?);
+        } else {
+            match datetime.cast_as::<PyDateTime>() {
+                Err(e) => {
+                    raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
+                }
+                Ok(dt) => {
+                    self.date = From::from(datetime_to_isodatetime(py, dt)?);
+                }
+            }
+        }
         Ok(())
     }
 
@@ -1983,7 +2011,8 @@ impl PyObjectProtocol for CreationDateClause {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
-        self.get_date(py).and_then(|dt| fmt.call_method1(py, "format", (dt,)))
+        self.get_date(py)
+            .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
     }
 
     fn __str__(&self) -> PyResult<String> {

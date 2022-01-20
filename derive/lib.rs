@@ -9,9 +9,9 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use syn::parse_macro_input;
 use syn::parse_quote;
 use syn::spanned::Spanned;
-use syn::parse_macro_input;
 
 // ---
 
@@ -197,9 +197,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             path.segments.iter().next().unwrap().ident.span(),
         );
 
-        variants.push(
-            quote!(#lit => ob.extract::<pyo3::Py<#path>>().map(#wrapped::#name))
-        );
+        variants.push(quote!(#lit => ob.extract::<pyo3::Py<#path>>().map(#wrapped::#name)));
     }
 
     let meta = ast
@@ -300,13 +298,14 @@ pub fn listlike(attr: TokenStream, input: TokenStream) -> TokenStream {
         })
         .filter_map(|m| match m {
             syn::Meta::NameValue(nv) => Some(nv),
-            _ => None
+            _ => None,
         })
         .find(|nv| nv.path.get_ident() == Some(&syn::Ident::new("field", Span::call_site())))
         .expect("#[pylist] requires a `field` argument")
         .lit
     {
-        s.parse().expect("`field` argument of #[pylist] is not a valid identifier")
+        s.parse()
+            .expect("`field` argument of #[pylist] is not a valid identifier")
     } else {
         panic!("`field` argument of #[pylist] must be a string");
     };
@@ -318,13 +317,14 @@ pub fn listlike(attr: TokenStream, input: TokenStream) -> TokenStream {
         })
         .filter_map(|m| match m {
             syn::Meta::NameValue(nv) => Some(nv),
-            _ => None
+            _ => None,
         })
         .find(|nv| nv.path.get_ident() == Some(&syn::Ident::new("type", Span::call_site())))
         .expect("#[pylist] requires a `type` argument")
         .lit
     {
-        s.parse().expect("`type` argument of #[pylist] is not a valid type")
+        s.parse()
+            .expect("`type` argument of #[pylist] is not a valid type")
     } else {
         panic!("`type` argument of #[pylist] must be a string");
     };
@@ -334,7 +334,11 @@ pub fn listlike(attr: TokenStream, input: TokenStream) -> TokenStream {
     TokenStream::from(listlike_impl_methods(&field, &ty, ast))
 }
 
-fn listlike_impl_methods(field: &syn::Ident, ty: &syn::Type, mut imp: syn::ItemImpl) -> TokenStream2 {
+fn listlike_impl_methods(
+    field: &syn::Ident,
+    ty: &syn::Type,
+    mut imp: syn::ItemImpl,
+) -> TokenStream2 {
     imp.items.push(parse_quote! {
         /// Append object to the end of the list.
         ///
@@ -441,7 +445,6 @@ fn listlike_impl_methods(field: &syn::Ident, ty: &syn::Type, mut imp: syn::ItemI
     quote!(#imp)
 }
 
-
 // ---
 
 #[proc_macro_derive(FinalClass, attributes(base))]
@@ -485,7 +488,6 @@ fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> Toke
         }
     }
 }
-
 
 // ---
 

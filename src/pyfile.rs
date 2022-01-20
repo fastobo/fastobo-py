@@ -15,14 +15,14 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use pyo3::AsPyPointer;
 use pyo3::PyDowncastError;
-use pyo3::PyObject;
 use pyo3::PyNativeType;
+use pyo3::PyObject;
 
 // ---------------------------------------------------------------------------
 
 #[macro_export]
 macro_rules! transmute_file_error {
-    ($self:ident, $e:ident, $msg:expr, $py:expr) => ({
+    ($self:ident, $e:ident, $msg:expr, $py:expr) => {{
         // Attempt to transmute the Python OSError to an actual
         // Rust `std::io::Error` using `from_raw_os_error`.
         if $e.is_instance::<PyOSError>($py) {
@@ -38,7 +38,7 @@ macro_rules! transmute_file_error {
         // generic Rust error instead.
         $e.restore($py);
         Err(IoError::new(std::io::ErrorKind::Other, $msg))
-    });
+    }};
 }
 
 // ---------------------------------------------------------------------------
@@ -55,7 +55,10 @@ impl<'p> PyFileRead<'p> {
             Ok(PyFileRead { file })
         } else {
             let ty = res.get_type().name()?.to_string();
-            Err(PyTypeError::new_err(format!("expected bytes, found {}", ty)))
+            Err(PyTypeError::new_err(format!(
+                "expected bytes, found {}",
+                ty
+            )))
         }
     }
 }
@@ -80,9 +83,7 @@ impl<'p> Read for PyFileRead<'p> {
                 }
             }
             Err(e) => {
-                transmute_file_error!(
-                    self, e, "read method failed", self.file.py()
-                )
+                transmute_file_error!(self, e, "read method failed", self.file.py())
             }
         }
     }
@@ -121,9 +122,7 @@ impl<'p> Write for PyFileWrite<'p> {
                 }
             }
             Err(e) => {
-                transmute_file_error!(
-                    self, e, "write method failed", self.file.py()
-                )
+                transmute_file_error!(self, e, "write method failed", self.file.py())
             }
         }
     }
@@ -132,9 +131,7 @@ impl<'p> Write for PyFileWrite<'p> {
         match self.file.call_method0("flush") {
             Ok(_) => Ok(()),
             Err(e) => {
-                transmute_file_error!(
-                    self, e, "flush method failed", self.file.py()
-                )
+                transmute_file_error!(self, e, "flush method failed", self.file.py())
             }
         }
     }
@@ -156,7 +153,10 @@ impl PyFileGILRead {
             })
         } else {
             let ty = res.get_type().name()?.to_string();
-            Err(PyTypeError::new_err(format!("expected bytes, found {}", ty)))
+            Err(PyTypeError::new_err(format!(
+                "expected bytes, found {}",
+                ty
+            )))
         }
     }
 
@@ -187,7 +187,7 @@ impl Read for PyFileGILRead {
                     ))
                 }
             }
-            Err(e) => transmute_file_error!(self, e, "read method failed", py)
+            Err(e) => transmute_file_error!(self, e, "read method failed", py),
         }
     }
 }

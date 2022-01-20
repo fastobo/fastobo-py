@@ -28,17 +28,17 @@ use pyo3::PyTypeInfo;
 use fastobo::ast as obo;
 use fastobo::parser::Parser;
 use fastobo::visit::VisitMut;
+use fastobo_graphs::model::GraphDocument;
 use fastobo_graphs::FromGraph;
 use fastobo_graphs::IntoGraph;
-use fastobo_graphs::model::GraphDocument;
 
-use crate::raise;
 use crate::error::Error;
 use crate::error::GraphError;
 use crate::iter::FrameReader;
 use crate::iter::InternalParser;
 use crate::pyfile::PyFileRead;
 use crate::pyfile::PyFileWrite;
+use crate::raise;
 use crate::utils::ClonePy;
 
 // ---------------------------------------------------------------------------
@@ -54,8 +54,8 @@ pub mod term;
 pub mod typedef;
 pub mod xref;
 
-use self::doc::OboDoc;
 use self::doc::EntityFrame;
+use self::doc::OboDoc;
 use super::built;
 
 // --- Module export ---------------------------------------------------------
@@ -116,7 +116,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> list(reader)
     ///     [TermFrame(PrefixedIdent('MS', '1000001')), ...]
     ///
-    #[pyfn(m, ordered="true", threads="0")]
+    #[pyfn(m, ordered = "true", threads = "0")]
     #[pyo3(name = "iter", text_signature = "(fh, ordered=True, threads=0)")]
     fn iter(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<FrameReader> {
         if let Ok(s) = fh.cast_as::<PyString>() {
@@ -167,7 +167,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc.header[3]
     ///     SubsetdefClause(UnprefixedIdent('Angiosperm'), 'Term for angiosperms')
     ///
-    #[pyfn(m, ordered="true", threads="0")]
+    #[pyfn(m, ordered = "true", threads = "0")]
     #[pyo3(name = "load", text_signature = "(fh, threads=0)")]
     fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         // extract either a path or a file-handle from the arguments
@@ -216,7 +216,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             Err(e) => match &path {
                 Some(p) => Err(Error::from(e).with_path(p).into()),
                 None => Err(Error::from(e).into()),
-            }
+            },
         }?;
 
         // read the rest while transforming it to Python
@@ -232,7 +232,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             Err(e) => match &path {
                 Some(p) => Err(Error::from(e).with_path(p).into()),
                 None => Err(Error::from(e).into()),
-            }
+            },
         }
     }
 
@@ -270,7 +270,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc[0][0]
     ///     NameClause('test item')
     ///
-    #[pyfn(m, ordered="true", threads="0")]
+    #[pyfn(m, ordered = "true", threads = "0")]
     #[pyo3(name = "loads", text_signature = "(document)")]
     fn loads(py: Python, document: &PyString, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         let cursor = std::io::Cursor::new(document.to_str()?);
@@ -334,19 +334,20 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             // Argument is not a string, check if it is a file-handle.
             let mut f = match PyFileRead::from_ref(fh) {
                 Ok(f) => f,
-                Err(e) => raise!(py, PyTypeError("expected path or binary file handle") from e)
+                Err(e) => raise!(py, PyTypeError("expected path or binary file handle") from e),
             };
             // Extract the graph
             match fastobo_graphs::from_reader(&mut f) {
                 Ok(doc) => doc,
                 Err(e) if PyErr::occurred(py) => return Err(PyErr::fetch(py)),
-                Err(e) => return Err(GraphError::from(e).into())
+                Err(e) => return Err(GraphError::from(e).into()),
             }
         };
 
         // Convert the graph to an OBO document
         let graph = doc.graphs.into_iter().next().unwrap();
-        let doc = py.allow_threads(|| obo::OboDoc::from_graph(graph))
+        let doc = py
+            .allow_threads(|| obo::OboDoc::from_graph(graph))
             .map_err(GraphError::from)?;
 
         // Convert the OBO document to a Python `OboDoc` class
@@ -381,7 +382,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
         // Convert OBO document to an OBO Graph document.
         let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
-        let graph = py.allow_threads(|| doc.into_graph())
+        let graph = py
+            .allow_threads(|| doc.into_graph())
             .map_err(|e| PyErr::from(GraphError::from(e)))?;
 
         // Write the document

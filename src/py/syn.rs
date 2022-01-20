@@ -76,14 +76,10 @@ impl FromStr for SynonymScope {
             "BROAD" => Ok(Self::new(fastobo::ast::SynonymScope::Broad)),
             "NARROW" => Ok(Self::new(fastobo::ast::SynonymScope::Narrow)),
             "RELATED" => Ok(Self::new(fastobo::ast::SynonymScope::Related)),
-            invalid => {
-                Err(PyValueError::new_err(
-                    format!(
-                        "expected 'EXACT', 'BROAD', 'NARROW' or 'RELATED', found {:?}",
-                        invalid
-                    )
-                ))
-            }
+            invalid => Err(PyValueError::new_err(format!(
+                "expected 'EXACT', 'BROAD', 'NARROW' or 'RELATED', found {:?}",
+                invalid
+            ))),
         }
     }
 }
@@ -144,10 +140,8 @@ impl IntoPy<Synonym> for fastobo::ast::Synonym {
             desc: std::mem::take(self.description_mut()),
             scope: SynonymScope::new(self.scope().clone()),
             ty: self.ty().map(|id| id.clone().into_py(py)),
-            xrefs: Py::new(
-                py,
-                std::mem::take(self.xrefs_mut()).into_py(py),
-            ).expect("failed allocating memory on Python heap")
+            xrefs: Py::new(py, std::mem::take(self.xrefs_mut()).into_py(py))
+                .expect("failed allocating memory on Python heap"),
         }
     }
 }
@@ -158,20 +152,19 @@ impl IntoPy<fastobo::ast::Synonym> for Synonym {
             self.desc,
             self.scope.inner,
             self.ty.map(|ty| ty.into_py(py)),
-            (&*self.xrefs.as_ref(py).borrow()).into_py(py)
+            (&*self.xrefs.as_ref(py).borrow()).into_py(py),
         )
     }
 }
 
 #[pymethods]
 impl Synonym {
-
     #[new]
     pub fn __init__(
         desc: String,
         scope: &str,
         ty: Option<Ident>,
-        xrefs: Option<&PyAny>
+        xrefs: Option<&PyAny>,
     ) -> PyResult<Self> {
         let gil = Python::acquire_gil();
         let py = gil.python();

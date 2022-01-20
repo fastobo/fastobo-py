@@ -20,9 +20,9 @@ use fastobo::ast;
 use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use super::clause::TermClause;
+use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::FinalClass;
-use crate::utils::AbstractClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.term")]
 #[derive(Debug, FinalClass)]
@@ -66,8 +66,7 @@ impl IntoPy<TermFrame> for fastobo::ast::TermFrame {
     fn into_py(self, py: Python) -> TermFrame {
         TermFrame::with_clauses(
             self.id().as_ref().clone().into_py(py),
-            self
-                .into_iter()
+            self.into_iter()
                 .map(|line| line.into_inner().into_py(py))
                 .collect(),
         )
@@ -78,8 +77,7 @@ impl IntoPy<fastobo::ast::TermFrame> for TermFrame {
     fn into_py(self, py: Python) -> fastobo::ast::TermFrame {
         fastobo::ast::TermFrame::with_clauses(
             fastobo::ast::ClassIdent::new(self.id.into_py(py)),
-            self
-                .clauses
+            self.clauses
                 .iter()
                 .map(|f| f.into_py(py))
                 .map(|c| fastobo::ast::Line::new().and_inner(c))

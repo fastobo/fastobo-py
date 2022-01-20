@@ -11,9 +11,9 @@ use pyo3::exceptions::PyIndexError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
+use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::types::PyIterator;
 use pyo3::PyGCProtocol;
 use pyo3::PyNativeType;
 use pyo3::PyObjectProtocol;
@@ -28,9 +28,9 @@ use crate::utils::ClonePy;
 
 use super::abc::AbstractFrame;
 use super::header::frame::HeaderFrame;
+use super::instance::frame::InstanceFrame;
 use super::term::frame::TermFrame;
 use super::typedef::frame::TypedefFrame;
-use super::instance::frame::InstanceFrame;
 
 // --- Module export ---------------------------------------------------------
 
@@ -63,7 +63,7 @@ impl IntoPy<EntityFrame> for fastobo::ast::EntityFrame {
             }
             fastobo::ast::EntityFrame::Instance(frame) => {
                 Py::new(py, frame.into_py(py)).map(EntityFrame::Instance)
-            },
+            }
         }
         .expect("could not allocate on Python heap")
     }
@@ -108,10 +108,7 @@ impl OboDoc {
     }
 
     pub fn with_entities(header: Py<HeaderFrame>, entities: Vec<EntityFrame>) -> Self {
-        Self {
-            header,
-            entities
-        }
+        Self { header, entities }
     }
 }
 
@@ -142,8 +139,7 @@ impl IntoPy<OboDoc> for fastobo::ast::OboDoc {
             .map(|frame| <fastobo::ast::EntityFrame as IntoPy<EntityFrame>>::into_py(frame, py))
             .collect();
 
-        let header = Py::new(py,h)
-            .expect("could not move header to Python heap");
+        let header = Py::new(py, h).expect("could not move header to Python heap");
 
         OboDoc { header, entities }
     }
@@ -154,7 +150,9 @@ impl IntoPy<fastobo::ast::OboDoc> for OboDoc {
         let header: HeaderFrame = self.header.as_ref(py).borrow().clone_py(py);
         self.entities
             .iter()
-            .map(|frame| <EntityFrame as IntoPy<fastobo::ast::EntityFrame>>::into_py(frame.clone_py(py), py))
+            .map(|frame| {
+                <EntityFrame as IntoPy<fastobo::ast::EntityFrame>>::into_py(frame.clone_py(py), py)
+            })
             .collect::<fastobo::ast::OboDoc>()
             .and_header(header.into_py(py))
     }

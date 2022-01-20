@@ -243,10 +243,7 @@ impl IntoPy<fastobo::ast::XrefList> for &XrefList {
 
 impl ToPyObject for XrefList {
     fn to_object(&self, py: Python) -> PyObject {
-        let list = self.xrefs
-            .iter()
-            .map(|xref| xref.clone_py(py))
-            .collect();
+        let list = self.xrefs.iter().map(|xref| xref.clone_py(py)).collect();
         IntoPy::into_py(XrefList::new(list), py)
     }
 }
@@ -276,7 +273,6 @@ impl PyObjectProtocol for XrefList {
             let fmt = PyString::new(py, "XrefList({!r})").to_object(py);
             fmt.call_method1(py, "format", (&self.xrefs.to_object(py),))
         }
-
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -306,7 +302,10 @@ impl PySequenceProtocol for XrefList {
     fn __contains__(&self, item: &PyAny) -> PyResult<bool> {
         if let Ok(xref) = item.extract::<Py<Xref>>() {
             let py = item.py();
-            Ok(self.xrefs.iter().any(|x| *x.as_ref(py).borrow() == *xref.as_ref(py).borrow()))
+            Ok(self
+                .xrefs
+                .iter()
+                .any(|x| *x.as_ref(py).borrow() == *xref.as_ref(py).borrow()))
         } else {
             let ty = item.get_type().name()?;
             let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);

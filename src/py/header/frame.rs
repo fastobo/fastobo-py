@@ -20,9 +20,9 @@ use pyo3::PyTypeInfo;
 use super::super::abc::AbstractFrame;
 use super::clause::BaseHeaderClause;
 use super::clause::HeaderClause;
+use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::FinalClass;
-use crate::utils::AbstractClass;
 
 #[pyclass(extends=AbstractFrame, module="fastobo.header")]
 #[derive(Debug, FinalClass)]
@@ -60,17 +60,13 @@ impl FromIterator<HeaderClause> for HeaderFrame {
 
 impl IntoPy<HeaderFrame> for fastobo::ast::HeaderFrame {
     fn into_py(self, py: Python) -> HeaderFrame {
-        self
-            .into_iter()
-            .map(|clause| clause.into_py(py))
-            .collect()
+        self.into_iter().map(|clause| clause.into_py(py)).collect()
     }
 }
 
 impl IntoPy<obo::HeaderFrame> for HeaderFrame {
     fn into_py(self, py: Python) -> obo::HeaderFrame {
-        self
-            .clauses
+        self.clauses
             .into_iter()
             .map(|clause| clause.into_py(py))
             .collect()
@@ -157,8 +153,7 @@ impl PySequenceProtocol for HeaderFrame {
             new_clauses.push(HeaderClause::extract(item?)?);
         }
 
-        let init = PyClassInitializer::from(AbstractFrame {})
-            .add_subclass(Self::new(new_clauses));
+        let init = PyClassInitializer::from(AbstractFrame {}).add_subclass(Self::new(new_clauses));
         Py::new(py, init)
     }
 }

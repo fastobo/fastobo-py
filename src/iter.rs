@@ -6,28 +6,28 @@ use std::io::BufReader;
 use std::io::Error as IoError;
 use std::io::Read;
 use std::iter::Iterator;
-use std::path::Path;
-use std::path::PathBuf;
 use std::num::NonZeroUsize;
 use std::ops::Deref;
 use std::ops::DerefMut;
+use std::path::Path;
+use std::path::PathBuf;
 
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::PyString;
 use pyo3::types::PyBytes;
-use pyo3::PyIterProtocol;
-use pyo3::PyObjectProtocol;
+use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyGCProtocol;
+use pyo3::PyIterProtocol;
+use pyo3::PyObjectProtocol;
 
 use fastobo::parser::Parser;
-use fastobo::parser::ThreadedParser;
 use fastobo::parser::SequentialParser;
+use fastobo::parser::ThreadedParser;
 
 use crate::error::Error;
-use crate::py::header::frame::HeaderFrame;
 use crate::py::doc::EntityFrame;
+use crate::py::header::frame::HeaderFrame;
 use crate::pyfile::PyFileGILRead;
 use crate::transmute_file_error;
 use crate::utils::ClonePy;
@@ -45,10 +45,8 @@ impl Handle {
         let gil = Python::acquire_gil();
         let py = gil.python();
         match self {
-            Handle::FsFile(_, path) =>  path.display().to_string().to_object(py),
-            Handle::PyFile(f) => {
-                f.file().lock().unwrap().to_object(py)
-            }
+            Handle::FsFile(_, path) => path.display().to_string().to_object(py),
+            Handle::PyFile(f) => f.file().lock().unwrap().to_object(py),
         }
     }
 }
@@ -83,13 +81,15 @@ impl<B: BufRead> InternalParser<B> {
         match n {
             0 => Ok(InternalParser::Threaded(ThreadedParser::new(stream))),
             1 => Ok(InternalParser::Sequential(SequentialParser::new(stream))),
-            n if n < 0 => {
-                Err(PyValueError::new_err("threads count must be positive or null"))
-            },
+            n if n < 0 => Err(PyValueError::new_err(
+                "threads count must be positive or null",
+            )),
             n => {
                 let t = std::num::NonZeroUsize::new(n as usize).unwrap();
-                Ok(InternalParser::Threaded(ThreadedParser::with_threads(stream, t)))
-            },
+                Ok(InternalParser::Threaded(ThreadedParser::with_threads(
+                    stream, t,
+                )))
+            }
         }
     }
 
@@ -244,7 +244,7 @@ impl PyIterProtocol for FrameReader {
                 let gil = Python::acquire_gil();
                 let entity = frame.into_entity_frame().unwrap();
                 Ok(Some(entity.into_py(gil.python())))
-            },
+            }
             Some(Err(e)) => {
                 let gil = Python::acquire_gil();
                 let py = gil.python();

@@ -126,10 +126,7 @@ impl From<fastobo::error::SyntaxError> for Error {
 
 impl From<fastobo::error::Error> for Error {
     fn from(err: fastobo::error::Error) -> Self {
-        Self {
-            err,
-            path: None
-        }
+        Self { err, path: None }
     }
 }
 
@@ -162,7 +159,7 @@ impl From<Error> for PyErr {
                 match ioerror.raw_os_error() {
                     Some(2) => PyFileNotFoundError::new_err((2, desc, error.path)),
                     Some(code) => PyOSError::new_err((code, desc, error.path)),
-                    None => PyOSError::new_err((desc,))
+                    None => PyOSError::new_err((desc,)),
                 }
             }
 
@@ -191,9 +188,7 @@ impl From<fastobo_graphs::error::Error> for GraphError {
 impl From<GraphError> for PyErr {
     fn from(err: GraphError) -> Self {
         match err.0 {
-            fastobo_graphs::error::Error::OboSyntaxError(error) => {
-                Error::from(error).into()
-            }
+            fastobo_graphs::error::Error::OboSyntaxError(error) => Error::from(error).into(),
             fastobo_graphs::error::Error::IOError(error) => {
                 let desc = error.to_string();
                 match error.raw_os_error() {

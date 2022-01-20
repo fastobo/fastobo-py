@@ -3,11 +3,11 @@ use std::ops::Deref;
 use pyo3::ffi::PyObject;
 use pyo3::AsPyPointer;
 use pyo3::Py;
+use pyo3::PyClass;
+use pyo3::PyClassInitializer;
 use pyo3::PyRef;
 use pyo3::PyTypeInfo;
 use pyo3::Python;
-use pyo3::PyClass;
-use pyo3::PyClassInitializer;
 
 // ---
 

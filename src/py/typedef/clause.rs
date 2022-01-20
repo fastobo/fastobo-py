@@ -5,8 +5,10 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 use pyo3::class::basic::CompareOp;
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
+use pyo3::types::PyDate;
 use pyo3::types::PyDateTime;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
@@ -22,10 +24,13 @@ use super::super::pv::PropertyValue;
 use super::super::syn::Synonym;
 use super::super::xref::Xref;
 use super::super::xref::XrefList;
-use crate::date::datetime_to_isodate;
-use crate::date::isodate_to_datetime;
-use crate::utils::ClonePy;
+use crate::date::date_to_isodate;
+use crate::date::datetime_to_isodatetime;
+use crate::date::isodate_to_date;
+use crate::date::isodatetime_to_datetime;
+use crate::raise;
 use crate::utils::AbstractClass;
+use crate::utils::ClonePy;
 use crate::utils::FinalClass;
 
 // --- Conversion Wrapper ----------------------------------------------------
@@ -96,26 +101,24 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
             }
             Comment(c) => Py::new(py, CommentClause::new(*c)).map(TypedefClause::Comment),
             Subset(s) => Py::new(py, SubsetClause::new(s.into_py(py))).map(TypedefClause::Subset),
-            Synonym(s) => {
-                Py::new(py, s.into_py(py))
-                    .map(SynonymClause::new)
-                    .and_then(|clause| Py::new(py, clause))
-                    .map(TypedefClause::Synonym)
-            }
-            Xref(x) => {
-                Py::new(py, x.into_py(py))
-                    .map(XrefClause::new)
-                    .and_then(|clause| Py::new(py, clause))
-                    .map(TypedefClause::Xref)
-            }
-            PropertyValue(pv) => {
-                Py::new(py, PropertyValueClause::new(pv.into_py(py))).map(TypedefClause::PropertyValue)
-            }
+            Synonym(s) => Py::new(py, s.into_py(py))
+                .map(SynonymClause::new)
+                .and_then(|clause| Py::new(py, clause))
+                .map(TypedefClause::Synonym),
+            Xref(x) => Py::new(py, x.into_py(py))
+                .map(XrefClause::new)
+                .and_then(|clause| Py::new(py, clause))
+                .map(TypedefClause::Xref),
+            PropertyValue(pv) => Py::new(py, PropertyValueClause::new(pv.into_py(py)))
+                .map(TypedefClause::PropertyValue),
             Domain(id) => Py::new(py, DomainClause::new(id.into_py(py))).map(TypedefClause::Domain),
             Range(id) => Py::new(py, RangeClause::new(id.into_py(py))).map(TypedefClause::Range),
             Builtin(b) => Py::new(py, BuiltinClause::new(b)).map(TypedefClause::Builtin),
-            HoldsOverChain(r1, r2) => Py::new(py, HoldsOverChainClause::new(r1.into_py(py), r2.into_py(py)))
-                .map(TypedefClause::HoldsOverChain),
+            HoldsOverChain(r1, r2) => Py::new(
+                py,
+                HoldsOverChainClause::new(r1.into_py(py), r2.into_py(py)),
+            )
+            .map(TypedefClause::HoldsOverChain),
             IsAntiSymmetric(b) => {
                 Py::new(py, IsAntiSymmetricClause::new(b)).map(TypedefClause::IsAntiSymmetric)
             }
@@ -138,21 +141,22 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
             IsInverseFunctional(b) => Py::new(py, IsInverseFunctionalClause::new(b))
                 .map(TypedefClause::IsInverseFunctional),
             IsA(id) => Py::new(py, IsAClause::new(id.into_py(py))).map(TypedefClause::IsA),
-            IntersectionOf(r) => {
-                Py::new(py, IntersectionOfClause::new(r.into_py(py))).map(TypedefClause::IntersectionOf)
+            IntersectionOf(r) => Py::new(py, IntersectionOfClause::new(r.into_py(py)))
+                .map(TypedefClause::IntersectionOf),
+            UnionOf(cls) => {
+                Py::new(py, UnionOfClause::new(cls.into_py(py))).map(TypedefClause::UnionOf)
             }
-            UnionOf(cls) => Py::new(py, UnionOfClause::new(cls.into_py(py))).map(TypedefClause::UnionOf),
-            EquivalentTo(cls) => {
-                Py::new(py, EquivalentToClause::new(cls.into_py(py))).map(TypedefClause::EquivalentTo)
-            }
-            DisjointFrom(cls) => {
-                Py::new(py, DisjointFromClause::new(cls.into_py(py))).map(TypedefClause::DisjointFrom)
-            }
-            TransitiveOver(r) => {
-                Py::new(py, TransitiveOverClause::new(r.into_py(py))).map(TypedefClause::TransitiveOver)
-            }
-            EquivalentToChain(r1, r2) => Py::new(py, EquivalentToChainClause::new(r1.into_py(py), r2.into_py(py)))
-                .map(TypedefClause::EquivalentToChain),
+            EquivalentTo(cls) => Py::new(py, EquivalentToClause::new(cls.into_py(py)))
+                .map(TypedefClause::EquivalentTo),
+            DisjointFrom(cls) => Py::new(py, DisjointFromClause::new(cls.into_py(py)))
+                .map(TypedefClause::DisjointFrom),
+            TransitiveOver(r) => Py::new(py, TransitiveOverClause::new(r.into_py(py)))
+                .map(TypedefClause::TransitiveOver),
+            EquivalentToChain(r1, r2) => Py::new(
+                py,
+                EquivalentToChainClause::new(r1.into_py(py), r2.into_py(py)),
+            )
+            .map(TypedefClause::EquivalentToChain),
             DisjointOver(r) => {
                 Py::new(py, DisjointOverClause::new(r.into_py(py))).map(TypedefClause::DisjointOver)
             }
@@ -160,23 +164,26 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
                 Py::new(py, InverseOfClause::new(r.into_py(py))).map(TypedefClause::InverseOf)
             }
             Relationship(r, id) => {
-                Py::new(py, RelationshipClause::new(r.into_py(py), id.into_py(py))).map(TypedefClause::Relationship)
+                Py::new(py, RelationshipClause::new(r.into_py(py), id.into_py(py)))
+                    .map(TypedefClause::Relationship)
             }
-            IsObsolete(b) => {
-                Py::new(py, IsObsoleteClause::new(b)).map(TypedefClause::IsObsolete)
-            }
+            IsObsolete(b) => Py::new(py, IsObsoleteClause::new(b)).map(TypedefClause::IsObsolete),
             ReplacedBy(id) => {
                 Py::new(py, ReplacedByClause::new(id.into_py(py))).map(TypedefClause::ReplacedBy)
             }
-            Consider(id) => Py::new(py, ConsiderClause::new(id.into_py(py))).map(TypedefClause::Consider),
+            Consider(id) => {
+                Py::new(py, ConsiderClause::new(id.into_py(py))).map(TypedefClause::Consider)
+            }
             CreatedBy(name) => {
                 Py::new(py, CreatedByClause::new(*name)).map(TypedefClause::CreatedBy)
             }
             CreationDate(dt) => {
                 Py::new(py, CreationDateClause::new(*dt)).map(TypedefClause::CreationDate)
             }
-            ExpandAssertionTo(d, xrefs) => Py::new(py, ExpandAssertionToClause::new(*d, xrefs.into_py(py)))
-                .map(TypedefClause::ExpandAssertionTo),
+            ExpandAssertionTo(d, xrefs) => {
+                Py::new(py, ExpandAssertionToClause::new(*d, xrefs.into_py(py)))
+                    .map(TypedefClause::ExpandAssertionTo)
+            }
             ExpandExpressionTo(d, xrefs) => {
                 Py::new(py, ExpandExpressionToClause::new(*d, xrefs.into_py(py)))
                     .map(TypedefClause::ExpandExpressionTo)
@@ -570,7 +577,8 @@ impl DefClause {
         let py = gil.python();
 
         let def = fastobo::ast::QuotedString::new(definition);
-        let list = xrefs.map(|x| XrefList::collect(py, x))
+        let list = xrefs
+            .map(|x| XrefList::collect(py, x))
             .transpose()?
             .unwrap_or_else(|| XrefList::new(Vec::new()));
 
@@ -817,9 +825,9 @@ impl Display for SynonymClause {
 
 impl IntoPy<fastobo::ast::TypedefClause> for SynonymClause {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
-        fastobo::ast::TypedefClause::Synonym(
-            Box::new(self.synonym.as_ref(py).borrow().clone_py(py).into_py(py))
-        )
+        fastobo::ast::TypedefClause::Synonym(Box::new(
+            self.synonym.as_ref(py).borrow().clone_py(py).into_py(py),
+        ))
     }
 }
 
@@ -904,9 +912,9 @@ impl From<Py<Xref>> for XrefClause {
 
 impl IntoPy<fastobo::ast::TypedefClause> for XrefClause {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
-        fastobo::ast::TypedefClause::Xref(
-            Box::new(self.xref.as_ref(py).borrow().clone_py(py).into_py(py))
-        )
+        fastobo::ast::TypedefClause::Xref(Box::new(
+            self.xref.as_ref(py).borrow().clone_py(py).into_py(py),
+        ))
     }
 }
 
@@ -2686,7 +2694,10 @@ impl Display for RelationshipClause {
 
 impl IntoPy<fastobo::ast::TypedefClause> for RelationshipClause {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
-        ast::TypedefClause::Relationship(Box::new(self.typedef.into_py(py)), Box::new(self.target.into_py(py)))
+        ast::TypedefClause::Relationship(
+            Box::new(self.typedef.into_py(py)),
+            Box::new(self.target.into_py(py)),
+        )
     }
 }
 
@@ -2945,7 +2956,6 @@ impl ConsiderClause {
     }
 }
 
-
 #[pyproto]
 impl PyObjectProtocol for ConsiderClause {
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -3047,7 +3057,8 @@ impl PyObjectProtocol for CreatedByClause {
 /// A clause declaring the date and time a typedef was created.
 ///
 /// Arguments:
-///     date (~datetime.datetime): the date and time this term was created.
+///     date (~datetime.datetime or datetime.date): the date, or date and
+///         time, when this typedef was created.
 ///
 /// Warning:
 ///     The timezone of the `datetime` will only be extracted down to the
@@ -3059,11 +3070,11 @@ impl PyObjectProtocol for CreatedByClause {
 #[derive(Clone, ClonePy, Debug, FinalClass)]
 #[base(BaseTypedefClause)]
 pub struct CreationDateClause {
-    date: fastobo::ast::IsoDateTime,
+    date: fastobo::ast::CreationDate,
 }
 
 impl CreationDateClause {
-    pub fn new(date: fastobo::ast::IsoDateTime) -> Self {
+    pub fn new(date: fastobo::ast::CreationDate) -> Self {
         Self { date }
     }
 }
@@ -3089,21 +3100,49 @@ impl IntoPy<fastobo::ast::TypedefClause> for CreationDateClause {
 #[pymethods]
 impl CreationDateClause {
     #[new]
-    fn __init__(datetime: &PyDateTime) -> PyResult<PyClassInitializer<Self>> {
-        datetime_to_isodate(datetime.py(), datetime)
-            .map(|date| CreationDateClause { date })
-            .map(Into::into)
+    fn __init__(datetime: &PyAny) -> PyResult<PyClassInitializer<Self>> {
+        let py = datetime.py();
+        if let Ok(d) = datetime.cast_as::<PyDate>() {
+            let date = date_to_isodate(py, d).map(From::from)?;
+            Ok(CreationDateClause::new(date).into())
+        } else {
+            match datetime.cast_as::<PyDateTime>() {
+                Err(e) => {
+                    raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
+                }
+                Ok(dt) => {
+                    let date = datetime_to_isodatetime(py, dt).map(From::from)?;
+                    Ok(CreationDateClause::new(date).into())
+                }
+            }
+        }
     }
 
     #[getter]
     /// `datetime.datetime`: the date and time this typedef was created.
-    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDateTime> {
-        isodate_to_datetime(py, &self.date)
+    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
+        use fastobo::ast::CreationDate::*;
+        match &self.date {
+            DateTime(dt) => Ok(isodatetime_to_datetime(py, dt)?.to_object(py)),
+            Date(d) => Ok(isodate_to_date(py, d)?.to_object(py)),
+        }
     }
 
     #[setter]
     fn set_date(&mut self, datetime: &PyDateTime) -> PyResult<()> {
-        self.date = datetime_to_isodate(datetime.py(), datetime)?;
+        let py = datetime.py();
+        if let Ok(d) = datetime.cast_as::<PyDate>() {
+            self.date = From::from(date_to_isodate(py, d)?);
+        } else {
+            match datetime.cast_as::<PyDateTime>() {
+                Err(e) => {
+                    raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
+                }
+                Ok(dt) => {
+                    self.date = From::from(datetime_to_isodatetime(py, dt)?);
+                }
+            }
+        }
         Ok(())
     }
 
@@ -3122,7 +3161,8 @@ impl PyObjectProtocol for CreationDateClause {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
-        self.get_date(py).and_then(|dt| fmt.call_method1(py, "format", (dt,)))
+        self.get_date(py)
+            .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -3152,7 +3192,7 @@ impl ExpandAssertionToClause {
     pub fn new(desc: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
         Self {
             definition: desc,
-            xrefs
+            xrefs,
         }
     }
 }
@@ -3179,7 +3219,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for ExpandAssertionToClause {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
         fastobo::ast::TypedefClause::ExpandAssertionTo(
             Box::new(self.definition),
-            Box::new(self.xrefs.into_py(py))
+            Box::new(self.xrefs.into_py(py)),
         )
     }
 }

@@ -15,9 +15,9 @@ use pyo3::PyTypeInfo;
 use fastobo::ast;
 
 use super::id::Ident;
+use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::FinalClass;
-use crate::utils::AbstractClass;
 
 // --- Module export ---------------------------------------------------------
 
@@ -68,12 +68,8 @@ impl IntoPy<PropertyValue> for fastobo::ast::PropertyValue {
 impl IntoPy<fastobo::ast::PropertyValue> for PropertyValue {
     fn into_py(self, py: Python) -> fastobo::ast::PropertyValue {
         match self {
-            PropertyValue::Literal(t) => {
-                t.as_ref(py).borrow().deref().clone_py(py).into_py(py)
-            }
-            PropertyValue::Resource(r) => {
-                r.as_ref(py).borrow().deref().clone_py(py).into_py(py)
-            }
+            PropertyValue::Literal(t) => t.as_ref(py).borrow().deref().clone_py(py).into_py(py),
+            PropertyValue::Resource(r) => r.as_ref(py).borrow().deref().clone_py(py).into_py(py),
         }
     }
 }
@@ -103,7 +99,11 @@ pub struct LiteralPropertyValue {
 
 impl LiteralPropertyValue {
     pub fn new(relation: Ident, value: fastobo::ast::QuotedString, datatype: Ident) -> Self {
-        LiteralPropertyValue { relation, value, datatype }
+        LiteralPropertyValue {
+            relation,
+            value,
+            datatype,
+        }
     }
 }
 
@@ -131,7 +131,7 @@ impl IntoPy<fastobo::ast::LiteralPropertyValue> for LiteralPropertyValue {
         fastobo::ast::LiteralPropertyValue::new(
             self.relation.into_py(py),
             self.value,
-            self.datatype.into_py(py)
+            self.datatype.into_py(py),
         )
     }
 }
@@ -242,10 +242,7 @@ pub struct ResourcePropertyValue {
 
 impl ResourcePropertyValue {
     pub fn new(relation: Ident, value: Ident) -> Self {
-        ResourcePropertyValue {
-            relation,
-            value,
-        }
+        ResourcePropertyValue { relation, value }
     }
 }
 

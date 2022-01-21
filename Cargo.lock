@@ -14,9 +14,9 @@ checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
 name = "blanket"
-version = "0.1.5"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f05883a5637c39941c00bda3e053be07ac107499d7bc6e849dbb3764f55d56f3"
+checksum = "7b04ce3d2372d05d1ef4ea3fdf427da6ae3c17ca06d688a107b5344836276bc3"
 dependencies = [
  "proc-macro2 1.0.27",
  "quote",
@@ -123,8 +123,18 @@ version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f2c43f534ea4b0b049015d00269734195e6d3f0f6635cb692251aca6f9f8b3c"
 dependencies = [
- "darling_core",
- "darling_macro",
+ "darling_core 0.12.4",
+ "darling_macro 0.12.4",
+]
+
+[[package]]
+name = "darling"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0d720b8683f8dd83c65155f0530560cba68cd2bf395f6513a483caee57ff7f4"
+dependencies = [
+ "darling_core 0.13.1",
+ "darling_macro 0.13.1",
 ]
 
 [[package]]
@@ -142,12 +152,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling_core"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a340f241d2ceed1deb47ae36c4144b2707ec7dd0b649f894cb39bb595986324"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2 1.0.27",
+ "quote",
+ "strsim",
+ "syn",
+]
+
+[[package]]
 name = "darling_macro"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29b5acf0dea37a7f66f7b25d2c5e93fd46f8f6968b1a5d7a3e02e97768afc95a"
 dependencies = [
- "darling_core",
+ "darling_core 0.12.4",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72c41b3b7352feb3211a0d743dc5700a4e3b60f51bd2b368892d1e0f9a95f44b"
+dependencies = [
+ "darling_core 0.13.1",
  "quote",
  "syn",
 ]
@@ -175,14 +210,33 @@ checksum = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
 
 [[package]]
 name = "fastobo"
-version = "0.13.1"
+version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7501c7e77bfc063fe08c41fb5d3c6898093e8977e4b5a8db8568b4ebc99f4e17"
+checksum = "cb929fa98b03875d2c5d4514c6f982c3e517a2ec2fc47322ec1599c1cf4d97d7"
 dependencies = [
  "blanket",
  "crossbeam-channel",
- "fastobo-derive-internal",
- "fastobo-syntax",
+ "fastobo-derive-internal 0.13.1",
+ "fastobo-syntax 0.6.2",
+ "lazy_static",
+ "memchr",
+ "num_cpus",
+ "ordered-float",
+ "pest",
+ "smartstring",
+ "thiserror",
+]
+
+[[package]]
+name = "fastobo"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82f81182904c656907b9a02d3ebff254d2273d1c45ce67889af477d4d95d4fb2"
+dependencies = [
+ "blanket",
+ "crossbeam-channel",
+ "fastobo-derive-internal 0.14.1",
+ "fastobo-syntax 0.7.1",
  "lazy_static",
  "memchr",
  "num_cpus",
@@ -198,8 +252,20 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e68bf262ac662e9532b49f0c71a92ef784bda94c0cec2ddf64d96a30d024aad1"
 dependencies = [
- "darling",
- "heck",
+ "darling 0.12.4",
+ "heck 0.3.3",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "fastobo-derive-internal"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebc79131e69b8d553d3fb84faae98ccb11ad0335baf4d3bc002bf12ba9994a2f"
+dependencies = [
+ "darling 0.13.1",
+ "heck 0.4.0",
  "quote",
  "syn",
 ]
@@ -210,7 +276,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1bc99e99aec3eba3ef9a29105d6e6d47cdda359043f2c7cf12f3426548c3e2f2"
 dependencies = [
- "fastobo",
+ "fastobo 0.13.2",
  "mashup",
  "serde",
  "serde_json",
@@ -223,7 +289,7 @@ name = "fastobo-py"
 version = "0.10.2"
 dependencies = [
  "built",
- "fastobo",
+ "fastobo 0.14.1",
  "fastobo-graphs",
  "fastobo-py-derive-internal",
  "lazy_static",
@@ -247,6 +313,16 @@ name = "fastobo-syntax"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "82baa32d8af195e89e664a96f93c0d07a39bff19b8520d4a6a318bedd836f1af"
+dependencies = [
+ "pest",
+ "pest_derive",
+]
+
+[[package]]
+name = "fastobo-syntax"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d04b7912718a8680ce3df286708a5cf78a1830771a47e5ef22668f083f99145f"
 dependencies = [
  "pest",
  "pest_derive",
@@ -285,6 +361,12 @@ checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
 dependencies = [
  "unicode-segmentation",
 ]
+
+[[package]]
+name = "heck"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 
 [[package]]
 name = "hermit-abi"

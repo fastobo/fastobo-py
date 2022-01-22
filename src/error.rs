@@ -13,6 +13,11 @@ use pyo3::PyErr;
 
 use fastobo::syntax::Rule;
 
+use crate::py::exceptions::SingleClauseError;
+use crate::py::exceptions::DuplicateClausesError;
+use crate::py::exceptions::MissingClauseError;
+use crate::py::exceptions::DisconnectedChannelError;
+
 // ---------------------------------------------------------------------------
 
 #[macro_export]
@@ -163,7 +168,30 @@ impl From<Error> for PyErr {
                 }
             }
 
-            other => PyRuntimeError::new_err(format!("{}", other)),
+            fastobo::error::Error::CardinalityError { id, inner } => {
+                let idstr = id.map(|ident| ident.to_string());
+                match inner {
+                    fastobo::error::CardinalityError::MissingClause { name } => {
+                        MissingClauseError::new_err((name, idstr))
+                    }
+                    fastobo::error::CardinalityError::DuplicateClauses { name } => {
+                        DuplicateClausesError::new_err((name, idstr))
+                    }
+                    fastobo::error::CardinalityError::SingleClause { name } => {
+                        SingleClauseError::new_err((name, idstr))
+                    }
+                }
+            }
+
+            fastobo::error::Error::ThreadingError { error } => {
+                match error {
+                    fastobo::error::ThreadingError::DisconnectedChannel => {
+                        DisconnectedChannelError::new_err(())
+                    }
+                }
+            }
+
+            // other => PyRuntimeError::new_err(format!("{}", other)),
         }
     }
 }

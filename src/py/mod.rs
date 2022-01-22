@@ -53,6 +53,7 @@ pub mod syn;
 pub mod term;
 pub mod typedef;
 pub mod xref;
+pub mod exceptions;
 
 use self::doc::EntityFrame;
 use self::doc::OboDoc;
@@ -73,6 +74,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
 
     add_submodule!(py, m, abc);
     add_submodule!(py, m, doc);
+    add_submodule!(py, m, exceptions);
     add_submodule!(py, m, header);
     add_submodule!(py, m, id);
     add_submodule!(py, m, instance);

@@ -12,6 +12,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::PyErr;
 
 use fastobo::syntax::Rule;
+use fastobo::ast as obo;
 
 use crate::py::exceptions::SingleClauseError;
 use crate::py::exceptions::DuplicateClausesError;
@@ -225,6 +226,33 @@ impl From<GraphError> for PyErr {
                 }
             }
             other => PyValueError::new_err(other.to_string()),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+
+/// A wrapper to convert `fastobo_graphs::error::Error` into a `PyErr`.
+pub struct OwlError(fastobo_owl::Error);
+
+impl From<fastobo_owl::Error> for OwlError {
+    fn from(e: fastobo_owl::Error) -> Self {
+        OwlError(e)
+    }
+}
+
+impl From<OwlError> for PyErr {
+    fn from(err: OwlError) -> Self {
+        match err.0 {
+            fastobo_owl::Error::Cardinality(error) => {
+                Error::from(fastobo::error::Error::CardinalityError {
+                    id: Some(obo::Ident::from(obo::UnprefixedIdent::new("header"))),
+                    inner: error,
+                }).into()
+            }
+            fastobo_owl::Error::Syntax(error) => {
+                Error::from(error).into()
+            }
         }
     }
 }

@@ -33,6 +33,12 @@ features = ["threading", "smartstring"]
 [dependencies.fastobo-graphs]
 version = "0.4.4"
 features = ["obo"]
+[dependencies.fastobo-owl]
+version = "0.1.2"
+[dependencies.horned-owl]
+version = "0.10.0"
+[dependencies.horned-functional]
+version = "0.3.3"
 [dependencies.fastobo-py-derive-internal]
 version = "0.10.1"
 path = "./derive"

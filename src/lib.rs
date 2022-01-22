@@ -10,6 +10,9 @@ extern crate pest;
 #[macro_use]
 extern crate fastobo_py_derive_internal;
 extern crate fastobo_graphs;
+extern crate fastobo_owl;
+extern crate horned_functional;
+extern crate horned_owl;
 
 #[macro_use]
 pub mod macros;

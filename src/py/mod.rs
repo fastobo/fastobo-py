@@ -7,6 +7,7 @@ use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::io::Write;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::string::ToString;
@@ -31,9 +32,14 @@ use fastobo::visit::VisitMut;
 use fastobo_graphs::model::GraphDocument;
 use fastobo_graphs::FromGraph;
 use fastobo_graphs::IntoGraph;
+use fastobo_owl::IntoOwl;
+use horned_owl::ontology::axiom_mapped::AxiomMappedOntology;
+use horned_functional::AsFunctional;
+use horned_functional::Context;
 
 use crate::error::Error;
 use crate::error::GraphError;
+use crate::error::OwlError;
 use crate::iter::FrameReader;
 use crate::iter::InternalParser;
 use crate::pyfile::PyFileRead;
@@ -409,6 +415,60 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
                 Err(e) => Err(PyErr::from(GraphError::from(e))),
             }
         }
+    }
+
+    /// Convert an OBO ontology to OWL and write it to the given handle.
+    ///
+    /// Arguments:
+    ///     fh (str or file-handle):Tthe path to a file, or a writable
+    ///         **binary** stream to write the serialized graph into.
+    ///         *A binary stream needs a* ``write(b)`` *method that accepts
+    ///         binary strings*.
+    ///     doc (`~fastobo.doc.OboDoc`): The OBO document to be converted
+    ///         into an OWL Ontology.
+    ///     format (`str`): The OWL format to serialize the converted OWL
+    ///         document into. Supports: ``ofn`` for Functional-style
+    ///         syntax.
+    ///
+    /// Raises:
+    ///     TypeError: when the argument have invalid types.
+    ///     ValueError: when the conversion to OWL fails.
+    ///     OSError: when an underlying OS error occurs.
+    ///     *other*: any exception raised by ``fh.read``.
+    ///
+    /// Example:
+    ///     Use ``fastobo`` to convert an OBO file into an OWL file:
+    ///
+    ///     >>> doc = fastobo.load("tests/data/plana.obo")
+    ///     >>> fastobo.dump_owl(doc, "tests/data/plana.ofn", format="ofn")
+    ///
+    #[pyfn(m, format = r#""ofn""#)]
+    #[pyo3(name = "dump_owl", text_signature = r#"(doc, fh, format="ofn")"#)]
+    fn dump_owl(py: Python, obj: &OboDoc, fh: &PyAny, format: &str) -> PyResult<()> {
+        // Convert OBO document to an OWL document.
+        let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
+        let prefixes = doc.prefixes();
+        let ont = doc.into_owl::<AxiomMappedOntology>().map_err(OwlError::from)?;
+        let ctx = horned_functional::Context::from(&prefixes);
+
+        // Write the document
+        let mut file: Box<dyn Write> = if let Ok(s) = fh.cast_as::<PyString>() {
+            // Write into a file if given a path as a string.
+            Box::new(std::fs::File::create(s.to_str()?)?)
+        } else {
+            // Write into the handle if given a writable file.
+            match PyFileWrite::from_ref(fh) {
+                Ok(f) => Box::new(f),
+                Err(e) => {
+                    raise!(py, PyTypeError("expected path or binary file handle") from e)
+                }
+            }
+        };
+
+        write!(file, "{}", prefixes.as_ofn())?;
+        write!(file, "{}", ont.as_ofn_ctx(&ctx))?;
+
+        Ok(())
     }
 
     Ok(())

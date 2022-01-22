@@ -37,6 +37,7 @@ macro_rules! raise(
 // ---------------------------------------------------------------------------
 
 /// Exact copy of `pest::error::Error` to access private fields.
+#[allow(unused)]
 struct PestError {
     /// Variant of the error
     pub variant: ErrorVariant<Rule>,

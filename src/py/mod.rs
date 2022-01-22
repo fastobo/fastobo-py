@@ -97,20 +97,23 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     /// iterator. See the *Examples* section.
     ///
     /// Arguments:
-    ///     fh (str or file-handle): the path to an OBO file, or a **binary**
+    ///     fh (str or file-handle): The path to an OBO file, or a **binary**
     ///         stream that contains a serialized OBO document. *A binary
     ///         stream needs a* ``read(x)`` *method returning* ``x`` *bytes*.
-    ///     ordered (bool): whether or not to yield the frames in the same
+    ///     ordered (bool): Whether or not to yield the frames in the same
     ///         order they are declared in the source document.
-    ///     threads (int): the number of threads to use for parsing. Set to
+    ///     threads (int): The number of threads to use for parsing. Set to
     ///         **0** to detect the number of logical cores, **1** to use the
     ///         single threadeded parser, or to any positive integer value.
     ///
+    /// Yields:
+    ///     `~fastobo.abc.AbstractFrame`: The individual frames contained
+    ///     in the OBO document.
+    ///
     /// Raises:
-    ///     TypeError: when the argument is not a `str` or a binary stream.
-    ///     SyntaxError: when the document is not in valid OBO syntax.
-    ///     OSError: when an underlying OS error occurs.
-    ///     *other*: any exception raised by ``fh.read``.
+    ///     TypeError: When the argument is not a `str` or a binary stream.
+    ///     SyntaxError: When the document is not in valid OBO syntax.
+    ///     OSError: When an underlying OS error occurs.
     ///
     /// Example:
     ///     Use ``fastobo.iter`` to load an ontology frame-by-frame, even
@@ -146,24 +149,23 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     /// Load an OBO document from the given path or file handle.
     ///
     /// Arguments:
-    ///     fh (str or file-handle): the path to an OBO file, or a **binary**
+    ///     fh (str or file-handle): The path to an OBO file, or a **binary**
     ///         stream that contains a serialized OBO document. *A binary
     ///         stream needs a* ``read(x)`` *method returning* ``x`` *bytes*.
-    ///     ordered (bool): whether or not to yield the frames in the same
+    ///     ordered (bool): Whether or not to yield the frames in the same
     ///         order they are declared in the source document.
-    ///     threads (int): the number of threads to use for parsing. Set to
+    ///     threads (int): The number of threads to use for parsing. Set to
     ///         **0** to detect the number of logical cores, **1** to use the
     ///         single threadeded parser, or to any positive integer value.
     ///
     /// Returns:
-    ///     `~fastobo.doc.OboDoc`: the OBO document deserialized into an
+    ///     `~fastobo.doc.OboDoc`: The OBO document deserialized into an
     ///     Abstract Syntax Tree.
     ///
     /// Raises:
-    ///     TypeError: when the argument is not a `str` or a binary stream.
-    ///     SyntaxError: when the document is not in valid OBO syntax.
-    ///     OSError: when an underlying OS error occurs.
-    ///     *other*: any exception raised by ``fh.read``.
+    ///     TypeError: When the argument is not a `str` or a binary stream.
+    ///     SyntaxError: When the document is not in valid OBO syntax.
+    ///     OSError: When an underlying OS error occurs.
     ///
     /// Example:
     ///     Use `~urllib.request.urlopen` and `fastobo.load` to parse an
@@ -247,20 +249,20 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     /// Load an OBO document from a string.
     ///
     /// Arguments:
-    ///     document (str): a string containing an OBO document.
-    ///     ordered (bool): whether or not to yield the frames in the same
+    ///     document (str): A string containing an OBO document.
+    ///     ordered (bool): Whether or not to yield the frames in the same
     ///         order they are declared in the source document.
-    ///     threads (int): the number of threads to use for parsing. Set to
+    ///     threads (int): The number of threads to use for parsing. Set to
     ///         **0** to detect the number of logical cores, **1** to use the
     ///         single threadeded parser, or to any positive integer value.
     ///
     /// Returns:
-    ///     `~fastobo.doc.OboDoc`: the OBO document deserialized into an
+    ///     `~fastobo.doc.OboDoc`: The OBO document deserialized into an
     ///     Abstract Syntax Tree.
     ///
     /// Raises:
-    ///     TypeError: when the argument is not a `str`.
-    ///     SyntaxError: when the document is not in valid OBO syntax.
+    ///     TypeError: When the argument is not a `str`.
+    ///     SyntaxError: When the document is not in valid OBO syntax.
     ///
     /// Example:
     ///     Use ``fastobo.loads`` to deserialize a literal OBO frame into the
@@ -296,23 +298,22 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     /// superset of JSON, all graphs are in YAML format.*
     ///
     /// Arguments:
-    ///     fh (str or file-handle): the path to an OBO graph file, or a
+    ///     fh (str or file-handle): The path to an OBO graph file, or a
     ///         **binary** stream that contains a serialized OBO document.
     ///         *A binary stream needs a* ``read(x)`` *method returning*
     ///         ``x`` *bytes*.
     ///
     /// Returns:
-    ///     `~fastobo.doc.OboDoc`: the first graph of the OBO graph
+    ///     `~fastobo.doc.OboDoc`: The first graph of the OBO graph
     ///     converted to an OBO document. The schema allows for more than
     ///     one graph but this is only used when merging imports into the
     ///     same document.
     ///
     /// Raises:
-    ///     TypeError: when the argument is not a `str` or a binary stream.
-    ///     ValueError: when the JSON is not a valid OBO Graph.
-    ///     SyntaxError: when the document contains invalid OBO identifiers.
-    ///     OSError: when an underlying OS error occurs.
-    ///     *other*: any exception raised by ``fh.read``.
+    ///     TypeError: When the argument is not a `str` or a binary stream.
+    ///     ValueError: When the JSON is not a valid OBO Graph.
+    ///     SyntaxError: When the document contains invalid OBO identifiers.
+    ///     OSError: When an underlying OS error occurs.
     ///
     /// Example:
     ///     Use ``urllib`` and ``fastobo`` to parse an ontology downloaded
@@ -366,18 +367,17 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     /// into a compact JSON representation.
     ///
     /// Arguments:
-    ///     fh (str or file-handle): the path to a file, or a writable
+    ///     fh (str or file-handle): The path to a file, or a writable
     ///         **binary** stream to write the serialized graph into.
     ///         *A binary stream needs a* ``write(b)`` *method that accepts
     ///         binary strings*.
-    ///     doc (`~fastobo.doc.OboDoc`): the OBO document to be converted
+    ///     doc (`~fastobo.doc.OboDoc`): The OBO document to be converted
     ///         into an OBO Graph.
     ///
     /// Raises:
-    ///     TypeError: when the argument have invalid types.
-    ///     ValueError: when the JSON serialization fails.
-    ///     OSError: when an underlying OS error occurs.
-    ///     *other*: any exception raised by ``fh.read``.
+    ///     TypeError: When the argument have invalid types.
+    ///     ValueError: When the JSON serialization fails.
+    ///     OSError: When an underlying OS error occurs.
     ///
     /// Example:
     ///     Use ``fastobo`` to convert an OBO file into an OBO graph:
@@ -420,27 +420,41 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     /// Convert an OBO ontology to OWL and write it to the given handle.
     ///
     /// Arguments:
-    ///     fh (str or file-handle):Tthe path to a file, or a writable
+    ///     fh (str or file-handle): The path to a file, or a writable
     ///         **binary** stream to write the serialized graph into.
-    ///         *A binary stream needs a* ``write(b)`` *method that accepts
-    ///         binary strings*.
+    ///         *A binary stream needs a* ``write(b)`` *method that accepts*
+    ///         ``bytes``.
     ///     doc (`~fastobo.doc.OboDoc`): The OBO document to be converted
     ///         into an OWL Ontology.
     ///     format (`str`): The OWL format to serialize the converted OWL
-    ///         document into. Supports: ``ofn`` for Functional-style
-    ///         syntax.
+    ///         document into. Supported values are: ``ofn`` for
+    ///         `Functional-style syntax <https://w3.org/TR/owl2-syntax/>`_.
     ///
     /// Raises:
-    ///     TypeError: when the argument have invalid types.
-    ///     ValueError: when the conversion to OWL fails.
-    ///     OSError: when an underlying OS error occurs.
-    ///     *other*: any exception raised by ``fh.read``.
+    ///     TypeError: When the argument have invalid types.
+    ///     ValueError: When the conversion to OWL fails.
+    ///     OSError: When an underlying OS error occurs.
     ///
     /// Example:
     ///     Use ``fastobo`` to convert an OBO file into an OWL file:
     ///
-    ///     >>> doc = fastobo.load("tests/data/plana.obo")
-    ///     >>> fastobo.dump_owl(doc, "tests/data/plana.ofn", format="ofn")
+    ///     >>> doc = fastobo.load("tests/data/ms.obo")
+    ///     >>> fastobo.dump_owl(doc, "tests/data/ms.ofn", format="ofn")
+    ///
+    /// Caution:
+    ///     This method is experimental. Conversion to OWL is provided on a
+    ///     best-effort basis using a dedicated Rust implementation of the
+    ///     OBO to OWL2-DL mapping. It should produce a document with correct
+    ///     syntax, but might fail to preserve the semantics. In such cases,
+    ///     consider opening an issue directly on the ``fastobo-owl``
+    ///     `issue tracker <https://github.com/fastobo/fastobo-owl/issues>`_.
+    ///
+    /// Hint:
+    ///     To support serialization to OWL, an OBO document is required to
+    ///     declare an ``ontology`` clause in the header. Furthermore, every
+    ///     entity frame must have a ``namespace`` clause, otherwise a
+    ///     ``default-namespace`` clause must be declared in the header.
+    ///     Failure to do both will result in a `ValueError` being thrown.
     ///
     #[pyfn(m, format = r#""ofn""#)]
     #[pyo3(name = "dump_owl", text_signature = r#"(doc, fh, format="ofn")"#)]

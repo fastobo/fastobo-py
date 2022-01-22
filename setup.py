@@ -35,10 +35,10 @@ class build_rust(_build_rust):
 
     def run(self):
 
-        try:
-            rustc = get_rust_version()
-            nightly = rustc.prerelease is not None and "nightly" in rustc.prerelease
-        except DistutilsPlatformError:
+        rustc = get_rust_version()
+        if rustc is not None:
+            nightly = rustc is not None and "nightly" in rustc.prerelease
+        else:
             self.setup_temp_rustc_unix(toolchain="stable", profile="minimal")
             nightly = False
 

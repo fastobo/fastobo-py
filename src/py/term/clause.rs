@@ -1904,17 +1904,26 @@ impl PyObjectProtocol for CreatedByClause {
 /// CreationDateClause(date)
 /// --
 ///
-/// A clause declaring the date and time a term was created.
+/// A clause declaring the date (and optionally time) a term was created.
 ///
 /// Arguments:
-///     date (~datetime.datetime or datetime.date): the date, or date and
-///         time, when this term was created.
+///     date (`datetime.date`): The date this term was created. If a
+///         `datetime.datime` object is given, then the serialized value
+///         will also include the serialized time.
 ///
 /// Warning:
 ///     The timezone of the `datetime` will only be extracted down to the
 ///     minutes, seconds and smaller durations will be ignored. It is advised
 ///     to use `datetime.timezone.utc` whenever possible to preserve the
 ///     date and time properly.
+///
+/// Example:
+///     >>> d1 = datetime.date(2021, 1, 23)
+///     >>> print(fastobo.term.CreationDateClause(d1))
+///     creation_date: 2021-01-23
+///     >>> d2 = datetime.datetime(2021, 1, 23, tzinfo=datetime.timezone.utc)
+///     >>> print(fastobo.term.CreationDateClause(d2))
+///     creation_date: 2021-01-23T00:00:00Z
 ///
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
 #[derive(Clone, ClonePy, Debug, FinalClass)]
@@ -1950,18 +1959,18 @@ impl IntoPy<fastobo::ast::TermClause> for CreationDateClause {
 #[pymethods]
 impl CreationDateClause {
     #[new]
-    fn __init__(date: &PyDateTime) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__(date: &PyAny) -> PyResult<PyClassInitializer<Self>> {
         let py = date.py();
-        if let Ok(d) = date.cast_as::<PyDate>() {
-            let date = date_to_isodate(py, d).map(From::from)?;
+        if let Ok(dt) = date.cast_as::<PyDateTime>() {
+            let date = datetime_to_isodatetime(py, dt).map(From::from)?;
             Ok(CreationDateClause::new(date).into())
         } else {
-            match date.cast_as::<PyDateTime>() {
+            match date.cast_as::<PyDate>() {
                 Err(e) => {
                     raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
                 }
-                Ok(dt) => {
-                    let date = datetime_to_isodatetime(py, dt).map(From::from)?;
+                Ok(d) => {
+                    let date = date_to_isodate(py, d).map(From::from)?;
                     Ok(CreationDateClause::new(date).into())
                 }
             }
@@ -1981,15 +1990,15 @@ impl CreationDateClause {
     #[setter]
     fn set_date(&mut self, datetime: &PyAny) -> PyResult<()> {
         let py = datetime.py();
-        if let Ok(d) = datetime.cast_as::<PyDate>() {
-            self.date = From::from(date_to_isodate(py, d)?);
+        if let Ok(dt) = datetime.cast_as::<PyDateTime>() {
+            self.date = From::from(datetime_to_isodatetime(py, dt)?);
         } else {
-            match datetime.cast_as::<PyDateTime>() {
+            match datetime.cast_as::<PyDate>() {
                 Err(e) => {
                     raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
                 }
-                Ok(dt) => {
-                    self.date = From::from(datetime_to_isodatetime(py, dt)?);
+                Ok(d) => {
+                    self.date = From::from(date_to_isodate(py, d)?);
                 }
             }
         }

@@ -6,7 +6,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.10.2-post1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.11.0...HEAD
+
+## [v0.11.0] - 2022-01-23
+[v0.11.0]: https://github.com/fastobo/fastobo-py/compare/v0.10.2-post1...v0.11.0
+### Added
+- `fastobo.exceptions` module with dedicated exception types to report specific errors.
+- `fastobo.dump_owl` to convert and write an OBO document to an OWL ontology (using `fastobo-owl` and `horned-owl`) in Functional-style syntax (using `horned-functional`).
+### Changed
+- Bumped `fastobo` to `v0.14.0`.
+- Bumped `fastobo-graphs` to `v0.4.4`.
+- `DateClause` may now store a `datetime.date` instead of a `datetime.datetime` if the source document contains a date without time specifier.
+- PyPI source distribution now contains vendored Rust sources, allowing compilation without network access.
+### Fixed
+- `setup.py` script not auto-installing the Rust compiler in latest `setuptools_rust` versions.
 
 ## [v0.10.2-post1] - 2021-09-19
 [v0.10.2-post1]: https://github.com/fastobo/fastobo-py/compare/v0.10.2...v0.10.2-post1
@@ -18,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Bumped `pyo3` dependency to `v0.14.1`.
 ### Fixed
-- `fastobo.iter` erroneously wrapping `SyntaxError` raised in the header into a `TypeError`. 
+- `fastobo.iter` erroneously wrapping `SyntaxError` raised in the header into a `TypeError`.
 
 ## [v0.10.1] - 2021-03-30
 [v0.10.1]: https://github.com/fastobo/fastobo-py/compare/v0.10.0...v0.10.1
@@ -45,8 +58,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### [v0.9.3] - 2020-12-04
 [v0.9.3]: https://github.com/fastobo/fastobo-py/compare/v0.9.2...v0.9.3
 ### Fixed
-- `setup.py` crashing when compiling from source on a platform with stable 
-  Rust as the default toolchain ([#182](https://github.com/fastobo/fastobo-py/pull/182), 
+- `setup.py` crashing when compiling from source on a platform with stable
+  Rust as the default toolchain ([#182](https://github.com/fastobo/fastobo-py/pull/182),
   thanks to [@alexhenrie](https://github.com/alexhenrie)).
 
 ### [v0.9.2] - 2020-09-04

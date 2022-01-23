@@ -16,6 +16,46 @@ from setuptools_rust.build import build_rust as _build_rust
 from setuptools_rust.utils import get_rust_version
 
 
+class vendor(setuptools.Command):
+
+    description = "vendor Rust dependencies into a local folder"
+    user_options = [
+        ("vendor-dir=", "d", "the path where to vendor the Rust crates")
+    ]
+
+    def initialize_options(self):
+        self.vendor_dir = None
+
+    def finalize_options(self):
+        if self.vendor_dir is None:
+            self.vendor_dir = "crates"
+
+    def run(self):
+        # make sure rust is available
+        _build_cmd = self.get_finalized_command("build_rust")
+        rustc = get_rust_version()
+        if rustc is None:
+            _build_cmd.setup_temp_rustc_unix(toolchain="stable", profile="minimal")
+        # vendor crates
+        proc = subprocess.run(["cargo", "vendor", self.vendor_dir])
+        proc.check_returncode()
+        # write the cargo config file
+        self.mkpath(".cargo")
+        with open(os.path.join(".cargo", "config.toml"), "w") as f:
+            f.write(
+                """
+                [source.crates-io]
+                replace-with = "vendored-sources"
+
+                [source.vendored-sources]
+                directory = "{}"
+                """.format(self.vendor_dir)
+            )
+
+
+
+
+
 class sdist(_sdist):
 
     def run(self):
@@ -65,7 +105,7 @@ class build_rust(_build_rust):
                 shutil.copyfileobj(res, dst)
 
         self.announce("installing Rust compiler to {}".format(self.build_temp), level=INFO)
-        subprocess.call([
+        proc = subprocess.run([
             "sh",
             rustup_sh,
             "-y",
@@ -75,6 +115,7 @@ class build_rust(_build_rust):
             profile,
             "--no-modify-path"
         ])
+        proc.check_returncode()
 
         self.announce("updating $PATH variable to use local Rust compiler", level=INFO)
         os.environ["PATH"] = ":".join([
@@ -84,10 +125,9 @@ class build_rust(_build_rust):
 
 
 
-
 setuptools.setup(
     setup_requires=["setuptools", "setuptools_rust"],
-    cmdclass=dict(sdist=sdist, build_rust=build_rust),
+    cmdclass=dict(sdist=sdist, build_rust=build_rust, vendor=vendor),
     rust_extensions=[rust.RustExtension(
         "fastobo",
         path="Cargo.toml",

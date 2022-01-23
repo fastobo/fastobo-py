@@ -9,3 +9,6 @@ include pyproject.toml
 recursive-include derive Cargo.toml *.rs
 recursive-include src *.rs
 recursive-include tests *.py *.obo
+
+include .cargo/config.toml
+recursive-include crates *

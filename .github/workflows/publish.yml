@@ -83,10 +83,10 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.9
-    - name: Install build package
+    - name: Install CI requirements
       run: python -m pip install -U -r ci/requirements.txt
-    - name: Build source tarball
-      run: python setup.py sdist
+    - name: Build source tarball with vendored sources
+      run: python setup.py vendor sdist
     - name: Download built wheels
       uses: actions/download-artifact@v2
       with:

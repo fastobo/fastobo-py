@@ -6,7 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.11.1...HEAD
+
+## [v0.11.1] - 2022-01-23
+[v0.11.1]: https://github.com/fastobo/fastobo-py/compare/v0.11.0...v0.11.1
+### Fixed
+- Extraction of date argument when creating a `CreationDateClause`.
+- Skip displaying empty xrefs in `fastobo.typedef.DefClause.__repr__`.
 
 ## [v0.11.0] - 2022-01-23
 [v0.11.0]: https://github.com/fastobo/fastobo-py/compare/v0.10.2-post1...v0.11.0

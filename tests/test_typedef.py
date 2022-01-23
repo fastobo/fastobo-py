@@ -15,29 +15,29 @@ from .common import (
 
 # --- TermFrame --------------------------------------------------------------
 
-class TestTermFrame(_TestFrame, unittest.TestCase):
-    type = fastobo.term.TermFrame
+class TestTypedefFrame(_TestFrame, unittest.TestCase):
+    type = fastobo.typedef.TypedefFrame
 
 
 # --- DefClause --------------------------------------------------------------
 
 class TestDefClause(_TestDefClause, unittest.TestCase):
-    type = fastobo.term.DefClause
+    type = fastobo.typedef.DefClause
 
 
 # --- ConsiderClause ---------------------------------------------------------
 
 class TestConsiderClause(_TestConsiderClause, unittest.TestCase):
-    type = fastobo.term.ConsiderClause
+    type = fastobo.typedef.ConsiderClause
 
 
 # --- IsObsoleteClause -------------------------------------------------------
 
 class TestIsObsoleteClause(_TestIsObsoleteClause, unittest.TestCase):
-    type = fastobo.term.IsObsoleteClause
+    type = fastobo.typedef.IsObsoleteClause
 
 
 # --- CreationDateClause -----------------------------------------------------
 
 class TestIsObsoleteClause(_TestIsObsoleteClause, unittest.TestCase):
-    type = fastobo.term.CreationDateClause
+    type = fastobo.typedef.CreationDateClause

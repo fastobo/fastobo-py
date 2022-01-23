@@ -614,7 +614,11 @@ impl DefClause {
 #[pyproto]
 impl PyObjectProtocol for DefClause {
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DefClause(self.definition, self.xrefs))
+        if self.xrefs.is_empty() {
+            impl_repr!(self, DefClause(self.definition))
+        } else {
+            impl_repr!(self, DefClause(self.definition, self.xrefs))
+        }
     }
 
     fn __str__(&self) -> PyResult<String> {

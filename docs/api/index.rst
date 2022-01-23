@@ -24,6 +24,18 @@ Library Reference
 Functions
 ---------
 
+``fastobo.dump_graph``
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: fastobo.dump_graph
+
+
+``fastobo.dump_owl``
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: fastobo.dump_owl
+
+
 ``fastobo.iter``
 ^^^^^^^^^^^^^^^^
 

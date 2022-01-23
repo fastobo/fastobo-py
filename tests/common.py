@@ -10,39 +10,41 @@ import fastobo
 
 class _TestFrame(object):
 
-    type = NotImplementedError
+    Frame = NotImplementedError
+    NameClause = None
+    CreatedByClause = None
 
     def setUp(self):
         self.id = fastobo.id.PrefixedIdent("MS", "1000031")
 
     def test_init(self):
         try:
-            frame = self.type(self.id)
+            frame = self.Frame(self.id)
         except Exception:
             self.fail("could not create frame instances")
 
     def test_init_iterable(self):
         try:
-            frame = self.type(self.id, [])
+            frame = self.Frame(self.id, [])
         except Exception:
             self.fail("could not create frame instances")
         try:
-            frame = self.type(self.id, [
-                fastobo.term.NameClause("thing"),
-                fastobo.term.CreatedByClause("Martin Larralde")
+            frame = self.Frame(self.id, [
+                self.NameClause("thing"),
+                self.CreatedByClause("Martin Larralde")
             ])
         except Exception:
             self.fail("could not create frame from iterable")
 
     def test_init_type_error(self):
-        self.assertRaises(TypeError, self.type, 1)
-        self.assertRaises(TypeError, self.type, [1])
-        self.assertRaises(TypeError, self.type, ["abc"])
-        self.assertRaises(TypeError, self.type, "abc")
-        self.assertRaises(TypeError, self.type, self.id, 1)
-        self.assertRaises(TypeError, self.type, self.id, [1])
-        self.assertRaises(TypeError, self.type, self.id, ["abc"])
-        self.assertRaises(TypeError, self.type, self.id, "abc")
+        self.assertRaises(TypeError, self.Frame, 1)
+        self.assertRaises(TypeError, self.Frame, [1])
+        self.assertRaises(TypeError, self.Frame, ["abc"])
+        self.assertRaises(TypeError, self.Frame, "abc")
+        self.assertRaises(TypeError, self.Frame, self.id, 1)
+        self.assertRaises(TypeError, self.Frame, self.id, [1])
+        self.assertRaises(TypeError, self.Frame, self.id, ["abc"])
+        self.assertRaises(TypeError, self.Frame, self.id, "abc")
 
 
 # --- DefClause --------------------------------------------------------------
@@ -122,7 +124,7 @@ class _TestIsObsoleteClause(object):
 
 # --- CreationDateClause -----------------------------------------------------
 
-class _TestIsObsoleteClause(object):
+class _TestCreationDateClause(object):
 
     type = NotImplementedError
 
@@ -132,12 +134,12 @@ class _TestIsObsoleteClause(object):
         self.assertEqual(str(clause), "creation_date: 2021-01-23")
         self.assertEqual(repr(clause), "CreationDateClause(datetime.date(2021, 1, 23))")
         self.assertEqual(clause.date, d1)
-        self.assertIsInstance(clause.date, d1)
+        self.assertIsInstance(clause.date, datetime.date)
         d2 = datetime.date(2021, 2, 15)
         clause.date = d2
         self.assertIsInstance(clause.date, datetime.date)
 
-    def test_date(self):
+    def test_datetime(self):
         d1 = datetime.datetime(2021, 1, 23, 12)
         clause = self.type(d1)
         self.assertEqual(str(clause), "creation_date: 2021-01-23T12:00:00")

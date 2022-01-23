@@ -10,13 +10,15 @@ from .common import (
     _TestIsObsoleteClause,
     _TestDefClause,
     _TestConsiderClause,
-    _TestIsObsoleteClause,
+    _TestCreationDateClause,
 )
 
 # --- TermFrame --------------------------------------------------------------
 
 class TestTermFrame(_TestFrame, unittest.TestCase):
-    type = fastobo.term.TermFrame
+    Frame = fastobo.term.TermFrame
+    NameClause = fastobo.term.NameClause
+    CreatedByClause = fastobo.term.CreatedByClause
 
 
 # --- DefClause --------------------------------------------------------------
@@ -39,5 +41,5 @@ class TestIsObsoleteClause(_TestIsObsoleteClause, unittest.TestCase):
 
 # --- CreationDateClause -----------------------------------------------------
 
-class TestIsObsoleteClause(_TestIsObsoleteClause, unittest.TestCase):
+class TestCreationDateClause(_TestCreationDateClause, unittest.TestCase):
     type = fastobo.term.CreationDateClause

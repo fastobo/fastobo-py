@@ -15,6 +15,7 @@ Library Reference
    pv
    syn
    xref
+   exceptions
 
 
 .. currentmodule:: fastobo
@@ -264,3 +265,29 @@ Xref (`fastobo.xref`)
 
     fastobo.xref.Xref
     fastobo.xref.XrefList
+
+
+
+Exceptions
+----------
+
+Cardinality Errors
+^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: fastobo.exceptions
+.. autosummary::
+   :nosignatures:
+
+   fastobo.exceptions.MissingClauseError
+   fastobo.exceptions.DuplicateClausesError
+   fastobo.exceptions.SingleClauseError
+
+
+Threading Errors
+^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: fastobo.exceptions
+.. autosummary::
+   :nosignatures:
+
+   fastobo.exceptions.DisconnectedChannelError

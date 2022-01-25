@@ -73,6 +73,18 @@ class TestXrefList(unittest.TestCase):
         self.assertEqual(str(self.type([x1])), '[{}]'.format(x1))
         self.assertEqual(str(self.type([x1, x2])), '[{}, {}]'.format(x1, x2))
 
+    def test_append(self):
+        x1, x2 = self.x1, self.x2
+        l = self.type()
+        self.assertEqual(len(l), 0)
+        l.append(x1)
+        self.assertEqual(len(l), 1)
+        self.assertEqual(l[0], x1)
+        l.append(x2)
+        self.assertEqual(len(l), 2)
+        self.assertEqual(l[0], x1)
+        self.assertEqual(l[1], x2)
+
     def test_contains(self):
         x1, x2 = self.x1, self.x2
         l1 = self.type()

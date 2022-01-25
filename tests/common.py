@@ -11,8 +11,8 @@ import fastobo
 class _TestFrame(object):
 
     Frame = NotImplementedError
-    NameClause = None
-    CreatedByClause = None
+    NameClause = NotImplementedError
+    CreatedByClause = NotImplementedError
 
     def setUp(self):
         self.id = fastobo.id.PrefixedIdent("MS", "1000031")
@@ -46,6 +46,48 @@ class _TestFrame(object):
         self.assertRaises(TypeError, self.Frame, self.id, ["abc"])
         self.assertRaises(TypeError, self.Frame, self.id, "abc")
 
+    def test_append(self):
+        frame = self.Frame(self.id)
+        self.assertEqual(len(frame), 0)
+        c1 = self.NameClause("thing")
+        frame.append(c1)
+        self.assertEqual(len(frame), 1)
+        self.assertEqual(frame[0], c1)
+        c2 = self.CreatedByClause("Martin Larralde")
+        frame.append(c2)
+        self.assertEqual(len(frame), 2)
+        self.assertEqual(frame[0], c1)
+        self.assertEqual(frame[1], c2)
+
+    def test_reverse(self):
+        c1 = self.NameClause("thing")
+        c2 = self.CreatedByClause("Martin Larralde")
+        frame = self.Frame(self.id, [c1, c2])
+        self.assertEqual(list(frame), [c1, c2])
+        frame.reverse()
+        self.assertEqual(list(frame), [c2, c1])
+
+    def test_clear(self):
+        c1 = self.NameClause("thing")
+        c2 = self.CreatedByClause("Martin Larralde")
+        frame = self.Frame(self.id, [c1, c2])
+        self.assertEqual(len(frame), 2)
+        frame.clear()
+        self.assertEqual(len(frame), 0)
+        self.assertEqual(list(frame), [])
+
+    def test_pop(self):
+        c1 = self.NameClause("thing")
+        c2 = self.CreatedByClause("Martin Larralde")
+        frame = self.Frame(self.id, [c1, c2])
+        self.assertEqual(len(frame), 2)
+        x1 = frame.pop()
+        self.assertEqual(len(frame), 1)
+        self.assertEqual(x1, c2)
+        x2 = frame.pop()
+        self.assertEqual(len(frame), 0)
+        self.assertEqual(x2, c1)
+        self.assertRaises(IndexError, frame.pop)
 
 # --- DefClause --------------------------------------------------------------
 

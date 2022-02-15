@@ -36,7 +36,7 @@ features = ["obo"]
 [dependencies.fastobo-owl]
 version = "0.1.2"
 [dependencies.horned-owl]
-version = "0.10.0"
+version = "0.11.0"
 [dependencies.horned-functional]
 version = "0.3.3"
 [dependencies.fastobo-py-derive-internal]

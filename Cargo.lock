@@ -224,6 +224,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47bd5433682fbed3b22edc3a3a6791c320839d05c706189d9b6f8f1da58edb0e"
 
 [[package]]
+name = "curie"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4215ce121b7a0c9667ec05a3fdf4d444ab61c71bd1cb38fa8b0bc14c863a203c"
+dependencies = [
+ "indexmap",
+]
+
+[[package]]
 name = "darling"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -321,7 +330,7 @@ checksum = "82f81182904c656907b9a02d3ebff254d2273d1c45ce67889af477d4d95d4fb2"
 dependencies = [
  "blanket",
  "crossbeam-channel",
- "fastobo-derive-internal",
+ "fastobo-derive-internal 0.14.1",
  "fastobo-syntax",
  "lazy_static",
  "memchr",
@@ -329,6 +338,23 @@ dependencies = [
  "ordered-float",
  "pest",
  "smartstring",
+ "thiserror",
+]
+
+[[package]]
+name = "fastobo"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "851bf71ca4a18dd42b1e5c63a1e6b37a3f62115fb0658a6e50989e5ae7572a95"
+dependencies = [
+ "blanket",
+ "crossbeam-channel",
+ "fastobo-derive-internal 0.15.0",
+ "fastobo-syntax",
+ "lazy_static",
+ "num_cpus",
+ "ordered-float",
+ "pest",
  "thiserror",
 ]
 
@@ -345,12 +371,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "fastobo-derive-internal"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "acb807579ac66cae8b8c8a77a863b64eb366179bac449658efa3f1b037e0e18e"
+dependencies = [
+ "darling",
+ "heck",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "fastobo-graphs"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb54b58dcf366d47cf7852ccd7df5dce1278c2c55f12cf2ccc06adac78e94636"
 dependencies = [
- "fastobo",
+ "fastobo 0.14.1",
  "mashup",
  "serde",
  "serde_json",
@@ -360,14 +398,14 @@ dependencies = [
 
 [[package]]
 name = "fastobo-owl"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd6574182245565c591cce5451d973da2f74f0c9514420ab94bad4002bbecb60"
+checksum = "36642a61f94957ea3870dccccd288ab756869a129f10c1f454a350fec901d228"
 dependencies = [
- "curie",
- "fastobo",
- "horned-functional",
- "horned-owl",
+ "curie 0.1.1",
+ "fastobo 0.15.0",
+ "horned-functional 0.4.0",
+ "horned-owl 0.11.0",
  "lazy_static",
  "thiserror",
 ]
@@ -377,12 +415,12 @@ name = "fastobo-py"
 version = "0.11.1"
 dependencies = [
  "built",
- "fastobo",
+ "fastobo 0.14.1",
  "fastobo-graphs",
  "fastobo-owl",
  "fastobo-py-derive-internal",
- "horned-functional",
- "horned-owl",
+ "horned-functional 0.3.3",
+ "horned-owl 0.10.0",
  "lazy_static",
  "libc",
  "pest",
@@ -401,9 +439,9 @@ dependencies = [
 
 [[package]]
 name = "fastobo-syntax"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d04b7912718a8680ce3df286708a5cf78a1830771a47e5ef22668f083f99145f"
+checksum = "77204f74037c42dd87c23e04bc40d69284dcc793c88d93b703fa1e9d582c83a6"
 dependencies = [
  "pest",
  "pest_derive",
@@ -479,9 +517,23 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9138a06d7f083da74bd83f153dd4daef4d7603277c89f4a1267306d29342502d"
 dependencies = [
- "curie",
+ "curie 0.0.8",
  "enum_meta",
- "horned-owl",
+ "horned-owl 0.10.0",
+ "pest",
+ "pest_derive",
+ "thiserror",
+]
+
+[[package]]
+name = "horned-functional"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18c63d3b445e68fe15c23498b23f9ec401d49c446411260d5ecc7f2e44021e1d"
+dependencies = [
+ "curie 0.1.1",
+ "enum_meta",
+ "horned-owl 0.11.0",
  "pest",
  "pest_derive",
  "thiserror",
@@ -494,7 +546,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25fa442e9226821a9212784172062b04115a196b972cf1184aa85501e89570bb"
 dependencies = [
  "clap",
- "curie",
+ "curie 0.0.8",
  "enum_meta",
  "failure",
  "indexmap",
@@ -506,6 +558,26 @@ dependencies = [
  "rio_xml",
  "slurp",
  "ureq",
+]
+
+[[package]]
+name = "horned-owl"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd730a577d61801592047e08579dbf296771383d5460a268c645672c14880369"
+dependencies = [
+ "clap",
+ "curie 0.1.1",
+ "enum_meta",
+ "indexmap",
+ "lazy_static",
+ "log",
+ "pretty_rdf",
+ "quick-xml 0.22.0",
+ "rio_api",
+ "rio_xml",
+ "slurp",
+ "thiserror",
 ]
 
 [[package]]

@@ -34,7 +34,7 @@ features = ["threading", "smartstring"]
 version = "0.4.4"
 features = ["obo"]
 [dependencies.fastobo-owl]
-version = "0.1.2"
+version = "0.2.1"
 [dependencies.horned-owl]
 version = "0.10.0"
 [dependencies.horned-functional]

@@ -221,7 +221,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
 
         // read the header and check it did not error
         let header = match reader.next().unwrap() {
-            Ok(frame) => Ok(frame.into_header_frame().unwrap().into_py(py)),
+            Ok(frame) => Ok(frame.into_header().unwrap().into_py(py)),
             Err(e) if PyErr::occurred(py) => Err(PyErr::fetch(py)),
             Err(e) => match &path {
                 Some(p) => Err(Error::from(e).with_path(p).into()),
@@ -231,7 +231,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
 
         // read the rest while transforming it to Python
         let frames = reader
-            .map(|res| res.map(|frame| frame.into_entity_frame().unwrap()))
+            .map(|res| res.map(|frame| frame.into_entity().unwrap()))
             .map(|res| res.map(|entity| entity.into_py(py)))
             .collect::<fastobo::error::Result<Vec<EntityFrame>>>();
 

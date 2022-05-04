@@ -191,7 +191,7 @@ impl FrameReader {
             .next()
             .unwrap()
             .map_err(Error::from)?
-            .into_header_frame()
+            .into_header()
             .unwrap();
         let header = Py::new(py, frame.into_py(py))?;
 
@@ -242,7 +242,7 @@ impl PyIterProtocol for FrameReader {
             None => Ok(None),
             Some(Ok(frame)) => {
                 let gil = Python::acquire_gil();
-                let entity = frame.into_entity_frame().unwrap();
+                let entity = frame.into_entity().unwrap();
                 Ok(Some(entity.into_py(gil.python())))
             }
             Some(Err(e)) => {

@@ -255,9 +255,9 @@ dependencies = [
 
 [[package]]
 name = "fastobo-graphs"
-version = "0.4.6"
+version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b48ff168edce848d4490d34b567d09f7cb84ecfc82fde49d035c47e254c72065"
+checksum = "46989b8b06dc48be23f0c1d97c75b0eb8bfc525954483865551d014bf9007d1d"
 dependencies = [
  "fastobo",
  "mashup",

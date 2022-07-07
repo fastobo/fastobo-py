@@ -1,5 +1,5 @@
 setuptools >=41.0
 wheel
-setuptools-rust
+setuptools-rust >= 1.0 
 requests
 auditwheel

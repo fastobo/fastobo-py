@@ -13,7 +13,11 @@ import setuptools
 import setuptools_rust as rust
 from setuptools.command.sdist import sdist as _sdist
 from setuptools_rust.build import build_rust as _build_rust
-from setuptools_rust.utils import get_rust_version
+
+try:
+    from setuptools_rust.rustc_info import get_rust_version
+except ImportError:
+    from setuptools_rust.utils import get_rust_version
 
 
 class vendor(setuptools.Command):
@@ -85,7 +89,7 @@ class build_rust(_build_rust):
         if self.inplace:
             self.extensions[0].strip = rust.Strip.No
         if nightly:
-            self.extensions[0].features.append("nightly")
+            self.extensions[0].features = (*self.extensions[0].features, "nightly")
 
         _build_rust.run(self)
 
@@ -124,6 +128,13 @@ class build_rust(_build_rust):
         ])
 
 
+    def get_dylib_ext_path(self, ext, module_name):
+        ext_path = _build_rust.get_dylib_ext_path(self, ext, module_name)
+        if self.inplace:
+            base = os.path.basename(ext_path)
+            folder = os.path.dirname(os.path.realpath(__file__))
+            ext_path = os.path.join(folder, base)
+        return ext_path
 
 setuptools.setup(
     setup_requires=["setuptools", "setuptools_rust"],

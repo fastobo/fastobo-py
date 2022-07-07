@@ -13,7 +13,11 @@ import setuptools
 import setuptools_rust as rust
 from setuptools.command.sdist import sdist as _sdist
 from setuptools_rust.build import build_rust as _build_rust
-from setuptools_rust.rustc_info import get_rust_version
+
+try:
+    from setuptools_rust.rustc_info import get_rust_version
+except ImportError:
+    from setuptools_rust.utils import get_rust_version
 
 
 class vendor(setuptools.Command):

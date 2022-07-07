@@ -237,7 +237,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
                     None => &qualname,
                 };
 
-                if ob.is_instance::<#base>()? {
+                if ob.is_instance_of::<#base>()? {
                     match ty.as_ref() {
                         #(#variants,)*
                         _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
@@ -379,7 +379,8 @@ fn listlike_impl_methods(
         #[pyo3(text_signature = "(self, value)")]
         fn count(&mut self, value: &PyAny) -> PyResult<usize> {
             let item = <#ty as pyo3::prelude::FromPyObject>::extract(value)?;
-            Ok(self.#field.iter().filter(|&x| *x == item).count())
+            // Ok(self.#field.iter().filter(|&x| *x == item.as_ref(item.py())).count())
+            unimplemented!("count")
         }
     });
     // |  extend($self, iterable, /)

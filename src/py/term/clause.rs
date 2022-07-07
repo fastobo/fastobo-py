@@ -40,7 +40,7 @@ use crate::utils::FinalClass;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
-#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper)]
 #[wraps(BaseTermClause)]
 pub enum TermClause {
     IsAnonymous(Py<IsAnonymousClause>),

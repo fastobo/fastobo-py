@@ -43,7 +43,7 @@ use crate::utils::FinalClass;
 // --- Conversion Wrapper ----------------------------------------------------
 
 /// A thin wrapper for a reference to any possible `BaseHeaderClause` subclass.
-#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper)]
 #[wraps(BaseHeaderClause)]
 pub enum HeaderClause {
     FormatVersion(Py<FormatVersionClause>),
@@ -982,9 +982,9 @@ impl DefaultNamespaceClause {
     fn __init__(namespace: &PyAny) -> PyResult<PyClassInitializer<Self>> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        if namespace.is_instance::<BaseIdent>()? {
+        if namespace.is_instance_of::<BaseIdent>()? {
             Ident::extract(namespace).map(|id| Self::new(id).into())
-        } else if namespace.is_instance::<PyString>()? {
+        } else if namespace.is_instance_of::<PyString>()? {
             let s: &PyString = FromPyObject::extract(namespace)?;
             let id = ast::Ident::from_str(&s.to_str()?).unwrap(); // FIXME
             Ok(Self::new(id.into_py(py)).into())

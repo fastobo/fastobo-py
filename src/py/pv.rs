@@ -33,7 +33,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 
 // --- Conversion Wrapper ----------------------------------------------------
 
-#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper)]
 #[wraps(AbstractPropertyValue)]
 pub enum PropertyValue {
     Literal(Py<LiteralPropertyValue>),

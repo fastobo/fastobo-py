@@ -124,7 +124,7 @@ macro_rules! impl_convert {
     };
 }
 
-#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper)]
 #[wraps(BaseIdent)]
 pub enum Ident {
     Unprefixed(Py<UnprefixedIdent>),

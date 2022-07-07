@@ -105,7 +105,7 @@ impl ToPyObject for SynonymScope {
 // --- Synonym ---------------------------------------------------------------
 
 #[pyclass(module = "fastobo.syn")]
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Synonym {
     desc: fastobo::ast::QuotedString,
     scope: SynonymScope,

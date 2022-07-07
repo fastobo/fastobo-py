@@ -48,7 +48,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 ///     ...     fastobo.id.PrefixedIdent('ISBN', '978-0-321-84268-8'),
 ///     ... )
 #[pyclass(module = "fastobo.xref")]
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Xref {
     #[pyo3(set)]
     id: Ident,
@@ -175,7 +175,7 @@ impl PyObjectProtocol for Xref {
 ///     Xref(PrefixedIdent('PSI', 'MS'))
 ///
 #[pyclass(module = "fastobo.xref")]
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default)]
 pub struct XrefList {
     xrefs: Vec<Py<Xref>>,
 }
@@ -300,16 +300,17 @@ impl PySequenceProtocol for XrefList {
     }
 
     fn __contains__(&self, item: &PyAny) -> PyResult<bool> {
-        if let Ok(xref) = item.extract::<Py<Xref>>() {
-            let py = item.py();
-            Ok(self
-                .xrefs
-                .iter()
-                .any(|x| *x.as_ref(py).borrow() == *xref.as_ref(py).borrow()))
-        } else {
-            let ty = item.get_type().name()?;
-            let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);
-            Err(PyTypeError::new_err(msg))
-        }
+        // if let Ok(xref) = item.extract::<Py<Xref>>() {
+        //     let py = item.py();
+        //     Ok(self
+        //         .xrefs
+        //         .iter()
+        //         .any(|x| *x.as_ref(py).borrow() == *xref.as_ref(py).borrow()))
+        // } else {
+        //     let ty = item.get_type().name()?;
+        //     let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);
+        //     Err(PyTypeError::new_err(msg))
+        // }
+        unimplemented!()
     }
 }

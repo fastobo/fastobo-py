@@ -136,7 +136,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         } else {
             match FrameReader::from_handle(fh, ordered, threads) {
                 Ok(r) => Ok(r),
-                Err(inner) if inner.is_instance::<pyo3::exceptions::PySyntaxError>(py) => {
+                Err(inner) if inner.is_instance_of::<pyo3::exceptions::PySyntaxError>(py) => {
                     Err(inner)
                 }
                 Err(inner) => {
@@ -286,7 +286,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         let cursor = std::io::Cursor::new(document.to_str()?);
         let mut reader = InternalParser::with_thread_count(cursor, threads)?;
         reader.ordered(ordered);
-        match py.allow_threads(|| reader.try_into_doc()) {
+        // match py.allow_threads(|| reader.try_into_doc()) {
+        match reader.try_into_doc() {
             Ok(doc) => Ok(doc.into_py(py)),
             Err(e) => Error::from(e).into(),
         }

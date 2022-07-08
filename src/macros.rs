@@ -8,27 +8,38 @@ macro_rules! impl_hash {
     });
 }
 
-macro_rules! impl_richmp {
+macro_rules! impl_richcmp {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
         match $op {
-            // $crate::pyo3::class::basic::CompareOp::Eq => {
-            //     if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-            //         let clause = clause.as_ref($other.py()).borrow();
-            //         Ok(($($self.$attr == clause.$attr)&&*).to_object($other.py()))
-            //     } else {
-            //         Ok(false.to_object($other.py()))
-            //     }
-            // }
-            // $crate::pyo3::class::basic::CompareOp::Ne => {
-            //     if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-            //         let clause = clause.as_ref($other.py()).borrow();
-            //         Ok(($($self.$attr != clause.$attr)||*).to_object($other.py()))
-            //     } else {
-            //         Ok(true.to_object($other.py()))
-            //     }
-            // }
-            // _ => Ok($other.py().NotImplemented())
-            _ => unimplemented!(),
+            $crate::pyo3::class::basic::CompareOp::Eq => {
+                let py = $other.py();
+                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
+                    let clause = clause.as_ref(py).borrow();
+                    let res = $($self.$attr == clause.$attr)&&*;
+                    Ok(res.to_object(py))
+                } else {
+                    Ok(false.to_object(py))
+                }
+            }
+            _ => Ok($other.py().NotImplemented())
+        }
+    });
+}
+
+macro_rules! impl_richcmp_py {
+    ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
+        match $op {
+            $crate::pyo3::class::basic::CompareOp::Eq => {
+                let py = $other.py();
+                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
+                    let clause = clause.as_ref(py).borrow();
+                    let res = $($self.$attr.eq_py(&clause.$attr, py))&&*;
+                    Ok(res.to_object(py))
+                } else {
+                    Ok(false.to_object(py))
+                }
+            }
+            _ => Ok($other.py().NotImplemented())
         }
     });
 }

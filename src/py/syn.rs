@@ -23,6 +23,7 @@ use pyo3::PyTypeInfo;
 
 use super::id::Ident;
 use super::xref::XrefList;
+use crate::utils::EqPy;
 use crate::utils::ClonePy;
 
 // --- Module export ---------------------------------------------------------
@@ -39,7 +40,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 // --- SynonymScope ----------------------------------------------------------
 
 #[pyclass(module = "fastobo.syn")] // FIXME(@althonos): probably not needed since it is not exposed.
-#[derive(Clone, ClonePy, Debug, Eq, PartialEq)]
+#[derive(Clone, ClonePy, Debug, Eq, PartialEq, EqPy)]
 pub struct SynonymScope {
     inner: fastobo::ast::SynonymScope,
 }
@@ -105,7 +106,7 @@ impl ToPyObject for SynonymScope {
 // --- Synonym ---------------------------------------------------------------
 
 #[pyclass(module = "fastobo.syn")]
-#[derive(Debug)]
+#[derive(Debug, EqPy)]
 pub struct Synonym {
     desc: fastobo::ast::QuotedString,
     scope: SynonymScope,
@@ -227,7 +228,7 @@ impl PyObjectProtocol for Synonym {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(
+        impl_richcmp_py!(
             self,
             other,
             op,

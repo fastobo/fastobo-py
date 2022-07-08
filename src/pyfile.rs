@@ -26,7 +26,7 @@ macro_rules! transmute_file_error {
         // Attempt to transmute the Python OSError to an actual
         // Rust `std::io::Error` using `from_raw_os_error`.
         if $e.is_instance_of::<PyOSError>($py) {
-            if let Ok(code) = &$e.pvalue($py).getattr("errno") {
+            if let Ok(code) = &$e.value($py).getattr("errno") {
                 if let Ok(n) = code.extract::<i32>() {
                     return Err(IoError::from_raw_os_error(n));
                 }

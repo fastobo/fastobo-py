@@ -60,8 +60,12 @@ class _TestUnquotedStringClause(object):
 
     def test_eq(self):
         x = self.type("1.2")
-        self.assertEqual(x, self.type("1.2"))
-        self.assertNotEqual(x, self.type("1.3"))
+        self.assertEqual(x, x)
+        y = self.type("1.2")
+        self.assertEqual(x, y)
+        z = self.type("1.4")
+        self.assertNotEqual(x, z)
+        self.assertNotEqual(y, z)
 
 # --- FormatVersion ----------------------------------------------------------
 

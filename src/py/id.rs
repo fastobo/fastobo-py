@@ -22,6 +22,7 @@ use crate::error::Error;
 use crate::raise;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 // --- Module export ----------------------------------------------------------
@@ -124,7 +125,7 @@ macro_rules! impl_convert {
     };
 }
 
-#[derive(ClonePy, Debug, PyWrapper)]
+#[derive(ClonePy, Debug, EqPy, PyWrapper)]
 #[wraps(BaseIdent)]
 pub enum Ident {
     Unprefixed(Py<UnprefixedIdent>),
@@ -209,7 +210,7 @@ impl AbstractClass for BaseIdent {
 ///     'GO:0009637'
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Debug, FinalClass, Clone, PartialEq, Eq)]
+#[derive(Debug, FinalClass, Clone, PartialEq, Eq, EqPy)]
 #[base(BaseIdent)]
 pub struct PrefixedIdent {
     inner: ast::PrefixedIdent,
@@ -361,7 +362,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///     hello world
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, Debug, Eq, Hash, PartialEq, FinalClass)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, EqPy, FinalClass)]
 #[base(BaseIdent)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
@@ -508,7 +509,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///     ValueError: invalid url: ...
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, FinalClass)]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, EqPy, FinalClass)]
 #[base(BaseIdent)]
 pub struct Url {
     inner: ast::Url,

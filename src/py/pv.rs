@@ -17,6 +17,7 @@ use fastobo::ast;
 use super::id::Ident;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 // --- Module export ---------------------------------------------------------
@@ -33,7 +34,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 
 // --- Conversion Wrapper ----------------------------------------------------
 
-#[derive(ClonePy, Debug, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper, EqPy)]
 #[wraps(AbstractPropertyValue)]
 pub enum PropertyValue {
     Literal(Py<LiteralPropertyValue>),
@@ -89,7 +90,7 @@ impl AbstractClass for AbstractPropertyValue {
 // --- Literal -----------------------------------------------------------------
 
 #[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(AbstractPropertyValue)]
 pub struct LiteralPropertyValue {
     relation: Ident,
@@ -233,7 +234,7 @@ impl PyObjectProtocol for LiteralPropertyValue {
 // --- Resource ------------------------------------------------------------
 
 #[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(AbstractPropertyValue)]
 pub struct ResourcePropertyValue {
     relation: Ident,

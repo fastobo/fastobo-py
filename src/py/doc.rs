@@ -25,6 +25,7 @@ use fastobo::visit::VisitMut;
 
 use crate::error::Error;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 
 use super::abc::AbstractFrame;
 use super::header::frame::HeaderFrame;
@@ -44,7 +45,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 
 // --- Conversion Wrapper ----------------------------------------------------
 
-#[derive(ClonePy, Debug, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper, EqPy)]
 #[wraps(AbstractFrame)]
 pub enum EntityFrame {
     Term(Py<TermFrame>),
@@ -93,7 +94,7 @@ impl IntoPy<fastobo::ast::EntityFrame> for EntityFrame {
 ///         frames, either `TermFrame`, `TypedefFrame` or `InstanceFrame`.
 ///
 #[pyclass(module = "fastobo.doc")]
-#[derive(Debug)]
+#[derive(Debug, EqPy)]
 pub struct OboDoc {
     #[pyo3(get, set)]
     /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.

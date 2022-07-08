@@ -24,10 +24,11 @@ use super::super::id::Ident;
 use super::clause::TypedefClause;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(AbstractEntityFrame)]
 pub struct TypedefFrame {
     #[pyo3(set)]

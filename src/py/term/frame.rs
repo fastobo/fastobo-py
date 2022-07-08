@@ -22,10 +22,11 @@ use super::super::id::Ident;
 use super::clause::TermClause;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(AbstractEntityFrame)]
 pub struct TermFrame {
     #[pyo3(set)]

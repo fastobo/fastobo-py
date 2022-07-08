@@ -38,12 +38,13 @@ use super::super::pv::PropertyValue;
 use super::super::syn::SynonymScope;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
 /// A thin wrapper for a reference to any possible `BaseHeaderClause` subclass.
-#[derive(ClonePy, Debug, PyWrapper)]
+#[derive(ClonePy, Debug, EqPy, PyWrapper)]
 #[wraps(BaseHeaderClause)]
 pub enum HeaderClause {
     FormatVersion(Py<FormatVersionClause>),
@@ -164,7 +165,7 @@ pub struct BaseHeaderClause {}
 ///
 /// A header clause indicating the format version of the OBO document.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct FormatVersionClause {
     version: obo::UnquotedString,
@@ -201,6 +202,18 @@ impl FormatVersionClause {
         Self::new(obo::UnquotedString::new(version)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, FormatVersionClause(self.version))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.version)
+    }
+
     /// `str`: the OBO format version used in document.
     #[getter]
     fn get_version(&self) -> PyResult<&str> {
@@ -221,21 +234,6 @@ impl FormatVersionClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for FormatVersionClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, FormatVersionClause(self.version))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.version)
-    }
-}
-
 // --- DataVersion -----------------------------------------------------------
 
 /// DataVersionClause(version)
@@ -243,7 +241,7 @@ impl PyObjectProtocol for FormatVersionClause {
 ///
 /// A header clause indicating the version of the data in the OBO document.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct DataVersionClause {
     version: UnquotedString,
@@ -280,6 +278,18 @@ impl DataVersionClause {
         Self::new(UnquotedString::new(version)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, DataVersionClause(self.version))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.version)
+    }
+
     /// `str`: the version of the data in the OBO document.
     #[getter]
     fn get_version(&self) -> PyResult<&str> {
@@ -300,21 +310,6 @@ impl DataVersionClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for DataVersionClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DataVersionClause(self.version))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.version)
-    }
-}
-
 // --- Date ------------------------------------------------------------------
 
 /// DateClause(date)
@@ -322,7 +317,7 @@ impl PyObjectProtocol for DataVersionClause {
 ///
 /// A header clause indicating the date the document was last modified.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct DateClause {
     date: obo::NaiveDateTime,
@@ -366,6 +361,38 @@ impl DateClause {
         .into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "DateClause({!r})").to_object(py);
+        fmt.call_method1(py, "format", (self.get_date(py)?,))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        if let Ok(ref clause) = other.extract::<Py<Self>>() {
+            let clause = &*clause.as_ref(other.py()).borrow();
+            Ok(match op {
+                CompareOp::Eq => self.date == clause.date,
+                CompareOp::Ne => self.date != clause.date,
+                CompareOp::Lt => self.date < clause.date,
+                CompareOp::Le => self.date <= clause.date,
+                CompareOp::Gt => self.date > clause.date,
+                CompareOp::Ge => self.date >= clause.date,
+            }
+            .to_object(other.py()))
+        } else {
+            match op {
+                CompareOp::Eq => Ok(false.to_object(other.py())),
+                CompareOp::Ne => Ok(true.to_object(other.py())),
+                _ => Ok(other.py().NotImplemented()),
+            }
+        }
+    }
+
     /// `~datetime.datetime`: the date this document was last modified.
     #[getter]
     fn get_date<'py>(&self, py: Python<'py>) -> PyResult<&'py PyDateTime> {
@@ -402,41 +429,6 @@ impl DateClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for DateClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "DateClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.get_date(py)?,))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        if let Ok(ref clause) = other.extract::<Py<Self>>() {
-            let clause = &*clause.as_ref(other.py()).borrow();
-            Ok(match op {
-                CompareOp::Eq => self.date == clause.date,
-                CompareOp::Ne => self.date != clause.date,
-                CompareOp::Lt => self.date < clause.date,
-                CompareOp::Le => self.date <= clause.date,
-                CompareOp::Gt => self.date > clause.date,
-                CompareOp::Ge => self.date >= clause.date,
-            }
-            .to_object(other.py()))
-        } else {
-            match op {
-                CompareOp::Eq => Ok(false.to_object(other.py())),
-                CompareOp::Ne => Ok(true.to_object(other.py())),
-                _ => Ok(other.py().NotImplemented()),
-            }
-        }
-    }
-}
-
 // --- SavedBy ---------------------------------------------------------------
 
 /// SavedByClause(name)
@@ -444,7 +436,7 @@ impl PyObjectProtocol for DateClause {
 ///
 /// A header clause containing the name of the person who saved the document.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct SavedByClause {
     name: UnquotedString,
@@ -481,6 +473,18 @@ impl SavedByClause {
         Self::new(UnquotedString::new(name)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, SavedByClause(self.name))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.name)
+    }
+
     /// `str`: the name of the person who saved the document.
     #[getter]
     fn get_name(&self) -> PyResult<&str> {
@@ -501,21 +505,6 @@ impl SavedByClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for SavedByClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SavedByClause(self.name))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.name)
-    }
-}
-
 // --- AutoGeneratedBy -------------------------------------------------------
 
 /// AutoGeneratedByClause(name)
@@ -523,7 +512,7 @@ impl PyObjectProtocol for SavedByClause {
 ///
 /// A header clause indicating the software that generated the document.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct AutoGeneratedByClause {
     name: UnquotedString,
@@ -560,6 +549,18 @@ impl AutoGeneratedByClause {
         Self::new(UnquotedString::new(name)).into()
     }
 
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, AutoGeneratedByClause(self.name))
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.name)
+    }
+
     /// `str`: the name of the software that generated the document.
     #[getter]
     fn get_name(&self) -> PyResult<&str> {
@@ -580,21 +581,6 @@ impl AutoGeneratedByClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for AutoGeneratedByClause {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, AutoGeneratedByClause(self.name))
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.name)
-    }
-}
-
 // --- Import ----------------------------------------------------------------
 
 /// ImportClause(reference)
@@ -602,7 +588,7 @@ impl PyObjectProtocol for AutoGeneratedByClause {
 ///
 /// A clause with a URL or ontology ID referencing another OBO document.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct ImportClause {
     reference: obo::Import, // should be `Import` ?
@@ -649,6 +635,18 @@ impl ImportClause {
         }
     }
 
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, SubsetdefClause(self.reference.to_string()))
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.reference)
+    }
+
     #[getter]
     /// `str`: a reference to a document to import.
     fn get_reference(&self) -> PyResult<String> {
@@ -664,21 +662,6 @@ impl ImportClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for ImportClause {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SubsetdefClause(self.reference.to_string()))
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.reference)
-    }
-}
-
 // --- Subsetdef -------------------------------------------------------------
 
 /// SubsetdefClause(subset, description)
@@ -686,7 +669,7 @@ impl PyObjectProtocol for ImportClause {
 ///
 /// A header clause declaring a subset in the OBO document.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct SubsetdefClause {
     #[pyo3(set)]
@@ -737,6 +720,21 @@ impl SubsetdefClause {
         Self::new(subset, QuotedString::new(description)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(
+            self,
+            SubsetdefClause(self.subset, self.description.as_str())
+        )
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.subset && self.description)
+    }
+
     /// `~fastobo.id.Ident`: the identifier of the declared subset.
     #[getter]
     fn get_subset<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
@@ -763,24 +761,6 @@ impl SubsetdefClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for SubsetdefClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(
-            self,
-            SubsetdefClause(self.subset, self.description.as_str())
-        )
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.subset && self.description)
-    }
-}
-
 // --- SynonymTypedef --------------------------------------------------------
 
 /// SynonymTypedefClause(typedef, description, scope=None)
@@ -788,7 +768,7 @@ impl PyObjectProtocol for SubsetdefClause {
 ///
 /// A header clause declaring a synonym type in the OBO document.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct SynonymTypedefClause {
     #[pyo3(set)]
@@ -861,6 +841,33 @@ impl SynonymTypedefClause {
         Ok(Self::with_scope(typedef, desc, sc).into())
     }
 
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __repr__(&self) -> PyResult<PyObject> {
+        if let Some(ref scope) = self.scope {
+            impl_repr!(
+                self,
+                SynonymTypedefClause(self.typedef, self.description.as_str(), scope)
+            )
+        } else {
+            impl_repr!(
+                self,
+                SynonymTypedefClause(self.typedef, self.description.as_str())
+            )
+        }
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(
+            self,
+            other,
+            op,
+            self.typedef && self.description && self.scope
+        )
+    }
+
     /// `~fastobo.id.Ident`: the identifier of the declared synonym type.
     #[getter]
     fn get_typedef(&self) -> PyResult<&Ident> {
@@ -903,36 +910,6 @@ impl SynonymTypedefClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for SynonymTypedefClause {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<PyObject> {
-        if let Some(ref scope) = self.scope {
-            impl_repr!(
-                self,
-                SynonymTypedefClause(self.typedef, self.description.as_str(), scope)
-            )
-        } else {
-            impl_repr!(
-                self,
-                SynonymTypedefClause(self.typedef, self.description.as_str())
-            )
-        }
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(
-            self,
-            other,
-            op,
-            self.typedef && self.description && self.scope
-        )
-    }
-}
-
 // --- DefaultNamespace ------------------------------------------------------
 
 /// DefaultNamespaceClause(namespace)
@@ -940,7 +917,7 @@ impl PyObjectProtocol for SynonymTypedefClause {
 ///
 /// A clause declaring the default namespace for the rest of the document.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct DefaultNamespaceClause {
     #[pyo3(set)]
@@ -995,6 +972,20 @@ impl DefaultNamespaceClause {
         }
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, DefaultNamespaceClause(self.namespace))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        Ok(self.clone_py(py).to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.namespace)
+    }
+
     /// `~fastobo.id.Ident`: the default namespace for this ontology.
     #[getter]
     fn get_namespace(&self) -> PyResult<&Ident> {
@@ -1010,23 +1001,6 @@ impl DefaultNamespaceClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for DefaultNamespaceClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DefaultNamespaceClause(self.namespace))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        Ok(self.clone_py(py).to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.namespace)
-    }
-}
-
 // --- NamespaceIdRuleClause -------------------------------------------------
 
 /// NamespaceIdRuleClause(rule)
@@ -1034,7 +1008,7 @@ impl PyObjectProtocol for DefaultNamespaceClause {
 ///
 /// A clause to describe the rule for Namespace ID generation in this document.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct NamespaceIdRuleClause {
     rule: fastobo::ast::UnquotedString,
@@ -1074,6 +1048,20 @@ impl NamespaceIdRuleClause {
         Self::new(fastobo::ast::UnquotedString::new(rule)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, NamespaceIdRuleClause(self.rule.as_str()))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        Ok(self.clone_py(py).to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.rule)
+    }
+
     /// `str`: the default namespace for this ontology.
     #[getter]
     fn get_rule(&self) -> PyResult<&str> {
@@ -1094,23 +1082,6 @@ impl NamespaceIdRuleClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for NamespaceIdRuleClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, NamespaceIdRuleClause(self.rule.as_str()))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        Ok(self.clone_py(py).to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.rule)
-    }
-}
-
 // --- IdspaceClause ---------------------------------------------------------
 
 /// IdspaceClause(prefix, url, description=None)
@@ -1118,7 +1089,7 @@ impl PyObjectProtocol for NamespaceIdRuleClause {
 ///
 /// A clause giving the mapping between a "local" and a "global" ID space.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct IdspaceClause {
     prefix: ast::IdentPrefix,
@@ -1198,6 +1169,25 @@ impl IdspaceClause {
         Self::with_description(p, url, d).into()
     }
 
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __repr__(&self) -> PyResult<PyObject> {
+        if let Some(ref desc) = self.description {
+            impl_repr!(
+                self,
+                IdspaceClause(self.prefix.as_str(), self.url, desc.as_str())
+            )
+        } else {
+            impl_repr!(self, IdspaceClause(self.prefix.as_str(), self.url))
+        }
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.prefix && self.url && self.description)
+    }
+
     /// `str`: the prefix used in prefixed IDs.
     #[getter]
     fn get_prefix(&self) -> &str {
@@ -1231,28 +1221,6 @@ impl IdspaceClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for IdspaceClause {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<PyObject> {
-        if let Some(ref desc) = self.description {
-            impl_repr!(
-                self,
-                IdspaceClause(self.prefix.as_str(), self.url, desc.as_str())
-            )
-        } else {
-            impl_repr!(self, IdspaceClause(self.prefix.as_str(), self.url))
-        }
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.prefix && self.url && self.description)
-    }
-}
-
 // --- TreatXrefsAsEquivalentClause ------------------------------------------
 
 /// TreatXrefsAsEquivalentClause(idspace)
@@ -1260,7 +1228,7 @@ impl PyObjectProtocol for IdspaceClause {
 ///
 /// A macro to treats xrefs coming from an ID space as equivalence statements.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct TreatXrefsAsEquivalentClause {
     idspace: ast::IdentPrefix,
@@ -1297,6 +1265,18 @@ impl TreatXrefsAsEquivalentClause {
         Self::new(ast::IdentPrefix::new(prefix)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, TreatXrefsAsEquivalentClause(self.idspace.as_str()))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.idspace)
+    }
+
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
     fn get_idspace(&self) -> &str {
@@ -1312,21 +1292,6 @@ impl TreatXrefsAsEquivalentClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for TreatXrefsAsEquivalentClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsEquivalentClause(self.idspace.as_str()))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.idspace)
-    }
-}
-
 // --- TreatXrefsAsGenusDifferentiaClause ------------------------------------
 
 /// TreatXrefsAsGenusDifferentiaClause(idspace, relation, filler)
@@ -1334,7 +1299,7 @@ impl PyObjectProtocol for TreatXrefsAsEquivalentClause {
 ///
 /// A macro to treats xrefs from an ID space as genus-differentia definitions.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct TreatXrefsAsGenusDifferentiaClause {
     idspace: ast::IdentPrefix,
@@ -1388,6 +1353,26 @@ impl TreatXrefsAsGenusDifferentiaClause {
         Self::new(ast::IdentPrefix::new(prefix), relation, filler).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(
+            self,
+            TreatXrefsAsGenusDifferentiaClause(self.idspace.as_str(), self.relation, self.filler)
+        )
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(
+            self,
+            other,
+            op,
+            self.idspace && self.relation && self.filler
+        )
+    }
+
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
     fn get_idspace(&self) -> &str {
@@ -1403,29 +1388,6 @@ impl TreatXrefsAsGenusDifferentiaClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(
-            self,
-            TreatXrefsAsGenusDifferentiaClause(self.idspace.as_str(), self.relation, self.filler)
-        )
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(
-            self,
-            other,
-            op,
-            self.idspace && self.relation && self.filler
-        )
-    }
-}
-
 // --- TreatXrefsAsReverseGenusDifferentiaClause -----------------------------
 
 /// TreatXrefsAsReverseGenusDifferentiaClause(idspace, relation, filler)
@@ -1433,7 +1395,7 @@ impl PyObjectProtocol for TreatXrefsAsGenusDifferentiaClause {
 ///
 /// A macro to treats xrefs from an ID space as reverse genus-differentia definitions.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct TreatXrefsAsReverseGenusDifferentiaClause {
     idspace: ast::IdentPrefix,
@@ -1487,23 +1449,6 @@ impl TreatXrefsAsReverseGenusDifferentiaClause {
         Self::new(ast::IdentPrefix::new(prefix), relation, filler).into()
     }
 
-    /// `str`: the ID prefix to select some Xrefs with.
-    #[getter]
-    fn get_idspace(&self) -> &str {
-        self.idspace.as_str()
-    }
-
-    fn raw_tag(&self) -> &str {
-        "treat-xrefs-as-reverse-genus-differentia"
-    }
-
-    fn raw_value(&self) -> String {
-        format!("{} {} {}", self.idspace, self.relation, self.filler)
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(
             self,
@@ -1520,12 +1465,26 @@ impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(
+        impl_richcmp_py!(
             self,
             other,
             op,
             self.idspace && self.relation && self.filler
         )
+    }
+
+    /// `str`: the ID prefix to select some Xrefs with.
+    #[getter]
+    fn get_idspace(&self) -> &str {
+        self.idspace.as_str()
+    }
+
+    fn raw_tag(&self) -> &str {
+        "treat-xrefs-as-reverse-genus-differentia"
+    }
+
+    fn raw_value(&self) -> String {
+        format!("{} {} {}", self.idspace, self.relation, self.filler)
     }
 }
 
@@ -1536,7 +1495,7 @@ impl PyObjectProtocol for TreatXrefsAsReverseGenusDifferentiaClause {
 ///
 /// A macro to treats xrefs from an ID space as being relationships.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct TreatXrefsAsRelationshipClause {
     idspace: ast::IdentPrefix,
@@ -1583,6 +1542,21 @@ impl TreatXrefsAsRelationshipClause {
         Self::new(ast::IdentPrefix::new(prefix), relation).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(
+            self,
+            TreatXrefsAsRelationshipClause(self.idspace.as_str(), self.relation)
+        )
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.idspace && self.relation)
+    }
+
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
     fn get_idspace(&self) -> &str {
@@ -1598,24 +1572,6 @@ impl TreatXrefsAsRelationshipClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for TreatXrefsAsRelationshipClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(
-            self,
-            TreatXrefsAsRelationshipClause(self.idspace.as_str(), self.relation)
-        )
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.idspace && self.relation)
-    }
-}
-
 // --- TreatXrefsAsIsA -------------------------------------------------------
 
 /// TreatXrefsAsIsAClause(idspace)
@@ -1623,7 +1579,7 @@ impl PyObjectProtocol for TreatXrefsAsRelationshipClause {
 ///
 /// A macro to treats xrefs from an ID space as being subclassing relations.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct TreatXrefsAsIsAClause {
     idspace: ast::IdentPrefix,
@@ -1661,6 +1617,18 @@ impl TreatXrefsAsIsAClause {
         Self::new(ast::IdentPrefix::new(prefix)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, TreatXrefsAsIsAClause(self.idspace.as_str()))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.idspace)
+    }
+
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
     fn get_idspace(&self) -> &str {
@@ -1676,21 +1644,6 @@ impl TreatXrefsAsIsAClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for TreatXrefsAsIsAClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsIsAClause(self.idspace.as_str()))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.idspace)
-    }
-}
-
 // --- TreatXrefsAsHasSubclassClause -----------------------------------------
 
 /// TreatXrefsAsHasSubclassClause(idspace)
@@ -1698,7 +1651,7 @@ impl PyObjectProtocol for TreatXrefsAsIsAClause {
 ///
 /// A macro to treats xrefs from an ID space as being superclassing relations.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct TreatXrefsAsHasSubclassClause {
     idspace: ast::IdentPrefix,
@@ -1735,6 +1688,18 @@ impl TreatXrefsAsHasSubclassClause {
         Self::new(ast::IdentPrefix::new(prefix)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, TreatXrefsAsHasSubclassClause(self.idspace.as_str()))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.idspace)
+    }
+
     /// `str`: the ID prefix to select some Xrefs with.
     #[getter]
     fn get_idspace(&self) -> &str {
@@ -1750,21 +1715,6 @@ impl TreatXrefsAsHasSubclassClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for TreatXrefsAsHasSubclassClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsHasSubclassClause(self.idspace.as_str()))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.idspace)
-    }
-}
-
 // --- PropertyValue ---------------------------------------------------------
 
 /// PropertyValueClause(property_value)
@@ -1777,7 +1727,7 @@ impl PyObjectProtocol for TreatXrefsAsHasSubclassClause {
 ///         to annotate the current OBO document with.
 ///
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct PropertyValueClause {
     #[pyo3(set)]
@@ -1822,6 +1772,18 @@ impl PropertyValueClause {
         Self::new(property_value).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, PropertyValueClause(self.inner))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.inner)
+    }
+
     #[getter]
     /// `~fastobo.pv.AbstractPropertyValue`: an annotation of the document.
     fn get_property_value(&self) -> PyResult<&PropertyValue> {
@@ -1837,21 +1799,6 @@ impl PropertyValueClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for PropertyValueClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, PropertyValueClause(self.inner))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.inner)
-    }
-}
-
 // --- Remark ----------------------------------------------------------------
 
 /// RemarkClause(remark)
@@ -1859,7 +1806,7 @@ impl PyObjectProtocol for PropertyValueClause {
 ///
 /// A header clause storing general comments for the current OBO file.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct RemarkClause {
     remark: UnquotedString,
@@ -1897,6 +1844,18 @@ impl RemarkClause {
         Self::new(UnquotedString::new(remark)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, RemarkClause(self.remark.as_str()))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.remark)
+    }
+
     /// `str`: a remark about the ontology.
     #[getter]
     fn get_remark(&self) -> PyResult<&str> {
@@ -1917,21 +1876,6 @@ impl RemarkClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for RemarkClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, RemarkClause(self.remark.as_str()))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.remark)
-    }
-}
-
 // --- Ontology --------------------------------------------------------------
 
 /// OntologyClause(ontology)
@@ -1939,7 +1883,7 @@ impl PyObjectProtocol for RemarkClause {
 ///
 /// The ontology ID of the current OBO file.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct OntologyClause {
     ontology: UnquotedString,
@@ -1976,6 +1920,20 @@ impl OntologyClause {
         Self::new(UnquotedString::new(ontology)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, OntologyClause(self.ontology.as_str()))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.ontology)
+    }
+
     /// `str`: the ID of the ontology described in the OBO document.
     #[getter]
     fn get_ontology(&self) -> PyResult<&str> {
@@ -1996,23 +1954,6 @@ impl OntologyClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for OntologyClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, OntologyClause(self.ontology.as_str()))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.ontology)
-    }
-}
-
 // --- OwlAxioms -------------------------------------------------------------
 
 /// OwlAxiomsClause(axioms)
@@ -2020,7 +1961,7 @@ impl PyObjectProtocol for OntologyClause {
 ///
 /// A header clause containing untranslatable OWL axioms.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct OwlAxiomsClause {
     axioms: UnquotedString,
@@ -2058,6 +1999,18 @@ impl OwlAxiomsClause {
         Self::new(UnquotedString::new(axioms)).into()
     }
 
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, OwlAxiomsClause(self.axioms.as_str()))
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.axioms)
+    }
+
     /// `str`: raw OWL axioms that have no equivalent in the OBO language.
     #[getter]
     fn get_axioms(&self) -> PyResult<&str> {
@@ -2078,21 +2031,6 @@ impl OwlAxiomsClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for OwlAxiomsClause {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, OwlAxiomsClause(self.axioms.as_str()))
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.axioms)
-    }
-}
-
 // --- UnreservedClause ------------------------------------------------------
 
 /// UnreservedClause(tag, value)
@@ -2100,7 +2038,7 @@ impl PyObjectProtocol for OwlAxiomsClause {
 ///
 /// A tag/value pair not reserved in the OBO specification.
 #[pyclass(extends=BaseHeaderClause, module="fastobo.header")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, EqPy, FinalClass)]
 #[base(BaseHeaderClause)]
 pub struct UnreservedClause {
     tag: UnquotedString,
@@ -2138,6 +2076,21 @@ impl UnreservedClause {
         Self::new(UnquotedString::new(tag), UnquotedString::new(value)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(
+            self,
+            UnreservedClause(self.tag.as_str(), self.value.as_str())
+        )
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.tag && self.value)
+    }
+
     #[getter]
     /// `str`: The tag of the clause.
     fn get_tag(&self) -> PyResult<&str> {
@@ -2166,23 +2119,5 @@ impl UnreservedClause {
 
     fn raw_value(&self) -> &str {
         self.value.as_str()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for UnreservedClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(
-            self,
-            UnreservedClause(self.tag.as_str(), self.value.as_str())
-        )
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.tag && self.value)
     }
 }

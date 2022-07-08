@@ -31,11 +31,12 @@ use crate::date::isodatetime_to_datetime;
 use crate::raise;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
-#[derive(ClonePy, Debug, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper, EqPy)]
 #[wraps(BaseTypedefClause)]
 pub enum TypedefClause {
     IsAnonymous(Py<IsAnonymousClause>),
@@ -213,7 +214,7 @@ pub struct BaseTypedefClause {}
 ///
 /// A clause declaring whether or not the relationship has an anonymous id.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsAnonymousClause {
     #[pyo3(get, set)]
@@ -271,7 +272,7 @@ impl PyObjectProtocol for IsAnonymousClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.anonymous)
+        impl_richcmp!(self, other, op, self.anonymous)
     }
 }
 
@@ -282,7 +283,7 @@ impl PyObjectProtocol for IsAnonymousClause {
 ///
 /// A clause declaring the human-readable name of this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct NameClause {
     name: fastobo::ast::UnquotedString,
@@ -350,7 +351,7 @@ impl PyObjectProtocol for NameClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.name)
+        impl_richcmp!(self, other, op, self.name)
     }
 }
 
@@ -361,7 +362,7 @@ impl PyObjectProtocol for NameClause {
 ///
 /// A term clause declaring the namespace of this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct NamespaceClause {
     #[pyo3(set)]
@@ -431,7 +432,7 @@ impl PyObjectProtocol for NamespaceClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.namespace)
+        impl_richcmp_py!(self, other, op, self.namespace)
     }
 }
 
@@ -442,7 +443,7 @@ impl PyObjectProtocol for NamespaceClause {
 ///
 /// A clause defines an alternate id for this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct AltIdClause {
     #[pyo3(set)]
@@ -511,7 +512,7 @@ impl PyObjectProtocol for AltIdClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.alt_id)
+        impl_richcmp_py!(self, other, op, self.alt_id)
     }
 }
 
@@ -530,7 +531,7 @@ impl PyObjectProtocol for AltIdClause {
 ///         definition, or `None`.
 ///
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct DefClause {
     definition: fastobo::ast::QuotedString,
@@ -626,7 +627,7 @@ impl PyObjectProtocol for DefClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.definition && self.xrefs)
+        impl_richcmp_py!(self, other, op, self.definition && self.xrefs)
     }
 }
 
@@ -637,7 +638,7 @@ impl PyObjectProtocol for DefClause {
 ///
 /// A clause storing a comment for this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct CommentClause {
     comment: fastobo::ast::UnquotedString,
@@ -705,7 +706,7 @@ impl PyObjectProtocol for CommentClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.comment)
+        impl_richcmp!(self, other, op, self.comment)
     }
 }
 
@@ -716,7 +717,7 @@ impl PyObjectProtocol for CommentClause {
 ///
 /// A clause declaring a subset to which this relationship belongs.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct SubsetClause {
     #[pyo3(set)]
@@ -785,7 +786,7 @@ impl PyObjectProtocol for SubsetClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.subset)
+        impl_richcmp_py!(self, other, op, self.subset)
     }
 }
 
@@ -796,7 +797,7 @@ impl PyObjectProtocol for SubsetClause {
 ///
 /// A clause giving a synonym for this relation, with some cross-references.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct SynonymClause {
     #[pyo3(get, set)]
@@ -866,7 +867,7 @@ impl PyObjectProtocol for SynonymClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.synonym)
+        impl_richcmp_py!(self, other, op, self.synonym)
     }
 }
 
@@ -877,7 +878,7 @@ impl PyObjectProtocol for SynonymClause {
 ///
 /// A cross-reference describing an analogous relation in another vocabulary.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct XrefClause {
     #[pyo3(get, set)]
@@ -960,7 +961,7 @@ impl PyObjectProtocol for XrefClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.xref)
+        impl_richcmp_py!(self, other, op, self.xref)
     }
 }
 
@@ -976,7 +977,7 @@ impl PyObjectProtocol for XrefClause {
 ///         to annotate the current relationship.
 ///
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct PropertyValueClause {
     #[pyo3(set)]
@@ -1047,7 +1048,7 @@ impl PyObjectProtocol for PropertyValueClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.inner)
+        impl_richcmp_py!(self, other, op, self.inner)
     }
 }
 
@@ -1058,7 +1059,7 @@ impl PyObjectProtocol for PropertyValueClause {
 ///
 /// A clause declaring the domain of the relationship, if any.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct DomainClause {
     #[pyo3(set)]
@@ -1127,7 +1128,7 @@ impl PyObjectProtocol for DomainClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.domain)
+        impl_richcmp_py!(self, other, op, self.domain)
     }
 }
 
@@ -1138,7 +1139,7 @@ impl PyObjectProtocol for DomainClause {
 ///
 /// A clause declaring the range of the relationship, if any.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct RangeClause {
     #[pyo3(set)]
@@ -1207,7 +1208,7 @@ impl PyObjectProtocol for RangeClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.range)
+        impl_richcmp_py!(self, other, op, self.range)
     }
 }
 
@@ -1218,7 +1219,7 @@ impl PyObjectProtocol for RangeClause {
 ///
 /// A clause declaring whether this relation is built-in to the OBO format.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct BuiltinClause {
     #[pyo3(get, set)]
@@ -1277,7 +1278,7 @@ impl PyObjectProtocol for BuiltinClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.builtin)
+        impl_richcmp!(self, other, op, self.builtin)
     }
 }
 
@@ -1288,7 +1289,7 @@ impl PyObjectProtocol for BuiltinClause {
 ///
 /// An extension of the `transitive_over` tag for property chains.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct HoldsOverChainClause {
     #[pyo3(set)]
@@ -1369,7 +1370,7 @@ impl PyObjectProtocol for HoldsOverChainClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.first && self.last)
+        impl_richcmp_py!(self, other, op, self.first && self.last)
     }
 }
 
@@ -1380,7 +1381,7 @@ impl PyObjectProtocol for HoldsOverChainClause {
 ///
 /// A clause declaring whether the relationship if anti-symmetric or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsAntiSymmetricClause {
     #[pyo3(get, set)]
@@ -1438,7 +1439,7 @@ impl PyObjectProtocol for IsAntiSymmetricClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.anti_symmetric)
+        impl_richcmp!(self, other, op, self.anti_symmetric)
     }
 }
 
@@ -1449,7 +1450,7 @@ impl PyObjectProtocol for IsAntiSymmetricClause {
 ///
 /// A clause declaring whether the relationship if cyclic or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsCyclicClause {
     #[pyo3(get, set)]
@@ -1507,7 +1508,7 @@ impl PyObjectProtocol for IsCyclicClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.cyclic)
+        impl_richcmp!(self, other, op, self.cyclic)
     }
 }
 
@@ -1518,7 +1519,7 @@ impl PyObjectProtocol for IsCyclicClause {
 ///
 /// A clause declaring whether the relationship if reflexive or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsReflexiveClause {
     #[pyo3(get, set)]
@@ -1576,7 +1577,7 @@ impl PyObjectProtocol for IsReflexiveClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.reflexive)
+        impl_richcmp!(self, other, op, self.reflexive)
     }
 }
 
@@ -1587,7 +1588,7 @@ impl PyObjectProtocol for IsReflexiveClause {
 ///
 /// A clause declaring whether the relationship if symmetric or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsSymmetricClause {
     #[pyo3(get, set)]
@@ -1645,7 +1646,7 @@ impl PyObjectProtocol for IsSymmetricClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.symmetric)
+        impl_richcmp!(self, other, op, self.symmetric)
     }
 }
 
@@ -1656,7 +1657,7 @@ impl PyObjectProtocol for IsSymmetricClause {
 ///
 /// A clause declaring whether the relationship is asymmetric or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsAsymmetricClause {
     #[pyo3(get, set)]
@@ -1714,7 +1715,7 @@ impl PyObjectProtocol for IsAsymmetricClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.asymmetric)
+        impl_richcmp!(self, other, op, self.asymmetric)
     }
 }
 
@@ -1725,7 +1726,7 @@ impl PyObjectProtocol for IsAsymmetricClause {
 ///
 /// A clause declaring whether the relationship if transitive or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsTransitiveClause {
     #[pyo3(get, set)]
@@ -1783,7 +1784,7 @@ impl PyObjectProtocol for IsTransitiveClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.transitive)
+        impl_richcmp!(self, other, op, self.transitive)
     }
 }
 
@@ -1794,7 +1795,7 @@ impl PyObjectProtocol for IsTransitiveClause {
 ///
 /// A clause declaring whether the relationship if functional or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsFunctionalClause {
     #[pyo3(get, set)]
@@ -1852,7 +1853,7 @@ impl PyObjectProtocol for IsFunctionalClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.functional)
+        impl_richcmp!(self, other, op, self.functional)
     }
 }
 
@@ -1863,7 +1864,7 @@ impl PyObjectProtocol for IsFunctionalClause {
 ///
 /// A clause declaring whether the relationship if inverse-functional or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsInverseFunctionalClause {
     #[pyo3(get, set)]
@@ -1921,7 +1922,7 @@ impl PyObjectProtocol for IsInverseFunctionalClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.inverse_functional)
+        impl_richcmp!(self, other, op, self.inverse_functional)
     }
 }
 
@@ -1932,7 +1933,7 @@ impl PyObjectProtocol for IsInverseFunctionalClause {
 ///
 /// A clause declaring this relation is a subproperty of another relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsAClause {
     #[pyo3(set)]
@@ -2001,7 +2002,7 @@ impl PyObjectProtocol for IsAClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2012,7 +2013,7 @@ impl PyObjectProtocol for IsAClause {
 ///
 /// Declares this relation is equivalent to the intersection of other relations.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IntersectionOfClause {
     #[pyo3(set)]
@@ -2080,7 +2081,7 @@ impl PyObjectProtocol for IntersectionOfClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2091,7 +2092,7 @@ impl PyObjectProtocol for IntersectionOfClause {
 ///
 /// Declares the relation represents the union of several other relations.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct UnionOfClause {
     #[pyo3(set)]
@@ -2160,7 +2161,7 @@ impl PyObjectProtocol for UnionOfClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2171,7 +2172,7 @@ impl PyObjectProtocol for UnionOfClause {
 ///
 /// A clause indicating the relation is exactly equivalent to another relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct EquivalentToClause {
     #[pyo3(set)]
@@ -2240,7 +2241,7 @@ impl PyObjectProtocol for EquivalentToClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2251,7 +2252,7 @@ impl PyObjectProtocol for EquivalentToClause {
 ///
 /// A clause stating is disjoint from another relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct DisjointFromClause {
     #[pyo3(set)]
@@ -2320,7 +2321,7 @@ impl PyObjectProtocol for DisjointFromClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2331,7 +2332,7 @@ impl PyObjectProtocol for DisjointFromClause {
 ///
 /// A clause declaring the inverse of this relationship type.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct InverseOfClause {
     #[pyo3(set)]
@@ -2400,7 +2401,7 @@ impl PyObjectProtocol for InverseOfClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2411,7 +2412,7 @@ impl PyObjectProtocol for InverseOfClause {
 ///
 /// A clause declaring another relation that this relation is transitive over.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct TransitiveOverClause {
     #[pyo3(set)]
@@ -2480,7 +2481,7 @@ impl PyObjectProtocol for TransitiveOverClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2491,7 +2492,7 @@ impl PyObjectProtocol for TransitiveOverClause {
 ///
 /// A clause declaring a property chain this relationship is equivalent to.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct EquivalentToChainClause {
     #[pyo3(set)]
@@ -2572,7 +2573,7 @@ impl PyObjectProtocol for EquivalentToChainClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.first && self.last)
+        impl_richcmp_py!(self, other, op, self.first && self.last)
     }
 }
 
@@ -2583,7 +2584,7 @@ impl PyObjectProtocol for EquivalentToChainClause {
 ///
 /// A clause declaring a relationship this relationship is disjoint over.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct DisjointOverClause {
     #[pyo3(set)]
@@ -2652,7 +2653,7 @@ impl PyObjectProtocol for DisjointOverClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2663,7 +2664,7 @@ impl PyObjectProtocol for DisjointOverClause {
 ///
 /// A clause declaring a relationship this relation has to another relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct RelationshipClause {
     #[pyo3(set)]
@@ -2742,7 +2743,7 @@ impl PyObjectProtocol for RelationshipClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef && self.target)
+        impl_richcmp_py!(self, other, op, self.typedef && self.target)
     }
 }
 
@@ -2753,7 +2754,7 @@ impl PyObjectProtocol for RelationshipClause {
 ///
 /// A clause indicating whether or not this relationship is obsolete.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsObsoleteClause {
     #[pyo3(get, set)]
@@ -2811,7 +2812,7 @@ impl PyObjectProtocol for IsObsoleteClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.obsolete)
+        impl_richcmp!(self, other, op, self.obsolete)
     }
 }
 
@@ -2822,7 +2823,7 @@ impl PyObjectProtocol for IsObsoleteClause {
 ///
 /// A clause giving a relation which replaces this obsolete relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct ReplacedByClause {
     #[pyo3(set)]
@@ -2891,7 +2892,7 @@ impl PyObjectProtocol for ReplacedByClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2902,7 +2903,7 @@ impl PyObjectProtocol for ReplacedByClause {
 ///
 /// A clause giving a potential substitute for an obsolete typedef.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct ConsiderClause {
     #[pyo3(set)]
@@ -2971,7 +2972,7 @@ impl PyObjectProtocol for ConsiderClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef)
+        impl_richcmp_py!(self, other, op, self.typedef)
     }
 }
 
@@ -2982,7 +2983,7 @@ impl PyObjectProtocol for ConsiderClause {
 ///
 /// A term clause stating the name of the creator of this relationship.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct CreatedByClause {
     creator: fastobo::ast::UnquotedString,
@@ -3049,7 +3050,7 @@ impl PyObjectProtocol for CreatedByClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.creator)
+        impl_richcmp!(self, other, op, self.creator)
     }
 }
 
@@ -3080,7 +3081,7 @@ impl PyObjectProtocol for CreatedByClause {
 ///     creation_date: 2021-01-23T00:00:00Z
 ///
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct CreationDateClause {
     date: fastobo::ast::CreationDate,
@@ -3183,7 +3184,7 @@ impl PyObjectProtocol for CreationDateClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.date)
+        impl_richcmp!(self, other, op, self.date)
     }
 }
 
@@ -3194,7 +3195,7 @@ impl PyObjectProtocol for CreationDateClause {
 ///
 /// An OWL macro that adds an `IAO:0000425` annotation to this relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct ExpandAssertionToClause {
     definition: fastobo::ast::QuotedString,
@@ -3293,7 +3294,7 @@ impl PyObjectProtocol for ExpandAssertionToClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.definition && self.xrefs)
+        impl_richcmp_py!(self, other, op, self.definition && self.xrefs)
     }
 }
 
@@ -3304,7 +3305,7 @@ impl PyObjectProtocol for ExpandAssertionToClause {
 ///
 /// An OWL macro that adds an `IAO:0000424` annotation to this relation.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct ExpandExpressionToClause {
     definition: fastobo::ast::QuotedString,
@@ -3403,7 +3404,7 @@ impl PyObjectProtocol for ExpandExpressionToClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.definition && self.xrefs)
+        impl_richcmp_py!(self, other, op, self.definition && self.xrefs)
     }
 }
 
@@ -3414,7 +3415,7 @@ impl PyObjectProtocol for ExpandExpressionToClause {
 ///
 /// A clause declaring whether this relationship is a metadata tag or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsMetadataTagClause {
     #[pyo3(get, set)]
@@ -3472,7 +3473,7 @@ impl PyObjectProtocol for IsMetadataTagClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.metadata_tag)
+        impl_richcmp!(self, other, op, self.metadata_tag)
     }
 }
 
@@ -3483,7 +3484,7 @@ impl PyObjectProtocol for IsMetadataTagClause {
 ///
 /// A clause declaring wether this relationship is class level or not.
 #[pyclass(extends=BaseTypedefClause, module="fastobo.typedef")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTypedefClause)]
 pub struct IsClassLevelClause {
     #[pyo3(get, set)]
@@ -3541,6 +3542,6 @@ impl PyObjectProtocol for IsClassLevelClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.class_level)
+        impl_richcmp!(self, other, op, self.class_level)
     }
 }

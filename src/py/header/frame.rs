@@ -22,10 +22,11 @@ use super::clause::BaseHeaderClause;
 use super::clause::HeaderClause;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractFrame, module="fastobo.header")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(AbstractFrame)]
 pub struct HeaderFrame {
     clauses: Vec<HeaderClause>,

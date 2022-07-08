@@ -37,6 +37,17 @@ class TestXref(unittest.TestCase):
             'ISBN:0321842685 "Hacker\'s Delight (2nd Edition)"'
         )
 
+    def test_eq(self):
+        i1 = fastobo.id.UnprefixedIdent('a')
+        i2 = fastobo.id.UnprefixedIdent('b')
+        x1 = self.type(i1)
+        self.assertEqual(x1, x1)
+        x2 = self.type(i1)
+        self.assertIsNot(x1, x2)
+        self.assertEqual(x1, x2)
+        x3 = self.type(i2)
+        self.assertNotEqual(x1, x2)
+
 
 class TestXrefList(unittest.TestCase):
 

@@ -3,6 +3,7 @@ use pyo3::types::PyTuple;
 use pyo3::types::PyString;
 use pyo3::exceptions::PyValueError;
 use pyo3::exceptions::PyRuntimeError;
+use pyo3::exceptions::PyChildProcessError;
 
 // --- Macros ----------------------------------------------------------------
 
@@ -138,7 +139,7 @@ impl SingleClauseError {
 
 // --- DisconnectedChannelError ----------------------------------------------
 
-#[pyclass(module = "fastobo.exceptions", extends = PyRuntimeError)]
+#[pyclass(module = "fastobo.exceptions", extends = PyChildProcessError)]
 pub struct DisconnectedChannelError {}
 
 impl_pyerr!(DisconnectedChannelError);

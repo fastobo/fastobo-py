@@ -71,6 +71,87 @@ fn clonepy_impl_struct(ast: &syn::DeriveInput, _en: &syn::DataStruct) -> TokenSt
 
 // ---
 
+// ---
+
+#[proc_macro_derive(EqPy)]
+pub fn eqpy_derive(input: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(input as syn::DeriveInput);
+    match &ast.data {
+        syn::Data::Enum(e) => TokenStream::from(eqpy_impl_enum(&ast, &e)),
+        syn::Data::Struct(s) => TokenStream::from(eqpy_impl_struct(&ast, &s)),
+        _ => panic!("#[derive(EqPy)] only supports enums or structs"),
+    }
+}
+
+fn eqpy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
+    let mut variants = Vec::new();
+
+    // Build eq_py for each variant
+    for variant in &en.variants {
+        let name = &variant.ident;
+        variants.push(quote!{
+            ( #name(l), #name(r) ) => (*l.as_ref(py).borrow()).eq_py(&*r.as_ref(py).borrow(), py)
+        });
+    }
+
+    // Build eq implementation
+    let name = &ast.ident;
+    let expanded = quote! {
+        #[automatically_derived]
+        #[allow(unused)]
+        impl EqPy for #name {
+            fn eq_py(&self, other: &Self, py: Python) -> bool {
+                use self::#name::*;
+                match (self, other) {
+                    #(#variants,)*
+                    _ => false
+                }
+            }
+        }
+    };
+
+    expanded
+}
+
+fn eqpy_impl_struct(ast: &syn::DeriveInput, en: &syn::DataStruct) -> TokenStream2 {
+    let mut expression: syn::Expr = parse_quote!(true);
+
+    // let fields: Vec<_> = match &en.fields {
+    //     syn::Fields::Named(n) => n.named.iter().map(|field| field.ident.as_ref().unwrap()).collect(),
+    //     _ => unreachable!(),
+    // };
+
+    if let syn::Fields::Named(n) = &en.fields {
+        for field in n.named.iter() {
+            let name = field.ident.as_ref().unwrap();
+            let condition = parse_quote!(self.#name.eq_py(&other.#name, py));
+            expression = syn::Expr::from(syn::ExprBinary {
+                attrs: Vec::new(),
+                left: Box::new(expression),
+                op: syn::BinOp::And(<syn::Token![&&]>::default()),
+                right: Box::new(condition),
+            })
+        }
+    } else {
+        unreachable!()
+    }
+
+
+    let name = &ast.ident;
+    let expanded = quote! {
+        #[automatically_derived]
+        impl EqPy for #name {
+            fn eq_py(&self, other: &Self, py: Python) -> bool {
+                #expression
+            }
+        }
+    };
+
+    expanded
+}
+
+// ---
+
 #[proc_macro_derive(PyWrapper, attributes(wraps))]
 pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
@@ -237,7 +318,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
                     None => &qualname,
                 };
 
-                if ob.is_instance::<#base>()? {
+                if ob.is_instance_of::<#base>()? {
                     match ty.as_ref() {
                         #(#variants,)*
                         _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
@@ -378,8 +459,9 @@ fn listlike_impl_methods(
         ///         required type).
         #[pyo3(text_signature = "(self, value)")]
         fn count(&mut self, value: &PyAny) -> PyResult<usize> {
+            let py = value.py();
             let item = <#ty as pyo3::prelude::FromPyObject>::extract(value)?;
-            Ok(self.#field.iter().filter(|&x| *x == item).count())
+            Ok(self.#field.iter().filter(|&x| x.eq_py(&item, py)).count())
         }
     });
     // |  extend($self, iterable, /)

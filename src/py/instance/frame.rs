@@ -10,8 +10,6 @@ use pyo3::types::PyIterator;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
-use pyo3::PyObjectProtocol;
-use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -20,10 +18,11 @@ use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.instance")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(AbstractEntityFrame)]
 pub struct InstanceFrame {
     id: Ident,

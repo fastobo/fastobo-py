@@ -9,7 +9,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
 use pyo3::PyNativeType;
-use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -17,6 +16,7 @@ use fastobo::ast;
 use super::id::Ident;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 // --- Module export ---------------------------------------------------------
@@ -33,7 +33,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 
 // --- Conversion Wrapper ----------------------------------------------------
 
-#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper, EqPy)]
 #[wraps(AbstractPropertyValue)]
 pub enum PropertyValue {
     Literal(Py<LiteralPropertyValue>),
@@ -89,7 +89,7 @@ impl AbstractClass for AbstractPropertyValue {
 // --- Literal -----------------------------------------------------------------
 
 #[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(AbstractPropertyValue)]
 pub struct LiteralPropertyValue {
     relation: Ident,
@@ -171,6 +171,28 @@ impl LiteralPropertyValue {
         Ok(Self::new(r, v, dt).into())
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
+        fmt.to_object(py).call_method1(
+            py,
+            "format",
+            (
+                self.relation.to_object(py),
+                self.value.as_str(),
+                self.datatype.to_object(py),
+            ),
+        )
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        Ok(pv.to_string())
+    }
+
     #[getter]
     fn get_relation(&self) -> PyResult<&Ident> {
         Ok(&self.relation)
@@ -205,35 +227,10 @@ impl LiteralPropertyValue {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for LiteralPropertyValue {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
-        fmt.to_object(py).call_method1(
-            py,
-            "format",
-            (
-                self.relation.to_object(py),
-                self.value.as_str(),
-                self.datatype.to_object(py),
-            ),
-        )
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
-        Ok(pv.to_string())
-    }
-}
-
 // --- Resource ------------------------------------------------------------
 
 #[pyclass(extends=AbstractPropertyValue, module="fastobo.pv")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(AbstractPropertyValue)]
 pub struct ResourcePropertyValue {
     relation: Ident,
@@ -293,6 +290,17 @@ impl ResourcePropertyValue {
         Self::new(relation, value).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, ResourcePropertyValue(self.relation, self.value))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        Ok(pv.to_string())
+    }
+
     #[getter]
     fn get_relation(&self) -> PyResult<&Ident> {
         Ok(&self.relation)
@@ -313,19 +321,5 @@ impl ResourcePropertyValue {
     fn set_value(&mut self, value: Ident) -> PyResult<()> {
         self.value = value;
         Ok(())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for ResourcePropertyValue {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ResourcePropertyValue(self.relation, self.value))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
-        Ok(pv.to_string())
     }
 }

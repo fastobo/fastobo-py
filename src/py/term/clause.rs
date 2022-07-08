@@ -18,7 +18,6 @@ use pyo3::types::PyTimeAccess;
 use pyo3::types::PyTzInfo;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
-use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -36,11 +35,12 @@ use crate::date::isodatetime_to_datetime;
 use crate::raise;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
-#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper, EqPy)]
 #[wraps(BaseTermClause)]
 pub enum TermClause {
     IsAnonymous(Py<IsAnonymousClause>),
@@ -146,7 +146,7 @@ pub struct BaseTermClause {}
 ///
 /// A clause declaring whether or not the current term has an anonymous id.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct IsAnonymousClause {
     #[pyo3(get, set)]
@@ -184,17 +184,6 @@ impl IsAnonymousClause {
         Self::new(anonymous).into()
     }
 
-    fn raw_tag(&self) -> &str {
-        "is_anonymous"
-    }
-
-    fn raw_value(&self) -> String {
-        self.anonymous.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for IsAnonymousClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, IsAnonymousClause(self.anonymous))
     }
@@ -204,7 +193,15 @@ impl PyObjectProtocol for IsAnonymousClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.anonymous)
+        impl_richcmp!(self, other, op, self.anonymous)
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "is_anonymous").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.anonymous.to_string()
     }
 }
 
@@ -215,7 +212,7 @@ impl PyObjectProtocol for IsAnonymousClause {
 ///
 /// A term clause declaring the human-readable name of this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct NameClause {
     name: fastobo::ast::UnquotedString,
@@ -252,6 +249,18 @@ impl NameClause {
         Self::new(fastobo::ast::UnquotedString::new(name)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, NameClause(self.name))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.name)
+    }
+
     /// `str`: the name of the current term.
     #[getter]
     fn get_name(&self) -> &str {
@@ -263,27 +272,12 @@ impl NameClause {
         self.name = fastobo::ast::UnquotedString::new(name);
     }
 
-    fn raw_tag(&self) -> &str {
-        "name"
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "name").to_object(slf.py())
     }
 
     fn raw_value(&self) -> String {
         self.name.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for NameClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, NameClause(self.name))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.name)
     }
 }
 
@@ -294,7 +288,7 @@ impl PyObjectProtocol for NameClause {
 ///
 /// A term clause declaring the namespace of this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct NamespaceClause {
     #[pyo3(set)]
@@ -338,23 +332,6 @@ impl NamespaceClause {
         Self::new(namespace).into()
     }
 
-    #[getter]
-    /// `~fastobo.id.Ident`: the ID of the namespace this term is part of.
-    fn get_namespace(&self) -> &Ident {
-        &self.namespace
-    }
-
-    fn raw_tag(&self) -> &str {
-        "namespace"
-    }
-
-    fn raw_value(&self) -> String {
-        self.namespace.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for NamespaceClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, NamespaceClause(self.namespace))
     }
@@ -364,7 +341,21 @@ impl PyObjectProtocol for NamespaceClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.namespace)
+        impl_richcmp_py!(self, other, op, self.namespace)
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the ID of the namespace this term is part of.
+    fn get_namespace(&self) -> &Ident {
+        &self.namespace
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "namespace").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.namespace.to_string()
     }
 }
 
@@ -375,7 +366,7 @@ impl PyObjectProtocol for NamespaceClause {
 ///
 /// A clause defines an alternate id for this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct AltIdClause {
     #[pyo3(set)]
@@ -418,23 +409,6 @@ impl AltIdClause {
         Self::new(alt_id).into()
     }
 
-    #[getter]
-    /// `~fastobo.id.Ident`: an alternative ID used to refer to this term.
-    fn get_alt_id(&self) -> &Ident {
-        &self.alt_id
-    }
-
-    fn raw_tag(&self) -> &str {
-        "alt_id"
-    }
-
-    fn raw_value(&self) -> String {
-        self.alt_id.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for AltIdClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, AltIdClause(self.alt_id))
     }
@@ -444,7 +418,21 @@ impl PyObjectProtocol for AltIdClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.alt_id)
+        impl_richcmp_py!(self, other, op, self.alt_id)
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: an alternative ID used to refer to this term.
+    fn get_alt_id(&self) -> &Ident {
+        &self.alt_id
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "alt_id").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.alt_id.to_string()
     }
 }
 
@@ -463,7 +451,7 @@ impl PyObjectProtocol for AltIdClause {
 ///         definition, or `None`.
 ///
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct DefClause {
     definition: fastobo::ast::QuotedString,
@@ -505,17 +493,30 @@ impl IntoPy<fastobo::ast::TermClause> for DefClause {
 #[pymethods]
 impl DefClause {
     #[new]
-    fn __init__(definition: String, xrefs: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
-        let def = fastobo::ast::QuotedString::new(definition);
+    fn __init__(definition: &PyString, xrefs: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        let py = definition.py();
+        let def = fastobo::ast::QuotedString::new(definition.to_str()?);
         let list = match xrefs {
             Some(x) => XrefList::collect(py, x)?,
             None => XrefList::new(Vec::new()),
         };
-
         Ok(Self::new(def, list).into())
+    }
+
+    fn __repr__(&self) -> PyResult<PyObject> {
+        if self.xrefs.is_empty() {
+            impl_repr!(self, DefClause(self.definition))
+        } else {
+            impl_repr!(self, DefClause(self.definition, self.xrefs))
+        }
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.definition && self.xrefs)
     }
 
     #[getter]
@@ -535,31 +536,12 @@ impl DefClause {
         self.xrefs.clone_py(py)
     }
 
-    fn raw_tag(&self) -> &str {
-        "def"
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "def").to_object(slf.py())
     }
 
     fn raw_value(&self) -> String {
         self.definition.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for DefClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        if self.xrefs.is_empty() {
-            impl_repr!(self, DefClause(self.definition))
-        } else {
-            impl_repr!(self, DefClause(self.definition, self.xrefs))
-        }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.definition && self.xrefs)
     }
 }
 
@@ -570,7 +552,7 @@ impl PyObjectProtocol for DefClause {
 ///
 /// A clause storing a comment for this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct CommentClause {
     comment: fastobo::ast::UnquotedString,
@@ -607,6 +589,18 @@ impl CommentClause {
         Self::new(fastobo::ast::UnquotedString::new(comment)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, CommentClause(self.comment))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.comment)
+    }
+
     #[getter]
     /// `str`: a comment relevant to this term.
     fn get_comment(&self) -> &str {
@@ -618,27 +612,12 @@ impl CommentClause {
         self.comment = fastobo::ast::UnquotedString::new(comment);
     }
 
-    fn raw_tag(&self) -> &str {
-        "comment"
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "comment").to_object(slf.py())
     }
 
     fn raw_value(&self) -> String {
         self.comment.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for CommentClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CommentClause(self.comment))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.comment)
     }
 }
 
@@ -649,7 +628,7 @@ impl PyObjectProtocol for CommentClause {
 ///
 /// A clause declaring a subset to which this term belongs.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct SubsetClause {
     #[pyo3(set)]
@@ -692,23 +671,6 @@ impl SubsetClause {
         Self::new(subset).into()
     }
 
-    #[getter]
-    /// `~fastobo.id.Ident`: the ID of the subset this term is part of.
-    fn get_subset(&self) -> &Ident {
-        &self.subset
-    }
-
-    fn raw_tag(&self) -> &str {
-        "subset"
-    }
-
-    fn raw_value(&self) -> String {
-        self.subset.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for SubsetClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, SubsetClause(self.subset))
     }
@@ -718,7 +680,21 @@ impl PyObjectProtocol for SubsetClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.subset)
+        impl_richcmp_py!(self, other, op, self.subset)
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the ID of the subset this term is part of.
+    fn get_subset(&self) -> &Ident {
+        &self.subset
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "subset").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.subset.to_string()
     }
 }
 
@@ -729,7 +705,7 @@ impl PyObjectProtocol for SubsetClause {
 ///
 /// A clause giving a synonym for this term, with some cross-references.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct SynonymClause {
     #[pyo3(set)]
@@ -776,25 +752,6 @@ impl SynonymClause {
         Self::new(synonym.clone_ref(py)).into()
     }
 
-    #[getter]
-    /// `~fastobo.syn.Synonym`: a possible synonym for this term.
-    fn get_synonym<'py>(&self, py: Python<'py>) -> Py<Synonym> {
-        self.synonym.clone_py(py)
-    }
-
-    fn raw_tag(&self) -> &str {
-        "synonym"
-    }
-
-    fn raw_value(&self) -> String {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        format!("{}", &*self.synonym.as_ref(py).borrow())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for SynonymClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, SynonymClause(self.synonym))
     }
@@ -804,7 +761,23 @@ impl PyObjectProtocol for SynonymClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.synonym)
+        impl_richcmp_py!(self, other, op, self.synonym)
+    }
+
+    #[getter]
+    /// `~fastobo.syn.Synonym`: a possible synonym for this term.
+    fn get_synonym<'py>(&self, py: Python<'py>) -> Py<Synonym> {
+        self.synonym.clone_py(py)
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "synonym").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        format!("{}", &*self.synonym.as_ref(py).borrow())
     }
 }
 
@@ -815,7 +788,7 @@ impl PyObjectProtocol for SynonymClause {
 ///
 /// A cross-reference that describes an analogous term in another vocabulary.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct XrefClause {
     #[pyo3(get, set)]
@@ -876,19 +849,6 @@ impl XrefClause {
         Self::from(xref).into()
     }
 
-    fn raw_tag(&self) -> &str {
-        "xref"
-    }
-
-    fn raw_value(&self) -> String {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        self.xref.as_ref(py).to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for XrefClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, XrefClause(self.xref))
     }
@@ -898,7 +858,17 @@ impl PyObjectProtocol for XrefClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.xref)
+        impl_richcmp_py!(self, other, op, self.xref)
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "xref").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        self.xref.as_ref(py).to_string()
     }
 }
 
@@ -909,7 +879,7 @@ impl PyObjectProtocol for XrefClause {
 ///
 /// A clause declaring whether or not this term is built-in to the OBO format.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct BuiltinClause {
     #[pyo3(set)]
@@ -947,23 +917,6 @@ impl BuiltinClause {
         Self::new(builtin).into()
     }
 
-    /// `bool`: ``True`` if the term is built in the OBO format.
-    #[getter]
-    fn get_builtin(&self) -> bool {
-        self.builtin
-    }
-
-    fn raw_tag(&self) -> &str {
-        "builtin"
-    }
-
-    fn raw_value(&self) -> String {
-        self.builtin.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for BuiltinClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, BuiltinClause(self.builtin))
     }
@@ -973,7 +926,21 @@ impl PyObjectProtocol for BuiltinClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.builtin)
+        impl_richcmp!(self, other, op, self.builtin)
+    }
+
+    /// `bool`: ``True`` if the term is built in the OBO format.
+    #[getter]
+    fn get_builtin(&self) -> bool {
+        self.builtin
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "builtin").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.builtin.to_string()
     }
 }
 
@@ -989,7 +956,7 @@ impl PyObjectProtocol for BuiltinClause {
 ///         to annotate the current term.
 ///
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct PropertyValueClause {
     #[pyo3(set)]
@@ -1034,23 +1001,6 @@ impl PropertyValueClause {
         Self::new(property_value).into()
     }
 
-    #[getter]
-    /// `~fastobo.pv.AbstractPropertyValue`: an annotation of the term.
-    fn get_property_value(&self) -> &PropertyValue {
-        &self.inner
-    }
-
-    fn raw_tag(&self) -> &str {
-        "property_value"
-    }
-
-    fn raw_value(&self) -> String {
-        self.inner.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for PropertyValueClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, PropertyValueClause(self.inner))
     }
@@ -1060,7 +1010,21 @@ impl PyObjectProtocol for PropertyValueClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.inner)
+        impl_richcmp_py!(self, other, op, self.inner)
+    }
+
+    #[getter]
+    /// `~fastobo.pv.AbstractPropertyValue`: an annotation of the term.
+    fn get_property_value(&self) -> &PropertyValue {
+        &self.inner
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "property_value").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.inner.to_string()
     }
 }
 
@@ -1071,7 +1035,7 @@ impl PyObjectProtocol for PropertyValueClause {
 ///
 /// A clause declaring this term is a subclass of another term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct IsAClause {
     #[pyo3(set)]
@@ -1114,23 +1078,6 @@ impl IsAClause {
         Self::new(term).into()
     }
 
-    #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the parent term.
-    fn get_term(&self) -> &Ident {
-        &self.term
-    }
-
-    fn raw_tag(&self) -> &str {
-        "is_a"
-    }
-
-    fn raw_value(&self) -> String {
-        self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for IsAClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, IsAClause(self.term))
     }
@@ -1140,7 +1087,21 @@ impl PyObjectProtocol for IsAClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.term)
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the parent term.
+    fn get_term(&self) -> &Ident {
+        &self.term
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "is_a").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
     }
 }
 
@@ -1175,7 +1136,7 @@ impl PyObjectProtocol for IsAClause {
 ///     ... ))
 ///
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct IntersectionOfClause {
     typedef: Option<Ident>,
@@ -1222,6 +1183,18 @@ impl IntersectionOfClause {
         Self::new(typedef, term).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IntersectionOfClause(self.typedef, self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.typedef && self.term)
+    }
+
     #[getter]
     /// `str`: the identifier of the composing term.
     fn get_term(&self) -> &Ident {
@@ -1234,8 +1207,8 @@ impl IntersectionOfClause {
         self.typedef.as_ref()
     }
 
-    fn raw_tag(&self) -> &str {
-        "intersection_of"
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "intersection_of").to_object(slf.py())
     }
 
     fn raw_value(&self) -> String {
@@ -1247,21 +1220,6 @@ impl IntersectionOfClause {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for IntersectionOfClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IntersectionOfClause(self.typedef, self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef && self.term)
-    }
-}
-
 // --- UnionOf ---------------------------------------------------------------
 
 /// UnionOfClause(term)
@@ -1269,7 +1227,7 @@ impl PyObjectProtocol for IntersectionOfClause {
 ///
 /// A clause indicating the term represents the union of several other terms.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct UnionOfClause {
     term: Ident,
@@ -1311,23 +1269,6 @@ impl UnionOfClause {
         Self::new(id).into()
     }
 
-    #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the member term.
-    fn get_term(&self) -> &Ident {
-        &self.term
-    }
-
-    fn raw_tag(&self) -> &str {
-        "union_of"
-    }
-
-    fn raw_value(&self) -> String {
-        self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for UnionOfClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, UnionOfClause(self.term))
     }
@@ -1337,7 +1278,21 @@ impl PyObjectProtocol for UnionOfClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.term)
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the member term.
+    fn get_term(&self) -> &Ident {
+        &self.term
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "union_of").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
     }
 }
 
@@ -1348,7 +1303,7 @@ impl PyObjectProtocol for UnionOfClause {
 ///
 /// A clause indicating the term is exactly equivalent to another term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct EquivalentToClause {
     term: Ident,
@@ -1390,23 +1345,6 @@ impl EquivalentToClause {
         Self::new(term).into()
     }
 
-    #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the equivalent term.
-    fn get_term(&self) -> &Ident {
-        &self.term
-    }
-
-    fn raw_tag(&self) -> &str {
-        "equivalent_to"
-    }
-
-    fn raw_value(&self) -> String {
-        self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for EquivalentToClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, EquivalentToClause(self.term))
     }
@@ -1416,7 +1354,21 @@ impl PyObjectProtocol for EquivalentToClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.term)
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the equivalent term.
+    fn get_term(&self) -> &Ident {
+        &self.term
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "equivalent_to").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
     }
 }
 
@@ -1427,7 +1379,7 @@ impl PyObjectProtocol for EquivalentToClause {
 ///
 /// A clause stating this term has no instances in common with another term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct DisjointFromClause {
     #[pyo3(set)]
@@ -1470,23 +1422,6 @@ impl DisjointFromClause {
         Self::new(term).into()
     }
 
-    #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the disjoint term.
-    fn get_term(&self) -> &Ident {
-        &self.term
-    }
-
-    fn raw_tag(&self) -> &str {
-        "disjoint_from"
-    }
-
-    fn raw_value(&self) -> String {
-        self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for DisjointFromClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, DisjointFromClause(self.term))
     }
@@ -1496,7 +1431,21 @@ impl PyObjectProtocol for DisjointFromClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.term)
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the disjoint term.
+    fn get_term(&self) -> &Ident {
+        &self.term
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "disjoint_from").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
     }
 }
 
@@ -1507,7 +1456,7 @@ impl PyObjectProtocol for DisjointFromClause {
 ///
 /// A clause describing a typed relationship between this term and another term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct RelationshipClause {
     #[pyo3(set)]
@@ -1556,6 +1505,18 @@ impl RelationshipClause {
         Self::new(typedef, term).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, RelationshipClause(self.typedef, self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.typedef && self.term)
+    }
+
     #[getter]
     fn get_typedef<'py>(&self, py: Python<'py>) -> PyResult<Ident> {
         Ok(self.typedef.clone_py(py))
@@ -1566,27 +1527,12 @@ impl RelationshipClause {
         Ok(self.term.clone_py(py))
     }
 
-    fn raw_tag(&self) -> &str {
-        "relationship"
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "relationship").to_object(slf.py())
     }
 
     fn raw_value(&self) -> String {
         format!("{} {}", self.typedef, self.term)
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for RelationshipClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, RelationshipClause(self.typedef, self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.typedef && self.term)
     }
 }
 
@@ -1597,7 +1543,7 @@ impl PyObjectProtocol for RelationshipClause {
 ///
 /// A clause indicating whether or not this term is obsolete.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct IsObsoleteClause {
     #[pyo3(get, set)]
@@ -1635,17 +1581,6 @@ impl IsObsoleteClause {
         Self::new(obsolete).into()
     }
 
-    fn raw_tag(&self) -> &str {
-        "is_obsolete"
-    }
-
-    fn raw_value(&self) -> String {
-        self.obsolete.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for IsObsoleteClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, IsObsoleteClause(self.obsolete))
     }
@@ -1655,7 +1590,15 @@ impl PyObjectProtocol for IsObsoleteClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.obsolete)
+        impl_richcmp!(self, other, op, self.obsolete)
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "is_obsolete").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.obsolete.to_string()
     }
 }
 
@@ -1666,7 +1609,7 @@ impl PyObjectProtocol for IsObsoleteClause {
 ///
 /// A clause giving a term which replaces this obsolete term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct ReplacedByClause {
     #[pyo3(set)]
@@ -1709,23 +1652,6 @@ impl ReplacedByClause {
         Self::new(term).into()
     }
 
-    #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the replacement term.
-    fn get_term(&self) -> &Ident {
-        &self.term
-    }
-
-    fn raw_tag(&self) -> &str {
-        "replaced_by"
-    }
-
-    fn raw_value(&self) -> String {
-        self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for ReplacedByClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, ReplacedByClause(self.term))
     }
@@ -1735,7 +1661,21 @@ impl PyObjectProtocol for ReplacedByClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.term)
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the replacement term.
+    fn get_term(&self) -> &Ident {
+        &self.term
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "replaced_by").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
     }
 }
 
@@ -1746,7 +1686,7 @@ impl PyObjectProtocol for ReplacedByClause {
 ///
 /// A clause giving a potential substitute for an obsolete term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct ConsiderClause {
     term: Ident,
@@ -1788,22 +1728,6 @@ impl ConsiderClause {
         Self::new(term).into()
     }
 
-    #[getter]
-    fn get_term(&self) -> &Ident {
-        &self.term
-    }
-
-    fn raw_tag(&self) -> &str {
-        "consider"
-    }
-
-    fn raw_value(&self) -> String {
-        self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for ConsiderClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, ConsiderClause(self.term))
     }
@@ -1813,7 +1737,20 @@ impl PyObjectProtocol for ConsiderClause {
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.term)
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
+    #[getter]
+    fn get_term(&self) -> &Ident {
+        &self.term
+    }
+
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "consider").to_object(slf.py())
+    }
+
+    fn raw_value(&self) -> String {
+        self.term.to_string()
     }
 }
 
@@ -1824,7 +1761,7 @@ impl PyObjectProtocol for ConsiderClause {
 ///
 /// A term clause stating the name of the creator of this term.
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct CreatedByClause {
     creator: fastobo::ast::UnquotedString,
@@ -1864,6 +1801,18 @@ impl CreatedByClause {
         Self::new(fastobo::ast::UnquotedString::new(creator)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, CreatedByClause(self.creator))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.creator)
+    }
+
     #[getter]
     /// `str`: the name of the creator of this term.
     fn get_creator(&self) -> &str {
@@ -1875,27 +1824,12 @@ impl CreatedByClause {
         self.creator = fastobo::ast::UnquotedString::new(creator);
     }
 
-    fn raw_tag(&self) -> &str {
-        "created_by"
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "created_by").to_object(slf.py())
     }
 
     fn raw_value(&self) -> String {
         self.creator.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for CreatedByClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CreatedByClause(self.creator))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.creator)
     }
 }
 
@@ -1926,7 +1860,7 @@ impl PyObjectProtocol for CreatedByClause {
 ///     creation_date: 2021-01-23T00:00:00Z
 ///
 #[pyclass(extends=BaseTermClause, module="fastobo.term")]
-#[derive(Clone, ClonePy, Debug, FinalClass)]
+#[derive(Clone, ClonePy, Debug, FinalClass, EqPy)]
 #[base(BaseTermClause)]
 pub struct CreationDateClause {
     date: fastobo::ast::CreationDate,
@@ -1977,6 +1911,22 @@ impl CreationDateClause {
         }
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
+        self.get_date(py)
+            .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.date)
+    }
+
     #[getter]
     /// `datetime.datetime`: the date and time this term was created.
     fn get_date<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
@@ -2005,30 +1955,11 @@ impl CreationDateClause {
         Ok(())
     }
 
-    fn raw_tag(&self) -> &str {
-        "creation_date"
+    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
+        pyo3::intern!(slf.py(), "creation_date").to_object(slf.py())
     }
 
     fn raw_value(&self) -> String {
         self.date.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for CreationDateClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
-        self.get_date(py)
-            .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(self, other, op, self.date)
     }
 }

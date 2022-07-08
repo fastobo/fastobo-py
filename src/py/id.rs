@@ -12,7 +12,6 @@ use pyo3::types::PyAny;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
-use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -22,6 +21,7 @@ use crate::error::Error;
 use crate::raise;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 // --- Module export ----------------------------------------------------------
@@ -124,7 +124,7 @@ macro_rules! impl_convert {
     };
 }
 
-#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+#[derive(ClonePy, Debug, EqPy, PyWrapper)]
 #[wraps(BaseIdent)]
 pub enum Ident {
     Unprefixed(Py<UnprefixedIdent>),
@@ -209,7 +209,7 @@ impl AbstractClass for BaseIdent {
 ///     'GO:0009637'
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Debug, FinalClass, Clone, PartialEq, Eq)]
+#[derive(Debug, FinalClass, Clone, PartialEq, Eq, EqPy)]
 #[base(BaseIdent)]
 pub struct PrefixedIdent {
     inner: ast::PrefixedIdent,
@@ -281,31 +281,6 @@ impl PrefixedIdent {
         Ok(PyClassInitializer::from(BaseIdent {}).add_subclass(Self::new(prefix, local)))
     }
 
-    /// `~fastobo.id.IdentPrefix`: the IDspace of the identifier.
-    #[getter]
-    fn get_prefix<'py>(&self) -> &str {
-        self.inner.prefix()
-    }
-
-    #[setter]
-    fn set_prefix(&mut self, prefix: &str) {
-        self.inner = ast::PrefixedIdent::new(prefix, self.inner.local());
-    }
-
-    /// `~fastobo.id.IdentLocal`: the local part of the identifier.
-    #[getter]
-    fn get_local<'py>(&self) -> &str {
-        self.inner.local()
-    }
-
-    #[setter]
-    fn set_local(&mut self, local: &str) {
-        self.inner = ast::PrefixedIdent::new(self.inner.prefix(), local);
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for PrefixedIdent {
     fn __hash__(&self) -> u64 {
         impl_hash!(self.inner.prefix(), ":", self.inner.local())
     }
@@ -346,6 +321,28 @@ impl PyObjectProtocol for PrefixedIdent {
             }
         }
     }
+
+    /// `~fastobo.id.IdentPrefix`: the IDspace of the identifier.
+    #[getter]
+    fn get_prefix<'py>(&self) -> &str {
+        self.inner.prefix()
+    }
+
+    #[setter]
+    fn set_prefix(&mut self, prefix: &str) {
+        self.inner = ast::PrefixedIdent::new(prefix, self.inner.local());
+    }
+
+    /// `~fastobo.id.IdentLocal`: the local part of the identifier.
+    #[getter]
+    fn get_local<'py>(&self) -> &str {
+        self.inner.local()
+    }
+
+    #[setter]
+    fn set_local(&mut self, local: &str) {
+        self.inner = ast::PrefixedIdent::new(self.inner.prefix(), local);
+    }
 }
 
 // --- UnprefixedIdent --------------------------------------------------------
@@ -361,7 +358,7 @@ impl PyObjectProtocol for PrefixedIdent {
 ///     hello world
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, Debug, Eq, Hash, PartialEq, FinalClass)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, EqPy, FinalClass)]
 #[base(BaseIdent)]
 pub struct UnprefixedIdent {
     inner: ast::UnprefixedIdent,
@@ -439,21 +436,6 @@ impl UnprefixedIdent {
         PyClassInitializer::from(BaseIdent {}).add_subclass(UnprefixedIdent::new(id))
     }
 
-    /// `str`: the escaped representation of the identifier.
-    #[getter]
-    fn escaped(&self) -> PyResult<String> {
-        Ok(self.inner.to_string())
-    }
-
-    /// `str`: the unescaped representation of the identifier.
-    #[getter]
-    fn unescaped(&self) -> PyResult<&str> {
-        Ok(self.inner.as_str())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for UnprefixedIdent {
     fn __hash__(&self) -> u64 {
         impl_hash!(self.inner.as_str())
     }
@@ -462,7 +444,7 @@ impl PyObjectProtocol for UnprefixedIdent {
         impl_repr!(self, UnprefixedIdent(self.inner.as_str()))
     }
 
-    fn __str__(&'p self) -> PyResult<&'p str> {
+    fn __str__(&self) -> PyResult<&str> {
         Ok(self.inner.as_str())
     }
 
@@ -489,6 +471,18 @@ impl PyObjectProtocol for UnprefixedIdent {
             }
         }
     }
+
+    /// `str`: the escaped representation of the identifier.
+    #[getter]
+    fn escaped(&self) -> PyResult<String> {
+        Ok(self.inner.to_string())
+    }
+
+    /// `str`: the unescaped representation of the identifier.
+    #[getter]
+    fn unescaped(&self) -> PyResult<&str> {
+        Ok(self.inner.as_str())
+    }
 }
 
 // --- UrlIdent ---------------------------------------------------------------
@@ -508,7 +502,7 @@ impl PyObjectProtocol for UnprefixedIdent {
 ///     ValueError: invalid url: ...
 ///
 #[pyclass(extends=BaseIdent, module="fastobo.id")]
-#[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, FinalClass)]
+#[derive(Clone, ClonePy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, EqPy, FinalClass)]
 #[base(BaseIdent)]
 pub struct Url {
     inner: ast::Url,
@@ -580,10 +574,7 @@ impl Url {
             Err(e) => Err(PyValueError::new_err(format!("invalid url: {}", e))),
         }
     }
-}
 
-#[pyproto]
-impl PyObjectProtocol for Url {
     fn __hash__(&self) -> u64 {
         impl_hash!(self.inner.as_str())
     }
@@ -593,11 +584,11 @@ impl PyObjectProtocol for Url {
     }
 
     /// Retrieve the URL in a serialized form.
-    fn __str__(&'p self) -> PyResult<&'p str> {
+    fn __str__(&self) -> PyResult<&str> {
         Ok(self.inner.as_str())
     }
 
-    /// Compare to another `Url` or `str` instance.
+    /// Compare to another `Url` instance.
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
         if let Ok(url) = other.extract::<Py<Url>>() {
             let url = &*url.as_ref(other.py()).borrow();

@@ -17,9 +17,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::PyGCProtocol;
-use pyo3::PyIterProtocol;
-use pyo3::PyObjectProtocol;
 
 use fastobo::parser::Parser;
 use fastobo::parser::SequentialParser;
@@ -216,28 +213,18 @@ impl FrameReader {
 
 #[pymethods]
 impl FrameReader {
-    fn header<'py>(&self, py: Python<'py>) -> Py<HeaderFrame> {
-        self.header.clone_py(py)
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for FrameReader {
     fn __repr__(&self) -> PyResult<PyObject> {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let fmt = PyString::new(py, "fastobo.iter({!r})").to_object(py);
         fmt.call_method1(py, "format", (&self.inner.as_ref().get_ref().handle(),))
     }
-}
 
-#[pyproto]
-impl PyIterProtocol for FrameReader {
-    fn __iter__(slf: PyRefMut<'p, Self>) -> PyResult<PyRefMut<'p, Self>> {
+    fn __iter__(slf: PyRefMut<'_, Self>) -> PyResult<PyRefMut<'_, Self>> {
         Ok(slf)
     }
 
-    fn __next__(mut slf: PyRefMut<'p, Self>) -> PyResult<Option<EntityFrame>> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> PyResult<Option<EntityFrame>> {
         match slf.deref_mut().inner.next() {
             None => Ok(None),
             Some(Ok(frame)) => {
@@ -255,5 +242,9 @@ impl PyIterProtocol for FrameReader {
                 }
             }
         }
+    }
+
+    fn header<'py>(&self, py: Python<'py>) -> Py<HeaderFrame> {
+        self.header.clone_py(py)
     }
 }

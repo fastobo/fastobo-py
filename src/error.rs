@@ -30,7 +30,7 @@ macro_rules! raise(
             "__setattr__",
             ("__cause__".to_object($py), $inner.to_object($py)),
         )?;
-        return Err(PyErr::from_instance(err.as_ref($py)))
+        return Err(PyErr::from_value(err.as_ref($py)))
     })
 );
 

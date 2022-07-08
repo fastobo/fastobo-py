@@ -31,7 +31,7 @@ macro_rules! unittest {
                 fastobo_py::py::init(py, &module).unwrap();
                 py.import("sys")
                     .unwrap()
-                    .get("modules")
+                    .getattr("modules")
                     .unwrap()
                     .downcast::<PyDict>()
                     .unwrap()
@@ -41,7 +41,7 @@ macro_rules! unittest {
                 // patch `sys.path` to locate tests from the project folder
                 py.import("sys")
                     .unwrap()
-                    .get("path")
+                    .getattr("path")
                     .unwrap()
                     .downcast::<PyList>()
                     .unwrap()
@@ -50,12 +50,12 @@ macro_rules! unittest {
 
                 // run tests with the unittest runner
                 let kwargs = PyDict::new(py);
-                kwargs.set_item("verbosity", 2).unwrap();
+                kwargs.set_item("verbosity", 2u8).unwrap();
                 kwargs.set_item("exit", false).unwrap();
                 let prog = py
                     .import("unittest")
                     .unwrap()
-                    .call(
+                    .call_method(
                         "main",
                         (concat!("tests.", stringify!($name)),),
                         Some(kwargs),

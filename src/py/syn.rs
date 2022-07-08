@@ -15,14 +15,12 @@ use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::PyGCProtocol;
 use pyo3::PyNativeType;
-use pyo3::PyObjectProtocol;
-use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use super::id::Ident;
 use super::xref::XrefList;
+use crate::utils::EqPy;
 use crate::utils::ClonePy;
 
 // --- Module export ---------------------------------------------------------
@@ -39,7 +37,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 // --- SynonymScope ----------------------------------------------------------
 
 #[pyclass(module = "fastobo.syn")] // FIXME(@althonos): probably not needed since it is not exposed.
-#[derive(Clone, ClonePy, Debug, Eq, PartialEq)]
+#[derive(Clone, ClonePy, Debug, Eq, PartialEq, EqPy)]
 pub struct SynonymScope {
     inner: fastobo::ast::SynonymScope,
 }
@@ -105,7 +103,7 @@ impl ToPyObject for SynonymScope {
 // --- Synonym ---------------------------------------------------------------
 
 #[pyclass(module = "fastobo.syn")]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, EqPy)]
 pub struct Synonym {
     desc: fastobo::ast::QuotedString,
     scope: SynonymScope,
@@ -182,6 +180,23 @@ impl Synonym {
         })
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, Synonym(self.desc, self.scope))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(
+            self,
+            other,
+            op,
+            self.desc && self.scope && self.ty && self.xrefs
+        )
+    }
+
     #[getter]
     pub fn get_desc(&self) -> PyResult<String> {
         Ok(self.desc.as_str().to_owned())
@@ -213,25 +228,5 @@ impl Synonym {
     pub fn set_type(&mut self, ty: Option<Ident>) -> PyResult<()> {
         self.ty = ty;
         Ok(())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for Synonym {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, Synonym(self.desc, self.scope))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richmp!(
-            self,
-            other,
-            op,
-            self.desc && self.scope && self.ty && self.xrefs
-        )
     }
 }

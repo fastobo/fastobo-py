@@ -5,6 +5,7 @@ use std::rc::Rc;
 use std::str::FromStr;
 use std::string::ToString;
 
+use pyo3::class::basic::CompareOp;
 use pyo3::class::gc::PyVisit;
 use pyo3::exceptions::PyIndexError;
 use pyo3::exceptions::PyTypeError;
@@ -15,14 +16,12 @@ use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::PyGCProtocol;
 use pyo3::PyNativeType;
-use pyo3::PyObjectProtocol;
-use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use super::id::Ident;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 
 // --- Module export ---------------------------------------------------------
 
@@ -48,7 +47,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 ///     ...     fastobo.id.PrefixedIdent('ISBN', '978-0-321-84268-8'),
 ///     ... )
 #[pyclass(module = "fastobo.xref")]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, EqPy)]
 pub struct Xref {
     #[pyo3(set)]
     id: Ident,
@@ -120,6 +119,28 @@ impl Xref {
         }
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        if let Some(ref d) = self.desc {
+            PyString::new(py, "Xref({!r}, {!r})")
+                .to_object(py)
+                .call_method1(py, "format", (&self.id, d.as_str()))
+        } else {
+            PyString::new(py, "Xref({!r})")
+                .to_object(py)
+                .call_method1(py, "format", (&self.id,))
+        }
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.id && self.desc)
+    }
+
     /// `~fastobo.id.Ident`: the identifier of the reference.
     #[getter]
     fn get_id(&self) -> PyResult<&Ident> {
@@ -142,27 +163,6 @@ impl Xref {
     }
 }
 
-#[pyproto]
-impl PyObjectProtocol for Xref {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        if let Some(ref d) = self.desc {
-            PyString::new(py, "Xref({!r}, {!r})")
-                .to_object(py)
-                .call_method1(py, "format", (&self.id, d.as_str()))
-        } else {
-            PyString::new(py, "Xref({!r})")
-                .to_object(py)
-                .call_method1(py, "format", (&self.id,))
-        }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-}
-
 // --- XrefList --------------------------------------------------------------
 
 /// A list of cross-references.
@@ -175,7 +175,7 @@ impl PyObjectProtocol for Xref {
 ///     Xref(PrefixedIdent('PSI', 'MS'))
 ///
 #[pyclass(module = "fastobo.xref")]
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, EqPy)]
 pub struct XrefList {
     xrefs: Vec<Py<Xref>>,
 }
@@ -260,10 +260,7 @@ impl XrefList {
             Ok(Self::new(Vec::new()))
         }
     }
-}
 
-#[pyproto]
-impl PyObjectProtocol for XrefList {
     fn __repr__(&self) -> PyResult<PyObject> {
         let gil = Python::acquire_gil();
         let py = gil.python();
@@ -281,10 +278,7 @@ impl PyObjectProtocol for XrefList {
         let frame: fastobo::ast::XrefList = self.clone_py(py).into_py(py);
         Ok(frame.to_string())
     }
-}
 
-#[pyproto]
-impl PySequenceProtocol for XrefList {
     fn __len__(&self) -> PyResult<usize> {
         Ok(self.xrefs.len())
     }
@@ -305,7 +299,7 @@ impl PySequenceProtocol for XrefList {
             Ok(self
                 .xrefs
                 .iter()
-                .any(|x| *x.as_ref(py).borrow() == *xref.as_ref(py).borrow()))
+                .any(|x| (*x.as_ref(py).borrow()).eq_py(&xref.as_ref(py).borrow(), py)))
         } else {
             let ty = item.get_type().name()?;
             let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);

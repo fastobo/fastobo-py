@@ -60,8 +60,12 @@ class _TestUnquotedStringClause(object):
 
     def test_eq(self):
         x = self.type("1.2")
-        self.assertEqual(x, self.type("1.2"))
-        self.assertNotEqual(x, self.type("1.3"))
+        self.assertEqual(x, x)
+        y = self.type("1.2")
+        self.assertEqual(x, y)
+        z = self.type("1.4")
+        self.assertNotEqual(x, z)
+        self.assertNotEqual(y, z)
 
 # --- FormatVersion ----------------------------------------------------------
 
@@ -82,6 +86,10 @@ class TestFormatVersionClause(_TestUnquotedStringClause, unittest.TestCase):
         self.assertEqual(vc1.version, "1.3")
         self.assertEqual(repr(vc1), "FormatVersionClause('1.3')")
 
+    def test_raw_tag(self):
+        vc = self.type("1.2")
+        self.assertEqual(vc.raw_tag(), "format-version")
+
 # --- DataVersion ------------------------------------------------------------
 
 class TestDataVersionClause(_TestUnquotedStringClause, unittest.TestCase):
@@ -98,6 +106,10 @@ class TestDataVersionClause(_TestUnquotedStringClause, unittest.TestCase):
         vc1.version = "1.3"
         self.assertEqual(vc1.version, "1.3")
         self.assertEqual(repr(vc1), "DataVersionClause('1.3')")
+
+    def test_raw_tag(self):
+        vc = self.type("1.2")
+        self.assertEqual(vc.raw_tag(), "data-version")
 
 # --- Date -------------------------------------------------------------------
 

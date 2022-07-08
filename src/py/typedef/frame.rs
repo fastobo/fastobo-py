@@ -13,8 +13,6 @@ use pyo3::types::PyIterator;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
-use pyo3::PyObjectProtocol;
-use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -24,10 +22,11 @@ use super::super::id::Ident;
 use super::clause::TypedefClause;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.typedef")]
-#[derive(Debug, FinalClass)]
+#[derive(Debug, FinalClass, EqPy)]
 #[base(AbstractEntityFrame)]
 pub struct TypedefFrame {
     #[pyo3(set)]
@@ -103,14 +102,6 @@ impl TypedefFrame {
         Self::with_clauses(id, clauses.unwrap_or_else(Vec::new)).into()
     }
 
-    #[getter]
-    fn get_id(&self) -> PyResult<&Ident> {
-        Ok(&self.id)
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for TypedefFrame {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, TypedefFrame(self.id))
     }
@@ -118,10 +109,7 @@ impl PyObjectProtocol for TypedefFrame {
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
     }
-}
 
-#[pyproto]
-impl PySequenceProtocol for TypedefFrame {
     fn __len__(&self) -> PyResult<usize> {
         Ok(self.clauses.len())
     }
@@ -164,5 +152,10 @@ impl PySequenceProtocol for TypedefFrame {
         }
 
         Py::new(py, Self::with_clauses(self.id.clone_py(py), new_clauses))
+    }
+
+    #[getter]
+    fn get_id(&self) -> PyResult<&Ident> {
+        Ok(&self.id)
     }
 }

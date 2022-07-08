@@ -14,10 +14,7 @@ use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::PyGCProtocol;
 use pyo3::PyNativeType;
-use pyo3::PyObjectProtocol;
-use pyo3::PySequenceProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast as obo;
@@ -25,6 +22,7 @@ use fastobo::visit::VisitMut;
 
 use crate::error::Error;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 
 use super::abc::AbstractFrame;
 use super::header::frame::HeaderFrame;
@@ -44,7 +42,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
 
 // --- Conversion Wrapper ----------------------------------------------------
 
-#[derive(ClonePy, Debug, PartialEq, PyWrapper)]
+#[derive(ClonePy, Debug, PyWrapper, EqPy)]
 #[wraps(AbstractFrame)]
 pub enum EntityFrame {
     Term(Py<TermFrame>),
@@ -93,7 +91,7 @@ impl IntoPy<fastobo::ast::EntityFrame> for EntityFrame {
 ///         frames, either `TermFrame`, `TypedefFrame` or `InstanceFrame`.
 ///
 #[pyclass(module = "fastobo.doc")]
-#[derive(Debug)]
+#[derive(Debug, EqPy)]
 pub struct OboDoc {
     #[pyo3(get, set)]
     /// `~fastobo.header.HeaderFrame`: the header containing ontology metadata.
@@ -181,6 +179,25 @@ impl OboDoc {
         Ok(doc)
     }
 
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __len__(&self) -> PyResult<usize> {
+        Ok(self.entities.len())
+    }
+
+    fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        if index < self.entities.len() as isize {
+            let item = &self.entities[index as usize];
+            Ok(item.to_object(py))
+        } else {
+            Err(PyIndexError::new_err("list index out of range"))
+        }
+    }
+
     #[getter]
     fn get_header<'py>(&self, py: Python<'py>) -> PyResult<Py<HeaderFrame>> {
         Ok(self.header.clone_ref(py))
@@ -261,30 +278,5 @@ impl OboDoc {
         let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
         py.allow_threads(|| fastobo::visit::IdDecompactor::new().visit_doc(&mut doc));
         Ok(doc.into_py(py))
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for OboDoc {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-}
-
-#[pyproto]
-impl PySequenceProtocol for OboDoc {
-    fn __len__(&self) -> PyResult<usize> {
-        Ok(self.entities.len())
-    }
-
-    fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        if index < self.entities.len() as isize {
-            let item = &self.entities[index as usize];
-            Ok(item.to_object(py))
-        } else {
-            Err(PyIndexError::new_err("list index out of range"))
-        }
     }
 }

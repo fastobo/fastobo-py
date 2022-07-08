@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.12.1...HEAD
+
+## [v0.12.1] - 2022-07-08
+[v0.12.1]: https://github.com/fastobo/fastobo-py/compare/v0.12.0...v0.12.1
+### Changed
+- Stop releasing the GIL when loading an ontology from a file to fix Windows compilation.
 
 ## [v0.12.0] - 2022-07-08
 [v0.12.0]: https://github.com/fastobo/fastobo-py/compare/v0.11.1...v0.12.0

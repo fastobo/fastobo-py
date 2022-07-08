@@ -8,7 +8,6 @@ use std::sync::Mutex;
 
 use pyo3::exceptions::PyOSError;
 use pyo3::exceptions::PyTypeError;
-use pyo3::gc::PyGCProtocol;
 use pyo3::gc::PyTraverseError;
 use pyo3::gc::PyVisit;
 use pyo3::prelude::*;

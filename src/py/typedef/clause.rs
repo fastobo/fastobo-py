@@ -13,7 +13,6 @@ use pyo3::types::PyDateTime;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
-use pyo3::PyObjectProtocol;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;

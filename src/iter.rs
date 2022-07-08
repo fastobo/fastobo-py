@@ -17,9 +17,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::PyGCProtocol;
-use pyo3::PyIterProtocol;
-use pyo3::PyObjectProtocol;
 
 use fastobo::parser::Parser;
 use fastobo::parser::SequentialParser;

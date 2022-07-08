@@ -12,7 +12,7 @@ jobs:
     name: Build Linux wheels(${{ matrix.image }})
     strategy:
       matrix:
-        image: [pypywheels/manylinux2010-pypy_x86_64, quay.io/pypa/manylinux2014_aarch64]
+        image: [quay.io/pypa/manylinux2014_x86_64, quay.io/pypa/manylinux2014_aarch64]
         python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310]
     env:
       pyo3-python: /opt/python/${{ matrix.python-version }}/bin/python

@@ -6,7 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.11.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.12.0...HEAD
+
+## [v0.12.0] - 2022-07-08
+[v0.12.0]: https://github.com/fastobo/fastobo-py/compare/v0.11.1...v0.12.0
+### Changed
+- Improve handling of exceptions in Rust code.
+- Bump `pyo3` dependency to `v0.16`.
+- Intern constant strings returned by `raw_tag` methods of clause objects.
+### Fixed
+- Compilation of `fastobo` extension with newer `setuptools-rust` versions ([#300](https://github.com/fastobo/fastobo-py/pull/300)).
+### Removed
+- Support for Python 3.6.
 
 ## [v0.11.1] - 2022-01-23
 [v0.11.1]: https://github.com/fastobo/fastobo-py/compare/v0.11.0...v0.11.1

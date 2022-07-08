@@ -335,7 +335,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             // Argument is a string, assumed to be a path: open the file.
             // and extract the graph
             let path = s.to_str()?;
-            py.allow_threads(|| fastobo_graphs::from_file(path))
+            // py.allow_threads(|| fastobo_graphs::from_file(path))
+            fastobo_graphs::from_file(path)
                 .map_err(|e| PyErr::from(GraphError::from(e)))?
         } else {
             // Argument is not a string, check if it is a file-handle.
@@ -353,8 +354,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
 
         // Convert the graph to an OBO document
         let graph = doc.graphs.into_iter().next().unwrap();
-        let doc = py
-            .allow_threads(|| obo::OboDoc::from_graph(graph))
+        // let doc = py.allow_threads(|| obo::OboDoc::from_graph(graph))
+        let doc = obo::OboDoc::from_graph(graph)
             .map_err(GraphError::from)?;
 
         // Convert the OBO document to a Python `OboDoc` class
@@ -388,15 +389,16 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
         // Convert OBO document to an OBO Graph document.
         let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
-        let graph = py
-            .allow_threads(|| doc.into_graph())
+        // FIXME: let graph = py.allow_threads(|| doc.into_graph())
+        let graph = doc.into_graph()
             .map_err(|e| PyErr::from(GraphError::from(e)))?;
 
         // Write the document
         if let Ok(s) = fh.cast_as::<PyString>() {
             // Write into a file if given a path as a string.
             let path = s.to_str()?;
-            py.allow_threads(|| fastobo_graphs::to_file(path, &graph))
+            // py.allow_threads(|| fastobo_graphs::to_file(path, &graph))
+            fastobo_graphs::to_file(path, &graph)
                 .map_err(|e| PyErr::from(GraphError::from(e)))
         } else {
             // Write into the handle if given a writable file.

@@ -957,8 +957,7 @@ impl IntoPy<obo::HeaderClause> for DefaultNamespaceClause {
 impl DefaultNamespaceClause {
     #[new]
     fn __init__(namespace: &PyAny) -> PyResult<PyClassInitializer<Self>> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
+        let py = namespace.py();
         if namespace.is_instance_of::<BaseIdent>()? {
             Ident::extract(namespace).map(|id| Self::new(id).into())
         } else if namespace.is_instance_of::<PyString>()? {
@@ -1925,8 +1924,6 @@ impl OntologyClause {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
         Ok(self.to_string())
     }
 

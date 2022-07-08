@@ -172,6 +172,28 @@ impl LiteralPropertyValue {
         Ok(Self::new(r, v, dt).into())
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
+        fmt.to_object(py).call_method1(
+            py,
+            "format",
+            (
+                self.relation.to_object(py),
+                self.value.as_str(),
+                self.datatype.to_object(py),
+            ),
+        )
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        Ok(pv.to_string())
+    }
+
     #[getter]
     fn get_relation(&self) -> PyResult<&Ident> {
         Ok(&self.relation)
@@ -203,31 +225,6 @@ impl LiteralPropertyValue {
     fn set_datatype(&mut self, datatype: Ident) -> PyResult<()> {
         self.datatype = datatype;
         Ok(())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for LiteralPropertyValue {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
-        fmt.to_object(py).call_method1(
-            py,
-            "format",
-            (
-                self.relation.to_object(py),
-                self.value.as_str(),
-                self.datatype.to_object(py),
-            ),
-        )
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
-        Ok(pv.to_string())
     }
 }
 
@@ -294,6 +291,17 @@ impl ResourcePropertyValue {
         Self::new(relation, value).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, ResourcePropertyValue(self.relation, self.value))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        Ok(pv.to_string())
+    }
+
     #[getter]
     fn get_relation(&self) -> PyResult<&Ident> {
         Ok(&self.relation)
@@ -314,19 +322,5 @@ impl ResourcePropertyValue {
     fn set_value(&mut self, value: Ident) -> PyResult<()> {
         self.value = value;
         Ok(())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for ResourcePropertyValue {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ResourcePropertyValue(self.relation, self.value))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
-        Ok(pv.to_string())
     }
 }

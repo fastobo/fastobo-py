@@ -93,10 +93,7 @@ impl HeaderFrame {
         }
         Ok(Self::new(vec).into())
     }
-}
 
-#[pyproto]
-impl PyObjectProtocol for HeaderFrame {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, HeaderFrame(self))
     }
@@ -107,11 +104,7 @@ impl PyObjectProtocol for HeaderFrame {
         let frame: obo::HeaderFrame = self.clone_py(py).into_py(py);
         Ok(frame.to_string())
     }
-}
 
-// FIXME(@althonos)
-#[pyproto]
-impl PySequenceProtocol for HeaderFrame {
     fn __len__(&self) -> PyResult<usize> {
         Ok(self.clauses.len())
     }

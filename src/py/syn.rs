@@ -183,6 +183,23 @@ impl Synonym {
         })
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, Synonym(self.desc, self.scope))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(
+            self,
+            other,
+            op,
+            self.desc && self.scope && self.ty && self.xrefs
+        )
+    }
+
     #[getter]
     pub fn get_desc(&self) -> PyResult<String> {
         Ok(self.desc.as_str().to_owned())
@@ -214,25 +231,5 @@ impl Synonym {
     pub fn set_type(&mut self, ty: Option<Ident>) -> PyResult<()> {
         self.ty = ty;
         Ok(())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for Synonym {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, Synonym(self.desc, self.scope))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(
-            self,
-            other,
-            op,
-            self.desc && self.scope && self.ty && self.xrefs
-        )
     }
 }

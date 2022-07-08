@@ -104,14 +104,6 @@ impl TypedefFrame {
         Self::with_clauses(id, clauses.unwrap_or_else(Vec::new)).into()
     }
 
-    #[getter]
-    fn get_id(&self) -> PyResult<&Ident> {
-        Ok(&self.id)
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for TypedefFrame {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, TypedefFrame(self.id))
     }
@@ -119,10 +111,7 @@ impl PyObjectProtocol for TypedefFrame {
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
     }
-}
 
-#[pyproto]
-impl PySequenceProtocol for TypedefFrame {
     fn __len__(&self) -> PyResult<usize> {
         Ok(self.clauses.len())
     }
@@ -165,5 +154,10 @@ impl PySequenceProtocol for TypedefFrame {
         }
 
         Py::new(py, Self::with_clauses(self.id.clone_py(py), new_clauses))
+    }
+
+    #[getter]
+    fn get_id(&self) -> PyResult<&Ident> {
+        Ok(&self.id)
     }
 }

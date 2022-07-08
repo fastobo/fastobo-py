@@ -282,31 +282,6 @@ impl PrefixedIdent {
         Ok(PyClassInitializer::from(BaseIdent {}).add_subclass(Self::new(prefix, local)))
     }
 
-    /// `~fastobo.id.IdentPrefix`: the IDspace of the identifier.
-    #[getter]
-    fn get_prefix<'py>(&self) -> &str {
-        self.inner.prefix()
-    }
-
-    #[setter]
-    fn set_prefix(&mut self, prefix: &str) {
-        self.inner = ast::PrefixedIdent::new(prefix, self.inner.local());
-    }
-
-    /// `~fastobo.id.IdentLocal`: the local part of the identifier.
-    #[getter]
-    fn get_local<'py>(&self) -> &str {
-        self.inner.local()
-    }
-
-    #[setter]
-    fn set_local(&mut self, local: &str) {
-        self.inner = ast::PrefixedIdent::new(self.inner.prefix(), local);
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for PrefixedIdent {
     fn __hash__(&self) -> u64 {
         impl_hash!(self.inner.prefix(), ":", self.inner.local())
     }
@@ -346,6 +321,28 @@ impl PyObjectProtocol for PrefixedIdent {
                 }
             }
         }
+    }
+
+    /// `~fastobo.id.IdentPrefix`: the IDspace of the identifier.
+    #[getter]
+    fn get_prefix<'py>(&self) -> &str {
+        self.inner.prefix()
+    }
+
+    #[setter]
+    fn set_prefix(&mut self, prefix: &str) {
+        self.inner = ast::PrefixedIdent::new(prefix, self.inner.local());
+    }
+
+    /// `~fastobo.id.IdentLocal`: the local part of the identifier.
+    #[getter]
+    fn get_local<'py>(&self) -> &str {
+        self.inner.local()
+    }
+
+    #[setter]
+    fn set_local(&mut self, local: &str) {
+        self.inner = ast::PrefixedIdent::new(self.inner.prefix(), local);
     }
 }
 
@@ -440,21 +437,6 @@ impl UnprefixedIdent {
         PyClassInitializer::from(BaseIdent {}).add_subclass(UnprefixedIdent::new(id))
     }
 
-    /// `str`: the escaped representation of the identifier.
-    #[getter]
-    fn escaped(&self) -> PyResult<String> {
-        Ok(self.inner.to_string())
-    }
-
-    /// `str`: the unescaped representation of the identifier.
-    #[getter]
-    fn unescaped(&self) -> PyResult<&str> {
-        Ok(self.inner.as_str())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for UnprefixedIdent {
     fn __hash__(&self) -> u64 {
         impl_hash!(self.inner.as_str())
     }
@@ -463,7 +445,7 @@ impl PyObjectProtocol for UnprefixedIdent {
         impl_repr!(self, UnprefixedIdent(self.inner.as_str()))
     }
 
-    fn __str__(&'p self) -> PyResult<&'p str> {
+    fn __str__(&self) -> PyResult<&str> {
         Ok(self.inner.as_str())
     }
 
@@ -489,6 +471,18 @@ impl PyObjectProtocol for UnprefixedIdent {
                 }
             }
         }
+    }
+
+    /// `str`: the escaped representation of the identifier.
+    #[getter]
+    fn escaped(&self) -> PyResult<String> {
+        Ok(self.inner.to_string())
+    }
+
+    /// `str`: the unescaped representation of the identifier.
+    #[getter]
+    fn unescaped(&self) -> PyResult<&str> {
+        Ok(self.inner.as_str())
     }
 }
 
@@ -581,10 +575,7 @@ impl Url {
             Err(e) => Err(PyValueError::new_err(format!("invalid url: {}", e))),
         }
     }
-}
 
-#[pyproto]
-impl PyObjectProtocol for Url {
     fn __hash__(&self) -> u64 {
         impl_hash!(self.inner.as_str())
     }
@@ -594,11 +585,11 @@ impl PyObjectProtocol for Url {
     }
 
     /// Retrieve the URL in a serialized form.
-    fn __str__(&'p self) -> PyResult<&'p str> {
+    fn __str__(&self) -> PyResult<&str> {
         Ok(self.inner.as_str())
     }
 
-    /// Compare to another `Url` or `str` instance.
+    /// Compare to another `Url` instance.
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
         if let Ok(url) = other.extract::<Py<Url>>() {
             let url = &*url.as_ref(other.py()).borrow();

@@ -182,6 +182,25 @@ impl OboDoc {
         Ok(doc)
     }
 
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __len__(&self) -> PyResult<usize> {
+        Ok(self.entities.len())
+    }
+
+    fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        if index < self.entities.len() as isize {
+            let item = &self.entities[index as usize];
+            Ok(item.to_object(py))
+        } else {
+            Err(PyIndexError::new_err("list index out of range"))
+        }
+    }
+
     #[getter]
     fn get_header<'py>(&self, py: Python<'py>) -> PyResult<Py<HeaderFrame>> {
         Ok(self.header.clone_ref(py))
@@ -262,30 +281,5 @@ impl OboDoc {
         let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
         py.allow_threads(|| fastobo::visit::IdDecompactor::new().visit_doc(&mut doc));
         Ok(doc.into_py(py))
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for OboDoc {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-}
-
-#[pyproto]
-impl PySequenceProtocol for OboDoc {
-    fn __len__(&self) -> PyResult<usize> {
-        Ok(self.entities.len())
-    }
-
-    fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        if index < self.entities.len() as isize {
-            let item = &self.entities[index as usize];
-            Ok(item.to_object(py))
-        } else {
-            Err(PyIndexError::new_err("list index out of range"))
-        }
     }
 }

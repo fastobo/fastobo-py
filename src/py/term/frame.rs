@@ -103,15 +103,6 @@ impl TermFrame {
         Self::with_clauses(id, clauses.unwrap_or_else(Vec::new)).into()
     }
 
-    #[getter]
-    /// `~fastobo.id.Ident`: the identifier of the term frame.
-    fn get_id(&self) -> PyResult<&Ident> {
-        Ok(&self.id)
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for TermFrame {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, TermFrame(self.id))
     }
@@ -119,10 +110,7 @@ impl PyObjectProtocol for TermFrame {
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
     }
-}
 
-#[pyproto]
-impl PySequenceProtocol for TermFrame {
     fn __len__(&self) -> PyResult<usize> {
         Ok(self.clauses.len())
     }
@@ -166,5 +154,11 @@ impl PySequenceProtocol for TermFrame {
         }
 
         Py::new(py, Self::with_clauses(self.id.clone_py(py), new_clauses))
+    }
+
+    #[getter]
+    /// `~fastobo.id.Ident`: the identifier of the term frame.
+    fn get_id(&self) -> PyResult<&Ident> {
+        Ok(&self.id)
     }
 }

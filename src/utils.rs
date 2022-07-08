@@ -13,6 +13,7 @@ use fastobo::ast;
 
 // ---
 
+/// A trait for objects that can be cloned while the GIL is held.
 pub trait ClonePy {
     fn clone_py(&self, py: Python) -> Self;
 }
@@ -53,6 +54,7 @@ macro_rules! derive_eqpy {
     };
 }
 
+/// A trait for objects that can be compared for equality while the GIL is held.
 pub trait EqPy {
     fn eq_py(&self, other: &Self, py: Python) -> bool;
     fn neq_py(&self, other: &Self, py: Python) -> bool {
@@ -116,10 +118,12 @@ derive_eqpy!(fastobo::ast::Url);
 
 // ---
 
+/// A trait for Python classes that are purely abstract.
 pub trait AbstractClass: PyClass {
     fn initializer() -> PyClassInitializer<Self>;
 }
 
+/// A trait for Python classes that are final.
 pub trait FinalClass: PyClass {}
 
 // ---

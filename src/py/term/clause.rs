@@ -185,17 +185,6 @@ impl IsAnonymousClause {
         Self::new(anonymous).into()
     }
 
-    fn raw_tag(&self) -> &str {
-        "is_anonymous"
-    }
-
-    fn raw_value(&self) -> String {
-        self.anonymous.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for IsAnonymousClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, IsAnonymousClause(self.anonymous))
     }
@@ -206,6 +195,14 @@ impl PyObjectProtocol for IsAnonymousClause {
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.anonymous)
+    }
+
+    fn raw_tag(&self) -> &str {
+        "is_anonymous"
+    }
+
+    fn raw_value(&self) -> String {
+        self.anonymous.to_string()
     }
 }
 
@@ -253,6 +250,18 @@ impl NameClause {
         Self::new(fastobo::ast::UnquotedString::new(name)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, NameClause(self.name))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.name)
+    }
+
     /// `str`: the name of the current term.
     #[getter]
     fn get_name(&self) -> &str {
@@ -270,21 +279,6 @@ impl NameClause {
 
     fn raw_value(&self) -> String {
         self.name.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for NameClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, NameClause(self.name))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp!(self, other, op, self.name)
     }
 }
 
@@ -339,6 +333,18 @@ impl NamespaceClause {
         Self::new(namespace).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, NamespaceClause(self.namespace))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.namespace)
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: the ID of the namespace this term is part of.
     fn get_namespace(&self) -> &Ident {
@@ -351,21 +357,6 @@ impl NamespaceClause {
 
     fn raw_value(&self) -> String {
         self.namespace.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for NamespaceClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, NamespaceClause(self.namespace))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.namespace)
     }
 }
 
@@ -419,6 +410,18 @@ impl AltIdClause {
         Self::new(alt_id).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, AltIdClause(self.alt_id))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.alt_id)
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: an alternative ID used to refer to this term.
     fn get_alt_id(&self) -> &Ident {
@@ -431,21 +434,6 @@ impl AltIdClause {
 
     fn raw_value(&self) -> String {
         self.alt_id.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for AltIdClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, AltIdClause(self.alt_id))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.alt_id)
     }
 }
 
@@ -506,17 +494,30 @@ impl IntoPy<fastobo::ast::TermClause> for DefClause {
 #[pymethods]
 impl DefClause {
     #[new]
-    fn __init__(definition: String, xrefs: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
-        let def = fastobo::ast::QuotedString::new(definition);
+    fn __init__(definition: &PyString, xrefs: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        let py = definition.py();
+        let def = fastobo::ast::QuotedString::new(definition.to_str()?);
         let list = match xrefs {
             Some(x) => XrefList::collect(py, x)?,
             None => XrefList::new(Vec::new()),
         };
-
         Ok(Self::new(def, list).into())
+    }
+
+    fn __repr__(&self) -> PyResult<PyObject> {
+        if self.xrefs.is_empty() {
+            impl_repr!(self, DefClause(self.definition))
+        } else {
+            impl_repr!(self, DefClause(self.definition, self.xrefs))
+        }
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.definition && self.xrefs)
     }
 
     #[getter]
@@ -542,25 +543,6 @@ impl DefClause {
 
     fn raw_value(&self) -> String {
         self.definition.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for DefClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        if self.xrefs.is_empty() {
-            impl_repr!(self, DefClause(self.definition))
-        } else {
-            impl_repr!(self, DefClause(self.definition, self.xrefs))
-        }
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.definition && self.xrefs)
     }
 }
 
@@ -608,6 +590,18 @@ impl CommentClause {
         Self::new(fastobo::ast::UnquotedString::new(comment)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, CommentClause(self.comment))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.comment)
+    }
+
     #[getter]
     /// `str`: a comment relevant to this term.
     fn get_comment(&self) -> &str {
@@ -625,21 +619,6 @@ impl CommentClause {
 
     fn raw_value(&self) -> String {
         self.comment.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for CommentClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CommentClause(self.comment))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp!(self, other, op, self.comment)
     }
 }
 
@@ -693,6 +672,18 @@ impl SubsetClause {
         Self::new(subset).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, SubsetClause(self.subset))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.subset)
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: the ID of the subset this term is part of.
     fn get_subset(&self) -> &Ident {
@@ -705,21 +696,6 @@ impl SubsetClause {
 
     fn raw_value(&self) -> String {
         self.subset.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for SubsetClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SubsetClause(self.subset))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.subset)
     }
 }
 
@@ -777,6 +753,18 @@ impl SynonymClause {
         Self::new(synonym.clone_ref(py)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, SynonymClause(self.synonym))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.synonym)
+    }
+
     #[getter]
     /// `~fastobo.syn.Synonym`: a possible synonym for this term.
     fn get_synonym<'py>(&self, py: Python<'py>) -> Py<Synonym> {
@@ -791,21 +779,6 @@ impl SynonymClause {
         let gil = Python::acquire_gil();
         let py = gil.python();
         format!("{}", &*self.synonym.as_ref(py).borrow())
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for SynonymClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SynonymClause(self.synonym))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.synonym)
     }
 }
 
@@ -877,19 +850,6 @@ impl XrefClause {
         Self::from(xref).into()
     }
 
-    fn raw_tag(&self) -> &str {
-        "xref"
-    }
-
-    fn raw_value(&self) -> String {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        self.xref.as_ref(py).to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for XrefClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, XrefClause(self.xref))
     }
@@ -900,6 +860,16 @@ impl PyObjectProtocol for XrefClause {
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.xref)
+    }
+
+    fn raw_tag(&self) -> &str {
+        "xref"
+    }
+
+    fn raw_value(&self) -> String {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        self.xref.as_ref(py).to_string()
     }
 }
 
@@ -948,6 +918,18 @@ impl BuiltinClause {
         Self::new(builtin).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, BuiltinClause(self.builtin))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.builtin)
+    }
+
     /// `bool`: ``True`` if the term is built in the OBO format.
     #[getter]
     fn get_builtin(&self) -> bool {
@@ -960,21 +942,6 @@ impl BuiltinClause {
 
     fn raw_value(&self) -> String {
         self.builtin.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for BuiltinClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, BuiltinClause(self.builtin))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp!(self, other, op, self.builtin)
     }
 }
 
@@ -1035,6 +1002,18 @@ impl PropertyValueClause {
         Self::new(property_value).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, PropertyValueClause(self.inner))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.inner)
+    }
+
     #[getter]
     /// `~fastobo.pv.AbstractPropertyValue`: an annotation of the term.
     fn get_property_value(&self) -> &PropertyValue {
@@ -1047,21 +1026,6 @@ impl PropertyValueClause {
 
     fn raw_value(&self) -> String {
         self.inner.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for PropertyValueClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, PropertyValueClause(self.inner))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.inner)
     }
 }
 
@@ -1115,6 +1079,18 @@ impl IsAClause {
         Self::new(term).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IsAClause(self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: the identifier of the parent term.
     fn get_term(&self) -> &Ident {
@@ -1127,21 +1103,6 @@ impl IsAClause {
 
     fn raw_value(&self) -> String {
         self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for IsAClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsAClause(self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.term)
     }
 }
 
@@ -1223,6 +1184,18 @@ impl IntersectionOfClause {
         Self::new(typedef, term).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, IntersectionOfClause(self.typedef, self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.typedef && self.term)
+    }
+
     #[getter]
     /// `str`: the identifier of the composing term.
     fn get_term(&self) -> &Ident {
@@ -1245,21 +1218,6 @@ impl IntersectionOfClause {
         } else {
             format!("{}", &self.term)
         }
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for IntersectionOfClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IntersectionOfClause(self.typedef, self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.typedef && self.term)
     }
 }
 
@@ -1312,6 +1270,18 @@ impl UnionOfClause {
         Self::new(id).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, UnionOfClause(self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: the identifier of the member term.
     fn get_term(&self) -> &Ident {
@@ -1324,21 +1294,6 @@ impl UnionOfClause {
 
     fn raw_value(&self) -> String {
         self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for UnionOfClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, UnionOfClause(self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.term)
     }
 }
 
@@ -1391,6 +1346,18 @@ impl EquivalentToClause {
         Self::new(term).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, EquivalentToClause(self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: the identifier of the equivalent term.
     fn get_term(&self) -> &Ident {
@@ -1403,21 +1370,6 @@ impl EquivalentToClause {
 
     fn raw_value(&self) -> String {
         self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for EquivalentToClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, EquivalentToClause(self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.term)
     }
 }
 
@@ -1471,6 +1423,18 @@ impl DisjointFromClause {
         Self::new(term).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, DisjointFromClause(self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: the identifier of the disjoint term.
     fn get_term(&self) -> &Ident {
@@ -1483,21 +1447,6 @@ impl DisjointFromClause {
 
     fn raw_value(&self) -> String {
         self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for DisjointFromClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DisjointFromClause(self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.term)
     }
 }
 
@@ -1557,6 +1506,18 @@ impl RelationshipClause {
         Self::new(typedef, term).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, RelationshipClause(self.typedef, self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.typedef && self.term)
+    }
+
     #[getter]
     fn get_typedef<'py>(&self, py: Python<'py>) -> PyResult<Ident> {
         Ok(self.typedef.clone_py(py))
@@ -1573,21 +1534,6 @@ impl RelationshipClause {
 
     fn raw_value(&self) -> String {
         format!("{} {}", self.typedef, self.term)
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for RelationshipClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, RelationshipClause(self.typedef, self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.typedef && self.term)
     }
 }
 
@@ -1636,17 +1582,6 @@ impl IsObsoleteClause {
         Self::new(obsolete).into()
     }
 
-    fn raw_tag(&self) -> &str {
-        "is_obsolete"
-    }
-
-    fn raw_value(&self) -> String {
-        self.obsolete.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for IsObsoleteClause {
     fn __repr__(&self) -> PyResult<PyObject> {
         impl_repr!(self, IsObsoleteClause(self.obsolete))
     }
@@ -1657,6 +1592,14 @@ impl PyObjectProtocol for IsObsoleteClause {
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.obsolete)
+    }
+
+    fn raw_tag(&self) -> &str {
+        "is_obsolete"
+    }
+
+    fn raw_value(&self) -> String {
+        self.obsolete.to_string()
     }
 }
 
@@ -1710,6 +1653,18 @@ impl ReplacedByClause {
         Self::new(term).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, ReplacedByClause(self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
     #[getter]
     /// `~fastobo.id.Ident`: the identifier of the replacement term.
     fn get_term(&self) -> &Ident {
@@ -1722,21 +1677,6 @@ impl ReplacedByClause {
 
     fn raw_value(&self) -> String {
         self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for ReplacedByClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ReplacedByClause(self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.term)
     }
 }
 
@@ -1789,6 +1729,18 @@ impl ConsiderClause {
         Self::new(term).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, ConsiderClause(self.term))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp_py!(self, other, op, self.term)
+    }
+
     #[getter]
     fn get_term(&self) -> &Ident {
         &self.term
@@ -1800,21 +1752,6 @@ impl ConsiderClause {
 
     fn raw_value(&self) -> String {
         self.term.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for ConsiderClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ConsiderClause(self.term))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp_py!(self, other, op, self.term)
     }
 }
 
@@ -1865,6 +1802,18 @@ impl CreatedByClause {
         Self::new(fastobo::ast::UnquotedString::new(creator)).into()
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        impl_repr!(self, CreatedByClause(self.creator))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.creator)
+    }
+
     #[getter]
     /// `str`: the name of the creator of this term.
     fn get_creator(&self) -> &str {
@@ -1882,21 +1831,6 @@ impl CreatedByClause {
 
     fn raw_value(&self) -> String {
         self.creator.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for CreatedByClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CreatedByClause(self.creator))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp!(self, other, op, self.creator)
     }
 }
 
@@ -1978,6 +1912,22 @@ impl CreationDateClause {
         }
     }
 
+    fn __repr__(&self) -> PyResult<PyObject> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
+        self.get_date(py)
+            .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(self.to_string())
+    }
+
+    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+        impl_richcmp!(self, other, op, self.date)
+    }
+
     #[getter]
     /// `datetime.datetime`: the date and time this term was created.
     fn get_date<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
@@ -2012,24 +1962,5 @@ impl CreationDateClause {
 
     fn raw_value(&self) -> String {
         self.date.to_string()
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for CreationDateClause {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
-        self.get_date(py)
-            .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
-    }
-
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
-    }
-
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
-        impl_richcmp!(self, other, op, self.date)
     }
 }

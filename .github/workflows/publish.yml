@@ -7,75 +7,124 @@ on:
 
 jobs:
 
-  wheel-linux:
-    runs-on: ubuntu-latest
-    name: Build Linux wheels(${{ matrix.image }})
-    strategy:
-      matrix:
-        image: [quay.io/pypa/manylinux2014_x86_64, quay.io/pypa/manylinux2014_aarch64]
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310]
-    env:
-      pyo3-python: /opt/python/${{ matrix.python-version }}/bin/python
+  wheel-linux-aarch64:
+    name: Build Linux wheels (Aarch64)
+    runs-on: ubuntu-20.04
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v1
+    - uses: actions/checkout@v3
     - name: Set up QEMU
-      if: matrix.image == 'quay.io/pypa/manylinux2014_aarch64'
       id: qemu
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: all
     - name: Build manylinux wheels
-      uses: addnab/docker-run-action@v2
-      with:
-        image: ${{ matrix.image }}
-        options: -v ${{ github.workspace }}:/io -e TERM=$TERM
-        shell: bash
-        run: |
-          ${{ env.pyo3-python }} -m pip install -U -r /io/ci/requirements.txt
-          ${{ env.pyo3-python }} -m pip wheel -vv /io -w /tmp
-          for whl in /tmp/*.whl; do ${{ env.pyo3-python }} -m auditwheel repair $whl -w /io/dist; done
-    - name: Store built wheels
-      uses: actions/upload-artifact@v2
-      with:
-          name: wheels
-          path: dist/*
-
-  wheel-osx:
-    runs-on: macos-latest
-    name: Build OSX wheels
-    strategy:
-      matrix:
-        python-version:
-        - "3.7"
-        - "3.8"
-        - "3.9"
-        - "3.10"
-        - pypy-3.7
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install build package
-      run: python -m pip install -U -r ci/requirements.txt
-    - name: Build wheel distribution
-      run: python setup.py bdist_wheel
+      uses: pypa/cibuildwheel@v2.11.3
       env:
-        MACOSX_DEPLOYMENT_TARGET: 10.9
-    - name: Store built wheels
-      uses: actions/upload-artifact@v2
+        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+        CIBW_ARCHS: aarch64
+        CIBW_BUILD_VERBOSITY: 2
       with:
-          name: wheels
-          path: dist/*
+        output-dir: dist
+    - uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: dist/*
+
+  wheel-linux-x86_64:
+    name: Build Linux wheels (x86-64)
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+    - name: Build manylinux wheels
+      uses: pypa/cibuildwheel@v2.11.3
+      env:
+        CIBW_ARCHS: x86_64
+        CIBW_BUILD_VERBOSITY: 2
+      with:
+        output-dir: dist
+    - uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: dist/*
+
+  wheel-macos-x86_64:
+    name: Build MacOS wheels (x86-64)
+    runs-on: macOS-11
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+    - name: Build manylinux wheels
+      uses: pypa/cibuildwheel@v2.11.3
+      env:
+        CIBW_ARCHS: x86_64
+        CIBW_BUILD_VERBOSITY: 2
+      with:
+        output-dir: dist
+    - uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: dist/*
+
+  wheel-macos-aarch64:
+    name: Build MacOS wheels (Aarch64)
+    runs-on: macOS-11
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        target: aarch64-apple-darwin
+    - name: Build manylinux wheels
+      uses: pypa/cibuildwheel@v2.11.3
+      env:
+        CIBW_ARCHS: arm64
+        CIBW_BUILD_VERBOSITY: 2
+      with:
+        output-dir: dist
+    - uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: dist/*
+
+  wheel-win32-x86_64:
+    name: Build Windows wheels (x86-64)
+    runs-on: windows-2019
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+    - name: Build manylinux wheels
+      uses: pypa/cibuildwheel@v2.11.3
+      env:
+        CIBW_ARCHS: AMD64
+        CIBW_BUILD_VERBOSITY: 2
+      with:
+        output-dir: dist
+    - uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: dist/*
 
   upload:
     environment: PyPI
     runs-on: ubuntu-latest
     name: Upload
     needs:
-    - wheel-linux
-    - wheel-osx
+    - wheel-linux-aarch64
+    - wheel-linux-x86_64
+    - wheel-macos-aarch64
+    - wheel-macos-x86_64
+    - wheel-win32-x86_64
     steps:
     - name: Checkout code
       uses: actions/checkout@v1
@@ -103,7 +152,7 @@ jobs:
   release:
     environment: GitHub Releases
     runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/v')"
+    if: "!contains(github.ref, 'rc')"
     name: Release
     needs: upload
     steps:

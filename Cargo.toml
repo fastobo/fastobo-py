@@ -18,7 +18,7 @@ doctest = false
 lazy_static = "1.4.0"
 
 [build-dependencies.built]
-version  = "0.5.1"
+version  = "0.5.2"
 features = ["chrono"]
 
 [dependencies]

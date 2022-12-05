@@ -9,6 +9,7 @@ use pyo3::types::PyDate;
 use pyo3::types::PyDateAccess;
 use pyo3::types::PyDateTime;
 use pyo3::types::PyTimeAccess;
+use pyo3::types::PyTzInfo;
 
 /// Extract the timezone from a Python datetime using the `tzinfo` attribute.
 pub fn extract_timezone<'py>(
@@ -96,7 +97,10 @@ pub fn isodatetime_to_datetime<'py>(
             .fraction()
             .map(|f| (f * 1000.0) as u32)
             .unwrap_or(0),
-        tz.as_ref(),
+        tz
+            .as_ref()
+            .map(|obj| obj.cast_as::<PyTzInfo>(py))
+            .transpose()?,
     )
 }
 

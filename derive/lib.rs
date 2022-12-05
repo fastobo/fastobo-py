@@ -41,13 +41,12 @@ fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
         #[allow(unused)]
         impl ClonePy for #name {
             fn clone_py(&self, py: Python) -> Self {
-                use self::#name::*;
-                let gil = pyo3::Python::acquire_gil();
-                let py = gil.python();
-
-                match self {
-                    #(#variants,)*
-                }
+                Python::with_gil(|py| {
+                    use self::#name::*;
+                    match self {
+                        #(#variants,)*
+                    }
+                })
             }
         }
     };
@@ -445,9 +444,10 @@ fn listlike_impl_methods(
         /// Return a shallow copy of the list.
         #[pyo3(text_signature = "(self)")]
         fn copy(&self) -> PyResult<Py<Self>> {
-            let gil = Python::acquire_gil();
-            let copy = self.clone_py(gil.python());
-            Py::new(gil.python(), copy)
+            Python::with_gil(|py| {
+                let copy = self.clone_py(py);
+                Py::new(py, copy)
+            })
         }
     });
     imp.items.push(parse_quote! {

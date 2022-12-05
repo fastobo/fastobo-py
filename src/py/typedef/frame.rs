@@ -96,8 +96,15 @@ impl IntoPy<fastobo::ast::EntityFrame> for TypedefFrame {
 impl TypedefFrame {
     // FIXME: should accept any iterable.
     #[new]
-    fn __init__(id: Ident, clauses: Option<Vec<TypedefClause>>) -> PyClassInitializer<Self> {
-        Self::with_clauses(id, clauses.unwrap_or_else(Vec::new)).into()
+    fn __init__(id: Ident, clauses: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        if let Some(clauses) = clauses {
+            match clauses.extract() {
+                Ok(c) => Ok(Self::with_clauses(id, c).into()),
+                Err(_) => Err(PyTypeError::new_err("Expected list of `TypedefClause`"))
+            }
+        } else {
+            Ok(Self::new(id).into())
+        }
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {

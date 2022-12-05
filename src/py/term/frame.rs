@@ -12,6 +12,7 @@ use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
+use pyo3::exceptions::PyTypeError;
 
 use fastobo::ast;
 
@@ -95,8 +96,15 @@ impl IntoPy<fastobo::ast::EntityFrame> for TermFrame {
 impl TermFrame {
     // FIXME: should accept any iterable.
     #[new]
-    fn __init__(id: Ident, clauses: Option<Vec<TermClause>>) -> PyClassInitializer<Self> {
-        Self::with_clauses(id, clauses.unwrap_or_else(Vec::new)).into()
+    fn __init__(id: Ident, clauses: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
+        if let Some(clauses) = clauses {
+            match clauses.extract() {
+                Ok(c) => Ok(Self::with_clauses(id, c).into()),
+                Err(_) => Err(PyTypeError::new_err("Expected list of `TermClause`"))
+            }
+        } else {
+            Ok(Self::new(id).into())
+        }
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {

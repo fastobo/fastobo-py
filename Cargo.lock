@@ -344,7 +344,7 @@ dependencies = [
  "curie",
  "fastobo",
  "horned-functional",
- "horned-owl",
+ "horned-owl 0.11.0",
  "lazy_static",
  "thiserror",
 ]
@@ -359,7 +359,7 @@ dependencies = [
  "fastobo-owl",
  "fastobo-py-derive-internal",
  "horned-functional",
- "horned-owl",
+ "horned-owl 0.12.0",
  "lazy_static",
  "libc",
  "pest",
@@ -440,7 +440,7 @@ checksum = "18c63d3b445e68fe15c23498b23f9ec401d49c446411260d5ecc7f2e44021e1d"
 dependencies = [
  "curie",
  "enum_meta",
- "horned-owl",
+ "horned-owl 0.11.0",
  "pest",
  "pest_derive",
  "thiserror",
@@ -463,6 +463,25 @@ dependencies = [
  "rio_api",
  "rio_xml",
  "slurp",
+ "thiserror",
+]
+
+[[package]]
+name = "horned-owl"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f3aedb64d9af5bba3b16f40a98df8b42093cfa9e7ed2909205d03593b7c1416"
+dependencies = [
+ "clap",
+ "curie",
+ "enum_meta",
+ "indexmap",
+ "lazy_static",
+ "log",
+ "pretty_rdf",
+ "quick-xml 0.22.0",
+ "rio_api",
+ "rio_xml",
  "thiserror",
 ]
 

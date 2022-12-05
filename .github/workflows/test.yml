@@ -26,6 +26,9 @@ jobs:
         - python-version: "3.10"
           python-release: v3.10
           python-impl: CPython
+        - python-version: "3.11"
+          python-release: v3.11
+          python-impl: CPython
         - python-version: pypy-3.7
           python-release: v3.7
           python-impl: PyPy
@@ -47,35 +50,6 @@ jobs:
     - name: Test Rust extension
       run: python -m unittest discover -vv
 
-  test_linux_aarch64:
-    name: "Test (Linux, Aarch64)"
-    strategy:
-      matrix:
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310]
-      fail-fast: false
-    runs-on: ubuntu-latest
-    env:
-      pyo3-python: /opt/python/${{ matrix.python-version }}/bin/python
-      img: quay.io/pypa/manylinux2014_aarch64
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Set up QEMU
-      id: qemu
-      uses: docker/setup-qemu-action@v1
-    - name: Test Rust extension
-      uses: addnab/docker-run-action@v2
-      with:
-        image: ${{ env.img }}
-        options: --rm -v ${{ github.workspace }}:/io:rw --workdir=/io
-        shell: bash
-        run: |
-          ${{ env.pyo3-python }} -m pip install -U -r ci/requirements.txt
-          ${{ env.pyo3-python }} setup.py build_ext --inplace --debug
-          if [ ${{ matrix.python-version }} != 'cp36-cp36m' ]; then
-              ${{ env.pyo3-python }} -m unittest discover -vv
-          fi
-
   test_osx:
     name: Test (OSX)
     runs-on: macos-latest
@@ -95,6 +69,9 @@ jobs:
           python-impl: CPython
         - python-version: "3.10"
           python-release: "v3.10"
+          python-impl: CPython
+        - python-version: "3.11"
+          python-release: "v3.11"
           python-impl: CPython
         - python-version: pypy-3.7
           python-release: v3.7
@@ -122,10 +99,10 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v1
-    - name: Set up Python 3.9
+    - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
-        python-version: "3.10"
+        python-version: "3.11"
     - name: Setup Rust nightly
       uses: actions-rs/toolchain@v1
       with:

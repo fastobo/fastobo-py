@@ -116,7 +116,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     Use ``fastobo.iter`` to load an ontology frame-by-frame, even
     ///     a larger one:
     ///
-    ///     >>> reader = fastobo.iter('tests/data/ms.obo')
+    ///     >>> reader = fastobo.iter('ms.obo')
     ///     >>> reader.header()
     ///     HeaderFrame([...])
     ///     >>> next(reader)
@@ -314,12 +314,9 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     OSError: When an underlying OS error occurs.
     ///
     /// Example:
-    ///     Use ``urllib`` and ``fastobo`` to parse an ontology downloaded
-    ///     from the Berkeley BOP portal:
+    ///     Use ``fastobo`` to parse an ontology graph in JSON format:
     ///
-    ///     >>> from urllib.request import urlopen
-    ///     >>> url = "http://purl.obolibrary.org/obo/pato.json"
-    ///     >>> graph = fastobo.load_graph(urlopen(url))
+    ///     >>> graph = fastobo.load_graph("pato.json")
     ///     >>> terms = [
     ///     ...     term for term in graph
     ///     ...     if isinstance(term.id, fastobo.id.PrefixedIdent)
@@ -381,8 +378,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     /// Example:
     ///     Use ``fastobo`` to convert an OBO file into an OBO graph:
     ///
-    ///     >>> doc = fastobo.load("tests/data/plana.obo")
-    ///     >>> fastobo.dump_graph(doc, "tests/data/plana.json")
+    ///     >>> doc = fastobo.load("plana.obo")
+    ///     >>> fastobo.dump_graph(doc, "plana.json")
     ///
     #[pyfn(m)]
     #[pyo3(name = "dump_graph", text_signature = "(doc, fh)")]
@@ -438,8 +435,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     /// Example:
     ///     Use ``fastobo`` to convert an OBO file into an OWL file:
     ///
-    ///     >>> doc = fastobo.load("tests/data/ms.obo")
-    ///     >>> fastobo.dump_owl(doc, "tests/data/ms.ofn", format="ofn")
+    ///     >>> doc = fastobo.load("ms.obo")
+    ///     >>> fastobo.dump_owl(doc, "ms.ofn", format="ofn")
     ///
     /// Caution:
     ///     This method is experimental. Conversion to OWL is provided on a

@@ -121,9 +121,7 @@ impl ClonePy for OboDoc {
 
 impl Display for OboDoc {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let doc: fastobo::ast::OboDoc = self.clone_py(py).into_py(py);
+        let doc: fastobo::ast::OboDoc = Python::with_gil(|py| self.clone_py(py).into_py(py));
         doc.fmt(f)
     }
 }
@@ -161,22 +159,20 @@ impl IntoPy<fastobo::ast::OboDoc> for OboDoc {
 impl OboDoc {
     #[new]
     fn __init__(header: Option<&HeaderFrame>, entities: Option<&PyAny>) -> PyResult<Self> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
-        // extract header
-        let header = header
-            .map(|h| h.clone_py(py))
-            .unwrap_or_else(HeaderFrame::empty);
-        // create doc and extract entities
-        let mut doc = OboDoc::new(Py::from(PyCell::new(py, header)?));
-        if let Some(any) = entities {
-            for res in PyIterator::from_object(py, &any.to_object(py))? {
-                doc.entities.push(EntityFrame::extract(res?)?);
+        Python::with_gil(|py| {
+            // extract header
+            let header = header
+                .map(|h| h.clone_py(py))
+                .unwrap_or_else(HeaderFrame::empty);
+            // create doc and extract entities
+            let mut doc = OboDoc::new(Py::from(PyCell::new(py, header)?));
+            if let Some(any) = entities {
+                for res in PyIterator::from_object(py, &any.to_object(py))? {
+                    doc.entities.push(EntityFrame::extract(res?)?);
+                }
             }
-        }
-
-        Ok(doc)
+            Ok(doc)
+        })
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -188,11 +184,9 @@ impl OboDoc {
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
         if index < self.entities.len() as isize {
             let item = &self.entities[index as usize];
-            Ok(item.to_object(py))
+            Ok(Python::with_gil(|py| item.to_object(py)))
         } else {
             Err(PyIndexError::new_err("list index out of range"))
         }
@@ -236,11 +230,11 @@ impl OboDoc {
     ///
     #[pyo3(text_signature = "(self, /)")]
     fn compact_ids(&self) -> PyResult<Self> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
-        py.allow_threads(|| fastobo::visit::IdCompactor::new().visit_doc(&mut doc));
-        Ok(doc.into_py(py))
+        Python::with_gil(|py| {
+            let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
+            py.allow_threads(|| fastobo::visit::IdCompactor::new().visit_doc(&mut doc));
+            Ok(doc.into_py(py))
+        })
     }
 
     /// Create a semantically equivalent OBO document with IRI identifiers.
@@ -273,10 +267,10 @@ impl OboDoc {
     ///
     #[pyo3(text_signature = "(self, /)")]
     fn decompact_ids(&self) -> PyResult<Self> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
-        py.allow_threads(|| fastobo::visit::IdDecompactor::new().visit_doc(&mut doc));
-        Ok(doc.into_py(py))
+        Python::with_gil(|py| {
+            let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
+            py.allow_threads(|| fastobo::visit::IdDecompactor::new().visit_doc(&mut doc));
+            Ok(doc.into_py(py))
+        })
     }
 }

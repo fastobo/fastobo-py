@@ -125,9 +125,7 @@ impl ClonePy for Synonym {
 
 impl Display for Synonym {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let syn: fastobo::ast::Synonym = self.clone_py(py).into_py(py);
+        let syn: fastobo::ast::Synonym = Python::with_gil(|py| self.clone_py(py).into_py(py));
         syn.fmt(f)
     }
 }
@@ -164,18 +162,17 @@ impl Synonym {
         ty: Option<Ident>,
         xrefs: Option<&PyAny>,
     ) -> PyResult<Self> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
-        let list = xrefs
-            .map(|x| XrefList::collect(py, x))
-            .transpose()?
-            .unwrap_or_default();
-
+        let xrefs = Python::with_gil(|py| {
+            let list = xrefs
+                .map(|x| XrefList::collect(py, x))
+                .transpose()?
+                .unwrap_or_default();
+            Py::new(py, list)
+        })?;
         Ok(Self {
             desc: fastobo::ast::QuotedString::new(desc),
             scope: SynonymScope::from_str(scope)?,
-            xrefs: Py::new(py, list)?,
+            xrefs,
             ty,
         })
     }

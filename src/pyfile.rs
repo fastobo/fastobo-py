@@ -166,27 +166,27 @@ impl PyFileGILRead {
 
 impl Read for PyFileGILRead {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let file = self.file.lock().unwrap();
-        match file.to_object(py).call_method1(py, "read", (buf.len(),)) {
-            Ok(obj) => {
-                // Check `fh.read` returned bytes, else raise a `TypeError`.
-                if let Ok(bytes) = obj.cast_as::<PyBytes>(py) {
-                    let b = bytes.as_bytes();
-                    (&mut buf[..b.len()]).copy_from_slice(b);
-                    Ok(b.len())
-                } else {
-                    let ty = obj.as_ref(py).get_type().name()?.to_string();
-                    let msg = format!("expected bytes, found {}", ty);
-                    PyTypeError::new_err(msg).restore(py);
-                    Err(IoError::new(
-                        std::io::ErrorKind::Other,
-                        "fh.read did not return bytes",
-                    ))
+        Python::with_gil(|py| {
+            let file = self.file.lock().unwrap();
+            match file.to_object(py).call_method1(py, "read", (buf.len(),)) {
+                Ok(obj) => {
+                    // Check `fh.read` returned bytes, else raise a `TypeError`.
+                    if let Ok(bytes) = obj.cast_as::<PyBytes>(py) {
+                        let b = bytes.as_bytes();
+                        (&mut buf[..b.len()]).copy_from_slice(b);
+                        Ok(b.len())
+                    } else {
+                        let ty = obj.as_ref(py).get_type().name()?.to_string();
+                        let msg = format!("expected bytes, found {}", ty);
+                        PyTypeError::new_err(msg).restore(py);
+                        Err(IoError::new(
+                            std::io::ErrorKind::Other,
+                            "fh.read did not return bytes",
+                        ))
+                    }
                 }
+                Err(e) => transmute_file_error!(self, e, "read method failed", py),
             }
-            Err(e) => transmute_file_error!(self, e, "read method failed", py),
-        }
+        })
     }
 }

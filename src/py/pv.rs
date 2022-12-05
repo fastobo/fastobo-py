@@ -42,12 +42,12 @@ pub enum PropertyValue {
 
 impl Display for PropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        match self {
-            PropertyValue::Literal(lpv) => lpv.as_ref(py).borrow().fmt(f),
-            PropertyValue::Resource(rpv) => rpv.as_ref(py).borrow().fmt(f),
-        }
+        Python::with_gil(|py| {
+            match self {
+                PropertyValue::Literal(lpv) => lpv.as_ref(py).borrow().fmt(f),
+                PropertyValue::Resource(rpv) => rpv.as_ref(py).borrow().fmt(f),
+            }
+        })
     }
 }
 
@@ -119,9 +119,7 @@ impl ClonePy for LiteralPropertyValue {
 
 impl Display for LiteralPropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        let pv: fastobo::ast::PropertyValue = Python::with_gil(|py| self.clone_py(py).into_py(py));
         pv.fmt(f)
     }
 }
@@ -172,24 +170,22 @@ impl LiteralPropertyValue {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
-        fmt.to_object(py).call_method1(
-            py,
-            "format",
-            (
-                self.relation.to_object(py),
-                self.value.as_str(),
-                self.datatype.to_object(py),
-            ),
-        )
+        Python::with_gil(|py| {
+            let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
+            fmt.to_object(py).call_method1(
+                py,
+                "format",
+                (
+                    self.relation.to_object(py),
+                    self.value.as_str(),
+                    self.datatype.to_object(py),
+                ),
+            )
+        })
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        let pv: fastobo::ast::PropertyValue = Python::with_gil(|py| self.clone_py(py).into_py(py));
         Ok(pv.to_string())
     }
 
@@ -254,10 +250,7 @@ impl ClonePy for ResourcePropertyValue {
 
 impl Display for ResourcePropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
-        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        let pv: fastobo::ast::PropertyValue = Python::with_gil(|py| self.clone_py(py).into_py(py));
         pv.fmt(f)
     }
 }
@@ -286,7 +279,6 @@ impl IntoPy<ResourcePropertyValue> for fastobo::ast::ResourcePropertyValue {
 impl ResourcePropertyValue {
     #[new]
     fn __init__(relation: Ident, value: Ident) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
         Self::new(relation, value).into()
     }
 
@@ -295,9 +287,7 @@ impl ResourcePropertyValue {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let pv: fastobo::ast::PropertyValue = self.clone_py(py).into_py(py);
+        let pv: fastobo::ast::PropertyValue = Python::with_gil(|py| self.clone_py(py).into_py(py));
         Ok(pv.to_string())
     }
 

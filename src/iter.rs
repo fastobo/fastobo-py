@@ -39,12 +39,12 @@ pub enum Handle {
 
 impl Handle {
     fn handle(&self) -> PyObject {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        match self {
-            Handle::FsFile(_, path) => path.display().to_string().to_object(py),
-            Handle::PyFile(f) => f.file().lock().unwrap().to_object(py),
-        }
+        Python::with_gil(|py| {
+            match self {
+                Handle::FsFile(_, path) => path.display().to_string().to_object(py),
+                Handle::PyFile(f) => f.file().lock().unwrap().to_object(py),
+            }
+        })
     }
 }
 
@@ -179,19 +179,15 @@ pub struct FrameReader {
 
 impl FrameReader {
     fn new(handle: BufReader<Handle>, ordered: bool, threads: i16) -> PyResult<Self> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
         let mut inner = InternalParser::with_thread_count(handle, threads)?;
         inner.ordered(ordered);
         let frame = inner
             .next()
             .unwrap()
             .map_err(Error::from)?
-            .into_header()
+            .into_header() 
             .unwrap();
-        let header = Py::new(py, frame.into_py(py))?;
-
+        let header = Python::with_gil(|py| Py::new(py, frame.into_py(py)))?;
         Ok(Self { inner, header })
     }
 
@@ -214,10 +210,10 @@ impl FrameReader {
 #[pymethods]
 impl FrameReader {
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "fastobo.iter({!r})").to_object(py);
-        fmt.call_method1(py, "format", (&self.inner.as_ref().get_ref().handle(),))
+        Python::with_gil(|py| {
+            let fmt = PyString::new(py, "fastobo.iter({!r})").to_object(py);
+            fmt.call_method1(py, "format", (&self.inner.as_ref().get_ref().handle(),))
+        })
     }
 
     fn __iter__(slf: PyRefMut<'_, Self>) -> PyResult<PyRefMut<'_, Self>> {
@@ -228,18 +224,17 @@ impl FrameReader {
         match slf.deref_mut().inner.next() {
             None => Ok(None),
             Some(Ok(frame)) => {
-                let gil = Python::acquire_gil();
                 let entity = frame.into_entity().unwrap();
-                Ok(Some(entity.into_py(gil.python())))
+                Ok(Some(Python::with_gil(|py| entity.into_py(py))))
             }
             Some(Err(e)) => {
-                let gil = Python::acquire_gil();
-                let py = gil.python();
-                if PyErr::occurred(py) {
-                    Err(PyErr::fetch(py))
-                } else {
-                    Err(Error::from(e).into())
-                }
+                Python::with_gil(|py| {
+                    if PyErr::occurred(py) {
+                        Err(PyErr::fetch(py))
+                    } else {
+                        Err(Error::from(e).into())
+                    }
+                })
             }
         }
     }

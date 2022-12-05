@@ -51,9 +51,7 @@ impl ClonePy for InstanceFrame {
 
 impl Display for InstanceFrame {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let frame: fastobo::ast::InstanceFrame = self.clone_py(py).into_py(py);
+        let frame: fastobo::ast::InstanceFrame = Python::with_gil(|py| self.clone_py(py).into_py(py));
         frame.fmt(f)
     }
 }

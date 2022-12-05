@@ -359,10 +359,10 @@ impl DateClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "DateClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.get_date(py)?,))
+        Python::with_gil(|py| {
+            let fmt = PyString::new(py, "DateClause({!r})").to_object(py);
+            fmt.call_method1(py, "format", (self.get_date(py)?,))
+        })
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -695,9 +695,7 @@ impl ClonePy for SubsetdefClause {
 
 impl Display for SubsetdefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -805,9 +803,7 @@ impl ClonePy for SynonymTypedefClause {
 
 impl Display for SynonymTypedefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -938,9 +934,7 @@ impl ClonePy for DefaultNamespaceClause {
 
 impl Display for DefaultNamespaceClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -974,9 +968,7 @@ impl DefaultNamespaceClause {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        Ok(self.clone_py(py).to_string())
+        Ok(Python::with_gil(|py| self.clone_py(py).to_string()))
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
@@ -1019,9 +1011,7 @@ impl NamespaceIdRuleClause {
 
 impl Display for NamespaceIdRuleClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1050,9 +1040,7 @@ impl NamespaceIdRuleClause {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        Ok(self.clone_py(py).to_string())
+        Ok(Python::with_gil(|py| self.clone_py(py).to_string()))
     }
 
     fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
@@ -1126,19 +1114,14 @@ impl ClonePy for IdspaceClause {
 
 impl Display for IdspaceClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
 
 impl From<IdspaceClause> for obo::HeaderClause {
     fn from(clause: IdspaceClause) -> Self {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let url = clause.url.as_ref(py).borrow().clone_py(py).into();
-
+        let url = Python::with_gil(|py| clause.url.as_ref(py).borrow().clone_py(py)).into();
         obo::HeaderClause::Idspace(
             Box::new(clause.prefix.clone()),
             Box::new(url),
@@ -1205,16 +1188,15 @@ impl IdspaceClause {
     }
 
     fn raw_value(&self) -> String {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
-        // FIXME: self.prefix may need to be escaped?
-        let url = &*self.url.as_ref(py).borrow();
-        if let Some(desc) = &self.description {
-            format!("{} {} {}", self.prefix, url, desc)
-        } else {
-            format!("{} {}", self.prefix, url)
-        }
+        Python::with_gil(|py| {
+            // FIXME: self.prefix may need to be escaped?
+            let url = &*self.url.as_ref(py).borrow();
+            if let Some(desc) = &self.description {
+                format!("{} {} {}", self.prefix, url, desc)
+            } else {
+                format!("{} {}", self.prefix, url)
+            }
+        })
     }
 }
 
@@ -1326,9 +1308,7 @@ impl ClonePy for TreatXrefsAsGenusDifferentiaClause {
 
 impl Display for TreatXrefsAsGenusDifferentiaClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1422,9 +1402,7 @@ impl ClonePy for TreatXrefsAsReverseGenusDifferentiaClause {
 
 impl Display for TreatXrefsAsReverseGenusDifferentiaClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1516,9 +1494,7 @@ impl ClonePy for TreatXrefsAsRelationshipClause {
 
 impl Display for TreatXrefsAsRelationshipClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1749,9 +1725,7 @@ impl ClonePy for PropertyValueClause {
 
 impl Display for PropertyValueClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::HeaderClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::HeaderClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }

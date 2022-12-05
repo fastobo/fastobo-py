@@ -55,9 +55,7 @@ impl ClonePy for TypedefFrame {
 
 impl Display for TypedefFrame {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let frame: fastobo::ast::TypedefFrame = self.clone_py(py).into_py(py);
+        let frame: fastobo::ast::TypedefFrame = Python::with_gil(|py| self.clone_py(py).into_py(py));
         frame.fmt(f)
     }
 }
@@ -115,11 +113,9 @@ impl TypedefFrame {
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
         if index < self.clauses.len() as isize {
             let item = &self.clauses[index as usize];
-            Ok(item.to_object(py))
+            Python::with_gil(|py| Ok(item.to_object(py)))
         } else {
             Err(PyIndexError::new_err("list index out of range"))
         }

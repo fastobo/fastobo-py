@@ -311,9 +311,7 @@ impl ClonePy for NamespaceClause {
 
 impl Display for NamespaceClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -389,9 +387,7 @@ impl ClonePy for AltIdClause {
 
 impl Display for AltIdClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -475,9 +471,7 @@ impl ClonePy for DefClause {
 
 impl Display for DefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -651,9 +645,7 @@ impl ClonePy for SubsetClause {
 
 impl Display for SubsetClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -728,9 +720,7 @@ impl ClonePy for SynonymClause {
 
 impl Display for SynonymClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -747,9 +737,7 @@ impl IntoPy<fastobo::ast::TermClause> for SynonymClause {
 impl SynonymClause {
     #[new]
     fn __init__(synonym: Py<Synonym>) -> PyClassInitializer<Self> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        Self::new(synonym.clone_ref(py)).into()
+        Self::new(Python::with_gil(|py| synonym.clone_ref(py))).into()
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -775,9 +763,9 @@ impl SynonymClause {
     }
 
     fn raw_value(&self) -> String {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        format!("{}", &*self.synonym.as_ref(py).borrow())
+        Python::with_gil(|py| {
+            format!("{}", &*self.synonym.as_ref(py).borrow())
+        })
     }
 }
 
@@ -812,9 +800,7 @@ impl ClonePy for XrefClause {
 
 impl Display for XrefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -866,9 +852,7 @@ impl XrefClause {
     }
 
     fn raw_value(&self) -> String {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        self.xref.as_ref(py).to_string()
+        Python::with_gil(|py| self.xref.as_ref(py).to_string())
     }
 }
 
@@ -981,9 +965,7 @@ impl ClonePy for PropertyValueClause {
 
 impl Display for PropertyValueClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1058,9 +1040,7 @@ impl ClonePy for IsAClause {
 
 impl Display for IsAClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1160,9 +1140,7 @@ impl ClonePy for IntersectionOfClause {
 
 impl Display for IntersectionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1249,9 +1227,7 @@ impl ClonePy for UnionOfClause {
 
 impl Display for UnionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1325,9 +1301,7 @@ impl ClonePy for EquivalentToClause {
 
 impl Display for EquivalentToClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1402,9 +1376,7 @@ impl ClonePy for DisjointFromClause {
 
 impl Display for DisjointFromClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1482,9 +1454,7 @@ impl ClonePy for RelationshipClause {
 
 impl Display for RelationshipClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1632,9 +1602,7 @@ impl ClonePy for ReplacedByClause {
 
 impl Display for ReplacedByClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1708,9 +1676,7 @@ impl ClonePy for ConsiderClause {
 
 impl Display for ConsiderClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1775,9 +1741,7 @@ impl CreatedByClause {
 
 impl Display for CreatedByClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let clause: fastobo::ast::TermClause = self.clone_py(py).into_py(py);
+        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1912,11 +1876,11 @@ impl CreationDateClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
-        self.get_date(py)
-            .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
+        Python::with_gil(|py| {
+            let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
+            self.get_date(py)
+                .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
+        })
     }
 
     fn __str__(&self) -> PyResult<String> {

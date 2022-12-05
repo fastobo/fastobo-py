@@ -54,9 +54,7 @@ impl ClonePy for TermFrame {
 impl Display for TermFrame {
     // FIXME: no clone
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let frame: fastobo::ast::TermFrame = self.clone_py(py).into_py(py);
+        let frame: fastobo::ast::TermFrame = Python::with_gil(|py| self.clone_py(py).into_py(py));
         frame.fmt(f)
     }
 }
@@ -114,12 +112,9 @@ impl TermFrame {
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
         if index < self.clauses.len() as isize {
             let item = &self.clauses[index as usize];
-            Ok(item.to_object(py))
+            Ok(Python::with_gil(|py| item.to_object(py)))
         } else {
             Err(PyIndexError::new_err("list index out of range"))
         }

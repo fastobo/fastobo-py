@@ -96,9 +96,7 @@ impl HeaderFrame {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let frame: obo::HeaderFrame = self.clone_py(py).into_py(py);
+        let frame: obo::HeaderFrame = Python::with_gil(|py| self.clone_py(py).into_py(py));
         Ok(frame.to_string())
     }
 
@@ -107,12 +105,11 @@ impl HeaderFrame {
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
         if index < self.clauses.len() as isize {
-            let item = &self.clauses[index as usize];
-            Ok(item.to_object(py))
+            Python::with_gil(|py| {
+                let item = &self.clauses[index as usize];
+                Ok(item.to_object(py))
+            })
         } else {
             Err(PyIndexError::new_err("list index out of range"))
         }

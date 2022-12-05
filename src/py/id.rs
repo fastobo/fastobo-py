@@ -134,14 +134,13 @@ pub enum Ident {
 
 impl Display for Ident {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-
-        match self {
-            Ident::Unprefixed(id) => id.as_ref(py).borrow().fmt(f),
-            Ident::Prefixed(id) => id.as_ref(py).borrow().fmt(f),
-            Ident::Url(id) => id.as_ref(py).borrow().fmt(f),
-        }
+        Python::with_gil(|py| {
+            match self {
+                Ident::Unprefixed(id) => id.as_ref(py).borrow().fmt(f),
+                Ident::Prefixed(id) => id.as_ref(py).borrow().fmt(f),
+                Ident::Url(id) => id.as_ref(py).borrow().fmt(f),
+            }
+        })
     }
 }
 

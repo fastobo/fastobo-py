@@ -75,9 +75,9 @@ impl ClonePy for Xref {
 
 impl Display for Xref {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let xref: fastobo::ast::Xref = self.clone_py(py).into_py(py);
+        let xref: fastobo::ast::Xref = Python::with_gil(|py| {
+            self.clone_py(py).into_py(py)
+        });
         xref.fmt(f)
     }
 }
@@ -112,7 +112,6 @@ impl Xref {
     #[new]
     fn __init__(id: Ident, desc: Option<String>) -> Self {
         if let Some(s) = desc {
-            let gil = Python::acquire_gil();
             Self::with_desc(id, Some(fastobo::ast::QuotedString::new(s)))
         } else {
             Self::new(id)
@@ -120,17 +119,17 @@ impl Xref {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        if let Some(ref d) = self.desc {
-            PyString::new(py, "Xref({!r}, {!r})")
-                .to_object(py)
-                .call_method1(py, "format", (&self.id, d.as_str()))
-        } else {
-            PyString::new(py, "Xref({!r})")
-                .to_object(py)
-                .call_method1(py, "format", (&self.id,))
-        }
+        Python::with_gil(|py| {
+            if let Some(ref d) = self.desc {
+                PyString::new(py, "Xref({!r}, {!r})")
+                    .to_object(py)
+                    .call_method1(py, "format", (&self.id, d.as_str()))
+            } else {
+                PyString::new(py, "Xref({!r})")
+                    .to_object(py)
+                    .call_method1(py, "format", (&self.id,))
+            }
+        })
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -254,28 +253,25 @@ impl XrefList {
     #[new]
     fn __init__(xrefs: Option<&PyAny>) -> PyResult<Self> {
         if let Some(x) = xrefs {
-            let gil = Python::acquire_gil();
-            Self::collect(gil.python(), x)
+            Python::with_gil(|py| Self::collect(py, x))
         } else {
             Ok(Self::new(Vec::new()))
         }
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        if self.xrefs.is_empty() {
-            Ok("XrefList()".to_object(py))
-        } else {
-            let fmt = PyString::new(py, "XrefList({!r})").to_object(py);
-            fmt.call_method1(py, "format", (&self.xrefs.to_object(py),))
-        }
+        Python::with_gil(|py| {
+            if self.xrefs.is_empty() {
+                Ok("XrefList()".to_object(py))
+            } else {
+                let fmt = PyString::new(py, "XrefList({!r})").to_object(py);
+                fmt.call_method1(py, "format", (&self.xrefs.to_object(py),))
+            }
+        })
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
-        let frame: fastobo::ast::XrefList = self.clone_py(py).into_py(py);
+        let frame: fastobo::ast::XrefList = Python::with_gil(|py| self.clone_py(py).into_py(py));
         Ok(frame.to_string())
     }
 
@@ -284,10 +280,8 @@ impl XrefList {
     }
 
     fn __getitem__(&self, index: isize) -> PyResult<Py<Xref>> {
-        let gil = Python::acquire_gil();
-        let py = gil.python();
         if index < self.xrefs.len() as isize {
-            Ok(self.xrefs[index as usize].clone_ref(py))
+            Python::with_gil(|py| Ok(self.xrefs[index as usize].clone_ref(py)))
         } else {
             Err(PyIndexError::new_err("list index out of range"))
         }

@@ -21,10 +21,8 @@ macro_rules! unittest {
             pyo3::prepare_freethreaded_python();
 
             // acquire Python only one test at a time
-            let success = {
+            let success = Python::with_gil(|py| {
                 let _l = LOCK.lock().unwrap();
-                let gil = Python::acquire_gil();
-                let py = gil.python();
 
                 // create a Python module from our rust code with debug symbols
                 let module = PyModule::new(py, "fastobo").unwrap();
@@ -69,7 +67,7 @@ macro_rules! unittest {
                     .unwrap()
                     .extract::<bool>()
                     .unwrap()
-            };
+            });
 
             // check the test succeeded
             if !success {
@@ -86,4 +84,5 @@ unittest!(test_header);
 unittest!(test_id);
 unittest!(test_pv);
 unittest!(test_term);
+unittest!(test_typedef);
 unittest!(test_xref);

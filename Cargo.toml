@@ -26,7 +26,7 @@ libc = "0.2.70"
 pyo3-built = "0.4.6"
 pest = "2.5.1"
 [dependencies.pyo3]
-version = "0.16.0"
+version = "0.17.3"
 [dependencies.fastobo]
 version = "0.15.0"
 features = ["threading", "smartstring"]

@@ -1,9 +1,7 @@
 use std::io::Error as IOError;
 use std::path::Path;
 
-use pest::error::ErrorVariant;
-use pest::error::InputLocation;
-use pest::error::LineColLocation;
+
 use pyo3::exceptions::PyFileNotFoundError;
 use pyo3::exceptions::PyOSError;
 use pyo3::exceptions::PyRuntimeError;
@@ -12,6 +10,9 @@ use pyo3::exceptions::PyValueError;
 use pyo3::PyErr;
 
 use fastobo::syntax::Rule;
+use fastobo::syntax::pest::error::ErrorVariant;
+use fastobo::syntax::pest::error::InputLocation;
+use fastobo::syntax::pest::error::LineColLocation;
 use fastobo::ast as obo;
 
 use crate::py::exceptions::SingleClauseError;
@@ -33,70 +34,6 @@ macro_rules! raise(
         return Err(PyErr::from_value(err.as_ref($py)))
     })
 );
-
-// ---------------------------------------------------------------------------
-
-/// Exact copy of `pest::error::Error` to access private fields.
-#[allow(unused)]
-struct PestError {
-    /// Variant of the error
-    pub variant: ErrorVariant<Rule>,
-    /// Location within the input string
-    pub location: InputLocation,
-    /// Line/column within the input string
-    pub line_col: LineColLocation,
-    path: Option<String>,
-    line: String,
-    #[allow(dead_code)]
-    continued_line: Option<String>,
-}
-
-impl PestError {
-    fn message(&self) -> String {
-        match self.variant {
-            ErrorVariant::ParsingError {
-                ref positives,
-                ref negatives,
-            } => Self::parsing_error_message(positives, negatives, |r| format!("{:?}", r)),
-            ErrorVariant::CustomError { ref message } => message.clone(),
-        }
-    }
-
-    fn parsing_error_message<F>(positives: &[Rule], negatives: &[Rule], mut f: F) -> String
-    where
-        F: FnMut(&Rule) -> String,
-    {
-        match (negatives.is_empty(), positives.is_empty()) {
-            (false, false) => format!(
-                "unexpected {}; expected {}",
-                Self::enumerate(negatives, &mut f),
-                Self::enumerate(positives, &mut f)
-            ),
-            (false, true) => format!("unexpected {}", Self::enumerate(negatives, &mut f)),
-            (true, false) => format!("expected {}", Self::enumerate(positives, &mut f)),
-            (true, true) => "unknown parsing error".to_owned(),
-        }
-    }
-
-    fn enumerate<F>(rules: &[Rule], f: &mut F) -> String
-    where
-        F: FnMut(&Rule) -> String,
-    {
-        match rules.len() {
-            1 => f(&rules[0]),
-            2 => format!("{} or {}", f(&rules[0]), f(&rules[1])),
-            l => {
-                let separated = rules
-                    .iter()
-                    .take(l - 1)
-                    .map(|r| f(r))
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                format!("{}, or {}", separated, f(&rules[l - 1]))
-            }
-        }
-    }
-}
 
 // ---------------------------------------------------------------------------
 
@@ -143,17 +80,17 @@ impl From<Error> for PyErr {
             fastobo::error::Error::SyntaxError { error } => {
                 match error {
                     fastobo::error::SyntaxError::ParserError { error } => {
-                        // SUPER UNSAFE: check the struct has not changed when
-                        //               updating! Using private fields is out of
-                        //               semver so any update is dangerous.
-                        let pe: PestError = unsafe { std::mem::transmute(*error) };
-                        let msg = pe.message();
-                        let path = pe.path.unwrap_or_else(|| String::from("<stdin>"));
-                        let (l, c) = match pe.line_col {
+                        let msg = error.variant.message().into_owned();
+                        let path = error
+                            .path()
+                            .map(String::from)
+                            .unwrap_or_else(|| String::from("<stdin>"));
+                        let line = error.line().to_string();
+                        let (l, c) = match error.line_col {
                             LineColLocation::Pos((l, c)) => (l, c),
                             LineColLocation::Span((l, c), _) => (l, c),
                         };
-                        PySyntaxError::new_err((msg, (path, l, c, pe.line)))
+                        PySyntaxError::new_err((msg, (path, l, c, line)))
                     }
                     fastobo::error::SyntaxError::UnexpectedRule { expected, actual } => {
                         PyRuntimeError::new_err("unexpected rule")

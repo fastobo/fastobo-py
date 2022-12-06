@@ -20,8 +20,8 @@ jobs:
     - name: Build manylinux wheels
       uses: pypa/cibuildwheel@v2.11.3
       env:
-        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
         CIBW_ARCHS: aarch64
+        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y"
         CIBW_BUILD_VERBOSITY: 2
       with:
         output-dir: dist
@@ -43,6 +43,7 @@ jobs:
       uses: pypa/cibuildwheel@v2.11.3
       env:
         CIBW_ARCHS: x86_64
+        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y"
         CIBW_BUILD_VERBOSITY: 2
       with:
         output-dir: dist
@@ -64,6 +65,7 @@ jobs:
       uses: pypa/cibuildwheel@v2.11.3
       env:
         CIBW_ARCHS: x86_64
+        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y"
         CIBW_BUILD_VERBOSITY: 2
       with:
         output-dir: dist
@@ -86,6 +88,7 @@ jobs:
       uses: pypa/cibuildwheel@v2.11.3
       env:
         CIBW_ARCHS: arm64
+        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y"
         CIBW_BUILD_VERBOSITY: 2
       with:
         output-dir: dist

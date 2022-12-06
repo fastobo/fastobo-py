@@ -27,7 +27,7 @@ pyo3-built = "0.4.6"
 [dependencies.pyo3]
 version = "0.17.3"
 [dependencies.fastobo]
-version = "0.15.0"
+version = "0.15.1"
 features = ["threading", "smartstring"]
 [dependencies.fastobo-graphs]
 version = "0.4.8"

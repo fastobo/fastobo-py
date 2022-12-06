@@ -6,7 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.12.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.12.2...HEAD
+
+## [v0.12.2] - 2022-12-06
+[v0.12.2]: https://github.com/fastobo/fastobo-py/compare/v0.12.1...v0.12.2
+### Added
+- Explicit support for Python 3.11.
+- Pre-built wheels for MacOS `aarch64` platforms.
+### Changed 
+- Bump `pyo3` to `v0.17.3`.
+- Bump `fastobo` to `v0.15.1`.
+- Bump `fastobo-graphs` to `v0.4.8`.
 
 ## [v0.12.1] - 2022-07-08
 [v0.12.1]: https://github.com/fastobo/fastobo-py/compare/v0.12.0...v0.12.1

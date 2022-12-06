@@ -351,7 +351,7 @@ dependencies = [
 
 [[package]]
 name = "fastobo-py"
-version = "0.12.1"
+version = "0.12.2"
 dependencies = [
  "built",
  "fastobo",
@@ -362,14 +362,13 @@ dependencies = [
  "horned-owl",
  "lazy_static",
  "libc",
- "pest",
  "pyo3",
  "pyo3-built",
 ]
 
 [[package]]
 name = "fastobo-py-derive-internal"
-version = "0.12.1"
+version = "0.12.2"
 dependencies = [
  "proc-macro2 1.0.47",
  "quote",

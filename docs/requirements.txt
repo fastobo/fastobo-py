@@ -10,7 +10,7 @@ ipython ~=7.15
 nbsphinx ~=0.7
 pygments-style-monokailight ~=0.4
 semantic_version ~=2.8
-networkx ~=2.5
+networkx ~=3.0
 pygraphviz ~=1.7
 
 # sphinx-bootstrap-theme ~=0.7 with patched admonition

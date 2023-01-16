@@ -125,9 +125,33 @@ dependencies = [
  "atty",
  "bitflags",
  "strsim 0.8.0",
- "textwrap",
+ "textwrap 0.11.0",
  "unicode-width",
  "vec_map",
+]
+
+[[package]]
+name = "clap"
+version = "3.2.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71655c45cb9845d3270c9d6df84ebe72b4dad3c2ba3f7023ad47c144e4e473a5"
+dependencies = [
+ "atty",
+ "bitflags",
+ "clap_lex",
+ "indexmap",
+ "strsim 0.10.0",
+ "termcolor",
+ "textwrap 0.16.0",
+]
+
+[[package]]
+name = "clap_lex"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
+dependencies = [
+ "os_str_bytes",
 ]
 
 [[package]]
@@ -344,7 +368,7 @@ dependencies = [
  "curie",
  "fastobo",
  "horned-functional",
- "horned-owl",
+ "horned-owl 0.11.0",
  "lazy_static",
  "thiserror",
 ]
@@ -359,7 +383,7 @@ dependencies = [
  "fastobo-owl",
  "fastobo-py-derive-internal",
  "horned-functional",
- "horned-owl",
+ "horned-owl 0.13.0",
  "lazy_static",
  "libc",
  "pyo3",
@@ -439,7 +463,7 @@ checksum = "18c63d3b445e68fe15c23498b23f9ec401d49c446411260d5ecc7f2e44021e1d"
 dependencies = [
  "curie",
  "enum_meta",
- "horned-owl",
+ "horned-owl 0.11.0",
  "pest",
  "pest_derive",
  "thiserror",
@@ -451,17 +475,36 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd730a577d61801592047e08579dbf296771383d5460a268c645672c14880369"
 dependencies = [
- "clap",
+ "clap 2.34.0",
  "curie",
  "enum_meta",
  "indexmap",
  "lazy_static",
  "log",
- "pretty_rdf",
+ "pretty_rdf 0.1.2",
  "quick-xml 0.22.0",
- "rio_api",
- "rio_xml",
+ "rio_api 0.6.2",
+ "rio_xml 0.6.2",
  "slurp",
+ "thiserror",
+]
+
+[[package]]
+name = "horned-owl"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "167bf4628327c097a2138a19d8167361529f48862de0707855a8afa87df4d86f"
+dependencies = [
+ "clap 3.2.23",
+ "curie",
+ "enum_meta",
+ "indexmap",
+ "lazy_static",
+ "log",
+ "pretty_rdf 0.2.0",
+ "quick-xml 0.26.0",
+ "rio_api 0.7.1",
+ "rio_xml 0.7.3",
  "thiserror",
 ]
 
@@ -656,6 +699,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "os_str_bytes"
+version = "6.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b7820b9daea5457c9f21c69448905d723fbd21136ccf521748f23fd49e723ee"
+
+[[package]]
 name = "oxilangtag"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -748,7 +797,18 @@ checksum = "3f44be06c0d3364825daf9b5d66224da349d73aba2fd2bcb85d181e51537d9f0"
 dependencies = [
  "indexmap",
  "quick-xml 0.21.0",
- "rio_api",
+ "rio_api 0.6.2",
+]
+
+[[package]]
+name = "pretty_rdf"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "619d050fff15f2616795847d1d3ae2207732d29269081618a737f0543f5cb209"
+dependencies = [
+ "indexmap",
+ "quick-xml 0.21.0",
+ "rio_api 0.7.1",
 ]
 
 [[package]]
@@ -869,6 +929,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "quick-xml"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11bafc859c6815fbaffbbbf4229ecb767ac913fecb27f9ad4343662e9ef099ea"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "quick-xml"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f50b1c63b38611e7d4d7f68b82d3ad0cc71a2ad2e7f61fc10f1328d917c93cd"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -893,6 +971,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ed96d73ad4e0de59e667b26c899930c90912cad3fec5f0291fc3171c90dacae"
 
 [[package]]
+name = "rio_api"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f6196ea9fb6791ce3dcd1cfc0d7f1074972aec0572db73dfb7396fcd9c3bc76"
+
+[[package]]
 name = "rio_xml"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -901,7 +985,19 @@ dependencies = [
  "oxilangtag",
  "oxiri",
  "quick-xml 0.22.0",
- "rio_api",
+ "rio_api 0.6.2",
+]
+
+[[package]]
+name = "rio_xml"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26defbc05a1e9d167f86d07adc70a717f108e46ef4c1ec6742d96c63c726ebb6"
+dependencies = [
+ "oxilangtag",
+ "oxiri",
+ "quick-xml 0.23.1",
+ "rio_api 0.7.1",
 ]
 
 [[package]]
@@ -1061,6 +1157,12 @@ checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
 dependencies = [
  "unicode-width",
 ]
+
+[[package]]
+name = "textwrap"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
 
 [[package]]
 name = "thiserror"

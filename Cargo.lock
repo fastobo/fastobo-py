@@ -344,7 +344,7 @@ dependencies = [
  "curie",
  "fastobo",
  "horned-functional",
- "horned-owl",
+ "horned-owl 0.11.0",
  "lazy_static",
  "thiserror",
 ]
@@ -359,7 +359,7 @@ dependencies = [
  "fastobo-owl",
  "fastobo-py-derive-internal",
  "horned-functional",
- "horned-owl",
+ "horned-owl 0.14.0",
  "lazy_static",
  "libc",
  "pyo3",
@@ -439,7 +439,7 @@ checksum = "18c63d3b445e68fe15c23498b23f9ec401d49c446411260d5ecc7f2e44021e1d"
 dependencies = [
  "curie",
  "enum_meta",
- "horned-owl",
+ "horned-owl 0.11.0",
  "pest",
  "pest_derive",
  "thiserror",
@@ -457,11 +457,29 @@ dependencies = [
  "indexmap",
  "lazy_static",
  "log",
- "pretty_rdf",
+ "pretty_rdf 0.1.2",
  "quick-xml 0.22.0",
- "rio_api",
- "rio_xml",
+ "rio_api 0.6.2",
+ "rio_xml 0.6.2",
  "slurp",
+ "thiserror",
+]
+
+[[package]]
+name = "horned-owl"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11e0103b22e2c897803a026323c3bc725c6d1d010e80539addba088a049ffdd8"
+dependencies = [
+ "curie",
+ "enum_meta",
+ "indexmap",
+ "lazy_static",
+ "log",
+ "pretty_rdf 0.2.0",
+ "quick-xml 0.26.0",
+ "rio_api 0.7.1",
+ "rio_xml 0.7.3",
  "thiserror",
 ]
 
@@ -748,7 +766,18 @@ checksum = "3f44be06c0d3364825daf9b5d66224da349d73aba2fd2bcb85d181e51537d9f0"
 dependencies = [
  "indexmap",
  "quick-xml 0.21.0",
- "rio_api",
+ "rio_api 0.6.2",
+]
+
+[[package]]
+name = "pretty_rdf"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "619d050fff15f2616795847d1d3ae2207732d29269081618a737f0543f5cb209"
+dependencies = [
+ "indexmap",
+ "quick-xml 0.21.0",
+ "rio_api 0.7.1",
 ]
 
 [[package]]
@@ -869,6 +898,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "quick-xml"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11bafc859c6815fbaffbbbf4229ecb767ac913fecb27f9ad4343662e9ef099ea"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "quick-xml"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f50b1c63b38611e7d4d7f68b82d3ad0cc71a2ad2e7f61fc10f1328d917c93cd"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -893,6 +940,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ed96d73ad4e0de59e667b26c899930c90912cad3fec5f0291fc3171c90dacae"
 
 [[package]]
+name = "rio_api"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f6196ea9fb6791ce3dcd1cfc0d7f1074972aec0572db73dfb7396fcd9c3bc76"
+
+[[package]]
 name = "rio_xml"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -901,7 +954,19 @@ dependencies = [
  "oxilangtag",
  "oxiri",
  "quick-xml 0.22.0",
- "rio_api",
+ "rio_api 0.6.2",
+]
+
+[[package]]
+name = "rio_xml"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26defbc05a1e9d167f86d07adc70a717f108e46ef4c1ec6742d96c63c726ebb6"
+dependencies = [
+ "oxilangtag",
+ "oxiri",
+ "quick-xml 0.23.1",
+ "rio_api 0.7.1",
 ]
 
 [[package]]

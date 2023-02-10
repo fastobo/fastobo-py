@@ -23,7 +23,7 @@ harness = false
 lazy_static = "1.4.0"
 
 [build-dependencies.built]
-version  = "0.5.1"
+version  = "0.6.0"
 features = ["chrono"]
 
 [dependencies]

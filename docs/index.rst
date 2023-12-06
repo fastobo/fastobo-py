@@ -46,7 +46,7 @@
 .. |DOI| image:: https://img.shields.io/badge/doi-10.7490%2Ff1000research.1117405.1-brightgreen?style=flat-square&maxAge=31536000
    :target: https://f1000research.com/posters/8-1500
 
-.. |Downloads| image:: https://img.shields.io/pypi/fastobo?style=flat-square&color=303f9f&maxAge=86400&label=downloads
+.. |Downloads| image:: https://img.shields.io/pypi/dm/fastobo?style=flat-square&color=303f9f&maxAge=86400&label=downloads
    :target: https://pepy.tech/project/fastobo
 
 About

@@ -15,7 +15,7 @@
 [![Documentation](https://img.shields.io/readthedocs/fastobo.svg?maxAge=3600&style=flat-square)](https://fastobo.readthedocs.io/)
 [![GitHub issues](https://img.shields.io/github/issues/fastobo/fastobo-py.svg?style=flat-square&maxAge=600)](https://github.com/fastobo/fastobo-py/issues)
 [![DOI](https://img.shields.io/badge/doi-10.7490%2Ff1000research.1117405.1-brightgreen?style=flat-square&maxAge=31536000)](https://f1000research.com/posters/8-1500)
-[![Downloads](https://img.shields.io/pypi/fastobo?style=flat-square&color=303f9f&maxAge=86400&label=downloads)](https://pepy.tech/project/fastobo)
+[![Downloads](https://img.shields.io/pypi/dm/fastobo?style=flat-square&color=303f9f&maxAge=86400&label=downloads)](https://pepy.tech/project/fastobo)
 
 
 ## Overview

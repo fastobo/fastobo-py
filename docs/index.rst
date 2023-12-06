@@ -16,7 +16,7 @@
 .. |Bioconda| image:: https://img.shields.io/conda/vn/bioconda/fastobo?style=flat-square&maxAge=3600
    :target: https://anaconda.org/bioconda/fastobo
 
-.. |Actions| image:: https://img.shields.io/github/workflow/status/fastobo/fastobo-py/Test?logo=github&style=flat-square&maxAge=600
+.. |Actions| image:: https://img.shields.io/github/actions/workflow/status/fastobo/fastobo-py/test.yml?branch=master&style=flat-square&maxAge=600
    :target: https://github.com/fastobo/fastobo-py/actions
 
 .. |Wheel| image:: https://img.shields.io/pypi/wheel/fastobo.svg?style=flat-square&maxAge=2678400
@@ -46,7 +46,7 @@
 .. |DOI| image:: https://img.shields.io/badge/doi-10.7490%2Ff1000research.1117405.1-brightgreen?style=flat-square&maxAge=31536000
    :target: https://f1000research.com/posters/8-1500
 
-.. |Downloads| image:: https://img.shields.io/badge/dynamic/json?style=flat-square&color=303f9f&maxAge=86400&label=downloads&query=%24.total_downloads&url=https%3A%2F%2Fapi.pepy.tech%2Fapi%2Fprojects%2Ffastobo
+.. |Downloads| image:: https://img.shields.io/pypi/fastobo?style=flat-square&color=303f9f&maxAge=86400&label=downloads
    :target: https://pepy.tech/project/fastobo
 
 About

@@ -139,7 +139,7 @@ impl SingleClauseError {
 
 // --- DisconnectedChannelError ----------------------------------------------
 
-#[pyclass(module = "fastobo.exceptions", extends = PyChildProcessError)]
+#[pyclass(module = "fastobo.exceptions", extends = PyRuntimeError)]
 pub struct DisconnectedChannelError {}
 
 impl_pyerr!(DisconnectedChannelError);

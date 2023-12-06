@@ -496,8 +496,7 @@ fn listlike_impl_methods(
         ///
         /// Raises:
         ///     IndexError: when list is empty or index is out of range.
-        #[args(index="-1")]
-        #[pyo3(text_signature = "(self, index=-1)")]
+        #[pyo3(text_signature = "(self, index=-1)", signature=(index=-1))]
         fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
             // Wrap once to allow negative indexing
             if index < 0 {

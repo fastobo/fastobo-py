@@ -26,15 +26,6 @@ use crate::utils::FinalClass;
 
 // --- Module export ----------------------------------------------------------
 
-#[pymodule]
-#[pyo3(name = "id")]
-pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<self::BaseIdent>()?;
-    m.add_class::<self::PrefixedIdent>()?;
-    m.add_class::<self::UnprefixedIdent>()?;
-    m.add_class::<self::Url>()?;
-    m.add("__name__", "fastobo.id")?;
-
     /// parse(s)
     /// --
     ///
@@ -59,7 +50,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> fastobo.id.parse("http://purl.obolibrary.org/obo/IAO_0000231")
     ///     Url('http://purl.obolibrary.org/obo/IAO_0000231')
     ///
-    #[pyfn(m)]
+    #[pyfunction]
     #[pyo3(name = "parse")]
     fn parse(py: Python, s: &str) -> PyResult<Ident> {
         match fastobo::ast::Ident::from_str(s) {
@@ -91,7 +82,7 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
     ///     True
     ///     >>> fastobo.id.is_valid("definitely not an identifier")
     ///     False
-    #[pyfn(m)]
+    #[pyfunction]
     #[pyo3(name = "is_valid")]
     fn is_valid(_py: Python, s: &str) -> bool {
         let rule = fastobo::syntax::Rule::Id;
@@ -100,6 +91,19 @@ pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
             Ok(pairs) => pairs.as_str().len() == s.len(),
         }
     }
+
+
+#[pymodule]
+#[pyo3(name = "id")]
+pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<self::BaseIdent>()?;
+    m.add_class::<self::PrefixedIdent>()?;
+    m.add_class::<self::UnprefixedIdent>()?;
+    m.add_class::<self::Url>()?;
+    m.add("__name__", "fastobo.id")?;
+
+    m.add_function(wrap_pyfunction!(self::parse, m)?)?;
+    m.add_function(wrap_pyfunction!(self::is_valid, m)?)?;
 
     Ok(())
 }

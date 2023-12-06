@@ -1157,6 +1157,7 @@ impl IntoPy<fastobo::ast::TermClause> for IntersectionOfClause {
 #[pymethods]
 impl IntersectionOfClause {
     #[new]
+    #[pyo3(signature=(typedef, term))]
     fn __init__(typedef: Option<Ident>, term: Ident) -> PyClassInitializer<Self> {
         Self::new(typedef, term).into()
     }

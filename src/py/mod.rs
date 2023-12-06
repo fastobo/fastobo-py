@@ -64,29 +64,6 @@ use super::built;
 
 // --- Module export ---------------------------------------------------------
 
-/// The Faultless AST for Open Biomedical Ontologies.
-///
-///
-#[pymodule]
-#[pyo3(name = "fastobo")]
-pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
-    m.add("__package__", "fastobo")?;
-    m.add("__build__", pyo3_built!(py, built))?;
-    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
-    m.add("__author__", env!("CARGO_PKG_AUTHORS").replace(':', "\n"))?;
-
-    add_submodule!(py, m, abc);
-    add_submodule!(py, m, doc);
-    add_submodule!(py, m, exceptions);
-    add_submodule!(py, m, header);
-    add_submodule!(py, m, id);
-    add_submodule!(py, m, instance);
-    add_submodule!(py, m, pv);
-    add_submodule!(py, m, syn);
-    add_submodule!(py, m, term);
-    add_submodule!(py, m, typedef);
-    add_submodule!(py, m, xref);
-
     /// Iterate over the frames contained in an OBO document.
     ///
     /// The header frame can be accessed with the ``header`` method of the
@@ -124,8 +101,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> list(reader)
     ///     [TermFrame(PrefixedIdent('MS', '1000001')), ...]
     ///
-    #[pyfn(m, ordered = "true", threads = "0")]
-    #[pyo3(name = "iter", text_signature = "(fh, ordered=True, threads=0)")]
+    #[pyfunction]
+    #[pyo3(name = "iter", text_signature = "(fh, ordered=True, threads=0)", signature = (fh, ordered=true, threads=0))]
     fn iter(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<FrameReader> {
         if let Ok(s) = fh.downcast::<PyString>() {
             let path = s.to_str()?;
@@ -174,8 +151,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc.header[3]
     ///     SubsetdefClause(UnprefixedIdent('Angiosperm'), 'Term for angiosperms')
     ///
-    #[pyfn(m, ordered = "true", threads = "0")]
-    #[pyo3(name = "load", text_signature = "(fh, threads=0)")]
+    #[pyfunction]
+    #[pyo3(name = "load", text_signature = "(fh, ordered=True, threads=0)", signature=(fh, ordered=true, threads=0))]
     fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         // extract either a path or a file-handle from the arguments
         let path: Option<String>;
@@ -277,8 +254,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc[0][0]
     ///     NameClause('test item')
     ///
-    #[pyfn(m, ordered = "true", threads = "0")]
-    #[pyo3(name = "loads", text_signature = "(document)")]
+    #[pyfunction]
+    #[pyo3(name = "loads", text_signature = "(document, ordered=True, threads=0)", signature=(document, ordered=true, threads=0))]
     fn loads(py: Python, document: &PyString, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         let cursor = std::io::Cursor::new(document.to_str()?);
         let mut reader = InternalParser::with_thread_count(cursor, threads)?;
@@ -325,7 +302,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> min(terms, key=lambda term: str(term.id))
     ///     TermFrame(PrefixedIdent('PATO', '0000000'))
     ///
-    #[pyfn(m)]
+    #[pyfunction]
     #[pyo3(name = "load_graph", text_signature = "(fh)")]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
         let doc: GraphDocument = if let Ok(s) = fh.downcast::<PyString>() {
@@ -381,7 +358,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     >>> doc = fastobo.load("plana.obo")
     ///     >>> fastobo.dump_graph(doc, "plana.json")
     ///
-    #[pyfn(m)]
+    #[pyfunction]
     #[pyo3(name = "dump_graph", text_signature = "(doc, fh)")]
     fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
         // Convert OBO document to an OBO Graph document.
@@ -453,8 +430,8 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     ///     ``default-namespace`` clause must be declared in the header.
     ///     Failure to do both will result in a `ValueError` being thrown.
     ///
-    #[pyfn(m, format = r#""ofn""#)]
-    #[pyo3(name = "dump_owl", text_signature = r#"(doc, fh, format="ofn")"#)]
+    #[pyfunction]
+    #[pyo3(name = "dump_owl", text_signature = r#"(doc, fh, format="ofn")"#, signature=(obj, fh, format="ofn"))]
     fn dump_owl(py: Python, obj: &OboDoc, fh: &PyAny, format: &str) -> PyResult<()> {
         // Convert OBO document to an OWL document.
         let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
@@ -481,6 +458,37 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
 
         Ok(())
     }
+
+
+/// The Faultless AST for Open Biomedical Ontologies.
+///
+///
+#[pymodule]
+#[pyo3(name = "fastobo")]
+pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add("__package__", "fastobo")?;
+    m.add("__build__", pyo3_built!(py, built))?;
+    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+    m.add("__author__", env!("CARGO_PKG_AUTHORS").replace(':', "\n"))?;
+
+    add_submodule!(py, m, abc);
+    add_submodule!(py, m, doc);
+    add_submodule!(py, m, exceptions);
+    add_submodule!(py, m, header);
+    add_submodule!(py, m, id);
+    add_submodule!(py, m, instance);
+    add_submodule!(py, m, pv);
+    add_submodule!(py, m, syn);
+    add_submodule!(py, m, term);
+    add_submodule!(py, m, typedef);
+    add_submodule!(py, m, xref);
+
+    m.add_function(wrap_pyfunction!(self::iter, m)?)?;
+    m.add_function(wrap_pyfunction!(self::load, m)?)?;
+    m.add_function(wrap_pyfunction!(self::loads, m)?)?;
+    m.add_function(wrap_pyfunction!(self::load_graph, m)?)?;
+    m.add_function(wrap_pyfunction!(self::dump_graph, m)?)?;
+    m.add_function(wrap_pyfunction!(self::dump_owl, m)?)?;
 
     Ok(())
 }

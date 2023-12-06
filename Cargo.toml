@@ -30,7 +30,7 @@ features = ["chrono"]
 libc = "0.2.70"
 pyo3-built = "0.4.6"
 [dependencies.pyo3]
-version = "0.17.3"
+version = "0.19.2"
 [dependencies.fastobo]
 version = "0.15.1"
 features = ["threading", "smartstring"]

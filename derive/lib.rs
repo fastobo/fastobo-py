@@ -317,7 +317,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
                     None => &qualname,
                 };
 
-                if ob.is_instance_of::<#base>()? {
+                if ob.is_instance_of::<#base>() {
                     match ty.as_ref() {
                         #(#variants,)*
                         _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))

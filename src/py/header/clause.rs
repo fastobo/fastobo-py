@@ -950,9 +950,9 @@ impl DefaultNamespaceClause {
     #[new]
     fn __init__(namespace: &PyAny) -> PyResult<PyClassInitializer<Self>> {
         let py = namespace.py();
-        if namespace.is_instance_of::<BaseIdent>()? {
+        if namespace.is_instance_of::<BaseIdent>() {
             Ident::extract(namespace).map(|id| Self::new(id).into())
-        } else if namespace.is_instance_of::<PyString>()? {
+        } else if namespace.is_instance_of::<PyString>() {
             let s: &PyString = FromPyObject::extract(namespace)?;
             let id = ast::Ident::from_str(&s.to_str()?).unwrap(); // FIXME
             Ok(Self::new(id.into_py(py)).into())

@@ -211,11 +211,7 @@ jobs:
         path: dist
     - name: Publish distributions to PyPI
       if: startsWith(github.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
-        skip_existing: true
+      uses: pypa/gh-action-pypi-publish@release/v1
 
   release:
     environment: GitHub Releases

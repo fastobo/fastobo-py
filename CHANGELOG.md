@@ -6,7 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.12.2...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.12.3...HEAD
+
+## [v0.12.3] - 2023-12-06
+[v0.12.3]: https://github.com/fastobo/fastobo-py/compare/v0.12.2...v0.12.3
+### Added
+- Explicit support for Python 3.12.
+### Changed
+- Bump `pyo3` to `v0.19.2`.
+- Make `DisconnectedChannelError` inherit from `RuntimeError` instead of `ChildProcessError`.
 
 ## [v0.12.2] - 2022-12-06
 [v0.12.2]: https://github.com/fastobo/fastobo-py/compare/v0.12.1...v0.12.2

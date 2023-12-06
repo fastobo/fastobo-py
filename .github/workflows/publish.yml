@@ -190,6 +190,8 @@ jobs:
   upload:
     environment: PyPI
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     name: Upload
     needs:
     - wheel-linux-aarch64

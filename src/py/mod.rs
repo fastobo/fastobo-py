@@ -127,7 +127,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m, ordered = "true", threads = "0")]
     #[pyo3(name = "iter", text_signature = "(fh, ordered=True, threads=0)")]
     fn iter(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<FrameReader> {
-        if let Ok(s) = fh.cast_as::<PyString>() {
+        if let Ok(s) = fh.downcast::<PyString>() {
             let path = s.to_str()?;
             FrameReader::from_path(path, ordered, threads)
         } else {
@@ -179,7 +179,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc> {
         // extract either a path or a file-handle from the arguments
         let path: Option<String>;
-        let boxed: Box<dyn BufRead> = if let Ok(s) = fh.cast_as::<PyString>() {
+        let boxed: Box<dyn BufRead> = if let Ok(s) = fh.downcast::<PyString>() {
             // get a buffered reader to the resources pointed by `path`
             let bf = match std::fs::File::open(s.to_str()?) {
                 Ok(f) => std::io::BufReader::new(f),
@@ -328,7 +328,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m)]
     #[pyo3(name = "load_graph", text_signature = "(fh)")]
     fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
-        let doc: GraphDocument = if let Ok(s) = fh.cast_as::<PyString>() {
+        let doc: GraphDocument = if let Ok(s) = fh.downcast::<PyString>() {
             // Argument is a string, assumed to be a path: open the file.
             // and extract the graph
             let path = s.to_str()?;
@@ -391,7 +391,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
             .map_err(|e| PyErr::from(GraphError::from(e)))?;
 
         // Write the document
-        if let Ok(s) = fh.cast_as::<PyString>() {
+        if let Ok(s) = fh.downcast::<PyString>() {
             // Write into a file if given a path as a string.
             let path = s.to_str()?;
             // py.allow_threads(|| fastobo_graphs::to_file(path, &graph))
@@ -463,7 +463,7 @@ pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
         let ctx = horned_functional::Context::from(&prefixes);
 
         // Write the document
-        let mut file: Box<dyn Write> = if let Ok(s) = fh.cast_as::<PyString>() {
+        let mut file: Box<dyn Write> = if let Ok(s) = fh.downcast::<PyString>() {
             // Write into a file if given a path as a string.
             Box::new(std::fs::File::create(s.to_str()?)?)
         } else {

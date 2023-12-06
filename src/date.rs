@@ -99,7 +99,7 @@ pub fn isodatetime_to_datetime<'py>(
             .unwrap_or(0),
         tz
             .as_ref()
-            .map(|obj| obj.cast_as::<PyTzInfo>(py))
+            .map(|obj| obj.downcast::<PyTzInfo>(py))
             .transpose()?,
     )
 }

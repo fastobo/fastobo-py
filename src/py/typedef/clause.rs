@@ -2957,11 +2957,11 @@ impl CreationDateClause {
     #[new]
     fn __init__(datetime: &PyAny) -> PyResult<PyClassInitializer<Self>> {
         let py = datetime.py();
-        if let Ok(dt) = datetime.cast_as::<PyDateTime>() {
+        if let Ok(dt) = datetime.downcast::<PyDateTime>() {
             let date = datetime_to_isodatetime(py, dt).map(From::from)?;
             Ok(CreationDateClause::new(date).into())
         } else {
-            match datetime.cast_as::<PyDate>() {
+            match datetime.downcast::<PyDate>() {
                 Err(e) => {
                     raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
                 }
@@ -3002,10 +3002,10 @@ impl CreationDateClause {
     #[setter]
     fn set_date(&mut self, datetime: &PyAny) -> PyResult<()> {
         let py = datetime.py();
-        if let Ok(dt) = datetime.cast_as::<PyDateTime>() {
+        if let Ok(dt) = datetime.downcast::<PyDateTime>() {
             self.date = From::from(datetime_to_isodatetime(py, dt)?);
         } else {
-            match datetime.cast_as::<PyDate>() {
+            match datetime.downcast::<PyDate>() {
                 Err(e) => {
                     raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
                 }

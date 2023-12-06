@@ -50,7 +50,7 @@ pub struct PyFileRead<'p> {
 impl<'p> PyFileRead<'p> {
     pub fn from_ref(file: &'p PyAny) -> PyResult<PyFileRead<'p>> {
         let res = file.call_method1("read", (0,))?;
-        if res.cast_as::<PyBytes>().is_ok() {
+        if res.downcast::<PyBytes>().is_ok() {
             Ok(PyFileRead { file })
         } else {
             let ty = res.get_type().name()?.to_string();
@@ -146,7 +146,7 @@ pub struct PyFileGILRead {
 impl PyFileGILRead {
     pub fn from_ref(file: &PyAny) -> PyResult<PyFileGILRead> {
         let res = file.call_method1("read", (0,))?;
-        if res.cast_as::<PyBytes>().is_ok() {
+        if res.downcast::<PyBytes>().is_ok() {
             Ok(PyFileGILRead {
                 file: Mutex::new(file.to_object(file.py())),
             })
@@ -171,7 +171,7 @@ impl Read for PyFileGILRead {
             match file.to_object(py).call_method1(py, "read", (buf.len(),)) {
                 Ok(obj) => {
                     // Check `fh.read` returned bytes, else raise a `TypeError`.
-                    if let Ok(bytes) = obj.cast_as::<PyBytes>(py) {
+                    if let Ok(bytes) = obj.downcast::<PyBytes>(py) {
                         let b = bytes.as_bytes();
                         (&mut buf[..b.len()]).copy_from_slice(b);
                         Ok(b.len())

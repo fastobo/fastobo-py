@@ -11,7 +11,7 @@ proc-macro = true
 path = "lib.rs"
 
 [dependencies.syn]
-version = "1.0"
+version = "2.0"
 default-features = false
 features = ["derive", "clone-impls", "parsing", "printing", "proc-macro"]
 [dependencies.quote]

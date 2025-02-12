@@ -14,12 +14,6 @@ jobs:
     strategy:
       matrix:
         include:
-        - python-version: 3.7
-          python-release: v3.7
-          python-impl: CPython
-        - python-version: 3.8
-          python-release: v3.8
-          python-impl: CPython
         - python-version: 3.9
           python-release: v3.9
           python-impl: CPython
@@ -32,24 +26,28 @@ jobs:
         - python-version: "3.12"
           python-release: v3.12
           python-impl: CPython
-        - python-version: pypy-3.7
-          python-release: v3.7
+        - python-version: "3.13"
+          python-release: v3.13
+          python-impl: CPython
+        - python-version: pypy-3.9
+          python-release: v3.9
+          python-impl: PyPy
+        - python-version: pypy-3.10
+          python-release: v3.10
           python-impl: PyPy
     steps:
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
     - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Setup Rust stable
-      uses: ATiltedTree/setup-rust@v1
-      with:
-        rust-version: stable
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
     - name: Update CI requirements
-      run: python -m pip install -U -r ci/requirements.txt
+      run: python -m pip install -U -r .github/workflows/requirements.txt
     - name: Build Rust extension
-      run: python setup.py build_ext --inplace --debug
+      run: python -m pip install --no-build-isolation -e . -vv
     - name: Test Rust extension
       run: python -m unittest discover -vv
 
@@ -61,12 +59,6 @@ jobs:
     strategy:
       matrix:
         include:
-        - python-version: 3.7
-          python-release: v3.7
-          python-impl: CPython
-        - python-version: 3.8
-          python-release: v3.8
-          python-impl: CPython
         - python-version: 3.9
           python-release: v3.9
           python-impl: CPython
@@ -79,46 +71,52 @@ jobs:
         - python-version: "3.12"
           python-release: "v3.12"
           python-impl: CPython
-        - python-version: pypy-3.7
-          python-release: v3.7
+        - python-version: "3.13"
+          python-release: "v3.13"
+          python-impl: CPython
+        - python-version: pypy-3.9
+          python-release: v3.9
+          python-impl: PyPy
+        - python-version: pypy-3.10
+          python-release: v3.10
           python-impl: PyPy
     steps:
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
     - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Setup Rust stable
-      uses: ATiltedTree/setup-rust@v1
-      with:
-        rust-version: stable
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
     - name: Update CI requirements
-      run: python -m pip install -U -r ci/requirements.txt
+      run: python -m pip install -U -r .github/workflows/requirements.txt
     - name: Build Rust extension
-      run: python setup.py build_ext --inplace --debug
+      run: python -m pip install --no-build-isolation -e . -vv
     - name: Test Rust extension
       run: python -m unittest discover -vv
 
   coverage:
+    name: Coverage
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+        - python-version: "3.13"
+          python-release: "v3.13"
+          python-impl: CPython
     steps:
     - name: Checkout code
-      uses: actions/checkout@v1
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v2
+      uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
-    - name: Setup Rust nightly
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: nightly
-        override: true
+        python-version: ${{ matrix.python-version }}
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Install tarpaulin
+      run: cargo install cargo-tarpaulin
     - name: Measure code coverage
-      uses: actions-rs/tarpaulin@v0.1
-      with:
-        version: '0.16.0'
-        args: '-v --out Xml --ciserver github-actions'
+      run: cargo tarpaulin -v --out Xml --ciserver github-actions
     - name: Upload coverage statistics
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2

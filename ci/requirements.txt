@@ -1,5 +1,0 @@
-setuptools >=41.0
-wheel
-setuptools-rust >= 1.0 
-requests
-auditwheel

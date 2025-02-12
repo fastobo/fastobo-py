@@ -7,184 +7,124 @@ on:
 
 jobs:
 
-  wheel-linux-aarch64:
-    name: Build Linux wheels (Aarch64)
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        python-tag:
-        - cp37-manylinux_aarch64
-        - cp38-manylinux_aarch64
-        - cp39-manylinux_aarch64
-        - cp310-manylinux_aarch64
-        - cp311-manylinux_aarch64
-        - cp312-manylinux_aarch64
-        - pp37-manylinux_aarch64
-        - pp38-manylinux_aarch64
-        - pp39-manylinux_aarch64
-        - pp310-manylinux_aarch64
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up QEMU
-      id: qemu
-      uses: docker/setup-qemu-action@v2
-      with:
-        platforms: all
-    - name: Build manylinux wheels
-      uses: pypa/cibuildwheel@v2.16.2
-      env:
-        CIBW_ARCHS: aarch64
-        CIBW_BUILD: ${{ matrix.python-tag }}
-        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y"
-        CIBW_BUILD_VERBOSITY: 2
-        CIBW_ENVIRONMENT: CARGO_NET_GIT_FETCH_WITH_CLI=true
-      with:
-        output-dir: dist
-    - uses: actions/upload-artifact@v3
-      with:
-        name: wheels
-        path: dist/*
+  # wheel-linux-aarch64:
+  #   name: Build Linux wheels (Aarch64)
+  #   runs-on: ubuntu-latest
+  #   if: "startsWith(github.ref, 'refs/tags/v')"
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Set up QEMU
+  #     id: qemu
+  #     uses: docker/setup-qemu-action@v3
+  #     with:
+  #       platforms: all
+  #   - name: Build manylinux wheels
+  #     uses: pypa/cibuildwheel@v2.21.3
+  #     env:
+  #       CIBW_ARCHS: aarch64
+  #       CIBW_BUILD: 'cp*-manylinux_aarch64'
+  #     with:
+  #       output-dir: dist
+  #   - uses: actions/upload-artifact@v4
+  #     with:
+  #       name: wheels-manylinux_aarch64
+  #       path: dist/*
 
   wheel-linux-x86_64:
     name: Build Linux wheels (x86-64)
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        python-tag:
-        - cp37-manylinux_x86_64
-        - cp38-manylinux_x86_64
-        - cp39-manylinux_x86_64
-        - cp310-manylinux_x86_64
-        - cp311-manylinux_x86_64
-        - cp312-manylinux_x86_64
-        - pp37-manylinux_x86_64
-        - pp38-manylinux_x86_64
-        - pp39-manylinux_x86_64
-        - pp310-manylinux_x86_64
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
+    - uses: actions/checkout@v4
     - name: Build manylinux wheels
-      uses: pypa/cibuildwheel@v2.16.2
+      uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: x86_64
-        CIBW_BUILD: ${{ matrix.python-tag }}
-        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y"
-        CIBW_BUILD_VERBOSITY: 2
-        CIBW_ENVIRONMENT: CARGO_NET_GIT_FETCH_WITH_CLI=true
+        CIBW_BUILD: 'cp*-manylinux_x86_64'
       with:
         output-dir: dist
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-manylinux_x86_64
         path: dist/*
 
   wheel-macos-x86_64:
     name: Build MacOS wheels (x86-64)
-    runs-on: macOS-12
-    strategy:
-      matrix:
-        python-tag:
-        - cp37-macosx_x86_64
-        - cp38-macosx_x86_64
-        - cp39-macosx_x86_64
-        - cp310-macosx_x86_64
-        - cp311-macosx_x86_64
-        - cp312-macosx_x86_64
-        - pp37-macosx_x86_64
-        - pp38-macosx_x86_64
-        - pp39-macosx_x86_64
-        - pp310-macosx_x86_64
+    runs-on: macOS-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        override: true
+        targets: x86_64-apple-darwin
     - name: Build manylinux wheels
-      uses: pypa/cibuildwheel@v2.16.2
+      uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: x86_64
-        CIBW_BUILD: ${{ matrix.python-tag }}
-        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y"
-        CIBW_BUILD_VERBOSITY: 2
-        CIBW_ENVIRONMENT: CARGO_NET_GIT_FETCH_WITH_CLI=true
+        CIBW_BUILD: 'cp*-macosx_x86_64'
+        CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=12.0
+        CIBW_TEST_SKIP: "*"
       with:
         output-dir: dist
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-macosx_x86_64
         path: dist/*
 
   wheel-macos-aarch64:
     name: Build MacOS wheels (Aarch64)
-    runs-on: macOS-12
-    strategy:
-      matrix:
-        python-tag:
-        - cp38-macosx_arm64
-        - cp39-macosx_arm64
-        - cp310-macosx_arm64
-        - cp311-macosx_arm64
-        - cp312-macosx_arm64
+    runs-on: macOS-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
-        override: true
-        target: aarch64-apple-darwin
+        targets: aarch64-apple-darwin
     - name: Build manylinux wheels
-      uses: pypa/cibuildwheel@v2.16.2
+      uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: arm64
-        CIBW_BUILD: ${{ matrix.python-tag }}
-        CIBW_BEFORE_ALL: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh /dev/stdin -y"
-        CIBW_BUILD_VERBOSITY: 2
-        CIBW_ENVIRONMENT: CARGO_NET_GIT_FETCH_WITH_CLI=true
+        CIBW_BUILD: 'cp*-macosx_arm64'
       with:
         output-dir: dist
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-macosx_arm64
         path: dist/*
 
   wheel-win32-x86_64:
     name: Build Windows wheels (x86-64)
-    runs-on: windows-2022
-    strategy:
-      matrix:
-        python-tag:
-        - cp37-win_amd64
-        - cp38-win_amd64
-        - cp39-win_amd64
-        - cp310-win_amd64
-        - cp311-win_amd64
-        - cp312-win_amd64
-        - pp37-win_amd64
-        - pp38-win_amd64
-        - pp39-win_amd64
-        - pp310-win_amd64
+    runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
     - name: Build manylinux wheels
-      uses: pypa/cibuildwheel@v2.16.2
+      uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: AMD64
-        CIBW_BUILD: ${{ matrix.python-tag }}
-        CIBW_BUILD_VERBOSITY: 2
+        CIBW_BUILD: 'cp*-win_amd64'
       with:
         output-dir: dist
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-win_amd64
+        path: dist/*
+
+  sdist:
+    runs-on: ubuntu-latest
+    name: Build source distribution
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.13
+    - name: Install CI requirements
+      run: python -m pip install -U build maturin
+    - name: Build source distribution without vendored sources
+      run: python -m build -s . -n
+    - uses: actions/upload-artifact@v4
+      with:
+        name: sdist
         path: dist/*
 
   upload:
@@ -222,13 +162,14 @@ jobs:
   release:
     environment: GitHub Releases
     runs-on: ubuntu-latest
-    if: "!contains(github.ref, 'rc')"
+    if: "startsWith(github.ref, 'refs/tags/v')"
     name: Release
     needs: upload
+    permissions: write-all
     steps:
     - name: Checkout code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v4
     - name: Release a Changelog
-      uses: rasmus-saks/release-a-changelog-action@v1.0.1
+      uses: rasmus-saks/release-a-changelog-action@v1.2.0
       with:
         github-token: '${{ secrets.GITHUB_TOKEN }}'

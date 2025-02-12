@@ -81,7 +81,9 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
             Def(mut def) => {
                 let text = std::mem::take(def.text_mut());
                 let xrefs = std::mem::take(def.xrefs_mut()).into_py(py);
-                Py::new(py, DefClause::new(text, Py::new(py, xrefs).unwrap())).map(TermClause::Def)
+                Py::new(py, xrefs)
+                    .and_then(|xrefs| Py::new(py, DefClause::new(text, xrefs)))
+                    .map(TermClause::Def)
             }
             Comment(c) => Py::new(py, CommentClause::new(*c)).map(TermClause::Comment),
             Subset(s) => Py::new(py, SubsetClause::new(s.into_py(py))).map(TermClause::Subset),

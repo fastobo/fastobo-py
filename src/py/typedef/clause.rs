@@ -97,7 +97,9 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
             Def(mut def) => {
                 let text = std::mem::take(def.text_mut());
                 let xrefs = std::mem::take(def.xrefs_mut()).into_py(py);
-                Py::new(py, DefClause::new(text, xrefs)).map(TypedefClause::Def)
+                Py::new(py, xrefs)
+                    .and_then(|xrefs| Py::new(py, DefClause::new(text, xrefs)))
+                    .map(TypedefClause::Def)
             }
             Comment(c) => Py::new(py, CommentClause::new(*c)).map(TypedefClause::Comment),
             Subset(s) => Py::new(py, SubsetClause::new(s.into_py(py))).map(TypedefClause::Subset),
@@ -518,11 +520,11 @@ impl AltIdClause {
 #[base(BaseTypedefClause)]
 pub struct DefClause {
     definition: fastobo::ast::QuotedString,
-    xrefs: XrefList,
+    xrefs: Py<XrefList>,
 }
 
 impl DefClause {
-    pub fn new(definition: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
+    pub fn new(definition: fastobo::ast::QuotedString, xrefs: Py<XrefList>) -> Self {
         Self { definition, xrefs }
     }
 }
@@ -545,7 +547,8 @@ impl Display for DefClause {
 
 impl IntoPy<fastobo::ast::TypedefClause> for DefClause {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
-        let xrefs: fastobo::ast::XrefList = self.xrefs.into_py(py);
+        let list = self.xrefs.bind(py).borrow();
+        let xrefs: fastobo::ast::XrefList = (&*list).into_py(py);
         let def = fastobo::ast::Definition::with_xrefs(self.definition, xrefs);
         fastobo::ast::TypedefClause::Def(Box::new(def))
     }
@@ -558,20 +561,18 @@ impl DefClause {
     fn __init__<'py>(definition: &Bound<'py, PyString>, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
         let py = definition.py();
         let def = fastobo::ast::QuotedString::new(definition.to_str()?);
-        let list = xrefs
-            .map(|x| XrefList::collect(py, x))
-            .transpose()?
-            .unwrap_or_else(|| XrefList::new(Vec::new()));
-
-        Ok(Self::new(def, list).into())
+        let list = match xrefs {
+            Some(x) => XrefList::collect(py, x)?,
+            None => XrefList::new(Vec::new()),
+        };
+        Ok(Self::new(def, Py::new(py, list)? ).into())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        if self.xrefs.is_empty() {
+    fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
+        if self.xrefs.bind(py).borrow().is_empty() {
             impl_repr!(self, DefClause(self.definition))
         } else {
-            // impl_repr!(self, DefClause(self.definition, self.xrefs))
-            todo!("DefClause.__repr__")
+            impl_repr!(self, DefClause(self.definition, self.xrefs))
         }
     }
 
@@ -596,8 +597,8 @@ impl DefClause {
 
     #[getter]
     /// `~fastobo.xrefs.XrefList`: a list of xrefs supporting the definition.
-    fn get_xrefs<'py>(&self, py: Python<'py>) -> PyResult<XrefList> {
-        Ok(self.xrefs.clone_py(py))
+    fn get_xrefs<'py>(&self, py: Python<'py>) -> &Bound<'py, XrefList> {
+        self.xrefs.bind(py)
     }
 
     fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {

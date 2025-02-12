@@ -160,7 +160,7 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(aspyptr_impl_enum(&ast, &e));
-        // output.extend(intopy_impl_enum(&ast, &e));
+        output.extend(intopy_impl_enum(&ast, &e));
     } else {
         panic!("only supports enums");
     }
@@ -369,7 +369,7 @@ fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
     for variant in &en.variants {
         let name = &variant.ident;
         variants.push(quote!(
-            #name(x) => (&x.as_ref(py).borrow()).clone_py(py).into_py(py)
+            #name(x) => (&x.bind(py).borrow()).clone_py(py).into_py(py)
         ));
     }
 
@@ -377,7 +377,7 @@ fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
-        impl pyo3::IntoPy<fastobo::ast::#name> for &#name {
+        impl IntoPy<fastobo::ast::#name> for &#name {
             fn into_py(self, py: Python) -> fastobo::ast::#name {
                 use std::ops::Deref;
                 use self::#name::*;

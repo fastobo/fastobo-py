@@ -14,7 +14,7 @@ use pyo3::types::PyTzInfo;
 /// Extract the timezone from a Python datetime using the `tzinfo` attribute.
 pub fn extract_timezone<'py>(
     py: Python<'py>,
-    datetime: Bound<'py, PyDateTime>,
+    datetime: &Bound<'py, PyDateTime>,
 ) -> PyResult<Option<fastobo::ast::IsoTimezone>> {
     use fastobo::ast::IsoTimezone::*;
     let tzinfo = datetime.getattr("tzinfo")?;
@@ -38,7 +38,7 @@ pub fn extract_timezone<'py>(
 /// Convert a Python `datetime.datetime` to a `fastobo::ast::IsoDateTime`.
 pub fn datetime_to_isodatetime<'py>(
     py: Python<'py>,
-    datetime: Bound<'py, PyDateTime>,
+    datetime: &Bound<'py, PyDateTime>,
 ) -> PyResult<fastobo::ast::IsoDateTime> {
     let date = fastobo::ast::IsoDate::new(
         datetime.get_year() as u16,
@@ -105,7 +105,7 @@ pub fn isodatetime_to_datetime<'py>(
 }
 
 /// Convert a Python `datetime.date` to a `fastobo::ast::IsoDate`.
-pub fn date_to_isodate<'py>(py: Python<'py>, date: Bound<'py, PyDate>) -> PyResult<fastobo::ast::IsoDate> {
+pub fn date_to_isodate<'py>(py: Python<'py>, date: &Bound<'py, PyDate>) -> PyResult<fastobo::ast::IsoDate> {
     Ok(fastobo::ast::IsoDate::new(
         date.get_year() as u16,
         date.get_month(),

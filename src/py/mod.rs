@@ -53,7 +53,7 @@ pub mod id;
 // pub mod instance;
 pub mod pv;
 pub mod syn;
-// pub mod term;
+pub mod term;
 // pub mod typedef;
 pub mod xref;
 pub mod exceptions;

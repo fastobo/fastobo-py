@@ -5,7 +5,7 @@ use pyo3::prelude::*;
 
 #[pymodule]
 #[pyo3(name = "term")]
-pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::frame::TermFrame>()?;
     m.add_class::<self::clause::BaseTermClause>()?;
     m.add_class::<self::clause::IsAnonymousClause>()?;

@@ -17,7 +17,6 @@ use pyo3::types::PyString;
 use pyo3::types::PyTimeAccess;
 use pyo3::types::PyTzInfo;
 use pyo3::AsPyPointer;
-use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -35,6 +34,7 @@ use crate::date::isodatetime_to_datetime;
 use crate::raise;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
+use crate::utils::IntoPy;
 use crate::utils::EqPy;
 use crate::utils::FinalClass;
 
@@ -192,7 +192,7 @@ impl IsAnonymousClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.anonymous)
     }
 
@@ -257,7 +257,7 @@ impl NameClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.name)
     }
 
@@ -338,7 +338,7 @@ impl NamespaceClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.namespace)
     }
 
@@ -413,7 +413,7 @@ impl AltIdClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.alt_id)
     }
 
@@ -487,7 +487,8 @@ impl IntoPy<fastobo::ast::TermClause> for DefClause {
 #[pymethods]
 impl DefClause {
     #[new]
-    fn __init__(definition: &PyString, xrefs: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
+    #[pyo3(signature = (definition, xrefs = None))]
+    fn __init__<'py>(definition: &Bound<'py, PyString>, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
         let py = definition.py();
         let def = fastobo::ast::QuotedString::new(definition.to_str()?);
         let list = match xrefs {
@@ -509,7 +510,7 @@ impl DefClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.definition && self.xrefs)
     }
 
@@ -591,7 +592,7 @@ impl CommentClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.comment)
     }
 
@@ -671,7 +672,7 @@ impl SubsetClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.subset)
     }
 
@@ -728,7 +729,7 @@ impl Display for SynonymClause {
 impl IntoPy<fastobo::ast::TermClause> for SynonymClause {
     fn into_py(self, py: Python) -> fastobo::ast::TermClause {
         fastobo::ast::TermClause::Synonym(Box::new(
-            self.synonym.as_ref(py).borrow().clone_py(py).into_py(py),
+            self.synonym.bind(py).borrow().clone_py(py).into_py(py),
         ))
     }
 }
@@ -748,7 +749,7 @@ impl SynonymClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.synonym)
     }
 
@@ -764,7 +765,7 @@ impl SynonymClause {
 
     fn raw_value(&self) -> String {
         Python::with_gil(|py| {
-            format!("{}", &*self.synonym.as_ref(py).borrow())
+            format!("{}", &*self.synonym.bind(py).borrow())
         })
     }
 }
@@ -814,7 +815,7 @@ impl From<Py<Xref>> for XrefClause {
 impl IntoPy<fastobo::ast::TermClause> for XrefClause {
     fn into_py(self, py: Python) -> fastobo::ast::TermClause {
         fastobo::ast::TermClause::Xref(Box::new(
-            self.xref.as_ref(py).borrow().clone_py(py).into_py(py),
+            self.xref.bind(py).borrow().clone_py(py).into_py(py),
         ))
     }
 }
@@ -843,7 +844,7 @@ impl XrefClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.xref)
     }
 
@@ -852,7 +853,7 @@ impl XrefClause {
     }
 
     fn raw_value(&self) -> String {
-        Python::with_gil(|py| self.xref.as_ref(py).to_string())
+        Python::with_gil(|py| self.xref.bind(py).to_string())
     }
 }
 
@@ -909,7 +910,7 @@ impl BuiltinClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.builtin)
     }
 
@@ -991,7 +992,7 @@ impl PropertyValueClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.inner)
     }
 
@@ -1066,7 +1067,7 @@ impl IsAClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1170,7 +1171,7 @@ impl IntersectionOfClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.typedef && self.term)
     }
 
@@ -1254,7 +1255,7 @@ impl UnionOfClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1328,7 +1329,7 @@ impl EquivalentToClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1403,7 +1404,7 @@ impl DisjointFromClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1484,7 +1485,7 @@ impl RelationshipClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.typedef && self.term)
     }
 
@@ -1560,7 +1561,7 @@ impl IsObsoleteClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.obsolete)
     }
 
@@ -1629,7 +1630,7 @@ impl ReplacedByClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1703,7 +1704,7 @@ impl ConsiderClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1774,7 +1775,7 @@ impl CreatedByClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.creator)
     }
 
@@ -1858,7 +1859,7 @@ impl IntoPy<fastobo::ast::TermClause> for CreationDateClause {
 #[pymethods]
 impl CreationDateClause {
     #[new]
-    fn __init__(date: &PyAny) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__<'py>(date: &Bound<'py, PyAny>) -> PyResult<PyClassInitializer<Self>> {
         let py = date.py();
         if let Ok(dt) = date.downcast::<PyDateTime>() {
             let date = datetime_to_isodatetime(py, dt).map(From::from)?;
@@ -1888,7 +1889,7 @@ impl CreationDateClause {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.date)
     }
 
@@ -1903,7 +1904,7 @@ impl CreationDateClause {
     }
 
     #[setter]
-    fn set_date(&mut self, datetime: &PyAny) -> PyResult<()> {
+    fn set_date<'py>(&mut self, datetime: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = datetime.py();
         if let Ok(dt) = datetime.downcast::<PyDateTime>() {
             self.date = From::from(datetime_to_isodatetime(py, dt)?);

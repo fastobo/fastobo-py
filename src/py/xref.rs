@@ -240,7 +240,7 @@ impl IntoPy<fastobo::ast::XrefList> for &XrefList {
     }
 }
 
-// NB: can be removed
+// NB: can be removed?
 // impl<'py> IntoPyObject<'py> for XrefList {
 //     type Target = PyList;
 //     type Error = Infallible;
@@ -251,12 +251,12 @@ impl IntoPy<fastobo::ast::XrefList> for &XrefList {
 //     }
 // }
 
-/*
 #[listlike(field = "xrefs", type = "Py<Xref>")]
 #[pymethods]
 impl XrefList {
     #[new]
-    fn __init__(xrefs: Option<&PyAny>) -> PyResult<Self> {
+    #[pyo3(signature = (xrefs = None))]
+    fn __init__<'py>(xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<Self> {
         if let Some(x) = xrefs {
             Python::with_gil(|py| Self::collect(py, x))
         } else {
@@ -292,13 +292,13 @@ impl XrefList {
         }
     }
 
-    fn __contains__(&self, item: &PyAny) -> PyResult<bool> {
+    fn __contains__<'py>(&self, item: &Bound<'py, PyAny>) -> PyResult<bool> {
         if let Ok(xref) = item.extract::<Py<Xref>>() {
             let py = item.py();
             Ok(self
                 .xrefs
                 .iter()
-                .any(|x| (*x.as_ref(py).borrow()).eq_py(&xref.as_ref(py).borrow(), py)))
+                .any(|x| (*x.bind(py).borrow()).eq_py(&xref.bind(py).borrow(), py)))
         } else {
             let ty = item.get_type().name()?;
             let msg = format!("'in <XrefList>' requires Xref as left operand, not {}", ty);
@@ -306,4 +306,3 @@ impl XrefList {
         }
     }
 }
- */

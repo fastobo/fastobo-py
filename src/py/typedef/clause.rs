@@ -81,7 +81,6 @@ pub enum TypedefClause {
     IsClassLevel(Py<IsClassLevelClause>),
 }
 
-// TODO
 impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
     fn into_py(self, py: Python) -> TypedefClause {
         use fastobo::ast::TypedefClause::*;
@@ -183,11 +182,15 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
                 Py::new(py, CreationDateClause::new(*dt)).map(TypedefClause::CreationDate)
             }
             ExpandAssertionTo(d, xrefs) => {
-                Py::new(py, ExpandAssertionToClause::new(*d, xrefs.into_py(py)))
+                let xrefs = xrefs.into_py(py);
+                Py::new(py, xrefs)
+                    .and_then(|xrefs| Py::new(py, ExpandAssertionToClause::new(*d, xrefs)))
                     .map(TypedefClause::ExpandAssertionTo)
             }
             ExpandExpressionTo(d, xrefs) => {
-                Py::new(py, ExpandExpressionToClause::new(*d, xrefs.into_py(py)))
+                let xrefs = xrefs.into_py(py);
+                Py::new(py, xrefs)
+                    .and_then(|xrefs| Py::new(py, ExpandExpressionToClause::new(*d, xrefs)))
                     .map(TypedefClause::ExpandExpressionTo)
             }
             IsMetadataTag(b) => {
@@ -3040,11 +3043,11 @@ impl CreationDateClause {
 #[base(BaseTypedefClause)]
 pub struct ExpandAssertionToClause {
     definition: fastobo::ast::QuotedString,
-    xrefs: XrefList,
+    xrefs: Py<XrefList>,
 }
 
 impl ExpandAssertionToClause {
-    pub fn new(desc: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
+    pub fn new(desc: fastobo::ast::QuotedString, xrefs: Py<XrefList>) -> Self {
         Self {
             definition: desc,
             xrefs,
@@ -3072,7 +3075,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for ExpandAssertionToClause {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
         fastobo::ast::TypedefClause::ExpandAssertionTo(
             Box::new(self.definition),
-            Box::new(self.xrefs.into_py(py)),
+            Box::new(self.xrefs.bind(py).borrow().clone_py(py).into_py(py)),
         )
     }
 }
@@ -3080,18 +3083,17 @@ impl IntoPy<fastobo::ast::TypedefClause> for ExpandAssertionToClause {
 #[pymethods]
 impl ExpandAssertionToClause {
     #[new]
-    fn __init__<'py>(definition: String, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__<'py>(py: Python<'py>, definition: String, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
         let def = fastobo::ast::QuotedString::new(definition);
         let list = match xrefs {
-            Some(x) => Python::with_gil(|py| XrefList::collect(x.py(), x))?,
+            Some(x) => XrefList::collect(x.py(), x)?,
             None => XrefList::new(Vec::new()),
         };
-        Ok(Self::new(def, list).into())
+        Ok(Self::new(def, Py::new(py, list)?).into())
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        // impl_repr!(self, ExpandAssertionToClause(self.definition, self.xrefs))
-        todo!("ExpandAssertionToClause.__repr__")
+        impl_repr!(self, ExpandAssertionToClause(self.definition, self.xrefs))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -3115,17 +3117,19 @@ impl ExpandAssertionToClause {
 
     #[getter]
     /// `~fastobo.xrefs.XrefList`: a list of xrefs supporting the assertion.
-    fn get_xrefs<'py>(&self, py: Python<'py>) -> PyResult<XrefList> {
-        Ok(self.xrefs.clone_py(py))
+    fn get_xrefs<'py>(&self, py: Python<'py>) -> Bound<'py, XrefList> {
+        self.xrefs.bind(py).clone()
     }
 
     fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "expand_assertion_to").to_object(slf.py())
+        let py = slf.py();
+        pyo3::intern!(py, "expand_assertion_to").to_object(py)
     }
 
-    fn raw_value(&self) -> String {
-        let xrefs: fastobo::ast::XrefList = Python::with_gil(|py| self.xrefs.clone_py(py).into_py(py));
-        format!("{} {}", self.definition, xrefs)
+    fn raw_value(slf: PyRef<'_, Self>) -> String {
+        let py = slf.py();
+        let xrefs: fastobo::ast::XrefList = slf.xrefs.bind(py).borrow().clone_py(py).into_py(py);
+        format!("{} {}", slf.definition, xrefs)
     }
 }
 
@@ -3140,11 +3144,11 @@ impl ExpandAssertionToClause {
 #[base(BaseTypedefClause)]
 pub struct ExpandExpressionToClause {
     definition: fastobo::ast::QuotedString,
-    xrefs: XrefList,
+    xrefs: Py<XrefList>,
 }
 
 impl ExpandExpressionToClause {
-    pub fn new(desc: fastobo::ast::QuotedString, xrefs: XrefList) -> Self {
+    pub fn new(desc: fastobo::ast::QuotedString, xrefs: Py<XrefList>) -> Self {
         Self {
             definition: desc,
             xrefs,
@@ -3172,7 +3176,7 @@ impl IntoPy<fastobo::ast::TypedefClause> for ExpandExpressionToClause {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefClause {
         fastobo::ast::TypedefClause::ExpandExpressionTo(
             Box::new(self.definition),
-            Box::new(self.xrefs.into_py(py)),
+            Box::new(self.xrefs.bind(py).borrow().clone_py(py).into_py(py)),
         )
     }
 }
@@ -3180,18 +3184,17 @@ impl IntoPy<fastobo::ast::TypedefClause> for ExpandExpressionToClause {
 #[pymethods]
 impl ExpandExpressionToClause {
     #[new]
-    fn __init__<'py>(definition: String, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__<'py>(py: Python<'py>, definition: String, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
         let def = fastobo::ast::QuotedString::new(definition);
         let list = match xrefs {
-            Some(x) => Python::with_gil(|py| XrefList::collect(py, x))?,
+            Some(x) => XrefList::collect(py, x)?,
             None => XrefList::new(Vec::new()),
         };
-        Ok(Self::new(def, list).into())
+        Ok(Self::new(def, Py::new(py, list)?).into())
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        // impl_repr!(self, ExpandExpressionToClause(self.definition, self.xrefs))
-        todo!("ExpandExpressionToClause.__repr__")
+        impl_repr!(self, ExpandExpressionToClause(self.definition, self.xrefs))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -3215,17 +3218,18 @@ impl ExpandExpressionToClause {
 
     #[getter]
     /// `~fastobo.xrefs.XrefList`: a list of xrefs supporting the expression.
-    fn get_xrefs<'py>(&self, py: Python<'py>) -> PyResult<XrefList> {
-        Ok(self.xrefs.clone_py(py))
+    fn get_xrefs<'py>(&self, py: Python<'py>) -> Bound<'py, XrefList> {
+        self.xrefs.bind(py).clone()
     }
 
     fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
         pyo3::intern!(slf.py(), "expand_expression_to").to_object(slf.py())
     }
 
-    fn raw_value(&self) -> String {
-        let xrefs: fastobo::ast::XrefList = Python::with_gil(|py| self.xrefs.clone_py(py).into_py(py));
-        format!("{} {}", self.definition, xrefs)
+    fn raw_value(slf: PyRef<'_, Self>) -> String {
+        let py = slf.py();
+        let xrefs: fastobo::ast::XrefList = slf.xrefs.bind(py).borrow().clone_py(py).into_py(py);
+        format!("{} {}", slf.definition, xrefs)
     }
 }
 

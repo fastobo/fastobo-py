@@ -58,9 +58,8 @@ impl Display for InstanceFrame {
 
 impl IntoPy<InstanceFrame> for fastobo::ast::InstanceFrame {
     fn into_py(self, py: Python) -> InstanceFrame {
-        // let id: Ident = self.id().as_ref().clone().into_py(py);
-        // InstanceFrame::new(id)
-        todo!("InstanceFrame.into_py")
+        let id: Ident = self.id().as_ref().clone().into_py(py);
+        InstanceFrame::new(id)
     }
 }
 

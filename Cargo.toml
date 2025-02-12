@@ -8,6 +8,7 @@ authors = ["Martin Larralde <martin.larralde@embl.de>"]
 license = "MIT"
 publish = false
 build = "src/build.rs"
+edition = '2021'
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -23,16 +24,16 @@ harness = false
 lazy_static = "1.4.0"
 
 [build-dependencies.built]
-version  = "0.5.1"
-features = ["chrono"]
+version  = "0.7.6"
+features = ["chrono", "cargo-lock"]
 
 [dependencies]
 libc = "0.2.70"
-pyo3-built = "0.4.6"
+pyo3-built = "0.6.0"
 [dependencies.pyo3]
-version = "0.19.2"
+version = "0.23.4"
 [dependencies.fastobo]
-version = "0.15.1"
+version = "0.15.2"
 features = ["threading", "smartstring"]
 [dependencies.fastobo-graphs]
 version = "0.4.8"

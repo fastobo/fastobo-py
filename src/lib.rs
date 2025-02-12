@@ -19,7 +19,7 @@ pub mod macros;
 pub mod built;
 pub mod date;
 pub mod error;
-// pub mod iter;
+pub mod iter;
 pub mod py;
 pub mod pyfile;
 pub mod utils;

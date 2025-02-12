@@ -14,7 +14,6 @@ use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast as obo;
@@ -23,7 +22,9 @@ use fastobo::visit::VisitMut;
 use crate::error::Error;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
+use crate::utils::IntoPy;
 
+use super::abc::AbstractClause;
 use super::abc::AbstractFrame;
 use super::header::frame::HeaderFrame;
 use super::instance::frame::InstanceFrame;
@@ -34,7 +35,7 @@ use super::typedef::frame::TypedefFrame;
 
 #[pymodule]
 #[pyo3(name = "doc")]
-pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::OboDoc>()?;
     m.add("__name__", "fastobo.doc")?;
     Ok(())
@@ -143,7 +144,7 @@ impl IntoPy<OboDoc> for fastobo::ast::OboDoc {
 
 impl IntoPy<fastobo::ast::OboDoc> for OboDoc {
     fn into_py(self, py: Python) -> fastobo::ast::OboDoc {
-        let header: HeaderFrame = self.header.as_ref(py).borrow().clone_py(py);
+        let header: HeaderFrame = self.header.bind(py).borrow().clone_py(py);
         self.entities
             .iter()
             .map(|frame| {
@@ -158,17 +159,18 @@ impl IntoPy<fastobo::ast::OboDoc> for OboDoc {
 #[pymethods]
 impl OboDoc {
     #[new]
-    fn __init__(header: Option<&HeaderFrame>, entities: Option<&PyAny>) -> PyResult<Self> {
+    #[pyo3(signature = (header, entities = None))]
+    fn __init__<'py>(header: Option<&HeaderFrame>, entities: Option<&Bound<'py, PyAny>>) -> PyResult<Self> {
         Python::with_gil(|py| {
             // extract header
             let header = header
                 .map(|h| h.clone_py(py))
                 .unwrap_or_else(HeaderFrame::empty);
             // create doc and extract entities
-            let mut doc = OboDoc::new(Py::from(PyCell::new(py, header)?));
+            let mut doc = OboDoc::new(Py::new(py, header)?);
             if let Some(any) = entities {
-                for res in PyIterator::from_object(py, &any.to_object(py))? {
-                    doc.entities.push(EntityFrame::extract(res?)?);
+                for res in PyIterator::from_object(&any)? {
+                    doc.entities.push(EntityFrame::extract_bound(&res?)?);
                 }
             }
             Ok(doc)
@@ -183,13 +185,14 @@ impl OboDoc {
         Ok(self.entities.len())
     }
 
-    fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
-        if index < self.entities.len() as isize {
-            let item = &self.entities[index as usize];
-            Ok(Python::with_gil(|py| item.to_object(py)))
-        } else {
-            Err(PyIndexError::new_err("list index out of range"))
-        }
+    fn __getitem__(&self, index: isize) -> PyResult<Bound<AbstractClause>> {
+        // if index < self.entities.len() as isize {
+        //     let item = &self.entities[index as usize];
+        //     Ok(Python::with_gil(|py| item.into_pyobject(py)))
+        // } else {
+        //     Err(PyIndexError::new_err("list index out of range"))
+        // }
+        todo!("OboDoc.__getitem__")
     }
 
     #[getter]

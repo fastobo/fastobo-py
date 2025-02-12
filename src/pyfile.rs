@@ -46,10 +46,10 @@ pub struct PyFileRead<'py> {
 }
 
 impl<'py> PyFileRead<'py> {
-    pub fn from_ref(file: Bound<'py, PyAny>) -> PyResult<PyFileRead<'py>> {
+    pub fn from_ref(file: &Bound<'py, PyAny>) -> PyResult<PyFileRead<'py>> {
         let res = file.call_method1("read", (0,))?;
         if res.downcast::<PyBytes>().is_ok() {
-            Ok(PyFileRead { file })
+            Ok(PyFileRead { file: file.clone() })
         } else {
             let ty = res.get_type().name()?.to_string();
             Err(PyTypeError::new_err(format!(
@@ -94,9 +94,9 @@ pub struct PyFileWrite<'py> {
 }
 
 impl<'py> PyFileWrite<'py> {
-    pub fn from_ref(file: Bound<'py, PyAny>) -> PyResult<PyFileWrite<'py>> {
+    pub fn from_ref(file: &Bound<'py, PyAny>) -> PyResult<PyFileWrite<'py>> {
         file.call_method1("write", (PyBytes::new(file.py(), b""),))
-            .map(|_| PyFileWrite { file })
+            .map(|_| PyFileWrite { file: file.clone() })
     }
 }
 
@@ -142,11 +142,11 @@ pub struct PyFileGILRead {
 }
 
 impl PyFileGILRead {
-    pub fn from_ref<'py>(file: Bound<'py, PyAny>) -> PyResult<PyFileGILRead> {
+    pub fn from_ref<'py>(file: &Bound<'py, PyAny>) -> PyResult<PyFileGILRead> {
         let res = file.call_method1("read", (0,))?;
         if res.downcast::<PyBytes>().is_ok() {
             Ok(PyFileGILRead {
-                file: Mutex::new(file.unbind()),
+                file: Mutex::new(file.clone().unbind()),
             })
         } else {
             let ty = res.get_type().name()?.to_string();

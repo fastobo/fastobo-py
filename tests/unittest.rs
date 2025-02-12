@@ -3,7 +3,7 @@ extern crate fastobo_py;
 
 use std::path::Path;
 
-use pyo3::prelude::PyResult;
+use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use pyo3::types::PyModule;
@@ -48,7 +48,7 @@ pub fn main() -> PyResult<()> {
         py.import("unittest").unwrap().call_method(
             "TestProgram",
             ("tests",),
-            Some(kwargs),
+            Some(&kwargs),
         ).map(|_| ())
     })
 }

@@ -9,7 +9,6 @@ use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -19,6 +18,7 @@ use super::super::id::Ident;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
+use crate::utils::IntoPy;
 use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.instance")]
@@ -58,8 +58,9 @@ impl Display for InstanceFrame {
 
 impl IntoPy<InstanceFrame> for fastobo::ast::InstanceFrame {
     fn into_py(self, py: Python) -> InstanceFrame {
-        let id: Ident = self.id().as_ref().clone().into_py(py);
-        InstanceFrame::new(id)
+        // let id: Ident = self.id().as_ref().clone().into_py(py);
+        // InstanceFrame::new(id)
+        todo!("InstanceFrame.into_py")
     }
 }
 

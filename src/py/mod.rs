@@ -33,38 +33,38 @@ use horned_owl::ontology::axiom_mapped::AxiomMappedOntology;
 use horned_functional::AsFunctional;
 use horned_functional::Context;
 
-use crate::built;
 use crate::error::Error;
 use crate::error::GraphError;
 use crate::error::OwlError;
-// use crate::iter::FrameReader;
-// use crate::iter::InternalParser;
+use crate::iter::FrameReader;
+use crate::iter::InternalParser;
 use crate::pyfile::PyFileRead;
 use crate::pyfile::PyFileWrite;
 use crate::raise;
 use crate::utils::ClonePy;
+use crate::utils::IntoPy;
 
 // ---------------------------------------------------------------------------
 
 pub mod abc;
-// pub mod doc;
+pub mod doc;
 pub mod header;
 pub mod id;
-// pub mod instance;
+pub mod instance;
 pub mod pv;
 pub mod syn;
 pub mod term;
-// pub mod typedef;
+pub mod typedef;
 pub mod xref;
 pub mod exceptions;
 
-// use self::doc::EntityFrame;
-// use self::doc::OboDoc;
-// use super::built;
+use self::doc::EntityFrame;
+use self::doc::OboDoc;
+use super::built;
 
 // --- Module export ---------------------------------------------------------
 
-/*
+
 /// Iterate over the frames contained in an OBO document.
 ///
 /// The header frame can be accessed with the ``header`` method of the
@@ -104,7 +104,7 @@ pub mod exceptions;
 ///
 #[pyfunction]
 #[pyo3(name = "iter", text_signature = "(fh, ordered=True, threads=0)", signature = (fh, ordered=true, threads=0))]
-fn iter(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<FrameReader> {
+fn iter<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<FrameReader> {
     if let Ok(s) = fh.downcast::<PyString>() {
         let path = s.to_str()?;
         FrameReader::from_path(path, ordered, threads)
@@ -154,7 +154,7 @@ fn iter(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<FrameRe
 ///
 #[pyfunction]
 #[pyo3(name = "load", text_signature = "(fh, ordered=True, threads=0)", signature=(fh, ordered=true, threads=0))]
-fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc> {
+fn load<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<OboDoc> {
     // extract either a path or a file-handle from the arguments
     let path: Option<String>;
     let boxed: Box<dyn BufRead> = if let Ok(s) = fh.downcast::<PyString>() {
@@ -182,9 +182,10 @@ fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc>
         // extract the path from the `name` attribute
         path = fh
             .getattr("name")
-            .and_then(|n| n.downcast::<PyString>().map_err(PyErr::from))
-            .and_then(|s| s.to_str())
-            .map(|s| s.to_string())
+            .and_then(|n| match n.downcast::<PyString>() {
+                Ok(x) => Ok(x.to_str()?.to_string()),
+                Err(e) => Err(PyErr::from(e))
+            })
             .ok();
         // use a sequential or a threaded reader depending on `threads`.
         Box::new(bf)
@@ -257,7 +258,7 @@ fn load(py: Python, fh: &PyAny, ordered: bool, threads: i16) -> PyResult<OboDoc>
 ///
 #[pyfunction]
 #[pyo3(name = "loads", text_signature = "(document, ordered=True, threads=0)", signature=(document, ordered=true, threads=0))]
-fn loads(py: Python, document: &PyString, ordered: bool, threads: i16) -> PyResult<OboDoc> {
+fn loads<'py>(py: Python<'py>, document: &Bound<'py, PyString>, ordered: bool, threads: i16) -> PyResult<OboDoc> {
     let cursor = std::io::Cursor::new(document.to_str()?);
     let mut reader = InternalParser::with_thread_count(cursor, threads)?;
     reader.ordered(ordered);
@@ -305,7 +306,7 @@ fn loads(py: Python, document: &PyString, ordered: bool, threads: i16) -> PyResu
 ///
 #[pyfunction]
 #[pyo3(name = "load_graph", text_signature = "(fh)")]
-fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
+fn load_graph<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>) -> PyResult<OboDoc> {
     let doc: GraphDocument = if let Ok(s) = fh.downcast::<PyString>() {
         // Argument is a string, assumed to be a path: open the file.
         // and extract the graph
@@ -361,7 +362,7 @@ fn load_graph(py: Python, fh: &PyAny) -> PyResult<OboDoc> {
 ///
 #[pyfunction]
 #[pyo3(name = "dump_graph", text_signature = "(doc, fh)")]
-fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
+fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>) -> PyResult<()> {
     // Convert OBO document to an OBO Graph document.
     let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
     // FIXME: let graph = py.allow_threads(|| doc.into_graph())
@@ -433,7 +434,7 @@ fn dump_graph(py: Python, obj: &OboDoc, fh: &PyAny) -> PyResult<()> {
 ///
 #[pyfunction]
 #[pyo3(name = "dump_owl", text_signature = r#"(doc, fh, format="ofn")"#, signature=(obj, fh, format="ofn"))]
-fn dump_owl(py: Python, obj: &OboDoc, fh: &PyAny, format: &str) -> PyResult<()> {
+fn dump_owl<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>, format: &str) -> PyResult<()> {
     // Convert OBO document to an OWL document.
     let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
     let prefixes = doc.prefixes();
@@ -459,7 +460,6 @@ fn dump_owl(py: Python, obj: &OboDoc, fh: &PyAny, format: &str) -> PyResult<()> 
 
     Ok(())
 }
-*/
 
 /// The Faultless AST for Open Biomedical Ontologies.
 ///
@@ -473,23 +473,23 @@ pub fn init<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add("__author__", env!("CARGO_PKG_AUTHORS").replace(':', "\n"))?;
 
     add_submodule!(py, m, abc);
-    // add_submodule!(py, m, doc);
-    // add_submodule!(py, m, exceptions);
-    // add_submodule!(py, m, header);
+    add_submodule!(py, m, doc);
+    add_submodule!(py, m, exceptions);
+    add_submodule!(py, m, header);
     add_submodule!(py, m, id);
-    // add_submodule!(py, m, instance);
-    // add_submodule!(py, m, pv);
-    // add_submodule!(py, m, syn);
-    // add_submodule!(py, m, term);
-    // add_submodule!(py, m, typedef);
-    // add_submodule!(py, m, xref);
+    add_submodule!(py, m, instance);
+    add_submodule!(py, m, pv);
+    add_submodule!(py, m, syn);
+    add_submodule!(py, m, term);
+    add_submodule!(py, m, typedef);
+    add_submodule!(py, m, xref);
 
-    // m.add_function(wrap_pyfunction!(self::iter, m)?)?;
-    // m.add_function(wrap_pyfunction!(self::load, m)?)?;
-    // m.add_function(wrap_pyfunction!(self::loads, m)?)?;
-    // m.add_function(wrap_pyfunction!(self::load_graph, m)?)?;
-    // m.add_function(wrap_pyfunction!(self::dump_graph, m)?)?;
-    // m.add_function(wrap_pyfunction!(self::dump_owl, m)?)?;
+    m.add_function(wrap_pyfunction!(self::iter, m)?)?;
+    m.add_function(wrap_pyfunction!(self::load, m)?)?;
+    m.add_function(wrap_pyfunction!(self::loads, m)?)?;
+    m.add_function(wrap_pyfunction!(self::load_graph, m)?)?;
+    m.add_function(wrap_pyfunction!(self::dump_graph, m)?)?;
+    m.add_function(wrap_pyfunction!(self::dump_owl, m)?)?;
 
     Ok(())
 }

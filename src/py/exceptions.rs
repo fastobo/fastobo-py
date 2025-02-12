@@ -28,7 +28,7 @@ macro_rules! impl_pyerr {
 
 #[pymodule]
 #[pyo3(name = "exceptions")]
-pub fn init<'py>(py: Python<'py>, m: Bound<'py, PyModule>) -> PyResult<()> {
+pub fn init<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::MissingClauseError>()?;
     m.add_class::<self::DuplicateClausesError>()?;
     m.add_class::<self::SingleClauseError>()?;

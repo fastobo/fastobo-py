@@ -74,15 +74,14 @@ impl IntoPy<TypedefFrame> for fastobo::ast::TypedefFrame {
 
 impl IntoPy<fastobo::ast::TypedefFrame> for TypedefFrame {
     fn into_py(self, py: Python) -> fastobo::ast::TypedefFrame {
-        // fastobo::ast::TypedefFrame::with_clauses(
-        //     fastobo::ast::RelationIdent::new(self.id.into_py(py)),
-        //     self.clauses
-        //         .iter()
-        //         .map(|f| f.into_py(py))
-        //         .map(|c| fastobo::ast::Line::new().and_inner(c))
-        //         .collect(),
-        // )
-        todo!("TypedefFrame.into_py")
+        fastobo::ast::TypedefFrame::with_clauses(
+            fastobo::ast::RelationIdent::new(self.id.into_py(py)),
+            self.clauses
+                .iter()
+                .map(|f| f.clone_py(py).into_py(py))
+                .map(|c| fastobo::ast::Line::new().and_inner(c))
+                .collect(),
+        )
     }
 }
 

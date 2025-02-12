@@ -141,12 +141,6 @@ impl IntoPy<HeaderClause> for fastobo::ast::HeaderClause {
     }
 }
 
-impl IntoPy<fastobo::ast::HeaderClause> for HeaderClause {
-    fn into_py(self, py: Python) -> fastobo::ast::HeaderClause {
-        todo!("HeaderClause::into_py()")
-    }
-}
-
 // --- Base ------------------------------------------------------------------
 
 /// A header clause, appearing in the OBO header frame.

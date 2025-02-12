@@ -159,7 +159,7 @@ impl IntoPy<fastobo::ast::OboDoc> for OboDoc {
 #[pymethods]
 impl OboDoc {
     #[new]
-    #[pyo3(signature = (header, entities = None))]
+    #[pyo3(signature = (header = None, entities = None))]
     fn __init__<'py>(header: Option<&HeaderFrame>, entities: Option<&Bound<'py, PyAny>>) -> PyResult<Self> {
         Python::with_gil(|py| {
             // extract header

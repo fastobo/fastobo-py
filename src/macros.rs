@@ -10,39 +10,37 @@ macro_rules! impl_hash {
 
 macro_rules! impl_richcmp {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
-        // match $op {
-        //     $crate::pyo3::class::basic::CompareOp::Eq => {
-        //         let py = $other.py();
-        //         if let Ok(ref clause) = $other.extract::<Self>() {
-        //             let clause = clause.as_ref(py).borrow();
-        //             let res = $($self.$attr == clause.$attr)&&*;
-        //             Ok(res.to_object(py))
-        //         } else {
-        //             Ok(false.to_object(py))
-        //         }
-        //     }
-        //     _ => Ok($other.py().NotImplemented())
-        // }
-        todo!("impl_richcmp")
+        match $op {
+            $crate::pyo3::class::basic::CompareOp::Eq => {
+                let py = $other.py();
+                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
+                    let clause = clause.bind(py).borrow();
+                    let res = $($self.$attr == clause.$attr)&&*;
+                    Ok(res.to_object(py))
+                } else {
+                    Ok(false.to_object(py))
+                }
+            }
+            _ => Ok($other.py().NotImplemented())
+        }
     });
 }
 
 macro_rules! impl_richcmp_py {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
-        // match $op {
-        //     $crate::pyo3::class::basic::CompareOp::Eq => {
-        //         let py = $other.py();
-        //         if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-        //             let clause = clause.as_ref(py).borrow();
-        //             let res = $($self.$attr.eq_py(&clause.$attr, py))&&*;
-        //             Ok(res.to_object(py))
-        //         } else {
-        //             Ok(false.to_object(py))
-        //         }
-        //     }
-        //     _ => Ok($other.py().NotImplemented())
-        // }
-        todo!("impl_richcmp_py")
+        match $op {
+            $crate::pyo3::class::basic::CompareOp::Eq => {
+                let py = $other.py();
+                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
+                    let clause = clause.bind(py).borrow();
+                    let res = $($self.$attr.eq_py(&clause.$attr, py))&&*;
+                    Ok(res.to_object(py))
+                } else {
+                    Ok(false.to_object(py))
+                }
+            }
+            _ => Ok($other.py().NotImplemented())
+        }
     });
 }
 

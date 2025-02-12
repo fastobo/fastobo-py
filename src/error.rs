@@ -25,14 +25,13 @@ use crate::py::exceptions::DisconnectedChannelError;
 #[macro_export]
 macro_rules! raise(
     ($py:expr, $error_type:ident ($msg:expr) from $inner:expr ) => ({
-        // let err = $error_type::new_err($msg).to_object($py);
-        // err.call_method1(
-        //     $py,
-        //     "__setattr__",
-        //     ("__cause__".to_object($py), $inner.to_object($py)),
-        // )?;
-        // return Err(PyErr::from_value(err.as_ref($py)))
-        unimplemented!("raise! macro")
+        let err = $error_type::new_err($msg).to_object($py);
+        err.call_method1(
+            $py,
+            "__setattr__",
+            ("__cause__".to_object($py), $inner.to_object($py)),
+        )?;
+        return Err(PyErr::from_value(err.bind($py).clone()))
     })
 );
 

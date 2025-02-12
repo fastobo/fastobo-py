@@ -89,7 +89,7 @@ fn eqpy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     for variant in &en.variants {
         let name = &variant.ident;
         variants.push(quote!{
-            ( #name(l), #name(r) ) => (*l.as_ref(py).borrow()).eq_py(&*r.as_ref(py).borrow(), py)
+            ( #name(l), #name(r) ) => (*l.bind(py).borrow()).eq_py(&*r.bind(py).borrow(), py)
         });
     }
 
@@ -156,13 +156,11 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
     let mut output = TokenStream2::new();
     if let syn::Data::Enum(e) = &ast.data {
-        // output.extend(clone_impl_enum(&ast, &e));
-        output.extend(topyobject_impl_enum(&ast, &e));
+        // output.extend(topyobject_impl_enum(&ast, &e));
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(aspyptr_impl_enum(&ast, &e));
-        output.extend(intopy_impl_enum(&ast, &e));
-        // output.extend(pyobjectprotocol_impl_enum(&ast, &e))
+        // output.extend(intopy_impl_enum(&ast, &e));
     } else {
         panic!("only supports enums");
     }
@@ -183,7 +181,7 @@ fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
-        impl pyo3::AsPyPointer for #name {
+        unsafe impl pyo3::AsPyPointer for #name {
             fn as_ptr(&self) -> *mut pyo3::ffi::PyObject {
                 use self::#name::*;
 
@@ -226,22 +224,49 @@ fn topyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStre
 fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     let mut variants = Vec::new();
 
+    // extract name of base struct
+    let meta = ast
+        .attrs
+        .iter()
+        .find(|attr| attr.path.is_ident(&syn::Ident::new("wraps", attr.span())))
+        .expect("could not find #[wraps] attribute")
+        .parse_meta()
+        .expect("could not parse #[wraps] argument");
+    let wrapped = if let syn::Meta::List(ml) = meta {
+        ml.nested.first().unwrap().clone()
+    } else {
+        unreachable!()
+    };
+
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote!(#name(x) => pyo3::IntoPy::into_py(x, py)));
+        variants.push(quote!(#name(x) => x.extract(py)));
     }
 
     // Build clone implementation
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
-        impl pyo3::IntoPy<pyo3::PyObject> for #name {
-            fn into_py(self, py: Python) -> pyo3::PyObject {
+        impl<'py> pyo3::IntoPyObject<'py> for &#name {
+            type Error = PyErr;
+            type Target = #wrapped;
+            type Output = Bound<'py, Self::Target>;
+            fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
                 use self::#name::*;
                 match self {
                     #(#variants,)*
                 }
+            }
+        }
+
+        #[automatically_derived]
+        impl<'py> pyo3::IntoPyObject<'py> for #name {
+            type Error = PyErr;
+            type Target = #wrapped;
+            type Output = Bound<'py, Self::Target>;
+            fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+                (&self).into_pyobject(py)
             }
         }
     };
@@ -308,13 +333,15 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     let expanded = quote! {
         #[automatically_derived]
         impl<'source> pyo3::FromPyObject<'source> for #wrapped {
-            fn extract(ob: &'source pyo3::types::PyAny) -> pyo3::PyResult<Self> {
+            fn extract_bound(ob: &Bound<'source, pyo3::types::PyAny>) -> pyo3::PyResult<Self> {
                 use pyo3::AsPyPointer;
 
                 let qualname = ob.get_type().name()?;
-                let ty = match qualname.rfind('.') {
-                    Some(idx) => &qualname[idx+1..],
-                    None => &qualname,
+                let q = qualname.to_str()?;
+
+                let ty = match q.rfind('.') {
+                    Some(idx) => &q[idx+1..],
+                    None => &q,
                 };
 
                 if ob.is_instance_of::<#base>() {

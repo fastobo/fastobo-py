@@ -77,24 +77,24 @@ impl IntoPy<obo::HeaderFrame> for HeaderFrame {
 //     }
 // }
 
-/*
+
 #[listlike(field = "clauses", type = "HeaderClause")]
 #[pymethods]
 impl HeaderFrame {
     #[new]
     #[pyo3(signature = (clauses = None))]
-    pub fn __init__<'py>(clauses: Option<Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    pub fn __init__<'py>(clauses: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
         let mut vec = Vec::new();
         if let Some(c) = clauses {
-            for item in PyIterator::from_object(c.py(), c)? {
-                vec.push(HeaderClause::extract(item?)?);
+            for item in PyIterator::from_object(c)? {
+                vec.push(HeaderClause::extract_bound(&item?)?);
             }
         }
         Ok(Self::new(vec).into())
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, HeaderFrame(self))
+        impl_repr!(self, HeaderFrame(self.clauses))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -106,22 +106,22 @@ impl HeaderFrame {
         Ok(self.clauses.len())
     }
 
-    fn __getitem__(&self, index: isize) -> PyResult<PyObject> {
+    fn __getitem__(&self, index: isize) -> PyResult<Py<BaseHeaderClause>> {
         if index < self.clauses.len() as isize {
             Python::with_gil(|py| {
                 let item = &self.clauses[index as usize];
-                Ok(item.to_object(py))
+                Ok(item.into_pyobject(py)?.unbind())
             })
         } else {
             Err(PyIndexError::new_err("list index out of range"))
         }
     }
 
-    fn __setitem__(&mut self, index: isize, elem: &PyAny) -> PyResult<()> {
+    fn __setitem__<'py>(&mut self, index: isize, elem: &Bound<'py, PyAny>) -> PyResult<()> {
         if index as usize > self.clauses.len() {
             return Err(PyIndexError::new_err("list index out of range"));
         }
-        let clause = HeaderClause::extract(elem)?;
+        let clause = HeaderClause::extract_bound(elem)?;
         self.clauses[index as usize] = clause;
         Ok(())
     }
@@ -134,17 +134,16 @@ impl HeaderFrame {
         Ok(())
     }
 
-    fn __concat__(&self, other: &PyAny) -> PyResult<Py<Self>> {
+    fn __concat__<'py>(&self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, Self>> {
         let py = other.py();
 
-        let iterator = PyIterator::from_object(py, other)?;
+        let iterator = PyIterator::from_object(other)?;
         let mut new_clauses = self.clauses.clone_py(py);
         for item in iterator {
-            new_clauses.push(HeaderClause::extract(item?)?);
+            new_clauses.push(HeaderClause::extract_bound(&item?)?);
         }
 
         let init = PyClassInitializer::from(AbstractFrame {}).add_subclass(Self::new(new_clauses));
-        Py::new(py, init)
+        Bound::new(py, init)
     }
 }
-*/

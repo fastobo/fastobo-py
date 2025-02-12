@@ -570,7 +570,8 @@ impl DefClause {
         if self.xrefs.is_empty() {
             impl_repr!(self, DefClause(self.definition))
         } else {
-            impl_repr!(self, DefClause(self.definition, self.xrefs))
+            // impl_repr!(self, DefClause(self.definition, self.xrefs))
+            todo!("DefClause.__repr__")
         }
     }
 
@@ -3088,7 +3089,8 @@ impl ExpandAssertionToClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ExpandAssertionToClause(self.definition, self.xrefs))
+        // impl_repr!(self, ExpandAssertionToClause(self.definition, self.xrefs))
+        todo!("ExpandAssertionToClause.__repr__")
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -3187,7 +3189,8 @@ impl ExpandExpressionToClause {
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ExpandExpressionToClause(self.definition, self.xrefs))
+        // impl_repr!(self, ExpandExpressionToClause(self.definition, self.xrefs))
+        todo!("ExpandExpressionToClause.__repr__")
     }
 
     fn __str__(&self) -> PyResult<String> {

@@ -74,15 +74,14 @@ impl IntoPy<TermFrame> for fastobo::ast::TermFrame {
 
 impl IntoPy<fastobo::ast::TermFrame> for TermFrame {
     fn into_py(self, py: Python) -> fastobo::ast::TermFrame {
-        // fastobo::ast::TermFrame::with_clauses(
-        //     fastobo::ast::ClassIdent::new(self.id.into_py(py)),
-        //     self.clauses
-        //         .iter()
-        //         .map(|f| f.into_py(py))
-        //         .map(|c| fastobo::ast::Line::new().and_inner(c))
-        //         .collect(),
-        // )
-        todo!("TermFrame.into_py()")
+        fastobo::ast::TermFrame::with_clauses(
+            fastobo::ast::ClassIdent::new(self.id.into_py(py)),
+            self.clauses
+                .iter()
+                .map(|f| f.clone_py(py).into_py(py))
+                .map(|c| fastobo::ast::Line::new().and_inner(c))
+                .collect(),
+        )
     }
 }
 

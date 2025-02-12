@@ -185,14 +185,13 @@ impl OboDoc {
         Ok(self.entities.len())
     }
 
-    fn __getitem__(&self, index: isize) -> PyResult<Bound<AbstractClause>> {
-        // if index < self.entities.len() as isize {
-        //     let item = &self.entities[index as usize];
-        //     Ok(Python::with_gil(|py| item.into_pyobject(py)))
-        // } else {
-        //     Err(PyIndexError::new_err("list index out of range"))
-        // }
-        todo!("OboDoc.__getitem__")
+    fn __getitem__<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, AbstractFrame>> {
+        if index < self.entities.len() as isize {
+            let item = &self.entities[index as usize];
+            item.into_pyobject(py)
+        } else {
+            Err(PyIndexError::new_err("list index out of range"))
+        }
     }
 
     #[getter]

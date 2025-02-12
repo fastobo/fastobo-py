@@ -240,17 +240,6 @@ impl IntoPy<fastobo::ast::XrefList> for &XrefList {
     }
 }
 
-// NB: can be removed?
-// impl<'py> IntoPyObject<'py> for XrefList {
-//     type Target = PyList;
-//     type Error = Infallible;
-//     type Output = Bound<'py, PyList>;
-//     fn into_pyobject(&self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-//         let list = self.xrefs.iter().map(|xref| xref.clone_py(py)).collect();
-//         Ok(IntoPy::into_py(XrefList::new(list), py))
-//     }
-// }
-
 #[listlike(field = "xrefs", type = "Py<Xref>")]
 #[pymethods]
 impl XrefList {

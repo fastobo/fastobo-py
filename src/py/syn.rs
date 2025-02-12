@@ -4,6 +4,7 @@ use std::fmt::Result as FmtResult;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::string::ToString;
+use std::convert::Infallible;
 
 use pyo3::class::basic::CompareOp;
 use pyo3::class::gc::PyVisit;
@@ -29,14 +30,13 @@ use crate::utils::IntoPy;
 #[pyo3(name = "syn")]
 pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::Synonym>()?;
-    m.add_class::<self::SynonymScope>()?;
     m.add("__name__", "fastobo.syn")?;
     Ok(())
 }
 
 // --- SynonymScope ----------------------------------------------------------
 
-#[pyclass(module = "fastobo.syn")] // FIXME(@althonos): probably not needed since it is not exposed.
+// #[pyclass(module = "fastobo.syn")] // FIXME(@althonos): probably not needed since it is not exposed.
 #[derive(Clone, ClonePy, Debug, Eq, PartialEq, EqPy)]
 pub struct SynonymScope {
     inner: fastobo::ast::SynonymScope,
@@ -97,6 +97,30 @@ impl IntoPy<fastobo::ast::SynonymScope> for SynonymScope {
 impl ToPyObject for SynonymScope {
     fn to_object(&self, py: Python) -> PyObject {
         self.to_string().to_object(py)
+    }
+}
+
+impl<'py> IntoPyObject<'py> for &SynonymScope {
+    type Error = Infallible;
+    type Target = PyString;
+    type Output = Bound<'py, PyString>;
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        match self.inner {
+            fastobo::ast::SynonymScope::Exact => Ok(pyo3::intern!(py, "EXACT").clone()),
+            fastobo::ast::SynonymScope::Broad => Ok(pyo3::intern!(py, "BROAD").clone()),
+            fastobo::ast::SynonymScope::Narrow => Ok(pyo3::intern!(py, "NARROW").clone()),
+            fastobo::ast::SynonymScope::Related => Ok(pyo3::intern!(py, "RELATED").clone()),
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl<'py> IntoPyObject<'py> for SynonymScope {
+    type Error = Infallible;
+    type Target = PyString;
+    type Output = Bound<'py, PyString>;
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        (&self).into_pyobject(py)
     }
 }
 

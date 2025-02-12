@@ -156,7 +156,6 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
     let mut output = TokenStream2::new();
     if let syn::Data::Enum(e) = &ast.data {
-        // output.extend(topyobject_impl_enum(&ast, &e));
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(aspyptr_impl_enum(&ast, &e));
@@ -185,32 +184,6 @@ fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
             fn as_ptr(&self) -> *mut pyo3::ffi::PyObject {
                 use self::#name::*;
 
-                match self {
-                    #(#variants,)*
-                }
-            }
-        }
-    };
-
-    expanded
-}
-
-fn topyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
-    let mut variants = Vec::new();
-
-    // Build clone for each variant
-    for variant in &en.variants {
-        let name = &variant.ident;
-        variants.push(quote!(#name(x) => x.to_object(py)));
-    }
-
-    // Build clone implementation
-    let name = &ast.ident;
-    let expanded = quote! {
-        #[automatically_derived]
-        impl pyo3::ToPyObject for #name {
-            fn to_object(&self, py: Python) -> pyo3::PyObject {
-                use self::#name::*;
                 match self {
                     #(#variants,)*
                 }

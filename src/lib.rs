@@ -1,5 +1,6 @@
 #![recursion_limit = "128"]
-#![allow(unused_imports, unused_variables)]
+// #![allow(unused_imports, unused_variables)]
+#![allow(unused, dead_code, deprecated)]
 
 extern crate fastobo;
 extern crate pyo3;
@@ -18,7 +19,7 @@ pub mod macros;
 pub mod built;
 pub mod date;
 pub mod error;
-pub mod iter;
+// pub mod iter;
 pub mod py;
 pub mod pyfile;
 pub mod utils;

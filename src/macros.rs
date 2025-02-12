@@ -10,48 +10,51 @@ macro_rules! impl_hash {
 
 macro_rules! impl_richcmp {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
-        match $op {
-            $crate::pyo3::class::basic::CompareOp::Eq => {
-                let py = $other.py();
-                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-                    let clause = clause.as_ref(py).borrow();
-                    let res = $($self.$attr == clause.$attr)&&*;
-                    Ok(res.to_object(py))
-                } else {
-                    Ok(false.to_object(py))
-                }
-            }
-            _ => Ok($other.py().NotImplemented())
-        }
+        // match $op {
+        //     $crate::pyo3::class::basic::CompareOp::Eq => {
+        //         let py = $other.py();
+        //         if let Ok(ref clause) = $other.extract::<Self>() {
+        //             let clause = clause.as_ref(py).borrow();
+        //             let res = $($self.$attr == clause.$attr)&&*;
+        //             Ok(res.to_object(py))
+        //         } else {
+        //             Ok(false.to_object(py))
+        //         }
+        //     }
+        //     _ => Ok($other.py().NotImplemented())
+        // }
+        todo!("impl_richcmp")
     });
 }
 
 macro_rules! impl_richcmp_py {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
-        match $op {
-            $crate::pyo3::class::basic::CompareOp::Eq => {
-                let py = $other.py();
-                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-                    let clause = clause.as_ref(py).borrow();
-                    let res = $($self.$attr.eq_py(&clause.$attr, py))&&*;
-                    Ok(res.to_object(py))
-                } else {
-                    Ok(false.to_object(py))
-                }
-            }
-            _ => Ok($other.py().NotImplemented())
-        }
+        // match $op {
+        //     $crate::pyo3::class::basic::CompareOp::Eq => {
+        //         let py = $other.py();
+        //         if let Ok(ref clause) = $other.extract::<Py<Self>>() {
+        //             let clause = clause.as_ref(py).borrow();
+        //             let res = $($self.$attr.eq_py(&clause.$attr, py))&&*;
+        //             Ok(res.to_object(py))
+        //         } else {
+        //             Ok(false.to_object(py))
+        //         }
+        //     }
+        //     _ => Ok($other.py().NotImplemented())
+        // }
+        todo!("impl_richcmp_py")
     });
 }
 
 macro_rules! impl_repr {
     ($self:ident, $cls:ident($($field:expr),*)) => ({
-        Python::with_gil(|py| {
-            let args = &[
-                $($field.to_object(py).as_ref(py).repr()?.to_str()?,)*
-            ].join(", ");
-            Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).to_object(py))
-        })
+        // Python::with_gil(|py| {
+        //     let args = &[
+        //         $($field.to_object(py).bind(py).repr()?.to_str()?,)*
+        //     ].join(", ");
+        //     Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).to_object(py))
+        // })
+        todo!("impl_repr")
     })
 }
 
@@ -74,12 +77,12 @@ macro_rules! add_submodule {
         module.add("__package__", $sup.getattr("__package__")?)?;
 
         // add the submodule to the supermodule
-        $sup.add(stringify!($sub), module)?;
+        $sup.add(stringify!($sub), &module)?;
 
         // add the submodule to the `sys.modules` index
         $py.import("sys")?
             .getattr("modules")?
             .downcast::<pyo3::types::PyDict>()?
-            .set_item(concat!("fastobo.", stringify!($sub)), module)?;
+            .set_item(concat!("fastobo.", stringify!($sub)), &module)?;
     }};
 }

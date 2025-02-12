@@ -1,3 +1,4 @@
+use std::convert::Infallible;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
@@ -16,18 +17,18 @@ use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
 
 use super::id::Ident;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
+use crate::utils::IntoPy;
 
 // --- Module export ---------------------------------------------------------
 
 #[pymodule]
 #[pyo3(name = "xref")]
-pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::Xref>()?;
     m.add_class::<self::XrefList>()?;
     m.add("__name__", "fastobo.xref")?;
@@ -118,25 +119,24 @@ impl Xref {
         }
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            if let Some(ref d) = self.desc {
-                PyString::new(py, "Xref({!r}, {!r})")
-                    .to_object(py)
-                    .call_method1(py, "format", (&self.id, d.as_str()))
-            } else {
-                PyString::new(py, "Xref({!r})")
-                    .to_object(py)
-                    .call_method1(py, "format", (&self.id,))
-            }
-        })
+    fn __repr__<'py>(&self) -> PyResult<Bound<'py, PyAny>> {
+        // Python::with_gil(|py| {
+        //     if let Some(ref d) = self.desc {
+        //         PyString::new(py, "Xref({!r}, {!r})")
+        //             .call_method1("format", (&self.id, d.as_str()))
+        //     } else {
+        //         PyString::new(py, "Xref({!r})")
+        //             .call_method1("format", (&self.id,))
+        //     }
+        // })
+        todo!("Xref.__repr__")
     }
 
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.id && self.desc)
     }
 
@@ -186,9 +186,9 @@ impl XrefList {
     }
 
     /// Create a new `XrefList` from a `PyIterator`.
-    pub fn collect(py: Python, xrefs: &PyAny) -> PyResult<Self> {
+    pub fn collect<'py>(py: Python<'py>, xrefs: &Bound<'py, PyAny>) -> PyResult<Self> {
         let mut vec = Vec::new();
-        for item in PyIterator::from_object(py, xrefs)? {
+        for item in PyIterator::from_object(xrefs)? {
             let i = item?;
             if let Ok(xref) = i.extract::<Py<Xref>>() {
                 vec.push(xref.clone_ref(py));
@@ -232,21 +232,26 @@ impl IntoPy<fastobo::ast::XrefList> for XrefList {
 }
 
 impl IntoPy<fastobo::ast::XrefList> for &XrefList {
-    fn into_py(self, py: Python) -> fastobo::ast::XrefList {
+    fn into_py<'py>(self, py: Python) -> fastobo::ast::XrefList {
         self.xrefs
             .iter()
-            .map(|xref| xref.as_ref(py).borrow().clone_py(py).into_py(py))
+            .map(|xref| xref.bind(py).borrow().clone_py(py).into_py(py))
             .collect()
     }
 }
 
-impl ToPyObject for XrefList {
-    fn to_object(&self, py: Python) -> PyObject {
-        let list = self.xrefs.iter().map(|xref| xref.clone_py(py)).collect();
-        IntoPy::into_py(XrefList::new(list), py)
-    }
-}
+// NB: can be removed
+// impl<'py> IntoPyObject<'py> for XrefList {
+//     type Target = PyList;
+//     type Error = Infallible;
+//     type Output = Bound<'py, PyList>;
+//     fn into_pyobject(&self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+//         let list = self.xrefs.iter().map(|xref| xref.clone_py(py)).collect();
+//         Ok(IntoPy::into_py(XrefList::new(list), py))
+//     }
+// }
 
+/*
 #[listlike(field = "xrefs", type = "Py<Xref>")]
 #[pymethods]
 impl XrefList {
@@ -301,3 +306,4 @@ impl XrefList {
         }
     }
 }
+ */

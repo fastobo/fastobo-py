@@ -12,7 +12,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast as obo;
@@ -21,10 +20,11 @@ use crate::error::Error;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 
-use super::header::frame::HeaderFrame;
+// use super::header::frame::HeaderFrame;
 use super::id::Ident;
-use super::term::frame::TermFrame;
-use super::typedef::frame::TypedefFrame;
+use super::id::BaseIdent;
+// use super::term::frame::TermFrame;
+// use super::typedef::frame::TypedefFrame;
 
 // --- Module export ---------------------------------------------------------
 
@@ -39,7 +39,7 @@ use super::typedef::frame::TypedefFrame;
 ///
 #[pymodule]
 #[pyo3(name = "abc")]
-pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::AbstractFrame>()?;
     m.add_class::<self::AbstractEntityFrame>()?;
     m.add_class::<self::AbstractClause>()?;
@@ -81,7 +81,7 @@ pub struct AbstractEntityFrame {}
 impl AbstractEntityFrame {
     /// `~fastobo.id.Ident`: the identifier of the described entity.
     #[getter]
-    pub fn get_id(&self) -> PyResult<Ident> {
+    pub fn get_id(&self) -> PyResult<BaseIdent> {
         Err(PyNotImplementedError::new_err(
             "AbstractEntityFrame.raw_tag",
         ))

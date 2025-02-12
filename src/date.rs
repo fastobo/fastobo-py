@@ -14,15 +14,15 @@ use pyo3::types::PyTzInfo;
 /// Extract the timezone from a Python datetime using the `tzinfo` attribute.
 pub fn extract_timezone<'py>(
     py: Python<'py>,
-    datetime: &'py PyDateTime,
+    datetime: Bound<'py, PyDateTime>,
 ) -> PyResult<Option<fastobo::ast::IsoTimezone>> {
     use fastobo::ast::IsoTimezone::*;
-    let tzinfo = datetime.to_object(py).getattr(py, "tzinfo")?;
-    if !tzinfo.is_none(py) {
-        let timedelta = tzinfo.call_method1(py, "utcoffset", (datetime,))?;
+    let tzinfo = datetime.getattr("tzinfo")?;
+    if !tzinfo.is_none() {
+        let timedelta = tzinfo.call_method1("utcoffset", (datetime,))?;
         let total_seconds = timedelta
-            .call_method0(py, "total_seconds")?
-            .extract::<f64>(py)? as i64;
+            .call_method0("total_seconds")?
+            .extract::<f64>()? as i64;
         let hh = total_seconds / 3600;
         let mm = (total_seconds / 60) % 60;
         match total_seconds.cmp(&0) {
@@ -38,7 +38,7 @@ pub fn extract_timezone<'py>(
 /// Convert a Python `datetime.datetime` to a `fastobo::ast::IsoDateTime`.
 pub fn datetime_to_isodatetime<'py>(
     py: Python<'py>,
-    datetime: &'py PyDateTime,
+    datetime: Bound<'py, PyDateTime>,
 ) -> PyResult<fastobo::ast::IsoDateTime> {
     let date = fastobo::ast::IsoDate::new(
         datetime.get_year() as u16,
@@ -60,23 +60,23 @@ pub fn datetime_to_isodatetime<'py>(
 pub fn isodatetime_to_datetime<'py>(
     py: Python<'py>,
     datetime: &fastobo::ast::IsoDateTime,
-) -> PyResult<&'py PyDateTime> {
+) -> PyResult<Bound<'py, PyDateTime>> {
     use fastobo::ast::IsoTimezone::*;
 
     // Extract the timezone if there is any
     let tz = if let Some(tz) = datetime.time().timezone() {
         let datetime = py.import("datetime")?;
-        let timezone = datetime.getattr("timezone")?.to_object(py);
-        let timedelta = datetime.getattr("timedelta")?.to_object(py);
+        let timezone = datetime.getattr("timezone")?;
+        let timedelta = datetime.getattr("timedelta")?;
         match tz {
-            Utc => Some(timezone.getattr(py, "utc")?),
+            Utc => Some(timezone.getattr("utc")?),
             Plus(hh, mm) => {
                 let args = (0u8, 0u8, 0u8, 0u8, *mm, *hh);
-                Some(timezone.call1(py, (timedelta.call1(py, args)?,))?)
+                Some(timezone.call1((timedelta.call1(args)?,))?)
             }
             Minus(hh, mm) => {
                 let args = (0u8, 0u8, 0u8, 0u8, -(*mm as i8), -(*hh as i8));
-                Some(timezone.call1(py, (timedelta.call1(py, args)?,))?)
+                Some(timezone.call1((timedelta.call1(args)?,))?)
             }
         }
     } else {
@@ -99,13 +99,13 @@ pub fn isodatetime_to_datetime<'py>(
             .unwrap_or(0),
         tz
             .as_ref()
-            .map(|obj| obj.downcast::<PyTzInfo>(py))
+            .map(|obj| obj.downcast::<PyTzInfo>())
             .transpose()?,
     )
 }
 
 /// Convert a Python `datetime.date` to a `fastobo::ast::IsoDate`.
-pub fn date_to_isodate<'py>(py: Python<'py>, date: &'py PyDate) -> PyResult<fastobo::ast::IsoDate> {
+pub fn date_to_isodate<'py>(py: Python<'py>, date: Bound<'py, PyDate>) -> PyResult<fastobo::ast::IsoDate> {
     Ok(fastobo::ast::IsoDate::new(
         date.get_year() as u16,
         date.get_month(),
@@ -117,7 +117,7 @@ pub fn date_to_isodate<'py>(py: Python<'py>, date: &'py PyDate) -> PyResult<fast
 pub fn isodate_to_date<'py>(
     py: Python<'py>,
     date: &fastobo::ast::IsoDate,
-) -> PyResult<&'py PyDate> {
+) -> PyResult<Bound<'py, PyDate>> {
     // Create the `datetime.datetime` instance
     PyDate::new(py, date.year() as i32, date.month(), date.day())
 }

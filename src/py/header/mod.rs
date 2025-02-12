@@ -5,7 +5,7 @@ use pyo3::prelude::*;
 
 #[pymodule]
 #[pyo3(name = "header")]
-pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::frame::HeaderFrame>()?;
     m.add_class::<self::clause::BaseHeaderClause>()?;
     m.add_class::<self::clause::FormatVersionClause>()?;

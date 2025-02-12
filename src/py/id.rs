@@ -1,3 +1,4 @@
+use std::convert::Infallible;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
@@ -11,7 +12,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -22,80 +22,81 @@ use crate::raise;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
+use crate::utils::IntoPy;
 use crate::utils::FinalClass;
 
 // --- Module export ----------------------------------------------------------
 
-    /// parse(s)
-    /// --
-    ///
-    /// Parse a string into an OBO identifier.
-    ///
-    /// Arguments:
-    ///     s (`str`): the string representation of an OBO identifier
-    ///
-    /// Returns:
-    ///     `~fastobo.id.BaseIdent`: the appropriate concrete subclass that
-    ///     can store the given identifier.
-    ///
-    /// Raises:
-    ///     ValueError: when the string could not be parsed as a valid OBO
-    ///         identifier.
-    ///
-    /// Example:
-    ///     >>> fastobo.id.parse("MS:1000031")
-    ///     PrefixedIdent('MS', '1000031')
-    ///     >>> fastobo.id.parse("part_of")
-    ///     UnprefixedIdent('part_of')
-    ///     >>> fastobo.id.parse("http://purl.obolibrary.org/obo/IAO_0000231")
-    ///     Url('http://purl.obolibrary.org/obo/IAO_0000231')
-    ///
-    #[pyfunction]
-    #[pyo3(name = "parse")]
-    fn parse(py: Python, s: &str) -> PyResult<Ident> {
-        match fastobo::ast::Ident::from_str(s) {
-            Ok(id) => Ok(id.into_py(py)),
-            Err(e) => {
-                let err = PyErr::from(Error::from(e));
-                raise!(py, PyValueError("could not parse identifier") from err)
-            }
+/// parse(s)
+/// --
+///
+/// Parse a string into an OBO identifier.
+///
+/// Arguments:
+///     s (`str`): the string representation of an OBO identifier
+///
+/// Returns:
+///     `~fastobo.id.BaseIdent`: the appropriate concrete subclass that
+///     can store the given identifier.
+///
+/// Raises:
+///     ValueError: when the string could not be parsed as a valid OBO
+///         identifier.
+///
+/// Example:
+///     >>> fastobo.id.parse("MS:1000031")
+///     PrefixedIdent('MS', '1000031')
+///     >>> fastobo.id.parse("part_of")
+///     UnprefixedIdent('part_of')
+///     >>> fastobo.id.parse("http://purl.obolibrary.org/obo/IAO_0000231")
+///     Url('http://purl.obolibrary.org/obo/IAO_0000231')
+///
+#[pyfunction]
+#[pyo3(name = "parse")]
+fn parse(py: Python, s: &str) -> PyResult<Ident> {
+    match fastobo::ast::Ident::from_str(s) {
+        Ok(id) => Ok(id.into_py(py)),
+        Err(e) => {
+            let err = PyErr::from(Error::from(e));
+            raise!(py, PyValueError("could not parse identifier") from err)
         }
     }
+}
 
-    /// is_valid(s)
-    /// --
-    ///
-    /// Check whether or not a string is a valid OBO identifier.
-    ///
-    /// Arguments
-    ///     s (`str`): the identifier to validate.
-    ///
-    /// Returns:
-    ///     `bool`: whether or not the string is valid as an OBO identifier.
-    ///
-    /// Example
-    ///     >>> fastobo.id.is_valid("MS:1000031")
-    ///     True
-    ///     >>> fastobo.id.is_valid("https://purl.obolibrary.org/obo/MS_1000031")
-    ///     True
-    ///     >>> fastobo.id.is_valid("related_to")
-    ///     True
-    ///     >>> fastobo.id.is_valid("definitely not an identifier")
-    ///     False
-    #[pyfunction]
-    #[pyo3(name = "is_valid")]
-    fn is_valid(_py: Python, s: &str) -> bool {
-        let rule = fastobo::syntax::Rule::Id;
-        match fastobo::syntax::Lexer::tokenize(rule, s) {
-            Err(e) => false,
-            Ok(pairs) => pairs.as_str().len() == s.len(),
-        }
+/// is_valid(s)
+/// --
+///
+/// Check whether or not a string is a valid OBO identifier.
+///
+/// Arguments
+///     s (`str`): the identifier to validate.
+///
+/// Returns:
+///     `bool`: whether or not the string is valid as an OBO identifier.
+///
+/// Example
+///     >>> fastobo.id.is_valid("MS:1000031")
+///     True
+///     >>> fastobo.id.is_valid("https://purl.obolibrary.org/obo/MS_1000031")
+///     True
+///     >>> fastobo.id.is_valid("related_to")
+///     True
+///     >>> fastobo.id.is_valid("definitely not an identifier")
+///     False
+#[pyfunction]
+#[pyo3(name = "is_valid")]
+fn is_valid(_py: Python, s: &str) -> bool {
+    let rule = fastobo::syntax::Rule::Id;
+    match fastobo::syntax::Lexer::tokenize(rule, s) {
+        Err(e) => false,
+        Ok(pairs) => pairs.as_str().len() == s.len(),
     }
+}
 
 
 #[pymodule]
 #[pyo3(name = "id")]
-pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::BaseIdent>()?;
     m.add_class::<self::PrefixedIdent>()?;
     m.add_class::<self::UnprefixedIdent>()?;
@@ -128,7 +129,7 @@ macro_rules! impl_convert {
     };
 }
 
-#[derive(ClonePy, Debug, EqPy, PyWrapper)]
+#[derive(Debug, ClonePy, PyWrapper, EqPy)]
 #[wraps(BaseIdent)]
 pub enum Ident {
     Unprefixed(Py<UnprefixedIdent>),
@@ -140,13 +141,25 @@ impl Display for Ident {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         Python::with_gil(|py| {
             match self {
-                Ident::Unprefixed(id) => id.as_ref(py).borrow().fmt(f),
-                Ident::Prefixed(id) => id.as_ref(py).borrow().fmt(f),
-                Ident::Url(id) => id.as_ref(py).borrow().fmt(f),
+                Ident::Unprefixed(id) => id.bind(py).borrow().fmt(f),
+                Ident::Prefixed(id) => id.bind(py).borrow().fmt(f),
+                Ident::Url(id) => id.bind(py).borrow().fmt(f),
             }
         })
     }
 }
+
+// impl EqPy for Ident {
+//     fn eq_py(&self, other: &Self, py: Python) -> bool {
+//         use self::Ident::*;
+//         match (&self, &other) {
+//             (Unprefixed(x), Unprefixed(y)) => x.bind(py).eq(y.bind(py)).unwrap(),
+//             (Prefixed(x), Prefixed(y)) => x.bind(py).eq(y.bind(py)).unwrap(),
+//             (Url(x), Url(y)) => x.bind(py).eq(y.bind(py)).unwrap(),
+//             _ => false,
+//         }
+//     }
+// }
 
 impl IntoPy<Ident> for fastobo::ast::Ident {
     fn into_py(self, py: Python) -> Ident {
@@ -163,15 +176,15 @@ impl IntoPy<fastobo::ast::Ident> for Ident {
     fn into_py(self, py: Python) -> fastobo::ast::Ident {
         match self {
             Ident::Unprefixed(id) => {
-                let i = id.as_ref(py).borrow();
+                let i = id.bind(py).borrow();
                 ast::Ident::from((*i).inner.clone())
             }
             Ident::Prefixed(id) => {
-                let i = id.as_ref(py).borrow();
+                let i = id.bind(py).borrow();
                 ast::Ident::from((*i).inner.clone())
             }
             Ident::Url(id) => {
-                let i = id.as_ref(py).borrow();
+                let i = id.bind(py).borrow();
                 ast::Ident::from((*i).inner.clone())
             }
         }
@@ -296,10 +309,10 @@ impl PrefixedIdent {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<bool> {
         let py = other.py();
-        if let Ok(r) = other.extract::<Py<PrefixedIdent>>() {
-            let r = r.as_ref(py).borrow();
+        if let Ok(r) = other.downcast::<PrefixedIdent>() {
+            let r = r.as_borrowed().borrow();
             let lp = self.inner.prefix();
             let ll = self.inner.local();
             let rp = r.inner.prefix();
@@ -451,16 +464,16 @@ impl UnprefixedIdent {
         Ok(self.inner.as_str())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-        if let Ok(u) = other.extract::<Py<UnprefixedIdent>>() {
-            let u = u.as_ref(other.py()).borrow();
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<bool> {
+        if let Ok(u) = other.downcast::<UnprefixedIdent>() {
+            let x = u.as_borrowed().borrow();
             match op {
-                CompareOp::Lt => Ok(self.inner < u.inner),
-                CompareOp::Le => Ok(self.inner <= u.inner),
-                CompareOp::Eq => Ok(self.inner == u.inner),
-                CompareOp::Ne => Ok(self.inner != u.inner),
-                CompareOp::Gt => Ok(self.inner > u.inner),
-                CompareOp::Ge => Ok(self.inner >= u.inner),
+                CompareOp::Lt => Ok(self.inner < x.inner),
+                CompareOp::Le => Ok(self.inner <= x.inner),
+                CompareOp::Eq => Ok(self.inner == x.inner),
+                CompareOp::Ne => Ok(self.inner != x.inner),
+                CompareOp::Gt => Ok(self.inner > x.inner),
+                CompareOp::Ge => Ok(self.inner >= x.inner),
             }
         } else {
             match op {
@@ -592,16 +605,16 @@ impl Url {
     }
 
     /// Compare to another `Url` instance.
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<bool> {
-        if let Ok(url) = other.extract::<Py<Url>>() {
-            let url = &*url.as_ref(other.py()).borrow();
+    fn __richcmp__<'py>(&self, other: Bound<'py, PyAny>, op: CompareOp) -> PyResult<bool> {
+        if let Ok(url) = other.downcast::<Url>() {
+            let x = url.as_borrowed().borrow();
             match op {
-                CompareOp::Lt => Ok(self < url),
-                CompareOp::Le => Ok(self <= url),
-                CompareOp::Eq => Ok(self == url),
-                CompareOp::Ne => Ok(self != url),
-                CompareOp::Gt => Ok(self > url),
-                CompareOp::Ge => Ok(self >= url),
+                CompareOp::Lt => Ok(self < &*x),
+                CompareOp::Le => Ok(self <= &*x),
+                CompareOp::Eq => Ok(self == &*x),
+                CompareOp::Ne => Ok(self != &*x),
+                CompareOp::Gt => Ok(self > &*x),
+                CompareOp::Ge => Ok(self >= &*x),
             }
         } else {
             match op {

@@ -13,8 +13,6 @@ use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use pyo3::AsPyPointer;
-use pyo3::PyDowncastError;
-use pyo3::PyNativeType;
 use pyo3::PyObject;
 
 // ---------------------------------------------------------------------------
@@ -43,12 +41,12 @@ macro_rules! transmute_file_error {
 // ---------------------------------------------------------------------------
 
 /// A wrapper around a readable Python file borrowed within a GIL lifetime.
-pub struct PyFileRead<'p> {
-    file: &'p PyAny,
+pub struct PyFileRead<'py> {
+    file: Bound<'py, PyAny>,
 }
 
-impl<'p> PyFileRead<'p> {
-    pub fn from_ref(file: &'p PyAny) -> PyResult<PyFileRead<'p>> {
+impl<'py> PyFileRead<'py> {
+    pub fn from_ref(file: Bound<'py, PyAny>) -> PyResult<PyFileRead<'py>> {
         let res = file.call_method1("read", (0,))?;
         if res.downcast::<PyBytes>().is_ok() {
             Ok(PyFileRead { file })
@@ -67,7 +65,7 @@ impl<'p> Read for PyFileRead<'p> {
         match self.file.call_method1("read", (buf.len(),)) {
             Ok(obj) => {
                 // Check `fh.read` returned bytes, else raise a `TypeError`.
-                if let Ok(bytes) = obj.extract::<&PyBytes>() {
+                if let Ok(bytes) = obj.downcast::<PyBytes>() {
                     let b = bytes.as_bytes();
                     (&mut buf[..b.len()]).copy_from_slice(b);
                     Ok(b.len())
@@ -91,24 +89,24 @@ impl<'p> Read for PyFileRead<'p> {
 // ---------------------------------------------------------------------------
 
 /// A wrapper around a writable Python file borrowed within a GIL lifetime.
-pub struct PyFileWrite<'p> {
-    file: &'p PyAny,
+pub struct PyFileWrite<'py> {
+    file: Bound<'py, PyAny>,
 }
 
-impl<'p> PyFileWrite<'p> {
-    pub fn from_ref(file: &'p PyAny) -> PyResult<PyFileWrite<'p>> {
+impl<'py> PyFileWrite<'py> {
+    pub fn from_ref(file: Bound<'py, PyAny>) -> PyResult<PyFileWrite<'py>> {
         file.call_method1("write", (PyBytes::new(file.py(), b""),))
             .map(|_| PyFileWrite { file })
     }
 }
 
-impl<'p> Write for PyFileWrite<'p> {
+impl<'py> Write for PyFileWrite<'py> {
     fn write(&mut self, buf: &[u8]) -> Result<usize, IoError> {
         let bytes = PyBytes::new(self.file.py(), buf);
         match self.file.call_method1("write", (bytes,)) {
             Ok(obj) => {
                 // Check `fh.write` returned int, else raise a `TypeError`.
-                if let Ok(len) = usize::extract(&obj) {
+                if let Ok(len) = obj.extract::<usize>() {
                     Ok(len)
                 } else {
                     let ty = obj.get_type().name()?.to_string();
@@ -144,11 +142,11 @@ pub struct PyFileGILRead {
 }
 
 impl PyFileGILRead {
-    pub fn from_ref(file: &PyAny) -> PyResult<PyFileGILRead> {
+    pub fn from_ref<'py>(file: Bound<'py, PyAny>) -> PyResult<PyFileGILRead> {
         let res = file.call_method1("read", (0,))?;
         if res.downcast::<PyBytes>().is_ok() {
             Ok(PyFileGILRead {
-                file: Mutex::new(file.to_object(file.py())),
+                file: Mutex::new(file.unbind()),
             })
         } else {
             let ty = res.get_type().name()?.to_string();
@@ -167,16 +165,17 @@ impl PyFileGILRead {
 impl Read for PyFileGILRead {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
         Python::with_gil(|py| {
-            let file = self.file.lock().unwrap();
-            match file.to_object(py).call_method1(py, "read", (buf.len(),)) {
+            let guard = self.file.lock().unwrap();
+            let file = guard.bind(py);
+            match file.call_method1("read", (buf.len(),)) {
                 Ok(obj) => {
                     // Check `fh.read` returned bytes, else raise a `TypeError`.
-                    if let Ok(bytes) = obj.downcast::<PyBytes>(py) {
+                    if let Ok(bytes) = obj.downcast::<PyBytes>() {
                         let b = bytes.as_bytes();
                         (&mut buf[..b.len()]).copy_from_slice(b);
                         Ok(b.len())
                     } else {
-                        let ty = obj.as_ref(py).get_type().name()?.to_string();
+                        let ty = obj.as_ref().get_type().name()?.to_string();
                         let msg = format!("expected bytes, found {}", ty);
                         PyTypeError::new_err(msg).restore(py);
                         Err(IoError::new(

@@ -11,7 +11,6 @@ use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
 
 use super::super::abc::AbstractFrame;
@@ -20,6 +19,7 @@ use super::clause::HeaderClause;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
+use crate::utils::IntoPy;
 use crate::utils::FinalClass;
 
 #[pyclass(extends=AbstractFrame, module="fastobo.header")]
@@ -71,17 +71,19 @@ impl IntoPy<obo::HeaderFrame> for HeaderFrame {
     }
 }
 
-impl ToPyObject for HeaderFrame {
-    fn to_object(&self, py: Python) -> PyObject {
-        IntoPy::into_py(PyList::new(py, &self.clauses), py)
-    }
-}
+// impl ToPyObject for HeaderFrame {
+//     fn to_object(&self, py: Python) -> PyObject {
+//         IntoPy::into_py(PyList::new(py, &self.clauses), py)
+//     }
+// }
 
+/*
 #[listlike(field = "clauses", type = "HeaderClause")]
 #[pymethods]
 impl HeaderFrame {
     #[new]
-    pub fn __init__(clauses: Option<&PyAny>) -> PyResult<PyClassInitializer<Self>> {
+    #[pyo3(signature = (clauses = None))]
+    pub fn __init__<'py>(clauses: Option<Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
         let mut vec = Vec::new();
         if let Some(c) = clauses {
             for item in PyIterator::from_object(c.py(), c)? {
@@ -145,3 +147,4 @@ impl HeaderFrame {
         Py::new(py, init)
     }
 }
+*/

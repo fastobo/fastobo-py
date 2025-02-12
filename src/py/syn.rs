@@ -15,19 +15,19 @@ use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
-use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
 
 use super::id::Ident;
 use super::xref::XrefList;
 use crate::utils::EqPy;
 use crate::utils::ClonePy;
+use crate::utils::IntoPy;
 
 // --- Module export ---------------------------------------------------------
 
 #[pymodule]
 #[pyo3(name = "syn")]
-pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::Synonym>()?;
     m.add_class::<self::SynonymScope>()?;
     m.add("__name__", "fastobo.syn")?;
@@ -148,7 +148,7 @@ impl IntoPy<fastobo::ast::Synonym> for Synonym {
             self.desc,
             self.scope.inner,
             self.ty.map(|ty| ty.into_py(py)),
-            (&*self.xrefs.as_ref(py).borrow()).into_py(py),
+            (&*self.xrefs.bind(py).borrow()).into_py(py),
         )
     }
 }
@@ -156,15 +156,16 @@ impl IntoPy<fastobo::ast::Synonym> for Synonym {
 #[pymethods]
 impl Synonym {
     #[new]
-    pub fn __init__(
+    #[pyo3(signature = (desc, scope, ty = None, xrefs = None))]
+    pub fn __init__<'py>(
         desc: String,
         scope: &str,
         ty: Option<Ident>,
-        xrefs: Option<&PyAny>,
+        xrefs: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Self> {
         let xrefs = Python::with_gil(|py| {
             let list = xrefs
-                .map(|x| XrefList::collect(py, x))
+                .map(|x| XrefList::collect(py, &x))
                 .transpose()?
                 .unwrap_or_default();
             Py::new(py, list)
@@ -185,7 +186,7 @@ impl Synonym {
         Ok(self.to_string())
     }
 
-    fn __richcmp__(&self, other: &PyAny, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(
             self,
             other,

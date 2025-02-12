@@ -14,7 +14,7 @@ macro_rules! impl_richcmp {
             $crate::pyo3::class::basic::CompareOp::Eq => {
                 let py = $other.py();
                 if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-                    let clause = clause.as_ref(py).borrow();
+                    let clause = clause.bind(py).borrow();
                     let res = $($self.$attr == clause.$attr)&&*;
                     Ok(res.to_object(py))
                 } else {
@@ -32,7 +32,7 @@ macro_rules! impl_richcmp_py {
             $crate::pyo3::class::basic::CompareOp::Eq => {
                 let py = $other.py();
                 if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-                    let clause = clause.as_ref(py).borrow();
+                    let clause = clause.bind(py).borrow();
                     let res = $($self.$attr.eq_py(&clause.$attr, py))&&*;
                     Ok(res.to_object(py))
                 } else {
@@ -48,7 +48,7 @@ macro_rules! impl_repr {
     ($self:ident, $cls:ident($($field:expr),*)) => ({
         Python::with_gil(|py| {
             let args = &[
-                $($field.to_object(py).as_ref(py).repr()?.to_str()?,)*
+                $((&$field).into_pyobject(py)?.as_any().repr()?.to_str()?,)*
             ].join(", ");
             Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).to_object(py))
         })
@@ -74,12 +74,12 @@ macro_rules! add_submodule {
         module.add("__package__", $sup.getattr("__package__")?)?;
 
         // add the submodule to the supermodule
-        $sup.add(stringify!($sub), module)?;
+        $sup.add(stringify!($sub), &module)?;
 
         // add the submodule to the `sys.modules` index
         $py.import("sys")?
             .getattr("modules")?
             .downcast::<pyo3::types::PyDict>()?
-            .set_item(concat!("fastobo.", stringify!($sub)), module)?;
+            .set_item(concat!("fastobo.", stringify!($sub)), &module)?;
     }};
 }

@@ -89,7 +89,7 @@ fn eqpy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     for variant in &en.variants {
         let name = &variant.ident;
         variants.push(quote!{
-            ( #name(l), #name(r) ) => (*l.as_ref(py).borrow()).eq_py(&*r.as_ref(py).borrow(), py)
+            ( #name(l), #name(r) ) => (*l.bind(py).borrow()).eq_py(&*r.bind(py).borrow(), py)
         });
     }
 
@@ -156,13 +156,10 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
     let mut output = TokenStream2::new();
     if let syn::Data::Enum(e) = &ast.data {
-        // output.extend(clone_impl_enum(&ast, &e));
-        output.extend(topyobject_impl_enum(&ast, &e));
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(aspyptr_impl_enum(&ast, &e));
         output.extend(intopy_impl_enum(&ast, &e));
-        // output.extend(pyobjectprotocol_impl_enum(&ast, &e))
     } else {
         panic!("only supports enums");
     }
@@ -183,7 +180,7 @@ fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
-        impl pyo3::AsPyPointer for #name {
+        unsafe impl pyo3::AsPyPointer for #name {
             fn as_ptr(&self) -> *mut pyo3::ffi::PyObject {
                 use self::#name::*;
 
@@ -197,51 +194,52 @@ fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
     expanded
 }
 
-fn topyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
+fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     let mut variants = Vec::new();
+
+    // extract name of base struct
+    let meta = ast
+        .attrs
+        .iter()
+        .find(|attr| attr.path.is_ident(&syn::Ident::new("wraps", attr.span())))
+        .expect("could not find #[wraps] attribute")
+        .parse_meta()
+        .expect("could not parse #[wraps] argument");
+    let wrapped = if let syn::Meta::List(ml) = meta {
+        ml.nested.first().unwrap().clone()
+    } else {
+        unreachable!()
+    };
 
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote!(#name(x) => x.to_object(py)));
+        variants.push(quote!(#name(x) => x.extract(py)));
     }
 
     // Build clone implementation
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
-        impl pyo3::ToPyObject for #name {
-            fn to_object(&self, py: Python) -> pyo3::PyObject {
+        impl<'py> pyo3::IntoPyObject<'py> for &#name {
+            type Error = PyErr;
+            type Target = #wrapped;
+            type Output = Bound<'py, Self::Target>;
+            fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
                 use self::#name::*;
                 match self {
                     #(#variants,)*
                 }
             }
         }
-    };
 
-    expanded
-}
-
-fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
-    let mut variants = Vec::new();
-
-    // Build clone for each variant
-    for variant in &en.variants {
-        let name = &variant.ident;
-        variants.push(quote!(#name(x) => pyo3::IntoPy::into_py(x, py)));
-    }
-
-    // Build clone implementation
-    let name = &ast.ident;
-    let expanded = quote! {
         #[automatically_derived]
-        impl pyo3::IntoPy<pyo3::PyObject> for #name {
-            fn into_py(self, py: Python) -> pyo3::PyObject {
-                use self::#name::*;
-                match self {
-                    #(#variants,)*
-                }
+        impl<'py> pyo3::IntoPyObject<'py> for #name {
+            type Error = PyErr;
+            type Target = #wrapped;
+            type Output = Bound<'py, Self::Target>;
+            fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+                (&self).into_pyobject(py)
             }
         }
     };
@@ -308,13 +306,15 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     let expanded = quote! {
         #[automatically_derived]
         impl<'source> pyo3::FromPyObject<'source> for #wrapped {
-            fn extract(ob: &'source pyo3::types::PyAny) -> pyo3::PyResult<Self> {
+            fn extract_bound(ob: &Bound<'source, pyo3::types::PyAny>) -> pyo3::PyResult<Self> {
                 use pyo3::AsPyPointer;
 
                 let qualname = ob.get_type().name()?;
-                let ty = match qualname.rfind('.') {
-                    Some(idx) => &qualname[idx+1..],
-                    None => &qualname,
+                let q = qualname.to_str()?;
+
+                let ty = match q.rfind('.') {
+                    Some(idx) => &q[idx+1..],
+                    None => &q,
                 };
 
                 if ob.is_instance_of::<#base>() {
@@ -342,7 +342,7 @@ fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
     for variant in &en.variants {
         let name = &variant.ident;
         variants.push(quote!(
-            #name(x) => (&x.as_ref(py).borrow()).clone_py(py).into_py(py)
+            #name(x) => (&x.bind(py).borrow()).clone_py(py).into_py(py)
         ));
     }
 
@@ -350,7 +350,7 @@ fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
-        impl pyo3::IntoPy<fastobo::ast::#name> for &#name {
+        impl IntoPy<fastobo::ast::#name> for &#name {
             fn into_py(self, py: Python) -> fastobo::ast::#name {
                 use std::ops::Deref;
                 use self::#name::*;
@@ -427,12 +427,12 @@ fn listlike_impl_methods(
         ///         this container (see type-level documentation for the
         ///         required type).
         #[pyo3(text_signature = "(self, object)")]
-        fn append(&mut self, object: &PyAny) -> PyResult<()> {
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
+        fn append<'py>(&mut self, object: &Bound<'py, PyAny>) -> PyResult<()> {
+            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
             self.#field.push(item);
             Ok(())
         }
-    });
+    }); 
     imp.items.push(parse_quote! {
         /// Remove all items from list.
         #[pyo3(text_signature = "(self)")]
@@ -458,9 +458,9 @@ fn listlike_impl_methods(
         ///         this container (see type-level documentation for the
         ///         required type).
         #[pyo3(text_signature = "(self, value)")]
-        fn count(&mut self, value: &PyAny) -> PyResult<usize> {
+        fn count<'py>(&mut self, value: &Bound<'py, PyAny>) -> PyResult<usize> {
             let py = value.py();
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract(value)?;
+            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(value)?;
             Ok(self.#field.iter().filter(|&x| x.eq_py(&item, py)).count())
         }
     });
@@ -478,8 +478,8 @@ fn listlike_impl_methods(
         /// If `index` is greater than the number of elements in the list,
         /// `object` will be added at the end of the list.
         #[pyo3(text_signature = "(self, index, object)")]
-        fn insert(&mut self, mut index: isize, object: &PyAny) -> PyResult<()> {
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
+        fn insert<'py>(&mut self, mut index: isize, object: &Bound<'py, PyAny>) -> PyResult<()> {
+            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
             if index >= self.#field.len() as isize {
                 self.#field.push(item);
             } else {

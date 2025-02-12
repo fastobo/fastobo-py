@@ -13,6 +13,13 @@ use fastobo::ast;
 
 // ---
 
+pub trait IntoPy<T> {
+    fn into_py(self, py: Python) -> T;
+}
+
+
+// ---
+
 /// A trait for objects that can be cloned while the GIL is held.
 pub trait ClonePy {
     fn clone_py(&self, py: Python) -> Self;

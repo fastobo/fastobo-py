@@ -8,7 +8,6 @@ use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyString;
-use pyo3::PyNativeType;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -17,13 +16,14 @@ use super::id::Ident;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
+use crate::utils::IntoPy;
 use crate::utils::FinalClass;
 
 // --- Module export ---------------------------------------------------------
 
 #[pymodule]
 #[pyo3(name = "pv")]
-pub fn init(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::AbstractPropertyValue>()?;
     m.add_class::<self::LiteralPropertyValue>()?;
     m.add_class::<self::ResourcePropertyValue>()?;
@@ -44,8 +44,8 @@ impl Display for PropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         Python::with_gil(|py| {
             match self {
-                PropertyValue::Literal(lpv) => lpv.as_ref(py).borrow().fmt(f),
-                PropertyValue::Resource(rpv) => rpv.as_ref(py).borrow().fmt(f),
+                PropertyValue::Literal(lpv) => lpv.bind(py).borrow().fmt(f),
+                PropertyValue::Resource(rpv) => rpv.bind(py).borrow().fmt(f),
             }
         })
     }
@@ -68,8 +68,8 @@ impl IntoPy<PropertyValue> for fastobo::ast::PropertyValue {
 impl IntoPy<fastobo::ast::PropertyValue> for PropertyValue {
     fn into_py(self, py: Python) -> fastobo::ast::PropertyValue {
         match self {
-            PropertyValue::Literal(t) => t.as_ref(py).borrow().deref().clone_py(py).into_py(py),
-            PropertyValue::Resource(r) => r.as_ref(py).borrow().deref().clone_py(py).into_py(py),
+            PropertyValue::Literal(t) => t.bind(py).borrow().deref().clone_py(py).into_py(py),
+            PropertyValue::Resource(r) => r.bind(py).borrow().deref().clone_py(py).into_py(py),
         }
     }
 }
@@ -152,13 +152,13 @@ impl IntoPy<LiteralPropertyValue> for fastobo::ast::LiteralPropertyValue {
 #[pymethods]
 impl LiteralPropertyValue {
     #[new]
-    fn __init__(
-        relation: &PyAny,
-        value: &PyAny,
-        datatype: &PyAny,
+    fn __init__<'py>(
+        relation: Bound<'py, PyAny>,
+        value: Bound<'py, PyAny>,
+        datatype: Bound<'py, PyAny>,
     ) -> PyResult<PyClassInitializer<Self>> {
         let r = relation.extract::<Ident>()?;
-        let v = if let Ok(s) = value.extract::<&PyString>() {
+        let v = if let Ok(s) = value.downcast::<PyString>() {
             ast::QuotedString::new(s.to_str()?.to_string())
         } else {
             let n = value.get_type().name()?;
@@ -169,19 +169,16 @@ impl LiteralPropertyValue {
         Ok(Self::new(r, v, dt).into())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
-            fmt.to_object(py).call_method1(
-                py,
-                "format",
-                (
-                    self.relation.to_object(py),
-                    self.value.as_str(),
-                    self.datatype.to_object(py),
-                ),
-            )
-        })
+    fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
+        fmt.call_method1(
+            "format",
+            (
+                &self.relation,
+                self.value.as_str(),
+                &self.datatype,
+            ),
+        )
     }
 
     fn __str__(&self) -> PyResult<String> {

@@ -28,6 +28,7 @@ use crate::py::header::frame::HeaderFrame;
 use crate::pyfile::PyFileGILRead;
 use crate::transmute_file_error;
 use crate::utils::ClonePy;
+use crate::utils::IntoPy;
 
 // ---------------------------------------------------------------------------
 
@@ -199,7 +200,8 @@ impl FrameReader {
         }
     }
 
-    pub fn from_handle(obj: &PyAny, ordered: bool, threads: i16) -> PyResult<Self> {
+    pub fn from_handle<'py>(obj: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<Self> {
+        let py = obj.py();
         match PyFileGILRead::from_ref(obj).map(Handle::PyFile) {
             Ok(inner) => Self::new(BufReader::new(inner), ordered, threads),
             Err(e) => Err(e),

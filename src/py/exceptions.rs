@@ -28,7 +28,7 @@ macro_rules! impl_pyerr {
 
 #[pymodule]
 #[pyo3(name = "exceptions")]
-pub fn init(py: Python, m: &PyModule) -> PyResult<()> {
+pub fn init<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<self::MissingClauseError>()?;
     m.add_class::<self::DuplicateClausesError>()?;
     m.add_class::<self::SingleClauseError>()?;
@@ -52,6 +52,7 @@ impl_pyerr!(MissingClauseError);
 #[pymethods]
 impl MissingClauseError {
     #[new]
+    #[pyo3(signature = (clause, frame = None))]
     fn __init__(clause: String, frame: Option<String>) -> Self {
         Self { clause, frame }
     }
@@ -85,6 +86,7 @@ impl_pyerr!(DuplicateClausesError);
 #[pymethods]
 impl DuplicateClausesError {
     #[new]
+    #[pyo3(signature = (clause, frame = None))]
     fn __init__(clause: String, frame: Option<String>) -> Self {
         Self { clause, frame }
     }
@@ -118,6 +120,7 @@ impl_pyerr!(SingleClauseError);
 #[pymethods]
 impl SingleClauseError {
     #[new]
+    #[pyo3(signature = (clause, frame = None))]
     fn __init__(clause: String, frame: Option<String>) -> Self {
         Self { clause, frame }
     }

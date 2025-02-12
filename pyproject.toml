@@ -1,4 +1,77 @@
 [build-system]
-requires = ['setuptools', 'setuptools_rust']
-build-backend = "setuptools.build_meta"
+requires = ["maturin ~=1.2"]
+build-backend = "maturin"
 
+[project]
+name = "fastobo"
+dynamic = ["version"]
+description = "Faultless AST for Open Biomedical Ontologies in Python."
+readme = "README.md"
+requires-python = ">=3.7"
+license = { file = "COPYING" }
+authors = [
+  { name = "Martin Larralde", email = "martin.larralde@embl.de" },
+]
+keywords = ["ontologies", "ontology", "obo", "obofoundry", "parser", "syntax", "ast"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/fastobo/fastobo-py/"
+"Bug Tracker" = "https://github.com/fastobo/fastobo-py/issues"
+"Changelog" = "https://fastobo.readthedocs.io/en/latest/changes.html"
+"Documentation" = "https://fastobo.readthedocs.io/"
+"Builds" = "https://github.com/fastobo/fastobo-py/actions/"
+"PyPI" = "https://pypi.org/project/fastobo"
+"Conda" = "https://anaconda.org/bioconda/fastobo"
+"PiWheels" = "https://www.piwheels.org/project/fastobo/"
+
+[tool.maturin]
+manifest-path = "Cargo.toml"
+features = ["extension-module"]
+# python-source = "src"
+module-name = "fastobo"
+
+[tool.cibuildwheel]
+skip = ["*-musllinux_i686"]
+before-build = "pip install maturin"
+test-command = "python -m unittest discover -s {project} -v"
+build-verbosity = 1
+free-threaded-support = false
+
+[tool.cibuildwheel.linux]
+environment = { PATH="$HOME/.cargo/bin:$PATH" }
+before-all = "curl -sSf https://sh.rustup.rs | sh -s -- -y"
+
+[tool.cibuildwheel.macos]
+before-all = ["curl -sSf https://sh.rustup.rs | sh -s -- -y"]
+environment = { MACOSX_DEPLOYMENT_TARGET = "10.12" }
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_x86_64"
+inherit.before-all = "append"
+before-all = ["rustup target add x86_64-apple-darwin"]
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_arm64"
+inherit.before-all = "append"
+before-all = ["rustup target add aarch64-apple-darwin"]

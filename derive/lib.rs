@@ -454,12 +454,12 @@ fn listlike_impl_methods(
         ///         this container (see type-level documentation for the
         ///         required type).
         #[pyo3(text_signature = "(self, object)")]
-        fn append(&mut self, object: &PyAny) -> PyResult<()> {
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
+        fn append<'py>(&mut self, object: &Bound<'py, PyAny>) -> PyResult<()> {
+            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
             self.#field.push(item);
             Ok(())
         }
-    });
+    }); 
     imp.items.push(parse_quote! {
         /// Remove all items from list.
         #[pyo3(text_signature = "(self)")]
@@ -485,9 +485,9 @@ fn listlike_impl_methods(
         ///         this container (see type-level documentation for the
         ///         required type).
         #[pyo3(text_signature = "(self, value)")]
-        fn count(&mut self, value: &PyAny) -> PyResult<usize> {
+        fn count<'py>(&mut self, value: &Bound<'py, PyAny>) -> PyResult<usize> {
             let py = value.py();
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract(value)?;
+            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(value)?;
             Ok(self.#field.iter().filter(|&x| x.eq_py(&item, py)).count())
         }
     });
@@ -505,8 +505,8 @@ fn listlike_impl_methods(
         /// If `index` is greater than the number of elements in the list,
         /// `object` will be added at the end of the list.
         #[pyo3(text_signature = "(self, index, object)")]
-        fn insert(&mut self, mut index: isize, object: &PyAny) -> PyResult<()> {
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract(object)?;
+        fn insert<'py>(&mut self, mut index: isize, object: &Bound<'py, PyAny>) -> PyResult<()> {
+            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
             if index >= self.#field.len() as isize {
                 self.#field.push(item);
             } else {

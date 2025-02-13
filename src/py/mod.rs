@@ -13,6 +13,7 @@ use std::str::FromStr;
 use std::string::ToString;
 
 use pyo3::class::gc::PyVisit;
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::exceptions::PyTypeError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
@@ -29,9 +30,11 @@ use fastobo_graphs::model::GraphDocument;
 use fastobo_graphs::FromGraph;
 use fastobo_graphs::IntoGraph;
 use fastobo_owl::IntoOwl;
-use horned_owl::ontology::axiom_mapped::AxiomMappedOntology;
-use horned_functional::AsFunctional;
-use horned_functional::Context;
+use fastobo_owl::IntoOwlPrefixes;
+use horned_owl::ontology::component_mapped::ComponentMappedOntology;
+use horned_owl::io::ofn::writer::AsFunctional;
+use horned_owl::model::AnnotatedComponent;
+use horned_owl::error::HornedError;
 
 use crate::error::Error;
 use crate::error::GraphError;
@@ -437,9 +440,9 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>) -> PyR
 fn dump_owl<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>, format: &str) -> PyResult<()> {
     // Convert OBO document to an OWL document.
     let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
+
     let prefixes = doc.prefixes();
-    let ont = doc.into_owl::<AxiomMappedOntology>().map_err(OwlError::from)?;
-    let ctx = horned_functional::Context::from(&prefixes);
+    let ont = doc.into_owl::<ComponentMappedOntology<Rc<str>, Rc<AnnotatedComponent<Rc<str>>>>>().map_err(OwlError::from)?;
 
     // Write the document
     let mut file: Box<dyn Write> = if let Ok(s) = fh.downcast::<PyString>() {
@@ -455,8 +458,14 @@ fn dump_owl<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>, format: 
         }
     };
 
-    write!(file, "{}", prefixes.as_ofn())?;
-    write!(file, "{}", ont.as_ofn_ctx(&ctx))?;
+    if let Err(e) = horned_owl::io::ofn::writer::write(file, &ont, Some(&prefixes)) {
+        match e {
+            HornedError::ParserError(_, _) => unreachable!(),
+            HornedError::CommandError(_) => unreachable!(),
+            HornedError::IOError(e) => return Err(PyErr::from(e)),
+            HornedError::ValidityError(_, _) => return Err(PyRuntimeError::new_err(e.to_string())),
+        }
+    }
 
     Ok(())
 }

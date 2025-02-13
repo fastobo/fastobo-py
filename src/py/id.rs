@@ -338,7 +338,7 @@ impl PrefixedIdent {
         }
     }
 
-    /// `~fastobo.id.IdentPrefix`: the IDspace of the identifier.
+    /// `str`: the IDspace of the identifier.
     #[getter]
     fn get_prefix<'py>(&self) -> &str {
         self.inner.prefix()
@@ -349,7 +349,7 @@ impl PrefixedIdent {
         self.inner = ast::PrefixedIdent::new(prefix, self.inner.local());
     }
 
-    /// `~fastobo.id.IdentLocal`: the local part of the identifier.
+    /// `str`: the local part of the identifier.
     #[getter]
     fn get_local<'py>(&self) -> &str {
         self.inner.local()

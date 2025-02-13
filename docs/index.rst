@@ -1,5 +1,9 @@
-``fastobo`` |Stars|
-===================
+|Logo| ``fastobo`` |Stars|
+==========================
+
+.. |Logo| image:: /_images/logo.png
+   :scale: 10%
+   :class: dark-light
 
 .. |Stars| image:: https://img.shields.io/github/stars/fastobo/fastobo-py.svg?style=social&maxAge=3600&label=Star
    :target: https://github.com/fastobo/fastobo-py/stargazers

@@ -137,8 +137,8 @@ html_theme_options = {
     ],
     "logo": {
         "text": "FastOBO",
-        # "image_light": "_images/logo.png",
-        # "image_dark": "_images/logo.png",
+        "image_light": "_images/logo.png",
+        "image_dark": "_images/logo.png",
     },
     "navbar_start": ["navbar-logo", "version-switcher"],
     "navbar_align": "left",

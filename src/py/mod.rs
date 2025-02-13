@@ -15,6 +15,7 @@ use std::string::ToString;
 use pyo3::class::gc::PyVisit;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::exceptions::PyTypeError;
+use pyo3::exceptions::PyValueError;
 use pyo3::gc::PyTraverseError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
@@ -407,7 +408,8 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>) -> PyR
 ///         into an OWL Ontology.
 ///     format (`str`): The OWL format to serialize the converted OWL
 ///         document into. Supported values are: ``ofn`` for
-///         `Functional-style syntax <https://w3.org/TR/owl2-syntax/>`_.
+///         `Functional-style syntax <https://w3.org/TR/owl2-syntax/>`_,
+///         ``owx`` for OWL/XML syntax, ``rdf`` for
 ///
 /// Raises:
 ///     TypeError: When the argument have invalid types.
@@ -458,12 +460,19 @@ fn dump_owl<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>, format: 
         }
     };
 
-    if let Err(e) = horned_owl::io::ofn::writer::write(file, &ont, Some(&prefixes)) {
+    let result = match format {
+        "ofn" => horned_owl::io::ofn::writer::write(file, &ont, Some(&prefixes)),
+        "owx" => horned_owl::io::owx::writer::write(file, &ont, Some(&prefixes)),
+        "rdf" => horned_owl::io::rdf::writer::write(&mut file, &ont),
+        _ => return Err(PyValueError::new_err(format!("invalid format: {}", format))),
+    };
+
+
+    if let Err(e) = result {
         match e {
-            HornedError::ParserError(_, _) => unreachable!(),
-            HornedError::CommandError(_) => unreachable!(),
             HornedError::IOError(e) => return Err(PyErr::from(e)),
             HornedError::ValidityError(_, _) => return Err(PyRuntimeError::new_err(e.to_string())),
+            HornedError::CommandError(_) | HornedError::ParserError(_, _) => unreachable!(),
         }
     }
 

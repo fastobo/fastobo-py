@@ -6,7 +6,6 @@ extern crate quote;
 extern crate syn;
 
 use proc_macro::TokenStream;
-use proc_macro2::Span;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::parse_macro_input;
@@ -198,17 +197,15 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     let mut variants = Vec::new();
 
     // extract name of base struct
-    let meta = ast
+    let meta = &ast
         .attrs
         .iter()
-        .find(|attr| attr.path.is_ident(&syn::Ident::new("wraps", attr.span())))
+        .find(|attr| attr.path().is_ident(&syn::Ident::new("wraps", attr.span())))
         .expect("could not find #[wraps] attribute")
-        .parse_meta()
-        .expect("could not parse #[wraps] argument");
-    let wrapped = if let syn::Meta::List(ml) = meta {
-        ml.nested.first().unwrap().clone()
-    } else {
-        unreachable!()
+        .meta;
+    let base: syn::Ident = match meta {
+        syn::Meta::List(l) => syn::parse2(l.tokens.clone()).unwrap(),
+        _ => panic!("#[wraps] argument must be a class ident"),
     };
 
     // Build clone for each variant
@@ -223,7 +220,7 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         #[automatically_derived]
         impl<'py> pyo3::IntoPyObject<'py> for &#name {
             type Error = PyErr;
-            type Target = #wrapped;
+            type Target = #base;
             type Output = Bound<'py, Self::Target>;
             fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
                 use self::#name::*;
@@ -236,7 +233,7 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         #[automatically_derived]
         impl<'py> pyo3::IntoPyObject<'py> for #name {
             type Error = PyErr;
-            type Target = #wrapped;
+            type Target = #base;
             type Output = Bound<'py, Self::Target>;
             fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
                 (&self).into_pyobject(py)
@@ -278,19 +275,15 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         variants.push(quote!(#lit => ob.extract::<pyo3::Py<#path>>().map(#wrapped::#name)));
     }
 
-    let meta = ast
+    // extract name of base struct
+    let meta = &ast
         .attrs
         .iter()
-        .find(|attr| attr.path.is_ident(&syn::Ident::new("wraps", attr.span())))
+        .find(|attr| attr.path().is_ident(&syn::Ident::new("wraps", attr.span())))
         .expect("could not find #[wraps] attribute")
-        .parse_meta()
-        .expect("could not parse #[wraps] argument");
-
-    let base = match meta {
-        syn::Meta::List(l) => match l.nested.iter().next().unwrap() {
-            syn::NestedMeta::Meta(syn::Meta::Path(p)) => p.clone(),
-            _ => panic!("#[wraps] argument must be a class ident"),
-        },
+        .meta;
+    let base: syn::Ident = match meta {
+        syn::Meta::List(l) => syn::parse2(l.tokens.clone()).unwrap(),
         _ => panic!("#[wraps] argument must be a class ident"),
     };
 
@@ -367,51 +360,27 @@ fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
 // ---
 
 #[proc_macro_attribute]
-pub fn listlike(attr: TokenStream, input: TokenStream) -> TokenStream {
-    // extract proc-macro arguments
-    let meta = parse_macro_input!(attr as syn::AttributeArgs);
-    let field: syn::Ident = if let syn::Lit::Str(ref s) = meta
-        .iter()
-        .filter_map(|m| match m {
-            syn::NestedMeta::Meta(m) => Some(m),
-            _ => None,
-        })
-        .filter_map(|m| match m {
-            syn::Meta::NameValue(nv) => Some(nv),
-            _ => None,
-        })
-        .find(|nv| nv.path.get_ident() == Some(&syn::Ident::new("field", Span::call_site())))
-        .expect("#[pylist] requires a `field` argument")
-        .lit
-    {
-        s.parse()
-            .expect("`field` argument of #[pylist] is not a valid identifier")
-    } else {
-        panic!("`field` argument of #[pylist] must be a string");
-    };
-    let ty: syn::Type = if let syn::Lit::Str(ref s) = meta
-        .iter()
-        .filter_map(|m| match m {
-            syn::NestedMeta::Meta(m) => Some(m),
-            _ => None,
-        })
-        .filter_map(|m| match m {
-            syn::Meta::NameValue(nv) => Some(nv),
-            _ => None,
-        })
-        .find(|nv| nv.path.get_ident() == Some(&syn::Ident::new("type", Span::call_site())))
-        .expect("#[pylist] requires a `type` argument")
-        .lit
-    {
-        s.parse()
-            .expect("`type` argument of #[pylist] is not a valid type")
-    } else {
-        panic!("`type` argument of #[pylist] must be a string");
-    };
+pub fn listlike(args: TokenStream, input: TokenStream) -> TokenStream {
+    let mut field: Option<syn::Ident> = None;
+    let mut ty: Option<syn::Type> = None;
+    let listlike_parser = syn::meta::parser(|meta| {
+        if meta.path.is_ident("field") {
+            let name: syn::LitStr = meta.value()?.parse()?;
+            field = Some(syn::parse_str(&name.value())?);
+            Ok(())
+        } else if meta.path.is_ident("type") {
+            let name: syn::LitStr = meta.value()?.parse()?;
+            ty = Some(syn::parse_str(&name.value())?);
+            Ok(())
+        } else {
+            Err(meta.error("unsupported listlike property"))
+        }
+    });
+    parse_macro_input!(args with listlike_parser);
 
     // add additional methods to the impl block
     let ast = parse_macro_input!(input as syn::ItemImpl);
-    TokenStream::from(listlike_impl_methods(&field, &ty, ast))
+    TokenStream::from(listlike_impl_methods(&field.unwrap(), &ty.unwrap(), ast))
 }
 
 fn listlike_impl_methods(
@@ -538,24 +507,20 @@ pub fn finalclass_derive(input: TokenStream) -> TokenStream {
 }
 
 fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream2 {
-    // Get the name of the wrapped struct.
-    let name = &ast.ident;
-
-    // Get the name of the base class.
-    let meta = ast
+    // Get the `base` attribute.
+    let meta = &ast
         .attrs
         .iter()
-        .find(|attr| attr.path.is_ident(&syn::Ident::new("base", attr.span())))
+        .find(|attr| attr.path().is_ident(&syn::Ident::new("base", attr.span())))
         .expect("could not find #[base] attribute")
-        .parse_meta()
-        .expect("could not parse #[base] argument");
-    let base = match meta {
-        syn::Meta::List(l) => match l.nested.iter().next().unwrap() {
-            syn::NestedMeta::Meta(syn::Meta::Path(p)) => p.clone(),
-            _ => panic!("#[base] argument must be a class ident"),
-        },
+        .meta;
+    let base: syn::Type = match meta {
+        syn::Meta::List(l) => syn::parse2(l.tokens.clone()).unwrap(),
         _ => panic!("#[base] argument must be a class ident"),
     };
+
+    // Get the name of the wrapped struct.
+    let name = &ast.ident;
 
     // derive an implementation of PyClassInitializer using simply the
     // default value of the base class as the initializer value
@@ -582,24 +547,20 @@ pub fn abstractclass_derive(input: TokenStream) -> TokenStream {
 }
 
 fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream2 {
-    // Get the name of the wrapped struct.
-    let name = &ast.ident;
-
-    // Get the name of the base class.
-    let meta = ast
+        // Get the `base` attribute.
+        let meta = &ast
         .attrs
         .iter()
-        .find(|attr| attr.path.is_ident(&syn::Ident::new("base", attr.span())))
+        .find(|attr| attr.path().is_ident(&syn::Ident::new("base", attr.span())))
         .expect("could not find #[base] attribute")
-        .parse_meta()
-        .expect("could not parse #[base] argument");
-    let base = match meta {
-        syn::Meta::List(l) => match l.nested.iter().next().unwrap() {
-            syn::NestedMeta::Meta(syn::Meta::Path(p)) => p.clone(),
-            _ => panic!("#[base] argument must be a class ident"),
-        },
+        .meta;
+    let base: syn::Type = match meta {
+        syn::Meta::List(l) => syn::parse2(l.tokens.clone()).unwrap(),
         _ => panic!("#[base] argument must be a class ident"),
     };
+
+    // Get the name of the wrapped struct.
+    let name = &ast.ident;
 
     // derive an implementation of PyClassInitializer using simply the
     // default value of the base class as the initializer value

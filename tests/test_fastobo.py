@@ -3,6 +3,7 @@
 import io
 import os
 import unittest
+import pathlib
 
 import fastobo
 
@@ -62,6 +63,10 @@ class TestLoad(unittest.TestCase):
     def test_threading_invalid(self):
         self.assertRaises(ValueError, fastobo.load, MS, threads=-1)
 
+    def test_load_path(self):
+        doc = fastobo.load(pathlib.Path(MS))
+        self.assertEqual(len(doc), MS_FRAMES)
+
 
 class TestIter(unittest.TestCase):
 
@@ -105,6 +110,11 @@ class TestIter(unittest.TestCase):
 
     def test_threading_invalid(self):
         self.assertRaises(ValueError, fastobo.iter, MS, threads=-1)
+
+    def test_iter_path(self):
+        n = sum(1 for _ in fastobo.iter(pathlib.Path(MS)))
+        self.assertEqual(n, MS_FRAMES)
+
 
 class TestLoads(unittest.TestCase):
 

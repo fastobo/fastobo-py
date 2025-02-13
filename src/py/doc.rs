@@ -160,7 +160,10 @@ impl IntoPy<fastobo::ast::OboDoc> for OboDoc {
 impl OboDoc {
     #[new]
     #[pyo3(signature = (header = None, entities = None))]
-    fn __init__<'py>(header: Option<&HeaderFrame>, entities: Option<&Bound<'py, PyAny>>) -> PyResult<Self> {
+    fn __init__<'py>(
+        header: Option<&HeaderFrame>,
+        entities: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<Self> {
         Python::with_gil(|py| {
             // extract header
             let header = header
@@ -185,7 +188,11 @@ impl OboDoc {
         Ok(self.entities.len())
     }
 
-    fn __getitem__<'py>(&self, py: Python<'py>, index: isize) -> PyResult<Bound<'py, AbstractFrame>> {
+    fn __getitem__<'py>(
+        &self,
+        py: Python<'py>,
+        index: isize,
+    ) -> PyResult<Bound<'py, AbstractFrame>> {
         if index < self.entities.len() as isize {
             let item = &self.entities[index as usize];
             item.into_pyobject(py)

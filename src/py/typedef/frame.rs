@@ -18,13 +18,13 @@ use fastobo::ast;
 
 use super::super::abc::AbstractEntityFrame;
 use super::super::id::Ident;
-use super::clause::TypedefClause;
 use super::clause::BaseTypedefClause;
+use super::clause::TypedefClause;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
-use crate::utils::IntoPy;
 use crate::utils::FinalClass;
+use crate::utils::IntoPy;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.typedef")]
 #[derive(Debug, FinalClass, EqPy)]
@@ -56,7 +56,8 @@ impl ClonePy for TypedefFrame {
 
 impl Display for TypedefFrame {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let frame: fastobo::ast::TypedefFrame = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let frame: fastobo::ast::TypedefFrame =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         frame.fmt(f)
     }
 }
@@ -97,11 +98,14 @@ impl IntoPy<fastobo::ast::EntityFrame> for TypedefFrame {
 impl TypedefFrame {
     // FIXME: should accept any iterable.
     #[new]
-    fn __init__<'py>(id: Ident, clauses: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__<'py>(
+        id: Ident,
+        clauses: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
         if let Some(clauses) = clauses {
             match clauses.extract() {
                 Ok(c) => Ok(Self::with_clauses(id, c).into()),
-                Err(_) => Err(PyTypeError::new_err("Expected list of `TypedefClause`"))
+                Err(_) => Err(PyTypeError::new_err("Expected list of `TypedefClause`")),
             }
         } else {
             Ok(Self::new(id).into())

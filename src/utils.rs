@@ -17,7 +17,6 @@ pub trait IntoPy<T> {
     fn into_py(self, py: Python) -> T;
 }
 
-
 // ---
 
 /// A trait for objects that can be cloned while the GIL is held.
@@ -69,22 +68,22 @@ pub trait EqPy {
     }
 }
 
-impl <T> EqPy for Option<T>
+impl<T> EqPy for Option<T>
 where
-    T: EqPy
+    T: EqPy,
 {
     fn eq_py(&self, other: &Self, py: Python) -> bool {
         match (self, other) {
             (Some(l), Some(r)) => l.eq_py(r, py),
             (None, None) => true,
-            _ => false
+            _ => false,
         }
     }
 }
 
-impl <T> EqPy for Vec<T>
+impl<T> EqPy for Vec<T>
 where
-    T: EqPy
+    T: EqPy,
 {
     fn eq_py(&self, other: &Self, py: Python) -> bool {
         if self.len() == other.len() {
@@ -102,7 +101,7 @@ where
 
 impl<T> EqPy for Py<T>
 where
-    T: EqPy + PyClass
+    T: EqPy + PyClass,
 {
     fn eq_py(&self, other: &Self, py: Python) -> bool {
         let l = self.borrow(py);

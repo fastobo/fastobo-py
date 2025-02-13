@@ -1,5 +1,5 @@
-extern crate pyo3;
 extern crate fastobo_py;
+extern crate pyo3;
 
 use std::path::Path;
 
@@ -9,19 +9,14 @@ use pyo3::types::PyList;
 use pyo3::types::PyModule;
 use pyo3::Python;
 
-
 pub fn main() -> PyResult<()> {
     // get the relative path to the project folder
-    let folder = Path::new(file!())
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap();
+    let folder = Path::new(file!()).parent().unwrap().parent().unwrap();
 
     // spawn a Python interpreter
     pyo3::prepare_freethreaded_python();
     Python::with_gil(|py| {
-        // insert the project folder in `sys.modules` so that 
+        // insert the project folder in `sys.modules` so that
         // the main module can be imported by Python
         let sys = py.import("sys").unwrap();
         sys.getattr("path")
@@ -45,10 +40,9 @@ pub fn main() -> PyResult<()> {
         let kwargs = PyDict::new(py);
         kwargs.set_item("exit", false).unwrap();
         kwargs.set_item("verbosity", 2u8).unwrap();
-        py.import("unittest").unwrap().call_method(
-            "TestProgram",
-            ("tests",),
-            Some(&kwargs),
-        ).map(|_| ())
+        py.import("unittest")
+            .unwrap()
+            .call_method("TestProgram", ("tests",), Some(&kwargs))
+            .map(|_| ())
     })
 }

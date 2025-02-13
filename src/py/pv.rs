@@ -16,8 +16,8 @@ use super::id::Ident;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
-use crate::utils::IntoPy;
 use crate::utils::FinalClass;
+use crate::utils::IntoPy;
 
 // --- Module export ---------------------------------------------------------
 
@@ -42,11 +42,9 @@ pub enum PropertyValue {
 
 impl Display for PropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        Python::with_gil(|py| {
-            match self {
-                PropertyValue::Literal(lpv) => lpv.bind(py).borrow().fmt(f),
-                PropertyValue::Resource(rpv) => rpv.bind(py).borrow().fmt(f),
-            }
+        Python::with_gil(|py| match self {
+            PropertyValue::Literal(lpv) => lpv.bind(py).borrow().fmt(f),
+            PropertyValue::Resource(rpv) => rpv.bind(py).borrow().fmt(f),
         })
     }
 }
@@ -173,11 +171,7 @@ impl LiteralPropertyValue {
         let fmt = PyString::new(py, "LiteralPropertyValue({!r}, {!r}, {!r})");
         fmt.call_method1(
             "format",
-            (
-                &self.relation,
-                self.value.as_str(),
-                &self.datatype,
-            ),
+            (&self.relation, self.value.as_str(), &self.datatype),
         )
     }
 

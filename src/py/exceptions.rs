@@ -1,9 +1,9 @@
-use pyo3::prelude::*;
-use pyo3::types::PyTuple;
-use pyo3::types::PyString;
-use pyo3::exceptions::PyValueError;
-use pyo3::exceptions::PyRuntimeError;
 use pyo3::exceptions::PyChildProcessError;
+use pyo3::exceptions::PyRuntimeError;
+use pyo3::exceptions::PyValueError;
+use pyo3::prelude::*;
+use pyo3::types::PyString;
+use pyo3::types::PyTuple;
 
 // --- Macros ----------------------------------------------------------------
 
@@ -38,7 +38,6 @@ pub fn init<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
 }
 
 // --- MissingClauseError ----------------------------------------------------
-
 
 /// An error indicating a required clause is missing.
 #[pyclass(module = "fastobo.exceptions", extends = PyValueError)]
@@ -151,7 +150,7 @@ impl_pyerr!(DisconnectedChannelError);
 impl DisconnectedChannelError {
     #[new]
     fn __init__() -> Self {
-        Self { }
+        Self {}
     }
 
     fn __repr__(&self) -> String {

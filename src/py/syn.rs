@@ -1,10 +1,10 @@
+use std::convert::Infallible;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::string::ToString;
-use std::convert::Infallible;
 
 use pyo3::class::basic::CompareOp;
 use pyo3::class::gc::PyVisit;
@@ -20,8 +20,8 @@ use pyo3::PyTypeInfo;
 
 use super::id::Ident;
 use super::xref::XrefList;
-use crate::utils::EqPy;
 use crate::utils::ClonePy;
+use crate::utils::EqPy;
 use crate::utils::IntoPy;
 
 // --- Module export ---------------------------------------------------------
@@ -110,7 +110,7 @@ impl<'py> IntoPyObject<'py> for &SynonymScope {
             fastobo::ast::SynonymScope::Broad => Ok(pyo3::intern!(py, "BROAD").clone()),
             fastobo::ast::SynonymScope::Narrow => Ok(pyo3::intern!(py, "NARROW").clone()),
             fastobo::ast::SynonymScope::Related => Ok(pyo3::intern!(py, "RELATED").clone()),
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
     }
 }

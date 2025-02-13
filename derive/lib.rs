@@ -87,7 +87,7 @@ fn eqpy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     // Build eq_py for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote!{
+        variants.push(quote! {
             ( #name(l), #name(r) ) => (*l.bind(py).borrow()).eq_py(&*r.bind(py).borrow(), py)
         });
     }
@@ -133,7 +133,6 @@ fn eqpy_impl_struct(ast: &syn::DeriveInput, en: &syn::DataStruct) -> TokenStream
     } else {
         unreachable!()
     }
-
 
     let name = &ast.ident;
     let expanded = quote! {
@@ -401,7 +400,7 @@ fn listlike_impl_methods(
             self.#field.push(item);
             Ok(())
         }
-    }); 
+    });
     imp.items.push(parse_quote! {
         /// Remove all items from list.
         #[pyo3(text_signature = "(self)")]
@@ -547,8 +546,8 @@ pub fn abstractclass_derive(input: TokenStream) -> TokenStream {
 }
 
 fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream2 {
-        // Get the `base` attribute.
-        let meta = &ast
+    // Get the `base` attribute.
+    let meta = &ast
         .attrs
         .iter()
         .find(|attr| attr.path().is_ident(&syn::Ident::new("base", attr.span())))

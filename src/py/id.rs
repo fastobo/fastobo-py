@@ -22,8 +22,8 @@ use crate::raise;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
-use crate::utils::IntoPy;
 use crate::utils::FinalClass;
+use crate::utils::IntoPy;
 
 // --- Module export ----------------------------------------------------------
 
@@ -93,7 +93,6 @@ fn is_valid(_py: Python, s: &str) -> bool {
     }
 }
 
-
 #[pymodule]
 #[pyo3(name = "id")]
 pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
@@ -139,12 +138,10 @@ pub enum Ident {
 
 impl Display for Ident {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        Python::with_gil(|py| {
-            match self {
-                Ident::Unprefixed(id) => id.bind(py).borrow().fmt(f),
-                Ident::Prefixed(id) => id.bind(py).borrow().fmt(f),
-                Ident::Url(id) => id.bind(py).borrow().fmt(f),
-            }
+        Python::with_gil(|py| match self {
+            Ident::Unprefixed(id) => id.bind(py).borrow().fmt(f),
+            Ident::Prefixed(id) => id.bind(py).borrow().fmt(f),
+            Ident::Url(id) => id.bind(py).borrow().fmt(f),
         })
     }
 }

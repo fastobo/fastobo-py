@@ -30,8 +30,8 @@ use crate::raise;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
-use crate::utils::IntoPy;
 use crate::utils::FinalClass;
+use crate::utils::IntoPy;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
@@ -383,7 +383,8 @@ impl ClonePy for NamespaceClause {
 
 impl Display for NamespaceClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -459,7 +460,8 @@ impl ClonePy for AltIdClause {
 
 impl Display for AltIdClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -543,7 +545,8 @@ impl ClonePy for DefClause {
 
 impl Display for DefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -561,14 +564,17 @@ impl IntoPy<fastobo::ast::TypedefClause> for DefClause {
 impl DefClause {
     #[new]
     #[pyo3(signature = (definition, xrefs = None))]
-    fn __init__<'py>(definition: &Bound<'py, PyString>, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__<'py>(
+        definition: &Bound<'py, PyString>,
+        xrefs: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
         let py = definition.py();
         let def = fastobo::ast::QuotedString::new(definition.to_str()?);
         let list = match xrefs {
             Some(x) => XrefList::collect(py, x)?,
             None => XrefList::new(Vec::new()),
         };
-        Ok(Self::new(def, Py::new(py, list)? ).into())
+        Ok(Self::new(def, Py::new(py, list)?).into())
     }
 
     fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
@@ -719,7 +725,8 @@ impl ClonePy for SubsetClause {
 
 impl Display for SubsetClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -795,7 +802,8 @@ impl ClonePy for SynonymClause {
 
 impl Display for SynonymClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -832,9 +840,7 @@ impl SynonymClause {
     }
 
     fn raw_value(&self) -> String {
-        Python::with_gil(|py| {
-            format!("{}", &*self.synonym.bind(py).borrow())
-        })
+        Python::with_gil(|py| format!("{}", &*self.synonym.bind(py).borrow()))
     }
 }
 
@@ -869,7 +875,8 @@ impl ClonePy for XrefClause {
 
 impl Display for XrefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -962,7 +969,8 @@ impl ClonePy for PropertyValueClause {
 
 impl Display for PropertyValueClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1037,7 +1045,8 @@ impl ClonePy for DomainClause {
 
 impl Display for DomainClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1112,7 +1121,8 @@ impl ClonePy for RangeClause {
 
 impl Display for RangeClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1257,7 +1267,8 @@ impl ClonePy for HoldsOverChainClause {
 
 impl Display for HoldsOverChainClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1861,7 +1872,8 @@ impl IsAClause {
 
 impl Display for IsAClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1944,7 +1956,8 @@ impl ClonePy for IntersectionOfClause {
 
 impl Display for IntersectionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2018,7 +2031,8 @@ impl ClonePy for UnionOfClause {
 
 impl Display for UnionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2093,7 +2107,8 @@ impl ClonePy for EquivalentToClause {
 
 impl Display for EquivalentToClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2168,7 +2183,8 @@ impl ClonePy for DisjointFromClause {
 
 impl Display for DisjointFromClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2243,7 +2259,8 @@ impl ClonePy for InverseOfClause {
 
 impl Display for InverseOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2318,7 +2335,8 @@ impl ClonePy for TransitiveOverClause {
 
 impl Display for TransitiveOverClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2396,7 +2414,8 @@ impl ClonePy for EquivalentToChainClause {
 
 impl Display for EquivalentToChainClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2480,7 +2499,8 @@ impl ClonePy for DisjointOverClause {
 
 impl Display for DisjointOverClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2558,7 +2578,8 @@ impl ClonePy for RelationshipClause {
 
 impl Display for RelationshipClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2706,7 +2727,8 @@ impl ClonePy for ReplacedByClause {
 
 impl Display for ReplacedByClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -2781,7 +2803,8 @@ impl ClonePy for ConsiderClause {
 
 impl Display for ConsiderClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -3066,7 +3089,8 @@ impl ClonePy for ExpandAssertionToClause {
 
 impl Display for ExpandAssertionToClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -3083,7 +3107,11 @@ impl IntoPy<fastobo::ast::TypedefClause> for ExpandAssertionToClause {
 #[pymethods]
 impl ExpandAssertionToClause {
     #[new]
-    fn __init__<'py>(py: Python<'py>, definition: String, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__<'py>(
+        py: Python<'py>,
+        definition: String,
+        xrefs: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
         let def = fastobo::ast::QuotedString::new(definition);
         let list = match xrefs {
             Some(x) => XrefList::collect(x.py(), x)?,
@@ -3167,7 +3195,8 @@ impl ClonePy for ExpandExpressionToClause {
 
 impl Display for ExpandExpressionToClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TypedefClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TypedefClause =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -3184,7 +3213,11 @@ impl IntoPy<fastobo::ast::TypedefClause> for ExpandExpressionToClause {
 #[pymethods]
 impl ExpandExpressionToClause {
     #[new]
-    fn __init__<'py>(py: Python<'py>, definition: String, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__<'py>(
+        py: Python<'py>,
+        definition: String,
+        xrefs: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
         let def = fastobo::ast::QuotedString::new(definition);
         let list = match xrefs {
             Some(x) => XrefList::collect(py, x)?,

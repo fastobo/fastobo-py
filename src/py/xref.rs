@@ -76,9 +76,7 @@ impl ClonePy for Xref {
 
 impl Display for Xref {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let xref: fastobo::ast::Xref = Python::with_gil(|py| {
-            self.clone_py(py).into_py(py)
-        });
+        let xref: fastobo::ast::Xref = Python::with_gil(|py| self.clone_py(py).into_py(py));
         xref.fmt(f)
     }
 }

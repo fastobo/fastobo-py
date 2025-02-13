@@ -5,13 +5,13 @@ use std::fmt::Write;
 use std::str::FromStr;
 
 use pyo3::exceptions::PyIndexError;
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyString;
 use pyo3::AsPyPointer;
 use pyo3::PyTypeInfo;
-use pyo3::exceptions::PyTypeError;
 
 use fastobo::ast;
 
@@ -22,8 +22,8 @@ use super::clause::TermClause;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
-use crate::utils::IntoPy;
 use crate::utils::FinalClass;
+use crate::utils::IntoPy;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.term")]
 #[derive(Debug, FinalClass, EqPy)]
@@ -98,11 +98,14 @@ impl TermFrame {
     // FIXME: should accept any iterable.
     #[new]
     #[pyo3(signature = (id, clauses = None))]
-    fn __init__<'py>(id: Ident, clauses: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__<'py>(
+        id: Ident,
+        clauses: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
         if let Some(clauses) = clauses {
             match clauses.extract() {
                 Ok(c) => Ok(Self::with_clauses(id, c).into()),
-                Err(_) => Err(PyTypeError::new_err("Expected list of `TermClause`"))
+                Err(_) => Err(PyTypeError::new_err("Expected list of `TermClause`")),
             }
         } else {
             Ok(Self::new(id).into())

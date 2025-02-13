@@ -35,9 +35,9 @@ use crate::py;
 use crate::raise;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
-use crate::utils::IntoPy;
 use crate::utils::EqPy;
 use crate::utils::FinalClass;
+use crate::utils::IntoPy;
 
 // --- Conversion Wrapper ----------------------------------------------------
 
@@ -492,14 +492,17 @@ impl IntoPy<fastobo::ast::TermClause> for DefClause {
 impl DefClause {
     #[new]
     #[pyo3(signature = (definition, xrefs = None))]
-    fn __init__<'py>(definition: &Bound<'py, PyString>, xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    fn __init__<'py>(
+        definition: &Bound<'py, PyString>,
+        xrefs: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
         let py = definition.py();
         let def = fastobo::ast::QuotedString::new(definition.to_str()?);
         let list = match xrefs {
             Some(x) => XrefList::collect(py, x)?,
             None => XrefList::new(Vec::new()),
         };
-        Ok(Self::new(def, Py::new(py, list)? ).into())
+        Ok(Self::new(def, Py::new(py, list)?).into())
     }
 
     fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
@@ -768,9 +771,7 @@ impl SynonymClause {
     }
 
     fn raw_value(&self) -> String {
-        Python::with_gil(|py| {
-            format!("{}", &*self.synonym.bind(py).borrow())
-        })
+        Python::with_gil(|py| format!("{}", &*self.synonym.bind(py).borrow()))
     }
 }
 

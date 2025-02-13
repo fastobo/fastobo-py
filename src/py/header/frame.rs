@@ -19,8 +19,8 @@ use super::clause::HeaderClause;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
-use crate::utils::IntoPy;
 use crate::utils::FinalClass;
+use crate::utils::IntoPy;
 
 #[pyclass(extends=AbstractFrame, module="fastobo.header")]
 #[derive(Debug, FinalClass, EqPy)]
@@ -77,13 +77,14 @@ impl IntoPy<obo::HeaderFrame> for HeaderFrame {
 //     }
 // }
 
-
 #[listlike(field = "clauses", type = "HeaderClause")]
 #[pymethods]
 impl HeaderFrame {
     #[new]
     #[pyo3(signature = (clauses = None))]
-    pub fn __init__<'py>(clauses: Option<&Bound<'py, PyAny>>) -> PyResult<PyClassInitializer<Self>> {
+    pub fn __init__<'py>(
+        clauses: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<PyClassInitializer<Self>> {
         let mut vec = Vec::new();
         if let Some(c) = clauses {
             for item in PyIterator::from_object(c)? {

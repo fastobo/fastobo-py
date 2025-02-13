@@ -21,8 +21,8 @@ use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 
 // use super::header::frame::HeaderFrame;
-use super::id::Ident;
 use super::id::BaseIdent;
+use super::id::Ident;
 // use super::term::frame::TermFrame;
 // use super::typedef::frame::TypedefFrame;
 

@@ -32,10 +32,10 @@ use fastobo_graphs::FromGraph;
 use fastobo_graphs::IntoGraph;
 use fastobo_owl::IntoOwl;
 use fastobo_owl::IntoOwlPrefixes;
-use horned_owl::ontology::component_mapped::ComponentMappedOntology;
+use horned_owl::error::HornedError;
 use horned_owl::io::ofn::writer::AsFunctional;
 use horned_owl::model::AnnotatedComponent;
-use horned_owl::error::HornedError;
+use horned_owl::ontology::component_mapped::ComponentMappedOntology;
 
 use crate::error::Error;
 use crate::error::GraphError;
@@ -52,6 +52,7 @@ use crate::utils::IntoPy;
 
 pub mod abc;
 pub mod doc;
+pub mod exceptions;
 pub mod header;
 pub mod id;
 pub mod instance;
@@ -60,14 +61,12 @@ pub mod syn;
 pub mod term;
 pub mod typedef;
 pub mod xref;
-pub mod exceptions;
 
 use self::doc::EntityFrame;
 use self::doc::OboDoc;
 use super::built;
 
 // --- Module export ---------------------------------------------------------
-
 
 /// Iterate over the frames contained in an OBO document.
 ///
@@ -76,9 +75,9 @@ use super::built;
 /// iterator. See the *Examples* section.
 ///
 /// Arguments:
-///     file (str, `os.PathLike` or file-handle): The path to an OBO file, or 
-///         a **binary** stream that contains a serialized OBO document. 
-///         *A binary stream needs a* ``read(x)`` *method returning* ``x`` 
+///     file (str, `os.PathLike` or file-handle): The path to an OBO file, or
+///         a **binary** stream that contains a serialized OBO document.
+///         *A binary stream needs a* ``read(x)`` *method returning* ``x``
 ///         `bytes`.
 ///     ordered (bool): Whether or not to yield the frames in the same
 ///         order they are declared in the source document.
@@ -109,7 +108,12 @@ use super::built;
 ///
 #[pyfunction]
 #[pyo3(name = "iter", text_signature = "(file, ordered=True, threads=0)", signature = (file, ordered=true, threads=0))]
-fn iter<'py>(py: Python<'py>, file: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<FrameReader> {
+fn iter<'py>(
+    py: Python<'py>,
+    file: &Bound<'py, PyAny>,
+    ordered: bool,
+    threads: i16,
+) -> PyResult<FrameReader> {
     // get the path to the given file
     let pathlike = py
         .import_bound(pyo3::intern!(py, "os"))?
@@ -120,9 +124,7 @@ fn iter<'py>(py: Python<'py>, file: &Bound<'py, PyAny>, ordered: bool, threads: 
     } else {
         match FrameReader::from_handle(file, ordered, threads) {
             Ok(r) => Ok(r),
-            Err(inner) if inner.is_instance_of::<pyo3::exceptions::PySyntaxError>(py) => {
-                Err(inner)
-            }
+            Err(inner) if inner.is_instance_of::<pyo3::exceptions::PySyntaxError>(py) => Err(inner),
             Err(inner) => {
                 raise!(py, PyTypeError("expected path or binary file handle") from inner);
             }
@@ -163,7 +165,12 @@ fn iter<'py>(py: Python<'py>, file: &Bound<'py, PyAny>, ordered: bool, threads: 
 ///
 #[pyfunction]
 #[pyo3(name = "load", text_signature = "(file, ordered=True, threads=0)", signature=(file, ordered=true, threads=0))]
-fn load<'py>(py: Python<'py>, file: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<OboDoc> {
+fn load<'py>(
+    py: Python<'py>,
+    file: &Bound<'py, PyAny>,
+    ordered: bool,
+    threads: i16,
+) -> PyResult<OboDoc> {
     // extract either a path or a file-handle from the arguments
     let path: Option<String>;
     let pathlike = py
@@ -197,7 +204,7 @@ fn load<'py>(py: Python<'py>, file: &Bound<'py, PyAny>, ordered: bool, threads: 
             .getattr("name")
             .and_then(|n| match n.downcast::<PyString>() {
                 Ok(x) => Ok(x.to_str()?.to_string()),
-                Err(e) => Err(PyErr::from(e))
+                Err(e) => Err(PyErr::from(e)),
             })
             .ok();
         // use a sequential or a threaded reader depending on `threads`.
@@ -271,7 +278,12 @@ fn load<'py>(py: Python<'py>, file: &Bound<'py, PyAny>, ordered: bool, threads: 
 ///
 #[pyfunction]
 #[pyo3(name = "loads", text_signature = "(document, ordered=True, threads=0)", signature=(document, ordered=true, threads=0))]
-fn loads<'py>(py: Python<'py>, document: &Bound<'py, PyString>, ordered: bool, threads: i16) -> PyResult<OboDoc> {
+fn loads<'py>(
+    py: Python<'py>,
+    document: &Bound<'py, PyString>,
+    ordered: bool,
+    threads: i16,
+) -> PyResult<OboDoc> {
     let cursor = std::io::Cursor::new(document.to_str()?);
     let mut reader = InternalParser::with_thread_count(cursor, threads)?;
     reader.ordered(ordered);
@@ -288,8 +300,8 @@ fn loads<'py>(py: Python<'py>, document: &Bound<'py, PyString>, ordered: bool, t
 /// superset of JSON, all graphs are in YAML format.*
 ///
 /// Arguments:
-///     file (str, `os.PathLike` or file-handle): The path to an OBO graph 
-///         file, or a **binary** stream that contains a serialized OBO 
+///     file (str, `os.PathLike` or file-handle): The path to an OBO graph
+///         file, or a **binary** stream that contains a serialized OBO
 ///         document. *A binary stream needs a* ``read(x)`` *method returning*
 ///         ``x`` `bytes`.
 ///
@@ -329,8 +341,8 @@ fn load_graph<'py>(py: Python<'py>, file: &Bound<'py, PyAny>) -> PyResult<OboDoc
         fastobo_graphs::from_file(decoded.to_str()?)
             .map_err(|e| PyErr::from(GraphError::from(e)))?
     } else {
-       // Argument is not a string, check if it is a file-handle.
-       let mut f = match PyFileRead::from_ref(file) {
+        // Argument is not a string, check if it is a file-handle.
+        let mut f = match PyFileRead::from_ref(file) {
             Ok(f) => f,
             Err(e) => raise!(py, PyTypeError("expected path or binary file handle") from e),
         };
@@ -345,8 +357,7 @@ fn load_graph<'py>(py: Python<'py>, file: &Bound<'py, PyAny>) -> PyResult<OboDoc
     // Convert the graph to an OBO document
     let graph = doc.graphs.into_iter().next().unwrap();
     // let doc = py.allow_threads(|| obo::OboDoc::from_graph(graph))
-    let doc = obo::OboDoc::from_graph(graph)
-        .map_err(GraphError::from)?;
+    let doc = obo::OboDoc::from_graph(graph).map_err(GraphError::from)?;
 
     // Convert the OBO document to a Python `OboDoc` class
     Ok(doc.into_py(py))
@@ -356,7 +367,7 @@ fn load_graph<'py>(py: Python<'py>, file: &Bound<'py, PyAny>) -> PyResult<OboDoc
 /// into a compact JSON representation.
 ///
 /// Arguments:
-///     file (str, `os.PathLike` or file-handle): The path to a file, or 
+///     file (str, `os.PathLike` or file-handle): The path to a file, or
 ///         a writable **binary** stream to write the serialized graph into.
 ///         *A binary stream needs a* ``write(b)`` *method that accepts
 ///         binary strings*.
@@ -380,7 +391,8 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>) -> P
     // Convert OBO document to an OBO Graph document.
     let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
     // FIXME: let graph = py.allow_threads(|| doc.into_graph())
-    let graph = doc.into_graph()
+    let graph = doc
+        .into_graph()
         .map_err(|e| PyErr::from(GraphError::from(e)))?;
 
     // Write the document
@@ -411,9 +423,9 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>) -> P
 /// Convert an OBO ontology to OWL and write it to the given handle.
 ///
 /// Arguments:
-///     file (str, `os.PathLike` or file-handle): The path to a file, 
-///         or a writable **binary** stream to write the serialized 
-///         ontology into. *A binary stream needs a* ``write(b)`` *method 
+///     file (str, `os.PathLike` or file-handle): The path to a file,
+///         or a writable **binary** stream to write the serialized
+///         ontology into. *A binary stream needs a* ``write(b)`` *method
 ///         that accepts* `bytes`.
 ///     doc (`~fastobo.doc.OboDoc`): The OBO document to be converted
 ///         into an OWL Ontology.
@@ -450,7 +462,12 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>) -> P
 ///
 #[pyfunction]
 #[pyo3(name = "dump_owl", text_signature = r#"(doc, file, format="ofn")"#, signature=(obj, file, format="ofn"))]
-fn dump_owl<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>, format: &str) -> PyResult<()> {
+fn dump_owl<'py>(
+    py: Python<'py>,
+    obj: &OboDoc,
+    file: &Bound<'py, PyAny>,
+    format: &str,
+) -> PyResult<()> {
     // get the path to the given file
     let pathlike = py
         .import_bound(pyo3::intern!(py, "os"))?
@@ -464,12 +481,14 @@ fn dump_owl<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>, format
         PyFileWrite::from_ref(&file)
             .map(std::io::BufWriter::new)
             .map(Box::new)?
-    };    
-   
+    };
+
     // Convert OBO document to an OWL document.
     let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
     let prefixes = doc.prefixes();
-    let ont = doc.into_owl::<ComponentMappedOntology<Rc<str>, Rc<AnnotatedComponent<Rc<str>>>>>().map_err(OwlError::from)?;
+    let ont = doc
+        .into_owl::<ComponentMappedOntology<Rc<str>, Rc<AnnotatedComponent<Rc<str>>>>>()
+        .map_err(OwlError::from)?;
 
     // Write the OWL document to the given handle
     let result = match format {

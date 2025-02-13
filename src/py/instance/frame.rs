@@ -18,8 +18,8 @@ use super::super::id::Ident;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 use crate::utils::EqPy;
-use crate::utils::IntoPy;
 use crate::utils::FinalClass;
+use crate::utils::IntoPy;
 
 #[pyclass(extends=AbstractEntityFrame, module="fastobo.instance")]
 #[derive(Debug, FinalClass, EqPy)]
@@ -51,7 +51,8 @@ impl ClonePy for InstanceFrame {
 
 impl Display for InstanceFrame {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let frame: fastobo::ast::InstanceFrame = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let frame: fastobo::ast::InstanceFrame =
+            Python::with_gil(|py| self.clone_py(py).into_py(py));
         frame.fmt(f)
     }
 }

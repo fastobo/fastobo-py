@@ -40,11 +40,9 @@ pub enum Handle {
 
 impl Handle {
     fn handle(&self) -> PyObject {
-        Python::with_gil(|py| {
-            match self {
-                Handle::FsFile(_, path) => path.display().to_string().to_object(py),
-                Handle::PyFile(f) => f.file().lock().unwrap().to_object(py),
-            }
+        Python::with_gil(|py| match self {
+            Handle::FsFile(_, path) => path.display().to_string().to_object(py),
+            Handle::PyFile(f) => f.file().lock().unwrap().to_object(py),
         })
     }
 }
@@ -186,7 +184,7 @@ impl FrameReader {
             .next()
             .unwrap()
             .map_err(Error::from)?
-            .into_header() 
+            .into_header()
             .unwrap();
         let header = Python::with_gil(|py| Py::new(py, frame.into_py(py)))?;
         Ok(Self { inner, header })
@@ -200,7 +198,11 @@ impl FrameReader {
         }
     }
 
-    pub fn from_handle<'py>(obj: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<Self> {
+    pub fn from_handle<'py>(
+        obj: &Bound<'py, PyAny>,
+        ordered: bool,
+        threads: i16,
+    ) -> PyResult<Self> {
         let py = obj.py();
         match PyFileGILRead::from_ref(obj).map(Handle::PyFile) {
             Ok(inner) => Self::new(BufReader::new(inner), ordered, threads),
@@ -229,15 +231,13 @@ impl FrameReader {
                 let entity = frame.into_entity().unwrap();
                 Ok(Some(Python::with_gil(|py| entity.into_py(py))))
             }
-            Some(Err(e)) => {
-                Python::with_gil(|py| {
-                    if PyErr::occurred(py) {
-                        Err(PyErr::fetch(py))
-                    } else {
-                        Err(Error::from(e).into())
-                    }
-                })
-            }
+            Some(Err(e)) => Python::with_gil(|py| {
+                if PyErr::occurred(py) {
+                    Err(PyErr::fetch(py))
+                } else {
+                    Err(Error::from(e).into())
+                }
+            }),
         }
     }
 

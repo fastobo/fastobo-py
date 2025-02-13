@@ -9,19 +9,20 @@ Precompiled Wheels
 The ``fastobo`` Python module is implemented in Rust, but the Rust compiler
 is only required if your platform does not have precompiled wheels available.
 Currently, we provide `wheels <https://pythonwheels.com/>`_ for the following
-platforms and implementations:
+platforms:
 
-* **Linux x86-64**: CPython 3.5, 3.6, 3.7, 3.8, and PyPy3 7.1.0, 7.2.0, 7.3.0
-* **OSX x86-64**: CPython 3.5, 3.6, 3.7, 3.8, and PyPy3 7.3.0
-* **Windows x86-64**: CPython 3.5, 3.6, 3.7, 3.8
+* **Linux**: *x86-64* and *Aarch64*
+* **MacOS**: *x86-64* and *Aarch64*
+* **Windows**: *x86-64* only.
 
-If your platform and implementation is not listed above, you will need to build
-from source (see next section). Feel free to
-`open an issue <https://github.com/fastobo/fastobo-py/issues>`_ as well!
-
-Downloading and installing from a wheel is then as simple as::
+The supported Python versions are provided with the 
+`cibuildwheel <https://cibuildwheel.pypa.io>`_ tool. Downloading and
+installing from a wheel is then as simple as::
 
   $ pip install fastobo --user
+
+If your platform and implementation is not listed above, you will need to build
+from source (see next section). 
 
 
 Bioconda package
@@ -34,6 +35,21 @@ package manager::
   $ conda install -c bioconda fastobo
 
 Note that only Linux x86-64 is supported.
+
+
+Piwheels
+^^^^^^^^
+
+``fastobo`` works on Raspberry Pi computers, and pre-built wheels are compiled 
+for `armv7l` on `piwheels <https://www.piwheels.org/project/fastobo/>`_.
+Run the following command to install these instead of compiling from source:
+
+.. code:: console
+
+   $ pip3 install fastobo --extra-index-url https://www.piwheels.org/simple
+
+Check the `piwheels documentation <https://www.piwheels.org/faq.html>`_ for 
+more information.
 
 
 Building from source

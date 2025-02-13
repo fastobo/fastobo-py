@@ -76,9 +76,10 @@ use super::built;
 /// iterator. See the *Examples* section.
 ///
 /// Arguments:
-///     fh (str or file-handle): The path to an OBO file, or a **binary**
-///         stream that contains a serialized OBO document. *A binary
-///         stream needs a* ``read(x)`` *method returning* ``x`` *bytes*.
+///     file (str, `os.PathLike` or file-handle): The path to an OBO file, or 
+///         a **binary** stream that contains a serialized OBO document. 
+///         *A binary stream needs a* ``read(x)`` *method returning* ``x`` 
+///         `bytes`.
 ///     ordered (bool): Whether or not to yield the frames in the same
 ///         order they are declared in the source document.
 ///     threads (int): The number of threads to use for parsing. Set to
@@ -107,13 +108,17 @@ use super::built;
 ///     [TermFrame(PrefixedIdent('MS', '1000001')), ...]
 ///
 #[pyfunction]
-#[pyo3(name = "iter", text_signature = "(fh, ordered=True, threads=0)", signature = (fh, ordered=true, threads=0))]
-fn iter<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<FrameReader> {
-    if let Ok(s) = fh.downcast::<PyString>() {
-        let path = s.to_str()?;
-        FrameReader::from_path(path, ordered, threads)
+#[pyo3(name = "iter", text_signature = "(file, ordered=True, threads=0)", signature = (file, ordered=true, threads=0))]
+fn iter<'py>(py: Python<'py>, file: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<FrameReader> {
+    // get the path to the given file
+    let pathlike = py
+        .import_bound(pyo3::intern!(py, "os"))?
+        .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
+    if let Ok(path) = pathlike {
+        let decoded = path.downcast::<PyString>()?;
+        FrameReader::from_path(decoded.to_str()?, ordered, threads)
     } else {
-        match FrameReader::from_handle(fh, ordered, threads) {
+        match FrameReader::from_handle(file, ordered, threads) {
             Ok(r) => Ok(r),
             Err(inner) if inner.is_instance_of::<pyo3::exceptions::PySyntaxError>(py) => {
                 Err(inner)
@@ -157,23 +162,27 @@ fn iter<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>, ordered: bool, threads: i1
 ///     SubsetdefClause(UnprefixedIdent('Angiosperm'), 'Term for angiosperms')
 ///
 #[pyfunction]
-#[pyo3(name = "load", text_signature = "(fh, ordered=True, threads=0)", signature=(fh, ordered=true, threads=0))]
-fn load<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<OboDoc> {
+#[pyo3(name = "load", text_signature = "(file, ordered=True, threads=0)", signature=(file, ordered=true, threads=0))]
+fn load<'py>(py: Python<'py>, file: &Bound<'py, PyAny>, ordered: bool, threads: i16) -> PyResult<OboDoc> {
     // extract either a path or a file-handle from the arguments
     let path: Option<String>;
-    let boxed: Box<dyn BufRead> = if let Ok(s) = fh.downcast::<PyString>() {
+    let pathlike = py
+        .import_bound(pyo3::intern!(py, "os"))?
+        .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
+    let b: Box<dyn BufRead> = if let Ok(p) = pathlike {
+        let decoded = p.downcast::<PyString>()?;
         // get a buffered reader to the resources pointed by `path`
-        let bf = match std::fs::File::open(s.to_str()?) {
+        let bf = match std::fs::File::open(decoded.to_str()?) {
             Ok(f) => std::io::BufReader::new(f),
             Err(e) => return Err(PyErr::from(Error::from(e))),
         };
         // store the path for later
-        path = Some(s.to_str()?.to_string());
+        path = Some(decoded.to_str()?.to_string());
         // use a sequential or a threaded reader depending on `threads`.
         Box::new(bf)
     } else {
         // get a buffered reader by wrapping the given file handle
-        let bf = match PyFileRead::from_ref(fh) {
+        let bf = match PyFileRead::from_ref(file) {
             // Object is a binary file-handle: attempt to parse the
             // document and return an `OboDoc` object.
             Ok(f) => std::io::BufReader::new(f),
@@ -184,7 +193,7 @@ fn load<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>, ordered: bool, threads: i1
             }
         };
         // extract the path from the `name` attribute
-        path = fh
+        path = file
             .getattr("name")
             .and_then(|n| match n.downcast::<PyString>() {
                 Ok(x) => Ok(x.to_str()?.to_string()),
@@ -196,7 +205,7 @@ fn load<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>, ordered: bool, threads: i1
     };
 
     // create the reader and set the `ordered` flag
-    let mut reader = InternalParser::with_thread_count(boxed, threads)?;
+    let mut reader = InternalParser::with_thread_count(b, threads)?;
     reader.ordered(ordered);
 
     // read the header and check it did not error
@@ -279,10 +288,10 @@ fn loads<'py>(py: Python<'py>, document: &Bound<'py, PyString>, ordered: bool, t
 /// superset of JSON, all graphs are in YAML format.*
 ///
 /// Arguments:
-///     fh (str or file-handle): The path to an OBO graph file, or a
-///         **binary** stream that contains a serialized OBO document.
-///         *A binary stream needs a* ``read(x)`` *method returning*
-///         ``x`` *bytes*.
+///     file (str, `os.PathLike` or file-handle): The path to an OBO graph 
+///         file, or a **binary** stream that contains a serialized OBO 
+///         document. *A binary stream needs a* ``read(x)`` *method returning*
+///         ``x`` `bytes`.
 ///
 /// Returns:
 ///     `~fastobo.doc.OboDoc`: The first graph of the OBO graph
@@ -309,18 +318,19 @@ fn loads<'py>(py: Python<'py>, document: &Bound<'py, PyString>, ordered: bool, t
 ///     TermFrame(PrefixedIdent('PATO', '0000000'))
 ///
 #[pyfunction]
-#[pyo3(name = "load_graph", text_signature = "(fh)")]
-fn load_graph<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>) -> PyResult<OboDoc> {
-    let doc: GraphDocument = if let Ok(s) = fh.downcast::<PyString>() {
-        // Argument is a string, assumed to be a path: open the file.
-        // and extract the graph
-        let path = s.to_str()?;
-        // py.allow_threads(|| fastobo_graphs::from_file(path))
-        fastobo_graphs::from_file(path)
+#[pyo3(name = "load_graph", text_signature = "(file)")]
+fn load_graph<'py>(py: Python<'py>, file: &Bound<'py, PyAny>) -> PyResult<OboDoc> {
+    // load graph from a path or a file-handle
+    let pathlike = py
+        .import_bound(pyo3::intern!(py, "os"))?
+        .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
+    let doc: GraphDocument = if let Ok(path) = pathlike {
+        let decoded = path.downcast::<PyString>()?;
+        fastobo_graphs::from_file(decoded.to_str()?)
             .map_err(|e| PyErr::from(GraphError::from(e)))?
     } else {
-        // Argument is not a string, check if it is a file-handle.
-        let mut f = match PyFileRead::from_ref(fh) {
+       // Argument is not a string, check if it is a file-handle.
+       let mut f = match PyFileRead::from_ref(file) {
             Ok(f) => f,
             Err(e) => raise!(py, PyTypeError("expected path or binary file handle") from e),
         };
@@ -346,8 +356,8 @@ fn load_graph<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>) -> PyResult<OboDoc> 
 /// into a compact JSON representation.
 ///
 /// Arguments:
-///     fh (str or file-handle): The path to a file, or a writable
-///         **binary** stream to write the serialized graph into.
+///     file (str, `os.PathLike` or file-handle): The path to a file, or 
+///         a writable **binary** stream to write the serialized graph into.
 ///         *A binary stream needs a* ``write(b)`` *method that accepts
 ///         binary strings*.
 ///     doc (`~fastobo.doc.OboDoc`): The OBO document to be converted
@@ -365,8 +375,8 @@ fn load_graph<'py>(py: Python<'py>, fh: &Bound<'py, PyAny>) -> PyResult<OboDoc> 
 ///     >>> fastobo.dump_graph(doc, "plana.json")
 ///
 #[pyfunction]
-#[pyo3(name = "dump_graph", text_signature = "(doc, fh)")]
-fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>) -> PyResult<()> {
+#[pyo3(name = "dump_graph", text_signature = "(doc, file)")]
+fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>) -> PyResult<()> {
     // Convert OBO document to an OBO Graph document.
     let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
     // FIXME: let graph = py.allow_threads(|| doc.into_graph())
@@ -374,15 +384,16 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>) -> PyR
         .map_err(|e| PyErr::from(GraphError::from(e)))?;
 
     // Write the document
-    if let Ok(s) = fh.downcast::<PyString>() {
-        // Write into a file if given a path as a string.
-        let path = s.to_str()?;
-        // py.allow_threads(|| fastobo_graphs::to_file(path, &graph))
-        fastobo_graphs::to_file(path, &graph)
+    let pathlike = py
+        .import_bound(pyo3::intern!(py, "os"))?
+        .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
+    if let Ok(path) = pathlike {
+        let decoded = path.downcast::<PyString>()?;
+        fastobo_graphs::to_file(decoded.to_str()?, &graph)
             .map_err(|e| PyErr::from(GraphError::from(e)))
     } else {
         // Write into the handle if given a writable file.
-        let mut f = match PyFileWrite::from_ref(fh) {
+        let mut f = match PyFileWrite::from_ref(file) {
             Ok(f) => f,
             Err(e) => {
                 raise!(py, PyTypeError("expected path or binary file handle") from e)
@@ -400,16 +411,16 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>) -> PyR
 /// Convert an OBO ontology to OWL and write it to the given handle.
 ///
 /// Arguments:
-///     fh (str or file-handle): The path to a file, or a writable
-///         **binary** stream to write the serialized graph into.
-///         *A binary stream needs a* ``write(b)`` *method that accepts*
-///         ``bytes``.
+///     file (str, `os.PathLike` or file-handle): The path to a file, 
+///         or a writable **binary** stream to write the serialized 
+///         ontology into. *A binary stream needs a* ``write(b)`` *method 
+///         that accepts* `bytes`.
 ///     doc (`~fastobo.doc.OboDoc`): The OBO document to be converted
 ///         into an OWL Ontology.
 ///     format (`str`): The OWL format to serialize the converted OWL
 ///         document into. Supported values are: ``ofn`` for
 ///         `Functional-style syntax <https://w3.org/TR/owl2-syntax/>`_,
-///         ``owx`` for OWL/XML syntax, ``rdf`` for
+///         ``owx`` for OWL/XML syntax, ``rdf`` for RDX/XML syntax.
 ///
 /// Raises:
 ///     TypeError: When the argument have invalid types.
@@ -438,35 +449,35 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>) -> PyR
 ///     Failure to do both will result in a `ValueError` being thrown.
 ///
 #[pyfunction]
-#[pyo3(name = "dump_owl", text_signature = r#"(doc, fh, format="ofn")"#, signature=(obj, fh, format="ofn"))]
-fn dump_owl<'py>(py: Python<'py>, obj: &OboDoc, fh: &Bound<'py, PyAny>, format: &str) -> PyResult<()> {
+#[pyo3(name = "dump_owl", text_signature = r#"(doc, file, format="ofn")"#, signature=(obj, file, format="ofn"))]
+fn dump_owl<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>, format: &str) -> PyResult<()> {
+    // get the path to the given file
+    let pathlike = py
+        .import_bound(pyo3::intern!(py, "os"))?
+        .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
+    let mut b: Box<dyn Write> = if let Ok(path) = pathlike {
+        let decoded = path.downcast::<PyString>()?;
+        std::fs::File::create(decoded.to_str()?)
+            .map(std::io::BufWriter::new)
+            .map(Box::new)?
+    } else {
+        PyFileWrite::from_ref(&file)
+            .map(std::io::BufWriter::new)
+            .map(Box::new)?
+    };    
+   
     // Convert OBO document to an OWL document.
     let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
-
     let prefixes = doc.prefixes();
     let ont = doc.into_owl::<ComponentMappedOntology<Rc<str>, Rc<AnnotatedComponent<Rc<str>>>>>().map_err(OwlError::from)?;
 
-    // Write the document
-    let mut file: Box<dyn Write> = if let Ok(s) = fh.downcast::<PyString>() {
-        // Write into a file if given a path as a string.
-        Box::new(std::fs::File::create(s.to_str()?)?)
-    } else {
-        // Write into the handle if given a writable file.
-        match PyFileWrite::from_ref(fh) {
-            Ok(f) => Box::new(f),
-            Err(e) => {
-                raise!(py, PyTypeError("expected path or binary file handle") from e)
-            }
-        }
-    };
-
+    // Write the OWL document to the given handle
     let result = match format {
-        "ofn" => horned_owl::io::ofn::writer::write(file, &ont, Some(&prefixes)),
-        "owx" => horned_owl::io::owx::writer::write(file, &ont, Some(&prefixes)),
-        "rdf" => horned_owl::io::rdf::writer::write(&mut file, &ont),
+        "ofn" => horned_owl::io::ofn::writer::write(&mut b, &ont, Some(&prefixes)),
+        "owx" => horned_owl::io::owx::writer::write(&mut b, &ont, Some(&prefixes)),
+        "rdf" => horned_owl::io::rdf::writer::write(&mut b, &ont),
         _ => return Err(PyValueError::new_err(format!("invalid format: {}", format))),
     };
-
 
     if let Err(e) = result {
         match e {

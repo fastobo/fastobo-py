@@ -39,7 +39,7 @@ features = ["threading", "smartstring"]
 version = "0.4.8"
 features = ["obo"]
 [dependencies.fastobo-owl]
-version = "0.3.1"
+version = "0.3.2"
 [dependencies.horned-owl]
 version = "1.0"
 [dependencies.fastobo-py-derive-internal]

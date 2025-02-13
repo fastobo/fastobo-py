@@ -285,9 +285,9 @@ dependencies = [
 
 [[package]]
 name = "fastobo-owl"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f68af211051c3be807ec03930923564bec9a28b7fd570dee1fcbf19722fc482a"
+checksum = "a5a9dbc9f450b2033923734ef701a3c89ba88c93fd5ad9d7e143f2c2d1804970"
 dependencies = [
  "curie",
  "fastobo",

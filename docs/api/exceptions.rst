@@ -1,5 +1,5 @@
-Xref
-====
+Exceptions
+==========
 
 .. currentmodule:: fastobo.exceptions
 .. automodule:: fastobo.exceptions
@@ -8,28 +8,16 @@ Xref
 Cardinality Errors
 ------------------
 
-MissingClauseError
-^^^^^^^^^^^^^^^^^^
-
 .. autoexception:: MissingClauseError
 
 
-DuplicateClausesError
-^^^^^^^^^^^^^^^^^^^^^
-
 .. autoexception:: DuplicateClausesError
 
-
-SingleClauseError
-^^^^^^^^^^^^^^^^^^
 
 .. autoexception:: SingleClauseError
 
 
 Threading Errors
 ----------------
-
-DisconnectedChannelError
-^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoexception:: DisconnectedChannelError

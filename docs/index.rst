@@ -1,10 +1,8 @@
-.. fastobo documentation master file, created by
-   sphinx-quickstart on Sat Apr 13 02:49:55 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+``fastobo`` |Stars|
+===================
 
-``fastobo``
-===========
+.. |Stars| image:: https://img.shields.io/github/stars/fastobo/fastobo-py.svg?style=social&maxAge=3600&label=Star
+   :target: https://github.com/fastobo/fastobo-py/stargazers
 
 *Faultless AST for Open Biomedical Ontologies in Python.*
 
@@ -52,9 +50,17 @@
 About
 -----
 
-``fastobo`` is a Rust library implementing a reliable parser for the OBO file format 1.4.
+``fastobo`` is a Rust library implementing a reliable parser for the 
+`OBO file format 1.4 <https://owlcollab.github.io/oboformat/doc/GO.format.obo-1_4.html>`_.
 This extension module exports idiomatic Python bindings that can be used to load, edit and
 serialize ontologies in the OBO format.
+
+Setup
+-----
+
+Run ``pip install fastobo`` in a shell to download the latest release 
+from PyPi, or have a look at the :doc:`Installation page <guide/install>` to find 
+other ways to install ``diced``.
 
 
 Library
@@ -63,23 +69,17 @@ Library
 .. toctree::
    :maxdepth: 2
 
-   install
-   examples/index
-   api/index
-   changes
+   User Guide <guide/index>
+   Examples <examples/index>
+   API Reference <api/index>
 
 
-Miscellaneous
--------------
+License
+-------
 
-.. toctree::
-   :maxdepth: 2
+This library is provided under the `MIT license <https://choosealicense.com/licenses/mit/>`_.
 
-   about
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+*This project was was developed by* `Martin Larralde <https://github.com/althonos/>`_ 
+*during his MSc thesis at the* 
+`Lawrence Berkeley National Laboratory <https://www.lbl.gov/>`_
+*in the* `BBOP team <http://berkeleybop.org/>`_.

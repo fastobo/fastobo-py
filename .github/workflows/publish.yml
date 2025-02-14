@@ -7,28 +7,23 @@ on:
 
 jobs:
 
-  # wheel-linux-aarch64:
-  #   name: Build Linux wheels (Aarch64)
-  #   runs-on: ubuntu-latest
-  #   if: "startsWith(github.ref, 'refs/tags/v')"
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - name: Set up QEMU
-  #     id: qemu
-  #     uses: docker/setup-qemu-action@v3
-  #     with:
-  #       platforms: all
-  #   - name: Build manylinux wheels
-  #     uses: pypa/cibuildwheel@v2.21.3
-  #     env:
-  #       CIBW_ARCHS: aarch64
-  #       CIBW_BUILD: 'cp*-manylinux_aarch64'
-  #     with:
-  #       output-dir: dist
-  #   - uses: actions/upload-artifact@v4
-  #     with:
-  #       name: wheels-manylinux_aarch64
-  #       path: dist/*
+  wheel-linux-aarch64:
+    name: Build Linux wheels (Aarch64)
+    runs-on: ubuntu-22.04-arm
+    if: "startsWith(github.ref, 'refs/tags/v')"
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build manylinux wheels
+      uses: pypa/cibuildwheel@v2.21.3
+      env:
+        CIBW_ARCHS: aarch64
+        CIBW_BUILD: 'cp*-manylinux_aarch64'
+      with:
+        output-dir: dist
+    - uses: actions/upload-artifact@v4
+      with:
+        name: wheels-manylinux_aarch64
+        path: dist/*
 
   wheel-linux-x86_64:
     name: Build Linux wheels (x86-64)
@@ -130,33 +125,33 @@ jobs:
   upload:
     environment: PyPI
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
     name: Upload
+    if: "startsWith(github.ref, 'refs/tags/v')"
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
     needs:
+    - sdist
     - wheel-linux-aarch64
     - wheel-linux-x86_64
     - wheel-macos-aarch64
     - wheel-macos-x86_64
     - wheel-win32-x86_64
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v1
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v1
+    - name: Download source distribution
+      uses: actions/download-artifact@v4
       with:
-        python-version: "3.10"
-    - name: Install CI requirements
-      run: python -m pip install -U -r ci/requirements.txt
-    - name: Build source tarball with vendored sources
-      run: python setup.py vendor sdist
-    - name: Download built wheels
-      uses: actions/download-artifact@v2
+        name: sdist
+        path: dist/
+        merge-multiple: true
+    - name: Download wheel distributions
+      uses: actions/download-artifact@v4
       with:
-        name: wheels
-        path: dist
+        pattern: wheels-*
+        path: dist/
+        merge-multiple: true
     - name: Publish distributions to PyPI
-      if: startsWith(github.ref, 'refs/tags')
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: pypa/gh-action-pypi-publish@release/v1
 
   release:

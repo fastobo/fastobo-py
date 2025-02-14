@@ -1,6 +1,6 @@
 [package]
 name = "fastobo-py-derive-internal"
-version = "0.12.3"
+version = "0.13.0"
 authors = ["Martin Larralde <martin.larralde@embl.de>"]
 edition = "2018"
 publish = false

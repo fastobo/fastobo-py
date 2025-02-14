@@ -6,7 +6,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.12.3...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.13.0...HEAD
+
+## [v0.13.0] - 2025-02-14
+[v0.13.0]: https://github.com/fastobo/fastobo-py/compare/v0.12.3...v0.13.0
+### Added
+- Support for exporting to OWL/XML and RDF/XML syntaxes in `fastobo.dump_owl`.
+- Support for `os.PathLike` arguments as files in all `fastobo` top-level functions.
+### Changed
+- Bump `pyo3` to `v0.23.4`.
+- Bump `fastobo` to `v0.15.4`.
+- Bump `fastobo-owl` to `v0.3.2`.
+- Bump `horned-owl` to `v1.0`.
+- Bump `syn` derive dependency to `v2.0`.
+- Use `maturin` instead of `setuptools-rust` to build the project with `pip`.
+- Use PyData theme to render the Sphinx documentation.
+### Removed
+- `fastobo.syn.SynonymScope` type (replaced by literal strings where applicable).
 
 ## [v0.12.3] - 2023-12-06
 [v0.12.3]: https://github.com/fastobo/fastobo-py/compare/v0.12.2...v0.12.3

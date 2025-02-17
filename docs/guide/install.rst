@@ -25,16 +25,13 @@ If your platform and implementation is not listed above, you will need to build
 from source (see next section). 
 
 
-Bioconda package
-----------------
+Conda package
+-------------
 
-``fastobo`` is also available in the
-`Bioconda <https://anaconda.org/bioconda/fastobo>`_ channel of the ``conda``
-package manager::
+``fastobo`` is also available for `Conda <https://anaconda.org>`_ in the
+``conda-forge`` channel::
 
-  $ conda install -c bioconda fastobo
-
-Note that only Linux x86-64 is supported.
+  $ conda install conda-forge::fastobo 
 
 
 Piwheels
@@ -62,7 +59,7 @@ to learn how to install Rust on your machine.
 
 Then installing with ``pip`` will build the pacakge::
 
-  $ pip install fastobo --user
+  $ pip install fastobo --user -v --no-binary :all:
 
 **Be patient, it can take a long time on lower-end machine!**
 

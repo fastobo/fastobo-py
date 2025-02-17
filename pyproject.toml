@@ -42,7 +42,7 @@ classifiers = [
 "Documentation" = "https://fastobo.readthedocs.io/"
 "Builds" = "https://github.com/fastobo/fastobo-py/actions/"
 "PyPI" = "https://pypi.org/project/fastobo"
-"Conda" = "https://anaconda.org/bioconda/fastobo"
+"Conda" = "https://anaconda.org/conda-forge/fastobo"
 "PiWheels" = "https://www.piwheels.org/project/fastobo/"
 
 [tool.maturin]

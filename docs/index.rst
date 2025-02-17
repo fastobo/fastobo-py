@@ -10,13 +10,13 @@
 
 *Faultless AST for Open Biomedical Ontologies in Python.*
 
-|Actions| |License| |Source| |PyPI| |Wheel| |Bioconda| |Versions| |Implementation| |Changelog| |Docs| |Issues| |DOI| |Downloads|
+|Actions| |License| |Source| |PyPI| |Wheel| |Conda| |Versions| |Implementation| |Changelog| |Docs| |Issues| |DOI| |Downloads|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/fastobo.svg?style=flat-square&maxAge=300
    :target: https://pypi.org/project/fastobo
 
-.. |Bioconda| image:: https://img.shields.io/conda/vn/bioconda/fastobo?style=flat-square&maxAge=3600
-   :target: https://anaconda.org/bioconda/fastobo
+.. |Conda| image:: https://img.shields.io/conda/vn/conda-forge/fastobo?style=flat-square&maxAge=3600
+   :target: https://anaconda.org/conda-forge/fastobo
 
 .. |Actions| image:: https://img.shields.io/github/actions/workflow/status/fastobo/fastobo-py/test.yml?branch=master&style=flat-square&maxAge=600
    :target: https://github.com/fastobo/fastobo-py/actions

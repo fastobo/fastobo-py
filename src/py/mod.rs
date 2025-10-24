@@ -57,6 +57,7 @@ pub mod header;
 pub mod id;
 pub mod instance;
 pub mod pv;
+pub mod qual;
 pub mod syn;
 pub mod term;
 pub mod typedef;
@@ -527,6 +528,7 @@ pub fn init<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     add_submodule!(py, m, id);
     add_submodule!(py, m, instance);
     add_submodule!(py, m, pv);
+    add_submodule!(py, m, qual);
     add_submodule!(py, m, syn);
     add_submodule!(py, m, term);
     add_submodule!(py, m, typedef);

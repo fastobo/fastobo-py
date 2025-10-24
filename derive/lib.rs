@@ -269,7 +269,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             path.segments.iter().next().unwrap().ident.span(),
         );
 
-        variants.push(quote!(#lit => ob.extract::<pyo3::Py<#path>>().map(#wrapped::#name)));
+        variants.push(quote!(#lit => obj.extract::<pyo3::Py<#path>>().map(#wrapped::#name).map_err(PyErr::from)));
     }
 
     // extract name of base struct
@@ -298,28 +298,25 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
         impl<'source, 'py> pyo3::FromPyObject<'source, 'py> for #wrapped {
             type Error = PyErr;
             fn extract(obj: Borrowed<'source, 'py, PyAny>) -> pyo3::PyResult<Self> {
-                // use pyo3::AsPyPointer;
+                let qualname = obj.get_type().name()?;
+                let q = qualname.to_str()?;
 
-                // let qualname = ob.get_type().name()?;
-                // let q = qualname.to_str()?;
+                let ty = match q.rfind('.') {
+                    Some(idx) => &q[idx+1..],
+                    None => &q,
+                };
 
-                // let ty = match q.rfind('.') {
-                //     Some(idx) => &q[idx+1..],
-                //     None => &q,
-                // };
-
-                // if ob.is_instance_of::<#base>() {
-                //     match ty.as_ref() {
-                //         #(#variants,)*
-                //         _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
-                //     }
-                // } else {
-                //     Err(pyo3::exceptions::PyTypeError::new_err(format!(
-                //         #err_ty,
-                //         ob.get_type().name()?,
-                //     )))
-                // }
-                todo!("FromPyObject")
+                if obj.is_instance_of::<#base>() {
+                    match ty.as_ref() {
+                        #(#variants,)*
+                        _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
+                    }
+                } else {
+                    Err(pyo3::exceptions::PyTypeError::new_err(format!(
+                        #err_ty,
+                        obj.get_type().name()?,
+                    )))
+                }
             }
         }
     };

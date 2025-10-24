@@ -119,10 +119,10 @@ impl AbstractClass for AbstractClause {
 
 #[pymethods]
 impl AbstractClause {
-    /// Get the raw tag of the header clause.
+    /// Get the raw tag of the clause.
     ///
     /// Returns:
-    ///     `str`: the header clause value as it was extracted from the OBO
+    ///     `str`: the clause tag as it was extracted from the OBO
     ///     header, stripped from trailing qualifiers and comment.
     ///
     /// Example:
@@ -135,10 +135,10 @@ impl AbstractClause {
         Err(PyNotImplementedError::new_err("BaseHeaderClause.raw_tag"))
     }
 
-    /// Get the raw value of the header clause.
+    /// Get the raw value of the clause.
     ///
     /// Returns:
-    ///     `str`: the header clause value as it was extracted from the OBO
+    ///     `str`: the clause value as it was extracted from the OBO
     ///     header, stripped from trailing qualifiers and comment.
     ///
     /// Example:

@@ -203,6 +203,21 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
     }
 }
 
+impl IntoPy<TypedefClause> for fastobo::ast::Line<fastobo::ast::TypedefClause> {
+    fn into_py(mut self, py: Python) -> TypedefClause {
+        // extract end-of-line attributes
+        let qualifiers = self.qualifiers_mut().map(std::mem::take).unwrap_or_default();
+        // let comment = self.comment_mut().map(std::mem::take).unwrap_or_default();
+        // convert clause
+        let clause = self.into_inner().into_py(py);
+        // attach attributes
+        let base = clause.as_base(py);
+        base.as_super().borrow_mut().qualifiers = Py::new(py, qualifiers.into_py(py)).unwrap();
+        // return object
+        clause
+    }
+}
+
 // --- Base ------------------------------------------------------------------
 
 #[pyclass(subclass, extends=AbstractEntityClause, module="fastobo.typedef")]

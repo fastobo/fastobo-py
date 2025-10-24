@@ -17,6 +17,7 @@ use pyo3::PyTypeInfo;
 use fastobo::ast as obo;
 
 use crate::error::Error;
+use crate::py::qual::QualifierList;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 
@@ -155,15 +156,26 @@ impl AbstractClause {
 
 /// An abstract entity clause.
 #[pyclass(subclass, extends=AbstractClause, module="fastobo.abc")]
-#[derive(Debug, Default)]
-pub struct AbstractEntityClause {}
+#[derive(Debug)]
+pub struct AbstractEntityClause {
+    #[pyo3(set)]
+    pub(crate) qualifiers: Py<QualifierList>,
+}
 
 impl AbstractClass for AbstractEntityClause {
     fn initializer() -> PyClassInitializer<Self> {
         AbstractClause::initializer()
-            .add_subclass(Self {})
+            .add_subclass(Self {
+                qualifiers: Python::attach(|py| Py::new(py, QualifierList::default()).unwrap())
+            })
     }
 }
 
 #[pymethods]
-impl AbstractEntityClause {}
+impl AbstractEntityClause {
+    /// `QualifierList`: the end-of-line qualifiers for this clause.
+    #[getter]
+    pub fn get_qualifiers(&self) -> &Py<QualifierList> {
+        &self.qualifiers
+    }
+}

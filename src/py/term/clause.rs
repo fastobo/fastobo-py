@@ -135,14 +135,15 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
 
 impl IntoPy<TermClause> for fastobo::ast::Line<fastobo::ast::TermClause> {
     fn into_py(mut self, py: Python) -> TermClause {
-        // let qualifiers = self.qualifiers_mut().map(std::mem::take).unwrap_or_default();
+        // extract end-of-line attributes
+        let qualifiers = self.qualifiers_mut().map(std::mem::take).unwrap_or_default();
         // let comment = self.comment_mut().map(std::mem::take).unwrap_or_default();
+        // convert clause
         let clause = self.into_inner().into_py(py);
-        clause.as_base(py);
-        // attach qualifiers
-        // let abc = clause.clone_py(py).into_pyobject(py).unwrap();
-        // abc.as_super().borrow_mut().line = fastobo::ast::Line::with_qualifiers(qualifiers);
-        
+        // attach attributes
+        let base = clause.as_base(py);
+        base.as_super().borrow_mut().qualifiers = Py::new(py, qualifiers.into_py(py)).unwrap();
+        // return object
         clause
     }
 }

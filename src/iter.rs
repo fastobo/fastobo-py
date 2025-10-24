@@ -16,7 +16,6 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use pyo3::types::PyString;
-use pyo3::AsPyPointer;
 
 use fastobo::parser::Parser;
 use fastobo::parser::SequentialParser;
@@ -213,11 +212,10 @@ impl FrameReader {
 
 #[pymethods]
 impl FrameReader {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            let fmt = PyString::new(py, "fastobo.iter({!r})").to_object(py);
-            fmt.call_method1(py, "format", (&self.inner.as_ref().get_ref().handle(),))
-        })
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        let py = slf.py();
+        let fmt = PyString::new(py, "fastobo.iter({!r})");
+        fmt.call_method1("format", (&slf.inner.as_ref().get_ref().handle(),))
     }
 
     fn __iter__(slf: PyRefMut<'_, Self>) -> PyResult<PyRefMut<'_, Self>> {

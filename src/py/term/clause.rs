@@ -16,7 +16,6 @@ use pyo3::types::PyDateTime;
 use pyo3::types::PyString;
 use pyo3::types::PyTimeAccess;
 use pyo3::types::PyTzInfo;
-use pyo3::AsPyPointer;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -199,8 +198,8 @@ impl IsAnonymousClause {
         impl_richcmp!(self, other, op, self.anonymous)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "is_anonymous").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "is_anonymous")
     }
 
     fn raw_value(&self) -> String {
@@ -275,8 +274,8 @@ impl NameClause {
         self.name = fastobo::ast::UnquotedString::new(name);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "name").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "name")
     }
 
     fn raw_value(&self) -> String {
@@ -351,8 +350,8 @@ impl NamespaceClause {
         &self.namespace
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "namespace").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "namespace")
     }
 
     fn raw_value(&self) -> String {
@@ -426,8 +425,8 @@ impl AltIdClause {
         &self.alt_id
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "alt_id").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "alt_id")
     }
 
     fn raw_value(&self) -> String {
@@ -538,8 +537,8 @@ impl DefClause {
         self.xrefs.bind(py)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "def").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "def")
     }
 
     fn raw_value(&self) -> String {
@@ -614,8 +613,8 @@ impl CommentClause {
         self.comment = fastobo::ast::UnquotedString::new(comment);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "comment").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "comment")
     }
 
     fn raw_value(&self) -> String {
@@ -689,8 +688,8 @@ impl SubsetClause {
         &self.subset
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "subset").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "subset")
     }
 
     fn raw_value(&self) -> String {
@@ -766,8 +765,8 @@ impl SynonymClause {
         self.synonym.clone_py(py)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "synonym").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "synonym")
     }
 
     fn raw_value(&self) -> String {
@@ -853,8 +852,8 @@ impl XrefClause {
         impl_richcmp_py!(self, other, op, self.xref)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "xref").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "xref")
     }
 
     fn raw_value(&self) -> String {
@@ -925,8 +924,8 @@ impl BuiltinClause {
         self.builtin
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "builtin").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "builtin")
     }
 
     fn raw_value(&self) -> String {
@@ -1007,8 +1006,8 @@ impl PropertyValueClause {
         &self.inner
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "property_value").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "property_value")
     }
 
     fn raw_value(&self) -> String {
@@ -1082,8 +1081,8 @@ impl IsAClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "is_a").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "is_a")
     }
 
     fn raw_value(&self) -> String {
@@ -1192,8 +1191,8 @@ impl IntersectionOfClause {
         self.typedef.as_ref()
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "intersection_of").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "intersection_of")
     }
 
     fn raw_value(&self) -> String {
@@ -1270,8 +1269,8 @@ impl UnionOfClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "union_of").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "union_of")
     }
 
     fn raw_value(&self) -> String {
@@ -1344,8 +1343,8 @@ impl EquivalentToClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "equivalent_to").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "equivalent_to")
     }
 
     fn raw_value(&self) -> String {
@@ -1419,8 +1418,8 @@ impl DisjointFromClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "disjoint_from").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "disjoint_from")
     }
 
     fn raw_value(&self) -> String {
@@ -1504,8 +1503,8 @@ impl RelationshipClause {
         Ok(self.term.clone_py(py))
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "relationship").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "relationship")
     }
 
     fn raw_value(&self) -> String {
@@ -1570,8 +1569,8 @@ impl IsObsoleteClause {
         impl_richcmp!(self, other, op, self.obsolete)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "is_obsolete").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "is_obsolete")
     }
 
     fn raw_value(&self) -> String {
@@ -1645,8 +1644,8 @@ impl ReplacedByClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "replaced_by").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "replaced_by")
     }
 
     fn raw_value(&self) -> String {
@@ -1718,8 +1717,8 @@ impl ConsiderClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "consider").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "consider")
     }
 
     fn raw_value(&self) -> String {
@@ -1795,8 +1794,8 @@ impl CreatedByClause {
         self.creator = fastobo::ast::UnquotedString::new(creator);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "created_by").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "created_by")
     }
 
     fn raw_value(&self) -> String {
@@ -1926,8 +1925,8 @@ impl CreationDateClause {
         Ok(())
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "creation_date").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "creation_date")
     }
 
     fn raw_value(&self) -> String {

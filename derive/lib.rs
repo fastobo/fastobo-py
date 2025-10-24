@@ -154,40 +154,12 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
     if let syn::Data::Enum(e) = &ast.data {
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
-        // output.extend(aspyptr_impl_enum(&ast, &e));
         output.extend(intopy_impl_enum(&ast, &e));
     } else {
         panic!("only supports enums");
     }
 
     TokenStream::from(output)
-}
-
-fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
-    let mut variants = Vec::new();
-
-    // Build clone for each variant
-    for variant in &en.variants {
-        let name = &variant.ident;
-        variants.push(quote!(#name(x) => x.as_ptr()));
-    }
-
-    // Build clone implementation
-    let name = &ast.ident;
-    let expanded = quote! {
-        #[automatically_derived]
-        unsafe impl pyo3::AsPyPointer for #name {
-            fn as_ptr(&self) -> *mut pyo3::ffi::PyObject {
-                use self::#name::*;
-
-                match self {
-                    #(#variants,)*
-                }
-            }
-        }
-    };
-
-    expanded
 }
 
 fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {

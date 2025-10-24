@@ -13,35 +13,30 @@ pub fn main() -> PyResult<()> {
     // get the relative path to the project folder
     let folder = Path::new(file!()).parent().unwrap().parent().unwrap();
 
+    // prepare the Python interpreter
+    Python::initialize();
+    
     // spawn a Python interpreter
-    pyo3::prepare_freethreaded_python();
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         // insert the project folder in `sys.modules` so that
         // the main module can be imported by Python
         let sys = py.import("sys").unwrap();
-        sys.getattr("path")
-            .unwrap()
-            .downcast::<PyList>()
-            .unwrap()
-            .insert(0, folder)
-            .unwrap();
+        sys.getattr("path")?
+            .cast::<PyList>()?
+            .insert(0, folder)?;
 
         // create a Python module from our rust code with debug symbols
-        let module = PyModule::new(py, "fastobo").unwrap();
-        fastobo_py::py::init(py, &module).unwrap();
-        sys.getattr("modules")
-            .unwrap()
-            .downcast::<PyDict>()
-            .unwrap()
-            .set_item("fastobo", module)
-            .unwrap();
+        let module = PyModule::new(py, "fastobo")?;
+        fastobo_py::py::init(py, &module)?;
+        sys.getattr("modules")?
+            .cast::<PyDict>()?
+            .set_item("fastobo", module)?;
 
         // run unittest on the tests
         let kwargs = PyDict::new(py);
         kwargs.set_item("exit", false).unwrap();
         kwargs.set_item("verbosity", 2u8).unwrap();
-        py.import("unittest")
-            .unwrap()
+        py.import("unittest")?
             .call_method("TestProgram", ("tests",), Some(&kwargs))
             .map(|_| ())
     })

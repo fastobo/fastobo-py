@@ -40,13 +40,10 @@ fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
         #[allow(unused)]
         impl ClonePy for #name {
             fn clone_py(&self, py: Python) -> Self {
-                // Python::with_gil(|py| {
-                //     use self::#name::*;
-                //     match self {
-                //         #(#variants,)*
-                //     }
-                // })
-                todo!("ClonePy")
+                use self::#name::*;
+                match self {
+                    #(#variants,)*
+                }
             }
         }
     };
@@ -100,12 +97,11 @@ fn eqpy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
         #[allow(unused)]
         impl EqPy for #name {
             fn eq_py(&self, other: &Self, py: Python) -> bool {
-                // use self::#name::*;
-                // match (self, other) {
-                //     #(#variants,)*
-                //     _ => false
-                // }
-                todo!("EqPy")
+                use self::#name::*;
+                match (self, other) {
+                    #(#variants,)*
+                    _ => false
+                }
             }
         }
     };
@@ -141,8 +137,7 @@ fn eqpy_impl_struct(ast: &syn::DeriveInput, en: &syn::DataStruct) -> TokenStream
         #[automatically_derived]
         impl EqPy for #name {
             fn eq_py(&self, other: &Self, py: Python) -> bool {
-                // #expression
-                todo!("EqPy")
+                #expression
             }
         }
     };
@@ -213,7 +208,7 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote!(#name(x) => x.extract(py)));
+        variants.push(quote!(#name(x) => x.extract(py).map_err(PyErr::from)));
     }
 
     // Build clone implementation
@@ -225,11 +220,10 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             type Target = #base;
             type Output = Bound<'py, Self::Target>;
             fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-                // use self::#name::*;
-                // match self {
-                //     #(#variants,)*
-                // }
-                todo!("IntoPyObject")
+                use self::#name::*;
+                match self {
+                    #(#variants,)*
+                }
             }
         }
 
@@ -239,8 +233,7 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             type Target = #base;
             type Output = Bound<'py, Self::Target>;
             fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-                // (&self).into_pyobject(py)
-                todo!("IntoPyObject")
+                (&self).into_pyobject(py)
             }
         }
     };

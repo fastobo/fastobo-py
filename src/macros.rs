@@ -10,51 +10,50 @@ macro_rules! impl_hash {
 
 macro_rules! impl_richcmp {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
-        // match $op {
-        //     $crate::pyo3::class::basic::CompareOp::Eq => {
-        //         let py = $other.py();
-        //         if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-        //             let clause = clause.bind(py).borrow();
-        //             let res = $($self.$attr == clause.$attr)&&*;
-        //             res.into_pyobject(py)
-        //         } else {
-        //             false.into_pyobject(py)
-        //         }
-        //     }
-        //     _ => Ok($other.py().NotImplemented())
-        // }
-        unimplemented!("impl_richcmp")
+        use pyo3::types::PyBool;
+        match $op {
+            $crate::pyo3::class::basic::CompareOp::Eq => {
+                let py = $other.py();
+                let val = if let Ok(ref clause) = $other.extract::<Py<Self>>() {
+                    let clause = clause.bind(py).borrow();
+                    $($self.$attr == clause.$attr)&&*
+                } else {
+                    false
+                };
+                Ok(PyBool::new(py, val).to_owned().into_any().unbind())
+            }
+            _ => Ok($other.py().NotImplemented())
+        }
     });
 }
 
 macro_rules! impl_richcmp_py {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
-        // match $op {
-        //     $crate::pyo3::class::basic::CompareOp::Eq => {
-        //         let py = $other.py();
-        //         if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-        //             let clause = clause.bind(py).borrow();
-        //             let res = $($self.$attr.eq_py(&clause.$attr, py))&&*;
-        //             Ok(res.to_object(py))
-        //         } else {
-        //             Ok(false.to_object(py))
-        //         }
-        //     }
-        //     _ => Ok($other.py().NotImplemented())
-        // }
-        unimplemented!("impl_richcmp_py")
+        use pyo3::types::PyBool;
+        match $op {
+            $crate::pyo3::class::basic::CompareOp::Eq => {
+                let py = $other.py();
+                let val = if let Ok(ref clause) = $other.extract::<Py<Self>>() {
+                    let clause = clause.bind(py).borrow();
+                    $($self.$attr.eq_py(&clause.$attr, py))&&*
+                } else {
+                    false
+                };
+                Ok(PyBool::new(py, val).to_owned().into_any().unbind())
+            }
+            _ => Ok($other.py().NotImplemented())
+        }
     });
 }
 
 macro_rules! impl_repr {
     ($self:ident, $cls:ident($($field:expr),*)) => ({
-        // Python::with_gil(|py| {
-        //     let args = &[
-        //         $((&$field).into_pyobject(py)?.as_any().repr()?.to_str()?,)*
-        //     ].join(", ");
-        //     Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).to_object(py))
-        // })
-        unimplemented!("impl_repr")
+        Python::with_gil(|py| {
+            let args = &[
+                $((&$field).into_pyobject(py)?.as_any().repr()?.to_str()?,)*
+            ].join(", ");
+            Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).into_pyobject(py)?.into_any().unbind())
+        })
     })
 }
 

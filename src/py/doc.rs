@@ -25,8 +25,8 @@ use crate::utils::EqPy;
 use crate::utils::IntoPy;
 
 use super::abc::AbstractClause;
-use super::abc::AbstractFrame;
 use super::abc::AbstractEntityFrame;
+use super::abc::AbstractFrame;
 use super::header::frame::HeaderFrame;
 use super::instance::frame::InstanceFrame;
 use super::term::frame::TermFrame;

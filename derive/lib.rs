@@ -150,12 +150,14 @@ fn eqpy_impl_struct(ast: &syn::DeriveInput, en: &syn::DataStruct) -> TokenStream
 #[proc_macro_derive(PyWrapper, attributes(wraps))]
 pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
-    
+
     let base = {
         let mut base = None;
         for attr in &ast.attrs {
             match &attr.meta {
-                syn::Meta::List(list) if list.path.get_ident().map(|i| i == "wraps").unwrap_or(false) => {
+                syn::Meta::List(list)
+                    if list.path.get_ident().map(|i| i == "wraps").unwrap_or(false) =>
+                {
                     base = Some(syn::parse2::<syn::Ident>(list.tokens.clone()).unwrap());
                 }
                 _ => (),
@@ -163,7 +165,7 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
         }
         base.expect("failed to locate #[wraps(...)] attribute")
     };
-    
+
     let mut output = TokenStream2::new();
     if let syn::Data::Enum(e) = &ast.data {
         output.extend(intopyobject_impl_enum(&ast, &e));
@@ -540,8 +542,13 @@ fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> Toke
         impl FinalClass for #name {}
         impl Into<pyo3::pyclass_init::PyClassInitializer<#name>> for #name {
             fn into(self) ->  pyo3::pyclass_init::PyClassInitializer<Self> {
-                <#base as AbstractClass>::initializer()
-                    .add_subclass(self)
+                Python::attach(|py| self.into_py(py))
+            }
+        }
+
+        impl IntoPy<pyo3::pyclass_init::PyClassInitializer<#name>> for #name {
+            fn into_py(self, py: Python) ->  pyo3::pyclass_init::PyClassInitializer<Self> {
+                #base::initializer(py).add_subclass(self)
             }
         }
     }
@@ -559,7 +566,7 @@ pub fn abstractclass_derive(input: TokenStream) -> TokenStream {
 }
 
 fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream2 {
-    // Get the `base` attribute.
+    // Get the `base` attribute.c
     let meta = &ast
         .attrs
         .iter()
@@ -578,9 +585,8 @@ fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> T
     // default value of the base class as the initializer value
     quote! {
         impl AbstractClass for #name {
-            fn initializer() -> pyo3::pyclass_init::PyClassInitializer<Self> {
-                <#base as AbstractClass>::initializer()
-                    .add_subclass(Self::default())
+            fn initializer(py: Python) -> pyo3::pyclass_init::PyClassInitializer<Self> {
+                #base::initializer(py).add_subclass(Self::default())
             }
         }
 

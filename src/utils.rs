@@ -125,7 +125,7 @@ derive_eqpy!(fastobo::ast::Url);
 
 /// A trait for Python classes that are purely abstract.
 pub trait AbstractClass: PyClass {
-    fn initializer() -> PyClassInitializer<Self>;
+    fn initializer(py: Python) -> PyClassInitializer<Self>;
 }
 
 /// A trait for Python classes that are final.

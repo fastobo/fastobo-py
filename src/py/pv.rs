@@ -79,7 +79,7 @@ impl IntoPy<fastobo::ast::PropertyValue> for PropertyValue {
 pub struct AbstractPropertyValue {}
 
 impl AbstractClass for AbstractPropertyValue {
-    fn initializer() -> PyClassInitializer<Self> {
+    fn initializer(py: Python) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Self {})
     }
 }

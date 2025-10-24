@@ -40,7 +40,12 @@ pub enum Handle {
 impl Handle {
     fn handle<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         match self {
-            Handle::FsFile(_, path) => path.display().to_string().into_pyobject(py).map(|b| b.into_any()).map_err(PyErr::from),
+            Handle::FsFile(_, path) => path
+                .display()
+                .to_string()
+                .into_pyobject(py)
+                .map(|b| b.into_any())
+                .map_err(PyErr::from),
             Handle::PyFile(f) => Ok(f.file().lock().unwrap().bind(py).clone()),
         }
     }

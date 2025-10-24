@@ -62,7 +62,7 @@ pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
 pub struct AbstractFrame {}
 
 impl AbstractClass for AbstractFrame {
-    fn initializer() -> PyClassInitializer<Self> {
+    fn initializer(py: Python) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Self {})
     }
 }
@@ -113,7 +113,7 @@ impl AbstractEntityFrame {
 pub struct AbstractClause {}
 
 impl AbstractClass for AbstractClause {
-    fn initializer() -> PyClassInitializer<Self> {
+    fn initializer(py: Python) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Self {})
     }
 }
@@ -163,11 +163,10 @@ pub struct AbstractEntityClause {
 }
 
 impl AbstractClass for AbstractEntityClause {
-    fn initializer() -> PyClassInitializer<Self> {
-        AbstractClause::initializer()
-            .add_subclass(Self {
-                qualifiers: Python::attach(|py| Py::new(py, QualifierList::default()).unwrap())
-            })
+    fn initializer(py: Python) -> PyClassInitializer<Self> {
+        AbstractClause::initializer(py).add_subclass(Self {
+            qualifiers: Py::new(py, QualifierList::default()).unwrap(),
+        })
     }
 }
 

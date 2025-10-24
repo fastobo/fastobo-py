@@ -136,7 +136,10 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
 impl IntoPy<TermClause> for fastobo::ast::Line<fastobo::ast::TermClause> {
     fn into_py(mut self, py: Python) -> TermClause {
         // extract end-of-line attributes
-        let qualifiers = self.qualifiers_mut().map(std::mem::take).unwrap_or_default();
+        let qualifiers = self
+            .qualifiers_mut()
+            .map(std::mem::take)
+            .unwrap_or_default();
         // let comment = self.comment_mut().map(std::mem::take).unwrap_or_default();
         // convert clause
         let clause = self.into_inner().into_py(py);
@@ -154,8 +157,7 @@ impl IntoPy<TermClause> for fastobo::ast::Line<fastobo::ast::TermClause> {
 #[pyclass(subclass, extends=AbstractEntityClause, module="fastobo.term")]
 #[derive(Debug, Default, AbstractClass)]
 #[base(AbstractEntityClause)]
-pub struct BaseTermClause {
-}
+pub struct BaseTermClause {}
 
 // --- IsAnonymous -----------------------------------------------------------
 
@@ -198,8 +200,8 @@ impl IntoPy<fastobo::ast::TermClause> for IsAnonymousClause {
 #[pymethods]
 impl IsAnonymousClause {
     #[new]
-    fn __init__(anonymous: bool) -> PyClassInitializer<Self> {
-        Self::new(anonymous).into()
+    fn __init__(py: Python, anonymous: bool) -> PyClassInitializer<Self> {
+        Self::new(anonymous).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -263,8 +265,8 @@ impl IntoPy<fastobo::ast::TermClause> for NameClause {
 #[pymethods]
 impl NameClause {
     #[new]
-    fn __init__(name: String) -> PyClassInitializer<Self> {
-        Self::new(fastobo::ast::UnquotedString::new(name)).into()
+    fn __init__(py: Python, name: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(name)).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -344,8 +346,8 @@ impl IntoPy<fastobo::ast::TermClause> for NamespaceClause {
 #[pymethods]
 impl NamespaceClause {
     #[new]
-    fn __init__(namespace: Ident) -> PyClassInitializer<Self> {
-        Self::new(namespace).into()
+    fn __init__(py: Python, namespace: Ident) -> PyClassInitializer<Self> {
+        Self::new(namespace).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -419,8 +421,8 @@ impl IntoPy<fastobo::ast::TermClause> for AltIdClause {
 #[pymethods]
 impl AltIdClause {
     #[new]
-    fn __init__(alt_id: Ident) -> PyClassInitializer<Self> {
-        Self::new(alt_id).into()
+    fn __init__(py: Python, alt_id: Ident) -> PyClassInitializer<Self> {
+        Self::new(alt_id).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -602,8 +604,8 @@ impl IntoPy<fastobo::ast::TermClause> for CommentClause {
 #[pymethods]
 impl CommentClause {
     #[new]
-    fn __init__(comment: String) -> PyClassInitializer<Self> {
-        Self::new(fastobo::ast::UnquotedString::new(comment)).into()
+    fn __init__(py: Python, comment: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(comment)).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -682,8 +684,8 @@ impl IntoPy<fastobo::ast::TermClause> for SubsetClause {
 #[pymethods]
 impl SubsetClause {
     #[new]
-    fn __init__(subset: Ident) -> PyClassInitializer<Self> {
-        Self::new(subset).into()
+    fn __init__(py: Python, subset: Ident) -> PyClassInitializer<Self> {
+        Self::new(subset).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -759,8 +761,8 @@ impl IntoPy<fastobo::ast::TermClause> for SynonymClause {
 #[pymethods]
 impl SynonymClause {
     #[new]
-    fn __init__(synonym: Py<Synonym>) -> PyClassInitializer<Self> {
-        Self::new(Python::with_gil(|py| synonym.clone_ref(py))).into()
+    fn __init__(py: Python, synonym: Py<Synonym>) -> PyClassInitializer<Self> {
+        Self::new(Python::with_gil(|py| synonym.clone_ref(py))).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -852,8 +854,8 @@ impl IntoPy<XrefClause> for Xref {
 #[pymethods]
 impl XrefClause {
     #[new]
-    fn __init__(xref: Py<Xref>) -> PyClassInitializer<Self> {
-        Self::from(xref).into()
+    fn __init__(py: Python, xref: Py<Xref>) -> PyClassInitializer<Self> {
+        Self::from(xref).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -918,8 +920,8 @@ impl IntoPy<fastobo::ast::TermClause> for BuiltinClause {
 #[pymethods]
 impl BuiltinClause {
     #[new]
-    fn __init__(builtin: bool) -> PyClassInitializer<Self> {
-        Self::new(builtin).into()
+    fn __init__(py: Python, builtin: bool) -> PyClassInitializer<Self> {
+        Self::new(builtin).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1000,8 +1002,8 @@ impl IntoPy<fastobo::ast::TermClause> for PropertyValueClause {
 #[pymethods]
 impl PropertyValueClause {
     #[new]
-    fn __init__(property_value: PropertyValue) -> PyClassInitializer<Self> {
-        Self::new(property_value).into()
+    fn __init__(py: Python, property_value: PropertyValue) -> PyClassInitializer<Self> {
+        Self::new(property_value).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1075,8 +1077,8 @@ impl IntoPy<fastobo::ast::TermClause> for IsAClause {
 #[pymethods]
 impl IsAClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1179,8 +1181,8 @@ impl IntoPy<fastobo::ast::TermClause> for IntersectionOfClause {
 impl IntersectionOfClause {
     #[new]
     #[pyo3(signature=(typedef, term))]
-    fn __init__(typedef: Option<Ident>, term: Ident) -> PyClassInitializer<Self> {
-        Self::new(typedef, term).into()
+    fn __init__(py: Python, typedef: Option<Ident>, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(typedef, term).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1263,8 +1265,8 @@ impl IntoPy<fastobo::ast::TermClause> for UnionOfClause {
 #[pymethods]
 impl UnionOfClause {
     #[new]
-    fn __init__(id: Ident) -> PyClassInitializer<Self> {
-        Self::new(id).into()
+    fn __init__(py: Python, id: Ident) -> PyClassInitializer<Self> {
+        Self::new(id).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1337,8 +1339,8 @@ impl IntoPy<fastobo::ast::TermClause> for EquivalentToClause {
 #[pymethods]
 impl EquivalentToClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1412,8 +1414,8 @@ impl IntoPy<fastobo::ast::TermClause> for DisjointFromClause {
 #[pymethods]
 impl DisjointFromClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1493,8 +1495,8 @@ impl IntoPy<fastobo::ast::TermClause> for RelationshipClause {
 #[pymethods]
 impl RelationshipClause {
     #[new]
-    fn __init__(typedef: Ident, term: Ident) -> PyClassInitializer<Self> {
-        Self::new(typedef, term).into()
+    fn __init__(py: Python, typedef: Ident, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(typedef, term).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1569,8 +1571,8 @@ impl IntoPy<fastobo::ast::TermClause> for IsObsoleteClause {
 #[pymethods]
 impl IsObsoleteClause {
     #[new]
-    fn __init__(obsolete: bool) -> PyClassInitializer<Self> {
-        Self::new(obsolete).into()
+    fn __init__(py: Python, obsolete: bool) -> PyClassInitializer<Self> {
+        Self::new(obsolete).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1638,8 +1640,8 @@ impl IntoPy<fastobo::ast::TermClause> for ReplacedByClause {
 #[pymethods]
 impl ReplacedByClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1712,8 +1714,8 @@ impl IntoPy<fastobo::ast::TermClause> for ConsiderClause {
 #[pymethods]
 impl ConsiderClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1783,8 +1785,8 @@ impl IntoPy<fastobo::ast::TermClause> for CreatedByClause {
 #[pymethods]
 impl CreatedByClause {
     #[new]
-    fn __init__(creator: String) -> PyClassInitializer<Self> {
-        Self::new(fastobo::ast::UnquotedString::new(creator)).into()
+    fn __init__(py: Python, creator: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(creator)).into_py(py)
     }
 
     fn __repr__(&self) -> PyResult<PyObject> {
@@ -1917,8 +1919,14 @@ impl CreationDateClause {
     fn get_date<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         use fastobo::ast::CreationDate::*;
         match &self.date {
-            DateTime(dt) => isodatetime_to_datetime(py, dt)?.into_pyobject(py).map_err(PyErr::from).map(|b| b.into_any()),
-            Date(d) => isodate_to_date(py, d)?.into_pyobject(py).map_err(PyErr::from).map(|b| b.into_any()),
+            DateTime(dt) => isodatetime_to_datetime(py, dt)?
+                .into_pyobject(py)
+                .map_err(PyErr::from)
+                .map(|b| b.into_any()),
+            Date(d) => isodate_to_date(py, d)?
+                .into_pyobject(py)
+                .map_err(PyErr::from)
+                .map(|b| b.into_any()),
         }
     }
 

@@ -202,7 +202,7 @@ impl_convert!(NamespaceIdent, Ident);
 pub struct BaseIdent {}
 
 impl AbstractClass for BaseIdent {
-    fn initializer() -> PyClassInitializer<Self> {
+    fn initializer(py: Python) -> PyClassInitializer<Self> {
         PyClassInitializer::from(BaseIdent {})
     }
 }

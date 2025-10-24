@@ -97,6 +97,7 @@ impl IntoPy<fastobo::ast::EntityFrame> for TypedefFrame {
 impl TypedefFrame {
     // FIXME: should accept any iterable.
     #[new]
+    #[pyo3(signature = (id, clauses = None))]
     fn __init__<'py>(
         id: Ident,
         clauses: Option<&Bound<'py, PyAny>>,

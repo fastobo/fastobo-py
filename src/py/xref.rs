@@ -108,6 +108,7 @@ impl Xref {
     ///     id (~fastobo.id.Ident): the identifier of the reference.
     ///     desc (str, optional): an optional description for the reference.
     #[new]
+    #[pyo3(signature = (id, desc = None))]
     fn __init__(id: Ident, desc: Option<String>) -> Self {
         if let Some(s) = desc {
             Self::with_desc(id, Some(fastobo::ast::QuotedString::new(s)))

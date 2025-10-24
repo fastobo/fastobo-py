@@ -108,7 +108,7 @@ impl AbstractEntityFrame {
 ///      'xref': ['value-type:xsd\\:string "The allowed value-type for this CV term."']}
 ///
 #[pyclass(subclass, module = "fastobo.abc")]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct AbstractClause {}
 
 impl AbstractClass for AbstractClause {
@@ -155,6 +155,15 @@ impl AbstractClause {
 
 /// An abstract entity clause.
 #[pyclass(subclass, extends=AbstractClause, module="fastobo.abc")]
-#[derive(Default, AbstractClass)]
-#[base(AbstractClause)]
+#[derive(Debug, Default)]
 pub struct AbstractEntityClause {}
+
+impl AbstractClass for AbstractEntityClause {
+    fn initializer() -> PyClassInitializer<Self> {
+        AbstractClause::initializer()
+            .add_subclass(Self {})
+    }
+}
+
+#[pymethods]
+impl AbstractEntityClause {}

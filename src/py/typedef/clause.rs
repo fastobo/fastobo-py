@@ -206,7 +206,7 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
 // --- Base ------------------------------------------------------------------
 
 #[pyclass(subclass, extends=AbstractEntityClause, module="fastobo.typedef")]
-#[derive(Debug, AbstractClass)]
+#[derive(Debug, Default, AbstractClass)]
 #[base(AbstractEntityClause)]
 pub struct BaseTypedefClause {}
 

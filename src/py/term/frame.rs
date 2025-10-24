@@ -65,7 +65,7 @@ impl IntoPy<TermFrame> for fastobo::ast::TermFrame {
         TermFrame::with_clauses(
             self.id().as_ref().clone().into_py(py),
             self.into_iter()
-                .map(|line| line.into_inner().into_py(py))
+                .map(|line| line.into_py(py))
                 .collect(),
         )
     }

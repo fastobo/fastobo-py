@@ -26,6 +26,7 @@ use crate::utils::IntoPy;
 
 use super::abc::AbstractClause;
 use super::abc::AbstractFrame;
+use super::abc::AbstractEntityFrame;
 use super::header::frame::HeaderFrame;
 use super::instance::frame::InstanceFrame;
 use super::term::frame::TermFrame;
@@ -44,7 +45,7 @@ pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
 // --- Conversion Wrapper ----------------------------------------------------
 
 #[derive(ClonePy, Debug, PyWrapper, EqPy)]
-#[wraps(AbstractFrame)]
+#[wraps(AbstractEntityFrame)]
 pub enum EntityFrame {
     Term(Py<TermFrame>),
     Typedef(Py<TypedefFrame>),
@@ -192,7 +193,7 @@ impl OboDoc {
         &self,
         py: Python<'py>,
         index: isize,
-    ) -> PyResult<Bound<'py, AbstractFrame>> {
+    ) -> PyResult<Bound<'py, AbstractEntityFrame>> {
         if index < self.entities.len() as isize {
             let item = &self.entities[index as usize];
             item.into_pyobject(py)

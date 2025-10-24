@@ -150,11 +150,26 @@ fn eqpy_impl_struct(ast: &syn::DeriveInput, en: &syn::DataStruct) -> TokenStream
 #[proc_macro_derive(PyWrapper, attributes(wraps))]
 pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
+    
+    let base = {
+        let mut base = None;
+        for attr in &ast.attrs {
+            match &attr.meta {
+                syn::Meta::List(list) if list.path.get_ident().map(|i| i == "wraps").unwrap_or(false) => {
+                    base = Some(syn::parse2::<syn::Ident>(list.tokens.clone()).unwrap());
+                }
+                _ => (),
+            }
+        }
+        base.expect("failed to locate #[wraps(...)] attribute")
+    };
+    
     let mut output = TokenStream2::new();
     if let syn::Data::Enum(e) = &ast.data {
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(intopy_impl_enum(&ast, &e));
+        output.extend(asbase_impl_enum(&ast, &e, &base));
     } else {
         panic!("only supports enums");
     }
@@ -307,12 +322,41 @@ fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
         ));
     }
 
-    // Build clone implementation
+    // Build implementation
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
         impl IntoPy<fastobo::ast::#name> for &#name {
             fn into_py(self, py: Python) -> fastobo::ast::#name {
+                use std::ops::Deref;
+                use self::#name::*;
+                match self {
+                    #(#variants,)*
+                }
+            }
+        }
+    };
+
+    expanded
+}
+
+fn asbase_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum, base: &syn::Ident) -> TokenStream2 {
+    let mut variants = Vec::new();
+
+    // Build IntoPy for each variant
+    for variant in &en.variants {
+        let name = &variant.ident;
+        variants.push(quote!(
+            #name(x) => x.bind(py).as_super()
+        ));
+    }
+
+    // Build implementation
+    let name = &ast.ident;
+    let expanded = quote! {
+        #[automatically_derived]
+        impl #name {
+            fn as_base<'a, 'py>(&'a self, py: Python<'py>) -> &'a Bound<'py, #base> {
                 use std::ops::Deref;
                 use self::#name::*;
                 match self {
@@ -536,7 +580,7 @@ fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> T
         impl AbstractClass for #name {
             fn initializer() -> pyo3::pyclass_init::PyClassInitializer<Self> {
                 <#base as AbstractClass>::initializer()
-                    .add_subclass(Self {})
+                    .add_subclass(Self::default())
             }
         }
 

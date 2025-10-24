@@ -133,13 +133,28 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
     }
 }
 
+impl IntoPy<TermClause> for fastobo::ast::Line<fastobo::ast::TermClause> {
+    fn into_py(mut self, py: Python) -> TermClause {
+        // let qualifiers = self.qualifiers_mut().map(std::mem::take).unwrap_or_default();
+        // let comment = self.comment_mut().map(std::mem::take).unwrap_or_default();
+        let clause = self.into_inner().into_py(py);
+        clause.as_base(py);
+        // attach qualifiers
+        // let abc = clause.clone_py(py).into_pyobject(py).unwrap();
+        // abc.as_super().borrow_mut().line = fastobo::ast::Line::with_qualifiers(qualifiers);
+        
+        clause
+    }
+}
+
 // --- Base ------------------------------------------------------------------
 
 /// A term clause, appearing in an OBO term frame.
 #[pyclass(subclass, extends=AbstractEntityClause, module="fastobo.term")]
-#[derive(AbstractClass)]
+#[derive(Debug, Default, AbstractClass)]
 #[base(AbstractEntityClause)]
-pub struct BaseTermClause {}
+pub struct BaseTermClause {
+}
 
 // --- IsAnonymous -----------------------------------------------------------
 

@@ -40,12 +40,13 @@ fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
         #[allow(unused)]
         impl ClonePy for #name {
             fn clone_py(&self, py: Python) -> Self {
-                Python::with_gil(|py| {
-                    use self::#name::*;
-                    match self {
-                        #(#variants,)*
-                    }
-                })
+                // Python::with_gil(|py| {
+                //     use self::#name::*;
+                //     match self {
+                //         #(#variants,)*
+                //     }
+                // })
+                todo!("ClonePy")
             }
         }
     };
@@ -99,11 +100,12 @@ fn eqpy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
         #[allow(unused)]
         impl EqPy for #name {
             fn eq_py(&self, other: &Self, py: Python) -> bool {
-                use self::#name::*;
-                match (self, other) {
-                    #(#variants,)*
-                    _ => false
-                }
+                // use self::#name::*;
+                // match (self, other) {
+                //     #(#variants,)*
+                //     _ => false
+                // }
+                todo!("EqPy")
             }
         }
     };
@@ -139,7 +141,8 @@ fn eqpy_impl_struct(ast: &syn::DeriveInput, en: &syn::DataStruct) -> TokenStream
         #[automatically_derived]
         impl EqPy for #name {
             fn eq_py(&self, other: &Self, py: Python) -> bool {
-                #expression
+                // #expression
+                todo!("EqPy")
             }
         }
     };
@@ -156,7 +159,7 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
     if let syn::Data::Enum(e) = &ast.data {
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
-        output.extend(aspyptr_impl_enum(&ast, &e));
+        // output.extend(aspyptr_impl_enum(&ast, &e));
         output.extend(intopy_impl_enum(&ast, &e));
     } else {
         panic!("only supports enums");
@@ -222,10 +225,11 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             type Target = #base;
             type Output = Bound<'py, Self::Target>;
             fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-                use self::#name::*;
-                match self {
-                    #(#variants,)*
-                }
+                // use self::#name::*;
+                // match self {
+                //     #(#variants,)*
+                // }
+                todo!("IntoPyObject")
             }
         }
 
@@ -235,7 +239,8 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             type Target = #base;
             type Output = Bound<'py, Self::Target>;
             fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-                (&self).into_pyobject(py)
+                // (&self).into_pyobject(py)
+                todo!("IntoPyObject")
             }
         }
     };
@@ -297,29 +302,31 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     );
     let expanded = quote! {
         #[automatically_derived]
-        impl<'source> pyo3::FromPyObject<'source> for #wrapped {
-            fn extract_bound(ob: &Bound<'source, pyo3::types::PyAny>) -> pyo3::PyResult<Self> {
-                use pyo3::AsPyPointer;
+        impl<'source, 'py> pyo3::FromPyObject<'source, 'py> for #wrapped {
+            type Error = PyErr;
+            fn extract(obj: Borrowed<'source, 'py, PyAny>) -> pyo3::PyResult<Self> {
+                // use pyo3::AsPyPointer;
 
-                let qualname = ob.get_type().name()?;
-                let q = qualname.to_str()?;
+                // let qualname = ob.get_type().name()?;
+                // let q = qualname.to_str()?;
 
-                let ty = match q.rfind('.') {
-                    Some(idx) => &q[idx+1..],
-                    None => &q,
-                };
+                // let ty = match q.rfind('.') {
+                //     Some(idx) => &q[idx+1..],
+                //     None => &q,
+                // };
 
-                if ob.is_instance_of::<#base>() {
-                    match ty.as_ref() {
-                        #(#variants,)*
-                        _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
-                    }
-                } else {
-                    Err(pyo3::exceptions::PyTypeError::new_err(format!(
-                        #err_ty,
-                        ob.get_type().name()?,
-                    )))
-                }
+                // if ob.is_instance_of::<#base>() {
+                //     match ty.as_ref() {
+                //         #(#variants,)*
+                //         _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
+                //     }
+                // } else {
+                //     Err(pyo3::exceptions::PyTypeError::new_err(format!(
+                //         #err_ty,
+                //         ob.get_type().name()?,
+                //     )))
+                // }
+                todo!("FromPyObject")
             }
         }
     };
@@ -387,110 +394,110 @@ fn listlike_impl_methods(
     ty: &syn::Type,
     mut imp: syn::ItemImpl,
 ) -> TokenStream2 {
-    imp.items.push(parse_quote! {
-        /// Append object to the end of the list.
-        ///
-        /// Raises:
-        ///     TypeError: when the object is not of the right type for
-        ///         this container (see type-level documentation for the
-        ///         required type).
-        #[pyo3(text_signature = "(self, object)")]
-        fn append<'py>(&mut self, object: &Bound<'py, PyAny>) -> PyResult<()> {
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
-            self.#field.push(item);
-            Ok(())
-        }
-    });
-    imp.items.push(parse_quote! {
-        /// Remove all items from list.
-        #[pyo3(text_signature = "(self)")]
-        fn clear(&mut self) {
-            self.#field.clear();
-        }
-    });
-    imp.items.push(parse_quote! {
-        /// Return a shallow copy of the list.
-        #[pyo3(text_signature = "(self)")]
-        fn copy(&self) -> PyResult<Py<Self>> {
-            Python::with_gil(|py| {
-                let copy = self.clone_py(py);
-                Py::new(py, copy)
-            })
-        }
-    });
-    imp.items.push(parse_quote! {
-        /// Return number of occurrences of value.
-        ///
-        /// Raises:
-        ///     TypeError: when the object is not of the right type for
-        ///         this container (see type-level documentation for the
-        ///         required type).
-        #[pyo3(text_signature = "(self, value)")]
-        fn count<'py>(&mut self, value: &Bound<'py, PyAny>) -> PyResult<usize> {
-            let py = value.py();
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(value)?;
-            Ok(self.#field.iter().filter(|&x| x.eq_py(&item, py)).count())
-        }
-    });
-    // |  extend($self, iterable, /)
-    // |      Extend list by appending elements from the iterable.
-    // |
-    // |  index(self, value, start=0, stop=9223372036854775807, /)
-    // |      Return first index of value.
-    // |
-    // |      Raises ValueError if the value is not present.
-    // |
-    imp.items.push(parse_quote! {
-        /// Insert `object` before `index`.
-        ///
-        /// If `index` is greater than the number of elements in the list,
-        /// `object` will be added at the end of the list.
-        #[pyo3(text_signature = "(self, index, object)")]
-        fn insert<'py>(&mut self, mut index: isize, object: &Bound<'py, PyAny>) -> PyResult<()> {
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
-            if index >= self.#field.len() as isize {
-                self.#field.push(item);
-            } else {
-                if index < 0 {
-                    index %= self.#field.len() as isize;
-                }
-                self.#field.insert(index as usize, item);
-            }
-            Ok(())
-        }
-    });
-    imp.items.push(parse_quote! {
-        /// Remove and return item at index (default last).
-        ///
-        /// Raises:
-        ///     IndexError: when list is empty or index is out of range.
-        #[pyo3(text_signature = "(self, index=-1)", signature=(index=-1))]
-        fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
-            // Wrap once to allow negative indexing
-            if index < 0 {
-                index += self.#field.len() as isize;
-            }
-            // Pop if the index is in vector bounds
-            if index >= 0 && index < self.#field.len() as isize {
-                Ok(self.#field.remove(index as usize))
-            } else {
-                Err(pyo3::exceptions::PyIndexError::new_err("pop index out of range"))
-            }
-        }
-    });
-    // |  remove(self, value, /)
-    // |      Remove first occurrence of value.
-    // |
-    // |      Raises ValueError if the value is not present.
-    imp.items.push(parse_quote! {
-        /// Reverse *IN PLACE*.
-        #[pyo3(text_signature = "(self)")]
-        fn reverse(&mut self) {
-            self.#field.reverse()
-        }
-    });
-    // |  sort(self, /, *, key=None, reverse=False)
-    // |      Stable sort *IN PLACE*.
+    // imp.items.push(parse_quote! {
+    //     /// Append object to the end of the list.
+    //     ///
+    //     /// Raises:
+    //     ///     TypeError: when the object is not of the right type for
+    //     ///         this container (see type-level documentation for the
+    //     ///         required type).
+    //     #[pyo3(text_signature = "(self, object)")]
+    //     fn append<'py>(&mut self, object: &Bound<'py, PyAny>) -> PyResult<()> {
+    //         let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
+    //         self.#field.push(item);
+    //         Ok(())
+    //     }
+    // });
+    // imp.items.push(parse_quote! {
+    //     /// Remove all items from list.
+    //     #[pyo3(text_signature = "(self)")]
+    //     fn clear(&mut self) {
+    //         self.#field.clear();
+    //     }
+    // });
+    // imp.items.push(parse_quote! {
+    //     /// Return a shallow copy of the list.
+    //     #[pyo3(text_signature = "(self)")]
+    //     fn copy(&self) -> PyResult<Py<Self>> {
+    //         Python::with_gil(|py| {
+    //             let copy = self.clone_py(py);
+    //             Py::new(py, copy)
+    //         })
+    //     }
+    // });
+    // imp.items.push(parse_quote! {
+    //     /// Return number of occurrences of value.
+    //     ///
+    //     /// Raises:
+    //     ///     TypeError: when the object is not of the right type for
+    //     ///         this container (see type-level documentation for the
+    //     ///         required type).
+    //     #[pyo3(text_signature = "(self, value)")]
+    //     fn count<'py>(&mut self, value: &Bound<'py, PyAny>) -> PyResult<usize> {
+    //         let py = value.py();
+    //         let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(value)?;
+    //         Ok(self.#field.iter().filter(|&x| x.eq_py(&item, py)).count())
+    //     }
+    // });
+    // // |  extend($self, iterable, /)
+    // // |      Extend list by appending elements from the iterable.
+    // // |
+    // // |  index(self, value, start=0, stop=9223372036854775807, /)
+    // // |      Return first index of value.
+    // // |
+    // // |      Raises ValueError if the value is not present.
+    // // |
+    // imp.items.push(parse_quote! {
+    //     /// Insert `object` before `index`.
+    //     ///
+    //     /// If `index` is greater than the number of elements in the list,
+    //     /// `object` will be added at the end of the list.
+    //     #[pyo3(text_signature = "(self, index, object)")]
+    //     fn insert<'py>(&mut self, mut index: isize, object: &Bound<'py, PyAny>) -> PyResult<()> {
+    //         let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
+    //         if index >= self.#field.len() as isize {
+    //             self.#field.push(item);
+    //         } else {
+    //             if index < 0 {
+    //                 index %= self.#field.len() as isize;
+    //             }
+    //             self.#field.insert(index as usize, item);
+    //         }
+    //         Ok(())
+    //     }
+    // });
+    // imp.items.push(parse_quote! {
+    //     /// Remove and return item at index (default last).
+    //     ///
+    //     /// Raises:
+    //     ///     IndexError: when list is empty or index is out of range.
+    //     #[pyo3(text_signature = "(self, index=-1)", signature=(index=-1))]
+    //     fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
+    //         // Wrap once to allow negative indexing
+    //         if index < 0 {
+    //             index += self.#field.len() as isize;
+    //         }
+    //         // Pop if the index is in vector bounds
+    //         if index >= 0 && index < self.#field.len() as isize {
+    //             Ok(self.#field.remove(index as usize))
+    //         } else {
+    //             Err(pyo3::exceptions::PyIndexError::new_err("pop index out of range"))
+    //         }
+    //     }
+    // });
+    // // |  remove(self, value, /)
+    // // |      Remove first occurrence of value.
+    // // |
+    // // |      Raises ValueError if the value is not present.
+    // imp.items.push(parse_quote! {
+    //     /// Reverse *IN PLACE*.
+    //     #[pyo3(text_signature = "(self)")]
+    //     fn reverse(&mut self) {
+    //         self.#field.reverse()
+    //     }
+    // });
+    // // |  sort(self, /, *, key=None, reverse=False)
+    // // |      Stable sort *IN PLACE*.
     quote!(#imp)
 }
 

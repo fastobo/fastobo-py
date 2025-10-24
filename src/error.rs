@@ -24,13 +24,12 @@ use crate::py::exceptions::SingleClauseError;
 #[macro_export]
 macro_rules! raise(
     ($py:expr, $error_type:ident ($msg:expr) from $inner:expr ) => ({
-        let err = $error_type::new_err($msg).to_object($py);
+        let err = $error_type::new_err($msg).into_pyobject($py)?;
         err.call_method1(
-            $py,
             "__setattr__",
-            ("__cause__".to_object($py), $inner.to_object($py)),
+            ("__cause__", $inner.into_pyobject($py)?),
         )?;
-        return Err(PyErr::from_value(err.bind($py).clone()))
+        return Err(PyErr::from_value(err.into_any()))
     })
 );
 

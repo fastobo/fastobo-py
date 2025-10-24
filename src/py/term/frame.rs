@@ -10,7 +10,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyString;
-use pyo3::AsPyPointer;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -133,11 +132,11 @@ impl TermFrame {
         }
     }
 
-    fn __setitem__<'py>(&mut self, index: isize, elem: &Bound<'py, PyAny>) -> PyResult<()> {
+    fn __setitem__<'py>(&mut self, index: isize, item: &Bound<'py, PyAny>) -> PyResult<()> {
         if index as usize > self.clauses.len() {
             return Err(PyIndexError::new_err("list index out of range"));
         }
-        let clause = TermClause::extract_bound(elem)?;
+        let clause = item.extract::<TermClause>()?;
         self.clauses[index as usize] = clause;
         Ok(())
     }
@@ -156,7 +155,7 @@ impl TermFrame {
         let iterator = PyIterator::from_object(other)?;
         let mut new_clauses = self.clauses.clone_py(py);
         for item in iterator {
-            new_clauses.push(TermClause::extract_bound(&item?)?);
+            new_clauses.push(item?.extract::<TermClause>()?);
         }
 
         Py::new(py, Self::with_clauses(self.id.clone_py(py), new_clauses))

@@ -15,7 +15,6 @@ use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::AsPyPointer;
 use pyo3::PyTypeInfo;
 
 use super::id::Ident;
@@ -94,12 +93,6 @@ impl IntoPy<fastobo::ast::SynonymScope> for SynonymScope {
     }
 }
 
-impl ToPyObject for SynonymScope {
-    fn to_object(&self, py: Python) -> PyObject {
-        self.to_string().to_object(py)
-    }
-}
-
 impl<'py> IntoPyObject<'py> for &SynonymScope {
     type Error = Infallible;
     type Target = PyString;
@@ -110,7 +103,6 @@ impl<'py> IntoPyObject<'py> for &SynonymScope {
             fastobo::ast::SynonymScope::Broad => Ok(pyo3::intern!(py, "BROAD").clone()),
             fastobo::ast::SynonymScope::Narrow => Ok(pyo3::intern!(py, "NARROW").clone()),
             fastobo::ast::SynonymScope::Related => Ok(pyo3::intern!(py, "RELATED").clone()),
-            _ => unimplemented!(),
         }
     }
 }

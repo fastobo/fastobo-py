@@ -173,7 +173,7 @@ impl OboDoc {
             let mut doc = OboDoc::new(Py::new(py, header)?);
             if let Some(any) = entities {
                 for res in PyIterator::from_object(&any)? {
-                    doc.entities.push(EntityFrame::extract_bound(&res?)?);
+                    doc.entities.push(EntityFrame::extract(res?.as_borrowed())?);
                 }
             }
             Ok(doc)

@@ -352,32 +352,33 @@ impl DateClause {
         .into()
     }
 
-    fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
-        let fmt = PyString::new(py, "DateClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.get_date(py)?,))
+    fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let fmt = PyString::intern(py, "DateClause({!r})");
+        fmt.call_method1("format", (self.get_date(py)?,))
     }
 
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> Bound<'py, PyAny> {
+        let py = other.py();
         if let Ok(ref clause) = other.extract::<Py<Self>>() {
-            let clause = &*clause.bind(other.py()).borrow();
-            Ok(match op {
+            let clause = &*clause.bind(py).borrow();
+            let res = match op {
                 CompareOp::Eq => self.date == clause.date,
                 CompareOp::Ne => self.date != clause.date,
                 CompareOp::Lt => self.date < clause.date,
                 CompareOp::Le => self.date <= clause.date,
                 CompareOp::Gt => self.date > clause.date,
                 CompareOp::Ge => self.date >= clause.date,
-            }
-            .to_object(other.py()))
+            };
+            res.into_pyobject(py).unwrap().to_owned().into_any()
         } else {
             match op {
-                CompareOp::Eq => Ok(false.to_object(other.py())),
-                CompareOp::Ne => Ok(true.to_object(other.py())),
-                _ => Ok(other.py().NotImplemented()),
+                CompareOp::Eq => false.into_pyobject(py).unwrap().to_owned().into_any(),
+                CompareOp::Ne => true.into_pyobject(py).unwrap().to_owned().into_any(),
+                _ => py.NotImplemented().bind(py).clone(),
             }
         }
     }
@@ -949,7 +950,7 @@ impl DefaultNamespaceClause {
     fn __init__<'py>(namespace: &Bound<'py, PyAny>) -> PyResult<PyClassInitializer<Self>> {
         let py = namespace.py();
         if namespace.is_instance_of::<BaseIdent>() {
-            Ident::extract_bound(namespace).map(|id| Self::new(id).into())
+            namespace.extract::<Ident>().map(|id| Self::new(id).into())
         } else if let Ok(s) = namespace.downcast::<PyString>() {
             let id = ast::Ident::from_str(&s.to_str()?).unwrap(); // FIXME
             Ok(Self::new(id.into_py(py)).into())

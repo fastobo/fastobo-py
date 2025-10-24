@@ -2460,7 +2460,7 @@ impl EquivalentToChainClause {
     }
 
     fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
-        PyString(slf.py(), "equivalent_to_chain")
+        PyString::intern(slf.py(), "equivalent_to_chain")
     }
 
     fn raw_value(&self) -> String {
@@ -2914,7 +2914,7 @@ impl CreatedByClause {
         self.creator = fastobo::ast::UnquotedString::new(creator);
     }
 
-    fn raw_tag(slf: PyRef<Self>) -> Bound<PyObject> {
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
         PyString::intern(slf.py(), "created_by")
     }
 
@@ -3001,12 +3001,10 @@ impl CreationDateClause {
         }
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
-            self.get_date(py)
-                .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
-        })
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        let fmt = PyString::intern(slf.py(), "CreationDateClause({!r})").into_any();
+        slf.get_date(slf.py())
+            .and_then(|dt| fmt.call_method1("format", (dt,)))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -3019,11 +3017,11 @@ impl CreationDateClause {
 
     #[getter]
     /// `datetime.datetime`: the date and time this typedef was created.
-    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
+    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         use fastobo::ast::CreationDate::*;
         match &self.date {
-            DateTime(dt) => Ok(isodatetime_to_datetime(py, dt)?.to_object(py)),
-            Date(d) => Ok(isodate_to_date(py, d)?.to_object(py)),
+            DateTime(dt) => isodatetime_to_datetime(py, dt).map(|b| b.into_any()),
+            Date(d) => isodate_to_date(py, d).map(|b| b.into_any()),
         }
     }
 

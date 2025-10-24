@@ -1881,12 +1881,11 @@ impl CreationDateClause {
         }
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
-            self.get_date(py)
-                .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
-        })
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        let py = slf.py();
+        let fmt = PyString::intern(py, "CreationDateClause({!r})").into_any();
+        slf.get_date(py)
+            .and_then(|dt| fmt.call_method1("format", (dt,)))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1899,11 +1898,11 @@ impl CreationDateClause {
 
     #[getter]
     /// `datetime.datetime`: the date and time this term was created.
-    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
+    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         use fastobo::ast::CreationDate::*;
         match &self.date {
-            DateTime(dt) => Ok(isodatetime_to_datetime(py, dt)?.to_object(py)),
-            Date(d) => Ok(isodate_to_date(py, d)?.to_object(py)),
+            DateTime(dt) => isodatetime_to_datetime(py, dt)?.into_pyobject(py).map_err(PyErr::from).map(|b| b.into_any()),
+            Date(d) => isodate_to_date(py, d)?.into_pyobject(py).map_err(PyErr::from).map(|b| b.into_any()),
         }
     }
 

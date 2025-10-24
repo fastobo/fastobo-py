@@ -384,110 +384,110 @@ fn listlike_impl_methods(
     ty: &syn::Type,
     mut imp: syn::ItemImpl,
 ) -> TokenStream2 {
-    // imp.items.push(parse_quote! {
-    //     /// Append object to the end of the list.
-    //     ///
-    //     /// Raises:
-    //     ///     TypeError: when the object is not of the right type for
-    //     ///         this container (see type-level documentation for the
-    //     ///         required type).
-    //     #[pyo3(text_signature = "(self, object)")]
-    //     fn append<'py>(&mut self, object: &Bound<'py, PyAny>) -> PyResult<()> {
-    //         let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
-    //         self.#field.push(item);
-    //         Ok(())
-    //     }
-    // });
-    // imp.items.push(parse_quote! {
-    //     /// Remove all items from list.
-    //     #[pyo3(text_signature = "(self)")]
-    //     fn clear(&mut self) {
-    //         self.#field.clear();
-    //     }
-    // });
-    // imp.items.push(parse_quote! {
-    //     /// Return a shallow copy of the list.
-    //     #[pyo3(text_signature = "(self)")]
-    //     fn copy(&self) -> PyResult<Py<Self>> {
-    //         Python::with_gil(|py| {
-    //             let copy = self.clone_py(py);
-    //             Py::new(py, copy)
-    //         })
-    //     }
-    // });
-    // imp.items.push(parse_quote! {
-    //     /// Return number of occurrences of value.
-    //     ///
-    //     /// Raises:
-    //     ///     TypeError: when the object is not of the right type for
-    //     ///         this container (see type-level documentation for the
-    //     ///         required type).
-    //     #[pyo3(text_signature = "(self, value)")]
-    //     fn count<'py>(&mut self, value: &Bound<'py, PyAny>) -> PyResult<usize> {
-    //         let py = value.py();
-    //         let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(value)?;
-    //         Ok(self.#field.iter().filter(|&x| x.eq_py(&item, py)).count())
-    //     }
-    // });
-    // // |  extend($self, iterable, /)
-    // // |      Extend list by appending elements from the iterable.
-    // // |
-    // // |  index(self, value, start=0, stop=9223372036854775807, /)
-    // // |      Return first index of value.
-    // // |
-    // // |      Raises ValueError if the value is not present.
-    // // |
-    // imp.items.push(parse_quote! {
-    //     /// Insert `object` before `index`.
-    //     ///
-    //     /// If `index` is greater than the number of elements in the list,
-    //     /// `object` will be added at the end of the list.
-    //     #[pyo3(text_signature = "(self, index, object)")]
-    //     fn insert<'py>(&mut self, mut index: isize, object: &Bound<'py, PyAny>) -> PyResult<()> {
-    //         let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
-    //         if index >= self.#field.len() as isize {
-    //             self.#field.push(item);
-    //         } else {
-    //             if index < 0 {
-    //                 index %= self.#field.len() as isize;
-    //             }
-    //             self.#field.insert(index as usize, item);
-    //         }
-    //         Ok(())
-    //     }
-    // });
-    // imp.items.push(parse_quote! {
-    //     /// Remove and return item at index (default last).
-    //     ///
-    //     /// Raises:
-    //     ///     IndexError: when list is empty or index is out of range.
-    //     #[pyo3(text_signature = "(self, index=-1)", signature=(index=-1))]
-    //     fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
-    //         // Wrap once to allow negative indexing
-    //         if index < 0 {
-    //             index += self.#field.len() as isize;
-    //         }
-    //         // Pop if the index is in vector bounds
-    //         if index >= 0 && index < self.#field.len() as isize {
-    //             Ok(self.#field.remove(index as usize))
-    //         } else {
-    //             Err(pyo3::exceptions::PyIndexError::new_err("pop index out of range"))
-    //         }
-    //     }
-    // });
-    // // |  remove(self, value, /)
-    // // |      Remove first occurrence of value.
-    // // |
-    // // |      Raises ValueError if the value is not present.
-    // imp.items.push(parse_quote! {
-    //     /// Reverse *IN PLACE*.
-    //     #[pyo3(text_signature = "(self)")]
-    //     fn reverse(&mut self) {
-    //         self.#field.reverse()
-    //     }
-    // });
-    // // |  sort(self, /, *, key=None, reverse=False)
-    // // |      Stable sort *IN PLACE*.
+    imp.items.push(parse_quote! {
+        /// Append object to the end of the list.
+        ///
+        /// Raises:
+        ///     TypeError: when the object is not of the right type for
+        ///         this container (see type-level documentation for the
+        ///         required type).
+        #[pyo3(text_signature = "(self, object)")]
+        fn append<'py>(&mut self, object: &Bound<'py, PyAny>) -> PyResult<()> {
+            let item = object.extract()?;
+            self.#field.push(item);
+            Ok(())
+        }
+    });
+    imp.items.push(parse_quote! {
+        /// Remove all items from list.
+        #[pyo3(text_signature = "(self)")]
+        fn clear(&mut self) {
+            self.#field.clear();
+        }
+    });
+    imp.items.push(parse_quote! {
+        /// Return a shallow copy of the list.
+        #[pyo3(text_signature = "(self)")]
+        fn copy(&self) -> PyResult<Py<Self>> {
+            Python::with_gil(|py| {
+                let copy = self.clone_py(py);
+                Py::new(py, copy)
+            })
+        }
+    });
+    imp.items.push(parse_quote! {
+        /// Return number of occurrences of value.
+        ///
+        /// Raises:
+        ///     TypeError: when the object is not of the right type for
+        ///         this container (see type-level documentation for the
+        ///         required type).
+        #[pyo3(text_signature = "(self, value)")]
+        fn count<'py>(&mut self, value: &Bound<'py, PyAny>) -> PyResult<usize> {
+            let py = value.py();
+            let item = value.extract()?;
+            Ok(self.#field.iter().filter(|&x| x.eq_py(&item, py)).count())
+        }
+    });
+    // |  extend($self, iterable, /)
+    // |      Extend list by appending elements from the iterable.
+    // |
+    // |  index(self, value, start=0, stop=9223372036854775807, /)
+    // |      Return first index of value.
+    // |
+    // |      Raises ValueError if the value is not present.
+    // |
+    imp.items.push(parse_quote! {
+        /// Insert `object` before `index`.
+        ///
+        /// If `index` is greater than the number of elements in the list,
+        /// `object` will be added at the end of the list.
+        #[pyo3(text_signature = "(self, index, object)")]
+        fn insert<'py>(&mut self, mut index: isize, object: &Bound<'py, PyAny>) -> PyResult<()> {
+            let item = object.extract()?;
+            if index >= self.#field.len() as isize {
+                self.#field.push(item);
+            } else {
+                if index < 0 {
+                    index %= self.#field.len() as isize;
+                }
+                self.#field.insert(index as usize, item);
+            }
+            Ok(())
+        }
+    });
+    imp.items.push(parse_quote! {
+        /// Remove and return item at index (default last).
+        ///
+        /// Raises:
+        ///     IndexError: when list is empty or index is out of range.
+        #[pyo3(text_signature = "(self, index=-1)", signature=(index=-1))]
+        fn pop(&mut self, mut index: isize) -> PyResult<#ty> {
+            // Wrap once to allow negative indexing
+            if index < 0 {
+                index += self.#field.len() as isize;
+            }
+            // Pop if the index is in vector bounds
+            if index >= 0 && index < self.#field.len() as isize {
+                Ok(self.#field.remove(index as usize))
+            } else {
+                Err(pyo3::exceptions::PyIndexError::new_err("pop index out of range"))
+            }
+        }
+    });
+    // |  remove(self, value, /)
+    // |      Remove first occurrence of value.
+    // |
+    // |      Raises ValueError if the value is not present.
+    imp.items.push(parse_quote! {
+        /// Reverse *IN PLACE*.
+        #[pyo3(text_signature = "(self)")]
+        fn reverse(&mut self) {
+            self.#field.reverse()
+        }
+    });
+    // |  sort(self, /, *, key=None, reverse=False)
+    // |      Stable sort *IN PLACE*.
     quote!(#imp)
 }
 

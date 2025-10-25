@@ -172,6 +172,7 @@ pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
         output.extend(frompyobject_impl_enum(&ast, &e));
         output.extend(intopy_impl_enum(&ast, &e));
         output.extend(asbase_impl_enum(&ast, &e, &base));
+        output.extend(fromvariant_impl_enum(&ast, &e));
     } else {
         panic!("only supports enums");
     }
@@ -369,6 +370,47 @@ fn asbase_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum, base: &syn::Iden
     };
 
     expanded
+}
+
+fn fromvariant_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum,) -> TokenStream2 {
+    
+    // extract name of enum wrapper
+    let wrapper = &ast.ident;
+
+    // Build From for each variant
+    let mut output = TokenStream2::new();
+    for variant in &en.variants {
+        let name = &variant.ident;
+        let ty = if let syn::Fields::Unnamed(f) = &variant.fields {
+            if let syn::Type::Path(p) = &f.unnamed.first().unwrap().ty {
+                if let syn::PathArguments::AngleBracketed(b) = &p.path.segments.first().unwrap().arguments {
+                    &b.args.first().unwrap()
+                } else {
+                    panic!("only supports bracketed paths")
+                }
+            } else {
+                panic!("only supports generic field types")
+            }
+        } else {
+            panic!("only supports unnamed fields");
+        };
+        output.extend(quote!(
+            #[automatically_derived]
+            impl From<Py<#ty>> for #wrapper {
+                fn from(x: Py<#ty>) -> Self {
+                    #wrapper::#name(x)
+                }
+            }
+            #[automatically_derived]
+            impl<'py> From<Bound<'py, #ty>> for #wrapper {
+                fn from(x: Bound<'py, #ty>) -> Self {
+                    #wrapper::#name(x.unbind())
+                }
+            }
+        ));
+    }
+    
+    output
 }
 
 // ---

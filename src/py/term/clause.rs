@@ -1101,8 +1101,10 @@ impl IsAClause {
         impl_repr_py!(slf, IsAClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        let py = slf.py();
+        let line: fastobo::ast::Line::<fastobo::ast::TermClause> = TermClause::from(slf).into_py(py);
+        line.to_string()
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {

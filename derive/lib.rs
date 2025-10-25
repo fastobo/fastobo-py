@@ -372,8 +372,7 @@ fn asbase_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum, base: &syn::Iden
     expanded
 }
 
-fn fromvariant_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum,) -> TokenStream2 {
-    
+fn fromvariant_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
     // extract name of enum wrapper
     let wrapper = &ast.ident;
 
@@ -383,7 +382,9 @@ fn fromvariant_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum,) -> TokenSt
         let name = &variant.ident;
         let ty = if let syn::Fields::Unnamed(f) = &variant.fields {
             if let syn::Type::Path(p) = &f.unnamed.first().unwrap().ty {
-                if let syn::PathArguments::AngleBracketed(b) = &p.path.segments.first().unwrap().arguments {
+                if let syn::PathArguments::AngleBracketed(b) =
+                    &p.path.segments.first().unwrap().arguments
+                {
                     &b.args.first().unwrap()
                 } else {
                     panic!("only supports bracketed paths")
@@ -409,7 +410,7 @@ fn fromvariant_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum,) -> TokenSt
             }
         ));
     }
-    
+
     output
 }
 

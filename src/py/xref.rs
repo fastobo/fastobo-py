@@ -119,11 +119,9 @@ impl Xref {
 
     fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         if let Some(ref d) = self.desc {
-            PyString::intern(py, "Xref({!r}, {!r})")
-                .call_method1("format", (&self.id, d.as_str()))
+            PyString::intern(py, "Xref({!r}, {!r})").call_method1("format", (&self.id, d.as_str()))
         } else {
-            PyString::intern(py, "Xref({!r})")
-                .call_method1("format", (&self.id,))
+            PyString::intern(py, "Xref({!r})").call_method1("format", (&self.id,))
         }
     }
 

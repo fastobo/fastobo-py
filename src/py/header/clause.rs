@@ -711,10 +711,7 @@ impl SubsetdefClause {
     }
 
     fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
-        impl_repr_py!(
-            slf,
-            SubsetdefClause(slf.subset, slf.description.as_str())
-        )
+        impl_repr_py!(slf, SubsetdefClause(slf.subset, slf.description.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2063,10 +2060,7 @@ impl UnreservedClause {
     }
 
     fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
-        impl_repr_py!(
-            slf,
-            UnreservedClause(slf.tag.as_str(), slf.value.as_str())
-        )
+        impl_repr_py!(slf, UnreservedClause(slf.tag.as_str(), slf.value.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {

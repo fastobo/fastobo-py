@@ -206,16 +206,19 @@ impl IntoPy<TypedefClause> for fastobo::ast::TypedefClause {
 impl IntoPy<TypedefClause> for fastobo::ast::Line<fastobo::ast::TypedefClause> {
     fn into_py(mut self, py: Python) -> TypedefClause {
         // extract end-of-line attributes
-        let qualifiers = self
-            .qualifiers_mut()
-            .map(std::mem::take);
-        // let comment = self.comment_mut().map(std::mem::take).unwrap_or_default();
+        let qualifiers = self.qualifiers_mut().map(std::mem::take);
+        let comment = self
+            .comment_mut()
+            .map(|c| std::mem::replace(c, fastobo::ast::Comment::new("")));
         // convert clause
         let clause = self.into_inner().into_py(py);
         // attach attributes
         let base = clause.as_base(py);
         if let Some(ql) = qualifiers {
             base.as_super().borrow_mut().qualifiers = Some(Py::new(py, ql.into_py(py)).unwrap());
+        }
+        if let Some(c) = comment {
+            base.as_super().borrow_mut().comment = Some(c.into_string());
         }
         // return object
         clause
@@ -224,14 +227,17 @@ impl IntoPy<TypedefClause> for fastobo::ast::Line<fastobo::ast::TypedefClause> {
 
 impl IntoPy<fastobo::ast::Line<fastobo::ast::TypedefClause>> for &TypedefClause {
     fn into_py(self, py: Python) -> fastobo::ast::Line<fastobo::ast::TypedefClause> {
-        let line = if let Some(ql) = &self.as_base(py).as_super().borrow().qualifiers {
+        let mut line = if let Some(ql) = &self.as_base(py).as_super().borrow().qualifiers {
             let list = ql.bind(py).borrow();
-            let qualifiers= (&*list).into_py(py);
+            let qualifiers = (&*list).into_py(py);
             fastobo::ast::Line::with_qualifiers(qualifiers)
         } else {
             fastobo::ast::Line::new()
         };
-        let clause= self.into_py(py);
+        if let Some(c) = &self.as_base(py).as_super().borrow().comment {
+            line = line.and_comment(fastobo::ast::Comment::new(c));
+        }
+        let clause = self.into_py(py);
         line.and_inner(clause)
     }
 }

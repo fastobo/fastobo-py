@@ -234,6 +234,16 @@ Xref (`fastobo.xref`)
     XrefList
 
 
+Qualifier (`fastobo.qual`)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: fastobo.qual
+.. autosummary::
+    :nosignature:
+
+    Qualifier
+    QualifierList
+
 
 Exceptions
 ----------

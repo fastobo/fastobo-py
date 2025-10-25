@@ -159,22 +159,22 @@ impl AbstractClause {
 #[derive(Debug)]
 pub struct AbstractEntityClause {
     #[pyo3(set)]
-    pub(crate) qualifiers: Py<QualifierList>,
+    pub(crate) qualifiers: Option<Py<QualifierList>>,
 }
 
 impl AbstractClass for AbstractEntityClause {
     fn initializer(py: Python) -> PyClassInitializer<Self> {
         AbstractClause::initializer(py).add_subclass(Self {
-            qualifiers: Py::new(py, QualifierList::default()).unwrap(),
+            qualifiers: None,
         })
     }
 }
 
 #[pymethods]
 impl AbstractEntityClause {
-    /// `QualifierList`: the end-of-line qualifiers for this clause.
+    /// `QualifierList` or `None`: the end-of-line qualifiers for this clause.
     #[getter]
-    pub fn get_qualifiers(&self) -> &Py<QualifierList> {
+    pub fn get_qualifiers(&self) -> &Option<Py<QualifierList>> {
         &self.qualifiers
     }
 }

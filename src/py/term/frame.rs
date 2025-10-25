@@ -108,8 +108,8 @@ impl TermFrame {
         }
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TermFrame(self.id))
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        impl_repr_py!(slf, TermFrame(slf.id))
     }
 
     fn __str__(&self) -> PyResult<String> {

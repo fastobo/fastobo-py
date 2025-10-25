@@ -194,8 +194,8 @@ impl Synonym {
         })
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, Synonym(self.desc, self.scope))
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        impl_repr_py!(slf, Synonym(slf.desc, slf.scope))
     }
 
     fn __str__(&self) -> PyResult<String> {

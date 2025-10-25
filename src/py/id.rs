@@ -297,8 +297,8 @@ impl PrefixedIdent {
         impl_hash!(self.inner.prefix(), ":", self.inner.local())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, PrefixedIdent(self.inner.prefix(), self.inner.local()))
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        impl_repr_py!(slf, PrefixedIdent(slf.inner.prefix(), slf.inner.local()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -452,8 +452,8 @@ impl UnprefixedIdent {
         impl_hash!(self.inner.as_str())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, UnprefixedIdent(self.inner.as_str()))
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        impl_repr_py!(slf, UnprefixedIdent(slf.inner.as_str()))
     }
 
     fn __str__(&self) -> PyResult<&str> {
@@ -591,8 +591,8 @@ impl Url {
         impl_hash!(self.inner.as_str())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, Url(self.inner.as_str()))
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        impl_repr_py!(slf, Url(slf.inner.as_str()))
     }
 
     /// Retrieve the URL in a serialized form.

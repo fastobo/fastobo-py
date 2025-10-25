@@ -117,18 +117,14 @@ impl Xref {
         }
     }
 
-    fn __repr__<'py>(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            if let Some(ref d) = self.desc {
-                PyString::new(py, "Xref({!r}, {!r})")
-                    .call_method1("format", (&self.id, d.as_str()))
-                    .map(|x| x.unbind())
-            } else {
-                PyString::new(py, "Xref({!r})")
-                    .call_method1("format", (&self.id,))
-                    .map(|x| x.unbind())
-            }
-        })
+    fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        if let Some(ref d) = self.desc {
+            PyString::intern(py, "Xref({!r}, {!r})")
+                .call_method1("format", (&self.id, d.as_str()))
+        } else {
+            PyString::intern(py, "Xref({!r})")
+                .call_method1("format", (&self.id,))
+        }
     }
 
     fn __str__(&self) -> PyResult<String> {

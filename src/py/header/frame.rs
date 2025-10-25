@@ -93,8 +93,8 @@ impl HeaderFrame {
         Ok(Self::new(vec).into())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, HeaderFrame(self.clauses))
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        impl_repr_py!(slf, HeaderFrame(slf.clauses))
     }
 
     fn __str__(&self) -> PyResult<String> {

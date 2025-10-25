@@ -46,14 +46,13 @@ macro_rules! impl_richcmp_py {
     });
 }
 
-macro_rules! impl_repr {
+macro_rules! impl_repr_py {
     ($self:ident, $cls:ident($($field:expr),*)) => ({
-        Python::with_gil(|py| {
-            let args = &[
-                $((&$field).into_pyobject(py)?.as_any().repr()?.to_str()?,)*
-            ].join(", ");
-            Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).into_pyobject(py)?.into_any().unbind())
-        })
+        let py = $self.py();
+        let args = &[
+            $((&$field).into_pyobject(py)?.as_any().repr()?.to_str()?,)*
+        ].join(", ");
+        Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).into_pyobject(py)?.into_any())
     })
 }
 

@@ -288,8 +288,8 @@ impl IsAnonymousClause {
         Self::new(anonymous).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsAnonymousClause(self.anonymous))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsAnonymousClause(slf.anonymous))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -353,8 +353,8 @@ impl NameClause {
         Self::new(fastobo::ast::UnquotedString::new(name)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, NameClause(self.name))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, NameClause(slf.name))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -435,8 +435,8 @@ impl NamespaceClause {
         Self::new(namespace).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, NamespaceClause(self.namespace))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, NamespaceClause(slf.namespace))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -511,8 +511,8 @@ impl AltIdClause {
         Self::new(alt_id).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, AltIdClause(self.alt_id))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, AltIdClause(slf.alt_id))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -609,11 +609,12 @@ impl DefClause {
         Ok(Self::new(def, Py::new(py, list)?).into_py(py))
     }
 
-    fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
-        if self.xrefs.bind(py).borrow().is_empty() {
-            impl_repr!(self, DefClause(self.definition))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        let py = slf.py();
+        if slf.xrefs.bind(py).borrow().is_empty() {
+            impl_repr_py!(slf, DefClause(slf.definition))
         } else {
-            impl_repr!(self, DefClause(self.definition, self.xrefs))
+            impl_repr_py!(slf, DefClause(slf.definition, slf.xrefs))
         }
     }
 
@@ -695,8 +696,8 @@ impl CommentClause {
         Self::new(fastobo::ast::UnquotedString::new(comment)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CommentClause(self.comment))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, CommentClause(slf.comment))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -776,8 +777,8 @@ impl SubsetClause {
         Self::new(subset).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SubsetClause(self.subset))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, SubsetClause(slf.subset))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -855,8 +856,8 @@ impl SynonymClause {
         Python::with_gil(|py| Self::new(synonym.clone_ref(py))).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SynonymClause(self.synonym))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, SynonymClause(slf.synonym))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -943,8 +944,8 @@ impl XrefClause {
         Self::from(xref).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, XrefClause(self.xref))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, XrefClause(slf.xref))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1020,8 +1021,8 @@ impl PropertyValueClause {
         Self::new(pv).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, PropertyValueClause(self.inner))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, PropertyValueClause(slf.inner))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1096,8 +1097,8 @@ impl DomainClause {
         Self::new(domain).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DomainClause(self.domain))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, DomainClause(slf.domain))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1172,8 +1173,8 @@ impl RangeClause {
         Self::new(range).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, RangeClause(self.range))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, RangeClause(slf.range))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1245,8 +1246,8 @@ impl BuiltinClause {
         Self::new(builtin).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, BuiltinClause(self.builtin))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, BuiltinClause(slf.builtin))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1321,8 +1322,8 @@ impl HoldsOverChainClause {
         Self::new(first, last).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, HoldsOverChainClause(self.first, self.last))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, HoldsOverChainClause(slf.first, slf.last))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1399,8 +1400,8 @@ impl IsAntiSymmetricClause {
         Self::new(anti_symmetric).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsAntiSymmetricClause(self.anti_symmetric))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsAntiSymmetricClause(slf.anti_symmetric))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1465,8 +1466,8 @@ impl IsCyclicClause {
         Self::new(cyclic).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsCyclicClause(self.cyclic))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsCyclicClause(slf.cyclic))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1531,8 +1532,8 @@ impl IsReflexiveClause {
         Self::new(reflexive).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsReflexiveClause(self.reflexive))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsReflexiveClause(slf.reflexive))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1597,8 +1598,8 @@ impl IsSymmetricClause {
         Self::new(symmetric).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsSymmetricClause(self.symmetric))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsSymmetricClause(slf.symmetric))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1663,8 +1664,8 @@ impl IsAsymmetricClause {
         Self::new(asymmetric).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsAsymmetricClause(self.asymmetric))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsAsymmetricClause(slf.asymmetric))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1729,8 +1730,8 @@ impl IsTransitiveClause {
         Self::new(transitive).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsTransitiveClause(self.transitive))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsTransitiveClause(slf.transitive))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1795,8 +1796,8 @@ impl IsFunctionalClause {
         Self::new(functional).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsFunctionalClause(self.functional))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsFunctionalClause(slf.functional))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1861,8 +1862,8 @@ impl IsInverseFunctionalClause {
         Self::new(inverse_functional).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsInverseFunctionalClause(self.inverse_functional))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsInverseFunctionalClause(slf.inverse_functional))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1931,8 +1932,8 @@ impl IsAClause {
         Self::new(typedef).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsAClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsAClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2007,8 +2008,8 @@ impl IntersectionOfClause {
         Self::new(typedef).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IntersectionOfClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IntersectionOfClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2082,8 +2083,8 @@ impl UnionOfClause {
         Self::new(typedef).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, UnionOfClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, UnionOfClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2158,8 +2159,8 @@ impl EquivalentToClause {
         Self::new(id).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, EquivalentToClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, EquivalentToClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2234,8 +2235,8 @@ impl DisjointFromClause {
         Self::new(typedef).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DisjointFromClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, DisjointFromClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2310,8 +2311,8 @@ impl InverseOfClause {
         Self::new(typedef).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, InverseOfClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, InverseOfClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2386,8 +2387,8 @@ impl TransitiveOverClause {
         Self::new(typedef).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TransitiveOverClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, TransitiveOverClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2468,8 +2469,8 @@ impl EquivalentToChainClause {
         Self::new(first, last).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, EquivalentToChainClause(self.first, self.last))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, EquivalentToChainClause(slf.first, slf.last))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2550,8 +2551,8 @@ impl DisjointOverClause {
         Self::new(typedef).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DisjointOverClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, DisjointOverClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2632,8 +2633,8 @@ impl RelationshipClause {
         Self::new(typedef, target).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, RelationshipClause(self.typedef, self.target))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, RelationshipClause(slf.typedef, slf.target))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2708,8 +2709,8 @@ impl IsObsoleteClause {
         Self::new(obsolete).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsObsoleteClause(self.obsolete))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsObsoleteClause(slf.obsolete))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2778,8 +2779,8 @@ impl ReplacedByClause {
         Self::new(typedef).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ReplacedByClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, ReplacedByClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2854,8 +2855,8 @@ impl ConsiderClause {
         Self::new(typedef).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ConsiderClause(self.typedef))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, ConsiderClause(slf.typedef))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -2925,8 +2926,8 @@ impl CreatedByClause {
         Self::new(fastobo::ast::UnquotedString::new(creator)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CreatedByClause(self.creator))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, CreatedByClause(slf.creator))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -3152,8 +3153,8 @@ impl ExpandAssertionToClause {
         Ok(Self::new(def, Py::new(py, list)?).into_py(py))
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ExpandAssertionToClause(self.definition, self.xrefs))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, ExpandAssertionToClause(slf.definition, slf.xrefs))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -3258,8 +3259,8 @@ impl ExpandExpressionToClause {
         Ok(Self::new(def, Py::new(py, list)?).into_py(py))
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ExpandExpressionToClause(self.definition, self.xrefs))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, ExpandExpressionToClause(slf.definition, slf.xrefs))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -3343,8 +3344,8 @@ impl IsMetadataTagClause {
         Self::new(metadata_tag).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsMetadataTagClause(self.metadata_tag))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsMetadataTagClause(slf.metadata_tag))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -3409,8 +3410,8 @@ impl IsClassLevelClause {
         Self::new(class_level).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsClassLevelClause(self.class_level))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsClassLevelClause(slf.class_level))
     }
 
     fn __str__(&self) -> PyResult<String> {

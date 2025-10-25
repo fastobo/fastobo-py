@@ -16,7 +16,6 @@ use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::AsPyPointer;
 use pyo3::PyTypeInfo;
 
 use super::id::Ident;
@@ -109,6 +108,7 @@ impl Xref {
     ///     id (~fastobo.id.Ident): the identifier of the reference.
     ///     desc (str, optional): an optional description for the reference.
     #[new]
+    #[pyo3(signature = (id, desc = None))]
     fn __init__(id: Ident, desc: Option<String>) -> Self {
         if let Some(s) = desc {
             Self::with_desc(id, Some(fastobo::ast::QuotedString::new(s)))
@@ -117,18 +117,12 @@ impl Xref {
         }
     }
 
-    fn __repr__<'py>(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            if let Some(ref d) = self.desc {
-                PyString::new(py, "Xref({!r}, {!r})")
-                    .call_method1("format", (&self.id, d.as_str()))
-                    .map(|x| x.unbind())
-            } else {
-                PyString::new(py, "Xref({!r})")
-                    .call_method1("format", (&self.id,))
-                    .map(|x| x.unbind())
-            }
-        })
+    fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        if let Some(ref d) = self.desc {
+            PyString::intern(py, "Xref({!r}, {!r})").call_method1("format", (&self.id, d.as_str()))
+        } else {
+            PyString::intern(py, "Xref({!r})").call_method1("format", (&self.id,))
+        }
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -252,15 +246,13 @@ impl XrefList {
         }
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            if self.xrefs.is_empty() {
-                Ok("XrefList()".to_object(py))
-            } else {
-                let fmt = PyString::new(py, "XrefList({!r})").to_object(py);
-                fmt.call_method1(py, "format", (&self.xrefs.to_object(py),))
-            }
-        })
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        if slf.xrefs.is_empty() {
+            Ok(PyString::intern(slf.py(), "XrefList()").into_any())
+        } else {
+            let fmt = PyString::intern(slf.py(), "XrefList({!r})");
+            fmt.call_method1("format", (&slf.xrefs,))
+        }
     }
 
     fn __str__(&self) -> PyResult<String> {

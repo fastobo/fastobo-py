@@ -40,12 +40,10 @@ fn clonepy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2
         #[allow(unused)]
         impl ClonePy for #name {
             fn clone_py(&self, py: Python) -> Self {
-                Python::with_gil(|py| {
-                    use self::#name::*;
-                    match self {
-                        #(#variants,)*
-                    }
-                })
+                use self::#name::*;
+                match self {
+                    #(#variants,)*
+                }
             }
         }
     };
@@ -152,44 +150,34 @@ fn eqpy_impl_struct(ast: &syn::DeriveInput, en: &syn::DataStruct) -> TokenStream
 #[proc_macro_derive(PyWrapper, attributes(wraps))]
 pub fn pywrapper_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::DeriveInput);
+
+    let base = {
+        let mut base = None;
+        for attr in &ast.attrs {
+            match &attr.meta {
+                syn::Meta::List(list)
+                    if list.path.get_ident().map(|i| i == "wraps").unwrap_or(false) =>
+                {
+                    base = Some(syn::parse2::<syn::Ident>(list.tokens.clone()).unwrap());
+                }
+                _ => (),
+            }
+        }
+        base.expect("failed to locate #[wraps(...)] attribute")
+    };
+
     let mut output = TokenStream2::new();
     if let syn::Data::Enum(e) = &ast.data {
         output.extend(intopyobject_impl_enum(&ast, &e));
         output.extend(frompyobject_impl_enum(&ast, &e));
-        output.extend(aspyptr_impl_enum(&ast, &e));
         output.extend(intopy_impl_enum(&ast, &e));
+        output.extend(asbase_impl_enum(&ast, &e, &base));
+        output.extend(fromvariant_impl_enum(&ast, &e));
     } else {
         panic!("only supports enums");
     }
 
     TokenStream::from(output)
-}
-
-fn aspyptr_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
-    let mut variants = Vec::new();
-
-    // Build clone for each variant
-    for variant in &en.variants {
-        let name = &variant.ident;
-        variants.push(quote!(#name(x) => x.as_ptr()));
-    }
-
-    // Build clone implementation
-    let name = &ast.ident;
-    let expanded = quote! {
-        #[automatically_derived]
-        unsafe impl pyo3::AsPyPointer for #name {
-            fn as_ptr(&self) -> *mut pyo3::ffi::PyObject {
-                use self::#name::*;
-
-                match self {
-                    #(#variants,)*
-                }
-            }
-        }
-    };
-
-    expanded
 }
 
 fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
@@ -210,7 +198,7 @@ fn intopyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     // Build clone for each variant
     for variant in &en.variants {
         let name = &variant.ident;
-        variants.push(quote!(#name(x) => x.extract(py)));
+        variants.push(quote!(#name(x) => x.extract(py).map_err(PyErr::from)));
     }
 
     // Build clone implementation
@@ -271,7 +259,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
             path.segments.iter().next().unwrap().ident.span(),
         );
 
-        variants.push(quote!(#lit => ob.extract::<pyo3::Py<#path>>().map(#wrapped::#name)));
+        variants.push(quote!(#lit => obj.extract::<pyo3::Py<#path>>().map(#wrapped::#name).map_err(PyErr::from)));
     }
 
     // extract name of base struct
@@ -297,11 +285,10 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
     );
     let expanded = quote! {
         #[automatically_derived]
-        impl<'source> pyo3::FromPyObject<'source> for #wrapped {
-            fn extract_bound(ob: &Bound<'source, pyo3::types::PyAny>) -> pyo3::PyResult<Self> {
-                use pyo3::AsPyPointer;
-
-                let qualname = ob.get_type().name()?;
+        impl<'source, 'py> pyo3::FromPyObject<'source, 'py> for #wrapped {
+            type Error = PyErr;
+            fn extract(obj: Borrowed<'source, 'py, PyAny>) -> pyo3::PyResult<Self> {
+                let qualname = obj.get_type().name()?;
                 let q = qualname.to_str()?;
 
                 let ty = match q.rfind('.') {
@@ -309,7 +296,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
                     None => &q,
                 };
 
-                if ob.is_instance_of::<#base>() {
+                if obj.is_instance_of::<#base>() {
                     match ty.as_ref() {
                         #(#variants,)*
                         _ => Err(pyo3::exceptions::PyTypeError::new_err(#err_sub))
@@ -317,7 +304,7 @@ fn frompyobject_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenSt
                 } else {
                     Err(pyo3::exceptions::PyTypeError::new_err(format!(
                         #err_ty,
-                        ob.get_type().name()?,
+                        obj.get_type().name()?,
                     )))
                 }
             }
@@ -338,7 +325,7 @@ fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
         ));
     }
 
-    // Build clone implementation
+    // Build implementation
     let name = &ast.ident;
     let expanded = quote! {
         #[automatically_derived]
@@ -354,6 +341,77 @@ fn intopy_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 
     };
 
     expanded
+}
+
+fn asbase_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum, base: &syn::Ident) -> TokenStream2 {
+    let mut variants = Vec::new();
+
+    // Build IntoPy for each variant
+    for variant in &en.variants {
+        let name = &variant.ident;
+        variants.push(quote!(
+            #name(x) => x.bind(py).as_super()
+        ));
+    }
+
+    // Build implementation
+    let name = &ast.ident;
+    let expanded = quote! {
+        #[automatically_derived]
+        impl #name {
+            fn as_base<'a, 'py>(&'a self, py: Python<'py>) -> &'a Bound<'py, #base> {
+                use std::ops::Deref;
+                use self::#name::*;
+                match self {
+                    #(#variants,)*
+                }
+            }
+        }
+    };
+
+    expanded
+}
+
+fn fromvariant_impl_enum(ast: &syn::DeriveInput, en: &syn::DataEnum) -> TokenStream2 {
+    // extract name of enum wrapper
+    let wrapper = &ast.ident;
+
+    // Build From for each variant
+    let mut output = TokenStream2::new();
+    for variant in &en.variants {
+        let name = &variant.ident;
+        let ty = if let syn::Fields::Unnamed(f) = &variant.fields {
+            if let syn::Type::Path(p) = &f.unnamed.first().unwrap().ty {
+                if let syn::PathArguments::AngleBracketed(b) =
+                    &p.path.segments.first().unwrap().arguments
+                {
+                    &b.args.first().unwrap()
+                } else {
+                    panic!("only supports bracketed paths")
+                }
+            } else {
+                panic!("only supports generic field types")
+            }
+        } else {
+            panic!("only supports unnamed fields");
+        };
+        output.extend(quote!(
+            #[automatically_derived]
+            impl From<Py<#ty>> for #wrapper {
+                fn from(x: Py<#ty>) -> Self {
+                    #wrapper::#name(x)
+                }
+            }
+            #[automatically_derived]
+            impl<'py> From<Bound<'py, #ty>> for #wrapper {
+                fn from(x: Bound<'py, #ty>) -> Self {
+                    #wrapper::#name(x.unbind())
+                }
+            }
+        ));
+    }
+
+    output
 }
 
 // ---
@@ -396,7 +454,7 @@ fn listlike_impl_methods(
         ///         required type).
         #[pyo3(text_signature = "(self, object)")]
         fn append<'py>(&mut self, object: &Bound<'py, PyAny>) -> PyResult<()> {
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
+            let item = object.extract()?;
             self.#field.push(item);
             Ok(())
         }
@@ -428,7 +486,7 @@ fn listlike_impl_methods(
         #[pyo3(text_signature = "(self, value)")]
         fn count<'py>(&mut self, value: &Bound<'py, PyAny>) -> PyResult<usize> {
             let py = value.py();
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(value)?;
+            let item = value.extract()?;
             Ok(self.#field.iter().filter(|&x| x.eq_py(&item, py)).count())
         }
     });
@@ -447,7 +505,7 @@ fn listlike_impl_methods(
         /// `object` will be added at the end of the list.
         #[pyo3(text_signature = "(self, index, object)")]
         fn insert<'py>(&mut self, mut index: isize, object: &Bound<'py, PyAny>) -> PyResult<()> {
-            let item = <#ty as pyo3::prelude::FromPyObject>::extract_bound(object)?;
+            let item = object.extract()?;
             if index >= self.#field.len() as isize {
                 self.#field.push(item);
             } else {
@@ -527,8 +585,13 @@ fn finalclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> Toke
         impl FinalClass for #name {}
         impl Into<pyo3::pyclass_init::PyClassInitializer<#name>> for #name {
             fn into(self) ->  pyo3::pyclass_init::PyClassInitializer<Self> {
-                <#base as AbstractClass>::initializer()
-                    .add_subclass(self)
+                Python::attach(|py| self.into_py(py))
+            }
+        }
+
+        impl IntoPy<pyo3::pyclass_init::PyClassInitializer<#name>> for #name {
+            fn into_py(self, py: Python) ->  pyo3::pyclass_init::PyClassInitializer<Self> {
+                #base::initializer(py).add_subclass(self)
             }
         }
     }
@@ -546,7 +609,7 @@ pub fn abstractclass_derive(input: TokenStream) -> TokenStream {
 }
 
 fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> TokenStream2 {
-    // Get the `base` attribute.
+    // Get the `base` attribute.c
     let meta = &ast
         .attrs
         .iter()
@@ -565,9 +628,8 @@ fn abstractclass_impl_struct(ast: &syn::DeriveInput, _st: &syn::DataStruct) -> T
     // default value of the base class as the initializer value
     quote! {
         impl AbstractClass for #name {
-            fn initializer() -> pyo3::pyclass_init::PyClassInitializer<Self> {
-                <#base as AbstractClass>::initializer()
-                    .add_subclass(Self {})
+            fn initializer(py: Python) -> pyo3::pyclass_init::PyClassInitializer<Self> {
+                #base::initializer(py).add_subclass(Self::default())
             }
         }
 

@@ -10,16 +10,17 @@ macro_rules! impl_hash {
 
 macro_rules! impl_richcmp {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
+        use pyo3::types::PyBool;
         match $op {
             $crate::pyo3::class::basic::CompareOp::Eq => {
                 let py = $other.py();
-                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-                    let clause = clause.bind(py).borrow();
-                    let res = $($self.$attr == clause.$attr)&&*;
-                    Ok(res.to_object(py))
+                let val = if let Ok(ref clause) = $other.cast::<Self>() {
+                    let c = clause.borrow();
+                    $($self.$attr == c.$attr)&&*
                 } else {
-                    Ok(false.to_object(py))
-                }
+                    false
+                };
+                Ok(PyBool::new(py, val).to_owned().into_any().unbind())
             }
             _ => Ok($other.py().NotImplemented())
         }
@@ -28,39 +29,50 @@ macro_rules! impl_richcmp {
 
 macro_rules! impl_richcmp_py {
     ($self:ident, $other:ident, $op:ident, $(self . $attr:ident)&&*) => ({
+        use pyo3::types::PyBool;
         match $op {
             $crate::pyo3::class::basic::CompareOp::Eq => {
                 let py = $other.py();
-                if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-                    let clause = clause.bind(py).borrow();
-                    let res = $($self.$attr.eq_py(&clause.$attr, py))&&*;
-                    Ok(res.to_object(py))
+                let val = if let Ok(ref clause) = $other.cast::<Self>() {
+                    let c = clause.borrow();
+                    $($self.$attr.eq_py(&c.$attr, py))&&*
                 } else {
-                    Ok(false.to_object(py))
-                }
+                    false
+                };
+                Ok(PyBool::new(py, val).to_owned().into_any().unbind())
             }
             _ => Ok($other.py().NotImplemented())
         }
     });
 }
 
-macro_rules! impl_repr {
+macro_rules! impl_repr_py {
     ($self:ident, $cls:ident($($field:expr),*)) => ({
-        Python::with_gil(|py| {
-            let args = &[
-                $((&$field).into_pyobject(py)?.as_any().repr()?.to_str()?,)*
-            ].join(", ");
-            Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).to_object(py))
-        })
+        let py = $self.py();
+        let args = &[
+            $((&$field).into_pyobject(py)?.as_any().repr()?.to_str()?,)*
+        ].join(", ");
+        Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).into_pyobject(py)?.into_any())
     })
+}
+
+macro_rules! impl_str_py {
+    ($self:ident, $cls:ident) => {{
+        let py = $self.py();
+        let line: fastobo::ast::Line<fastobo::ast::$cls> = $cls::from($self).into_py(py);
+        let mut s = line.to_string();
+        if s.ends_with('\n') {
+            s.pop();
+        }
+        s
+    }};
 }
 
 macro_rules! register {
     ($py:ident, $m:ident, $cls:ident, $module:expr, $metacls:ident) => {
         $py.import($module)?
             .getattr(stringify!($metacls))?
-            .to_object($py)
-            .call_method1($py, "register", ($m.getattr(stringify!($cls))?,))?;
+            .call_method1("register", ($m.getattr(stringify!($cls))?,))?;
     };
 }
 

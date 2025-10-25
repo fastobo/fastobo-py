@@ -189,12 +189,12 @@ impl IntoPy<obo::HeaderClause> for FormatVersionClause {
 #[pymethods]
 impl FormatVersionClause {
     #[new]
-    fn __init__(version: String) -> PyClassInitializer<Self> {
-        Self::new(obo::UnquotedString::new(version)).into()
+    fn __init__(py: Python, version: String) -> PyClassInitializer<Self> {
+        Self::new(obo::UnquotedString::new(version)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, FormatVersionClause(self.version))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, FormatVersionClause(slf.version))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -216,8 +216,8 @@ impl FormatVersionClause {
         self.version = obo::UnquotedString::new(version);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "format-version").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "format-version")
     }
 
     fn raw_value(&self) -> String {
@@ -265,12 +265,12 @@ impl Display for DataVersionClause {
 #[pymethods]
 impl DataVersionClause {
     #[new]
-    fn __init__(version: String) -> PyClassInitializer<Self> {
-        Self::new(UnquotedString::new(version)).into()
+    fn __init__(py: Python, version: String) -> PyClassInitializer<Self> {
+        Self::new(UnquotedString::new(version)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DataVersionClause(self.version))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, DataVersionClause(slf.version))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -292,8 +292,8 @@ impl DataVersionClause {
         self.version = UnquotedString::new(version);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "data-version").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "data-version")
     }
 
     fn raw_value(&self) -> String {
@@ -352,32 +352,34 @@ impl DateClause {
         .into()
     }
 
-    fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
-        let fmt = PyString::new(py, "DateClause({!r})").to_object(py);
-        fmt.call_method1(py, "format", (self.get_date(py)?,))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        let py = slf.py();
+        let fmt = PyString::intern(py, "DateClause({!r})");
+        fmt.call_method1("format", (slf.get_date(py)?,))
     }
 
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> Bound<'py, PyAny> {
+        let py = other.py();
         if let Ok(ref clause) = other.extract::<Py<Self>>() {
-            let clause = &*clause.bind(other.py()).borrow();
-            Ok(match op {
+            let clause = &*clause.bind(py).borrow();
+            let res = match op {
                 CompareOp::Eq => self.date == clause.date,
                 CompareOp::Ne => self.date != clause.date,
                 CompareOp::Lt => self.date < clause.date,
                 CompareOp::Le => self.date <= clause.date,
                 CompareOp::Gt => self.date > clause.date,
                 CompareOp::Ge => self.date >= clause.date,
-            }
-            .to_object(other.py()))
+            };
+            res.into_pyobject(py).unwrap().to_owned().into_any()
         } else {
             match op {
-                CompareOp::Eq => Ok(false.to_object(other.py())),
-                CompareOp::Ne => Ok(true.to_object(other.py())),
-                _ => Ok(other.py().NotImplemented()),
+                CompareOp::Eq => false.into_pyobject(py).unwrap().to_owned().into_any(),
+                CompareOp::Ne => true.into_pyobject(py).unwrap().to_owned().into_any(),
+                _ => py.NotImplemented().bind(py).clone(),
             }
         }
     }
@@ -409,8 +411,8 @@ impl DateClause {
         );
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "date").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "date")
     }
 
     fn raw_value(&self) -> String {
@@ -458,12 +460,12 @@ impl IntoPy<obo::HeaderClause> for SavedByClause {
 #[pymethods]
 impl SavedByClause {
     #[new]
-    fn __init__(name: String) -> PyClassInitializer<Self> {
-        Self::new(UnquotedString::new(name)).into()
+    fn __init__(py: Python, name: String) -> PyClassInitializer<Self> {
+        Self::new(UnquotedString::new(name)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SavedByClause(self.name))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, SavedByClause(slf.name))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -485,8 +487,8 @@ impl SavedByClause {
         self.name = UnquotedString::new(name);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "saved-py").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "saved-py")
     }
 
     fn raw_value(&self) -> String {
@@ -534,16 +536,16 @@ impl IntoPy<obo::HeaderClause> for AutoGeneratedByClause {
 #[pymethods]
 impl AutoGeneratedByClause {
     #[new]
-    fn __init__(name: String) -> PyClassInitializer<Self> {
-        Self::new(UnquotedString::new(name)).into()
+    fn __init__(py: Python, name: String) -> PyClassInitializer<Self> {
+        Self::new(UnquotedString::new(name)).into_py(py)
     }
 
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, AutoGeneratedByClause(self.name))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, AutoGeneratedByClause(slf.name))
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -561,8 +563,8 @@ impl AutoGeneratedByClause {
         self.name = UnquotedString::new(name);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "auto-generated-by").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "auto-generated-by")
     }
 
     fn raw_value(&self) -> String {
@@ -611,11 +613,11 @@ impl IntoPy<obo::HeaderClause> for ImportClause {
 impl ImportClause {
     // FIXME(@althonos): should not be implicit here ?
     #[new]
-    pub fn __init__(reference: &str) -> PyResult<PyClassInitializer<Self>> {
+    pub fn __init__(py: Python, reference: &str) -> PyResult<PyClassInitializer<Self>> {
         if let Ok(url) = ast::Url::from_str(reference) {
-            Ok(Self::new(obo::Import::Url(Box::new(url))).into())
+            Ok(Self::new(obo::Import::Url(Box::new(url))).into_py(py))
         } else if let Ok(id) = obo::Ident::from_str(reference) {
-            Ok(Self::new(obo::Import::Abbreviated(Box::new(id))).into())
+            Ok(Self::new(obo::Import::Abbreviated(Box::new(id))).into_py(py))
         } else {
             Err(PyValueError::new_err(format!(
                 "invalid import: {:?}",
@@ -628,8 +630,8 @@ impl ImportClause {
         Ok(self.to_string())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SubsetdefClause(self.reference.to_string()))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, SubsetdefClause(slf.reference.to_string()))
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -642,8 +644,8 @@ impl ImportClause {
         Ok(self.reference.to_string()) // FIXME ?
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "import").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "import")
     }
 
     fn raw_value(&self) -> String {
@@ -704,15 +706,12 @@ impl IntoPy<obo::HeaderClause> for SubsetdefClause {
 #[pymethods]
 impl SubsetdefClause {
     #[new]
-    fn __init__(subset: Ident, description: String) -> PyClassInitializer<Self> {
-        Self::new(subset, QuotedString::new(description)).into()
+    fn __init__(py: Python, subset: Ident, description: String) -> PyClassInitializer<Self> {
+        Self::new(subset, QuotedString::new(description)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(
-            self,
-            SubsetdefClause(self.subset, self.description.as_str())
-        )
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, SubsetdefClause(slf.subset, slf.description.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -743,8 +742,8 @@ impl SubsetdefClause {
         self.description = fastobo::ast::QuotedString::new(description);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "subsetdef").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "subsetdef")
     }
 
     fn raw_value(&self) -> String {
@@ -836,16 +835,16 @@ impl SynonymTypedefClause {
         Ok(self.to_string())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        if let Some(ref scope) = self.scope {
-            impl_repr!(
-                self,
-                SynonymTypedefClause(self.typedef, self.description.as_str(), scope)
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        if let Some(ref scope) = slf.scope {
+            impl_repr_py!(
+                slf,
+                SynonymTypedefClause(slf.typedef, slf.description.as_str(), scope)
             )
         } else {
-            impl_repr!(
-                self,
-                SynonymTypedefClause(self.typedef, self.description.as_str())
+            impl_repr_py!(
+                slf,
+                SynonymTypedefClause(slf.typedef, slf.description.as_str())
             )
         }
     }
@@ -888,8 +887,8 @@ impl SynonymTypedefClause {
         Ok(())
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "synonymtypedef").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "synonymtypedef")
     }
 
     fn raw_value(&self) -> PyResult<String> {
@@ -949,7 +948,7 @@ impl DefaultNamespaceClause {
     fn __init__<'py>(namespace: &Bound<'py, PyAny>) -> PyResult<PyClassInitializer<Self>> {
         let py = namespace.py();
         if namespace.is_instance_of::<BaseIdent>() {
-            Ident::extract_bound(namespace).map(|id| Self::new(id).into())
+            namespace.extract::<Ident>().map(|id| Self::new(id).into())
         } else if let Ok(s) = namespace.downcast::<PyString>() {
             let id = ast::Ident::from_str(&s.to_str()?).unwrap(); // FIXME
             Ok(Self::new(id.into_py(py)).into())
@@ -960,8 +959,8 @@ impl DefaultNamespaceClause {
         }
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DefaultNamespaceClause(self.namespace))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, DefaultNamespaceClause(slf.namespace))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -978,8 +977,8 @@ impl DefaultNamespaceClause {
         Ok(&self.namespace)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "default-namespace").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "default-namespace")
     }
 
     fn raw_value(&self) -> String {
@@ -1029,12 +1028,12 @@ impl IntoPy<obo::HeaderClause> for NamespaceIdRuleClause {
 #[pymethods]
 impl NamespaceIdRuleClause {
     #[new]
-    fn __init__(rule: String) -> PyClassInitializer<Self> {
-        Self::new(fastobo::ast::UnquotedString::new(rule)).into()
+    fn __init__(py: Python, rule: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(rule)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, NamespaceIdRuleClause(self.rule.as_str()))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, NamespaceIdRuleClause(slf.rule.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1056,8 +1055,8 @@ impl NamespaceIdRuleClause {
         self.rule = fastobo::ast::UnquotedString::new(rule);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "namespace-id-rule").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "namespace-id-rule")
     }
 
     fn raw_value(&self) -> String {
@@ -1140,27 +1139,28 @@ impl IdspaceClause {
     #[new]
     #[pyo3(signature = (prefix, url, description = None))]
     fn __init__(
+        py: Python,
         prefix: String,
         url: Py<Url>,
         description: Option<String>,
     ) -> PyClassInitializer<Self> {
         let p = ast::IdentPrefix::new(prefix);
         let d = description.map(QuotedString::new);
-        Self::with_description(p, url, d).into()
+        Self::with_description(p, url, d).into_py(py)
     }
 
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        if let Some(ref desc) = self.description {
-            impl_repr!(
-                self,
-                IdspaceClause(self.prefix.as_str(), self.url, desc.as_str())
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        if let Some(ref desc) = slf.description {
+            impl_repr_py!(
+                slf,
+                IdspaceClause(slf.prefix.as_str(), slf.url, desc.as_str())
             )
         } else {
-            impl_repr!(self, IdspaceClause(self.prefix.as_str(), self.url))
+            impl_repr_py!(slf, IdspaceClause(slf.prefix.as_str(), slf.url))
         }
     }
 
@@ -1183,8 +1183,8 @@ impl IdspaceClause {
         }
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "idspace").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "idspace")
     }
 
     fn raw_value(&self) -> String {
@@ -1240,12 +1240,12 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsEquivalentClause {
 #[pymethods]
 impl TreatXrefsAsEquivalentClause {
     #[new]
-    fn __init__(prefix: String) -> PyClassInitializer<Self> {
-        Self::new(ast::IdentPrefix::new(prefix)).into()
+    fn __init__(py: Python, prefix: String) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsEquivalentClause(self.idspace.as_str()))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, TreatXrefsAsEquivalentClause(slf.idspace.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1262,8 +1262,8 @@ impl TreatXrefsAsEquivalentClause {
         self.idspace.as_str()
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "treat-xrefs-as-equivalent").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "treat-xrefs-as-equivalent")
     }
 
     fn raw_value(&self) -> String {
@@ -1327,14 +1327,19 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsGenusDifferentiaClause {
 #[pymethods]
 impl TreatXrefsAsGenusDifferentiaClause {
     #[new]
-    fn __init__(prefix: String, relation: Ident, filler: Ident) -> PyClassInitializer<Self> {
-        Self::new(ast::IdentPrefix::new(prefix), relation, filler).into()
+    fn __init__(
+        py: Python,
+        prefix: String,
+        relation: Ident,
+        filler: Ident,
+    ) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix), relation, filler).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(
-            self,
-            TreatXrefsAsGenusDifferentiaClause(self.idspace.as_str(), self.relation, self.filler)
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(
+            slf,
+            TreatXrefsAsGenusDifferentiaClause(slf.idspace.as_str(), slf.relation, slf.filler)
         )
     }
 
@@ -1357,8 +1362,8 @@ impl TreatXrefsAsGenusDifferentiaClause {
         self.idspace.as_str()
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "treat-xrefs-as-genus-differentia").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "treat-xrefs-as-genus-differentia")
     }
 
     fn raw_value(&self) -> String {
@@ -1422,17 +1427,22 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsReverseGenusDifferentiaClause {
 #[pymethods]
 impl TreatXrefsAsReverseGenusDifferentiaClause {
     #[new]
-    fn __init__(prefix: String, relation: Ident, filler: Ident) -> PyClassInitializer<Self> {
-        Self::new(ast::IdentPrefix::new(prefix), relation, filler).into()
+    fn __init__(
+        py: Python,
+        prefix: String,
+        relation: Ident,
+        filler: Ident,
+    ) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix), relation, filler).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(
-            self,
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(
+            slf,
             TreatXrefsAsReverseGenusDifferentiaClause(
-                self.idspace.as_str(),
-                self.relation,
-                self.filler
+                slf.idspace.as_str(),
+                slf.relation,
+                slf.filler
             )
         )
     }
@@ -1456,8 +1466,8 @@ impl TreatXrefsAsReverseGenusDifferentiaClause {
         self.idspace.as_str()
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "treat-xrefs-as-reverse-genus-differentia").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "treat-xrefs-as-reverse-genus-differentia")
     }
 
     fn raw_value(&self) -> String {
@@ -1514,14 +1524,14 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsRelationshipClause {
 #[pymethods]
 impl TreatXrefsAsRelationshipClause {
     #[new]
-    fn __init__(prefix: String, relation: Ident) -> PyClassInitializer<Self> {
-        Self::new(ast::IdentPrefix::new(prefix), relation).into()
+    fn __init__(py: Python, prefix: String, relation: Ident) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix), relation).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(
-            self,
-            TreatXrefsAsRelationshipClause(self.idspace.as_str(), self.relation)
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(
+            slf,
+            TreatXrefsAsRelationshipClause(slf.idspace.as_str(), slf.relation)
         )
     }
 
@@ -1539,8 +1549,8 @@ impl TreatXrefsAsRelationshipClause {
         self.idspace.as_str()
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "treat-xrefs-as-relationship").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "treat-xrefs-as-relationships")
     }
 
     fn raw_value(&self) -> String {
@@ -1589,12 +1599,12 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsIsAClause {
 #[pymethods]
 impl TreatXrefsAsIsAClause {
     #[new]
-    fn __init__(prefix: String) -> PyClassInitializer<Self> {
-        Self::new(ast::IdentPrefix::new(prefix)).into()
+    fn __init__(py: Python, prefix: String) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsIsAClause(self.idspace.as_str()))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, TreatXrefsAsIsAClause(slf.idspace.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1611,8 +1621,8 @@ impl TreatXrefsAsIsAClause {
         self.idspace.as_str()
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "treat-xrefs-as-is_a").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "treat-xrefs-as-is_a")
     }
 
     fn raw_value(&self) -> String {
@@ -1660,12 +1670,12 @@ impl IntoPy<obo::HeaderClause> for TreatXrefsAsHasSubclassClause {
 #[pymethods]
 impl TreatXrefsAsHasSubclassClause {
     #[new]
-    fn __init__(prefix: String) -> PyClassInitializer<Self> {
-        Self::new(ast::IdentPrefix::new(prefix)).into()
+    fn __init__(py: Python, prefix: String) -> PyClassInitializer<Self> {
+        Self::new(ast::IdentPrefix::new(prefix)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TreatXrefsAsHasSubclassClause(self.idspace.as_str()))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, TreatXrefsAsHasSubclassClause(slf.idspace.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1682,8 +1692,8 @@ impl TreatXrefsAsHasSubclassClause {
         self.idspace.as_str()
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "treat-xrefs-as-has-subclass").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "treat-xrefs-as-has-subclass")
     }
 
     fn raw_value(&self) -> String {
@@ -1743,12 +1753,12 @@ impl IntoPy<ast::HeaderClause> for PropertyValueClause {
 #[pymethods]
 impl PropertyValueClause {
     #[new]
-    fn __init__(property_value: PropertyValue) -> PyClassInitializer<Self> {
-        Self::new(property_value).into()
+    fn __init__(py: Python, property_value: PropertyValue) -> PyClassInitializer<Self> {
+        Self::new(property_value).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, PropertyValueClause(self.inner))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, PropertyValueClause(slf.inner))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1765,8 +1775,8 @@ impl PropertyValueClause {
         Ok(&self.inner)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "property_value").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "property_value")
     }
 
     fn raw_value(&self) -> String {
@@ -1815,12 +1825,12 @@ impl IntoPy<obo::HeaderClause> for RemarkClause {
 #[pymethods]
 impl RemarkClause {
     #[new]
-    fn __init__(remark: String) -> PyClassInitializer<Self> {
-        Self::new(UnquotedString::new(remark)).into()
+    fn __init__(py: Python, remark: String) -> PyClassInitializer<Self> {
+        Self::new(UnquotedString::new(remark)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, RemarkClause(self.remark.as_str()))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, RemarkClause(slf.remark.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1842,8 +1852,8 @@ impl RemarkClause {
         self.remark = fastobo::ast::UnquotedString::new(remark);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "remark").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "remark")
     }
 
     fn raw_value(&self) -> String {
@@ -1891,12 +1901,12 @@ impl IntoPy<obo::HeaderClause> for OntologyClause {
 #[pymethods]
 impl OntologyClause {
     #[new]
-    fn __init__(ontology: String) -> PyClassInitializer<Self> {
-        Self::new(UnquotedString::new(ontology)).into()
+    fn __init__(py: Python, ontology: String) -> PyClassInitializer<Self> {
+        Self::new(UnquotedString::new(ontology)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, OntologyClause(self.ontology.as_str()))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, OntologyClause(slf.ontology.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -1918,8 +1928,8 @@ impl OntologyClause {
         self.ontology = fastobo::ast::UnquotedString::new(ontology);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "ontology").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "ontology")
     }
 
     fn raw_value(&self) -> String {
@@ -1967,17 +1977,17 @@ impl IntoPy<obo::HeaderClause> for OwlAxiomsClause {
 #[pymethods]
 impl OwlAxiomsClause {
     #[new]
-    fn __init__(axioms: String) -> PyClassInitializer<Self> {
+    fn __init__(py: Python, axioms: String) -> PyClassInitializer<Self> {
         // FIXME: validate syntax using `horned-functional`
-        Self::new(UnquotedString::new(axioms)).into()
+        Self::new(UnquotedString::new(axioms)).into_py(py)
     }
 
     fn __str__(&self) -> PyResult<String> {
         Ok(self.to_string())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, OwlAxiomsClause(self.axioms.as_str()))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, OwlAxiomsClause(slf.axioms.as_str()))
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1995,8 +2005,8 @@ impl OwlAxiomsClause {
         self.axioms = fastobo::ast::UnquotedString::new(axioms);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "owl-axioms").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "owl-axioms")
     }
 
     fn raw_value(&self) -> String {
@@ -2045,15 +2055,12 @@ impl Display for UnreservedClause {
 #[pymethods]
 impl UnreservedClause {
     #[new]
-    fn __init__(tag: String, value: String) -> PyClassInitializer<Self> {
-        Self::new(UnquotedString::new(tag), UnquotedString::new(value)).into()
+    fn __init__(py: Python, tag: String, value: String) -> PyClassInitializer<Self> {
+        Self::new(UnquotedString::new(tag), UnquotedString::new(value)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(
-            self,
-            UnreservedClause(self.tag.as_str(), self.value.as_str())
-        )
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, UnreservedClause(slf.tag.as_str(), slf.value.as_str()))
     }
 
     fn __str__(&self) -> PyResult<String> {

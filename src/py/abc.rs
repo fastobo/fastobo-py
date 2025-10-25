@@ -17,6 +17,7 @@ use pyo3::PyTypeInfo;
 use fastobo::ast as obo;
 
 use crate::error::Error;
+use crate::py::qual::QualifierList;
 use crate::utils::AbstractClass;
 use crate::utils::ClonePy;
 
@@ -61,7 +62,7 @@ pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
 pub struct AbstractFrame {}
 
 impl AbstractClass for AbstractFrame {
-    fn initializer() -> PyClassInitializer<Self> {
+    fn initializer(py: Python) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Self {})
     }
 }
@@ -108,21 +109,21 @@ impl AbstractEntityFrame {
 ///      'xref': ['value-type:xsd\\:string "The allowed value-type for this CV term."']}
 ///
 #[pyclass(subclass, module = "fastobo.abc")]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct AbstractClause {}
 
 impl AbstractClass for AbstractClause {
-    fn initializer() -> PyClassInitializer<Self> {
+    fn initializer(py: Python) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Self {})
     }
 }
 
 #[pymethods]
 impl AbstractClause {
-    /// Get the raw tag of the header clause.
+    /// Get the raw tag of the clause.
     ///
     /// Returns:
-    ///     `str`: the header clause value as it was extracted from the OBO
+    ///     `str`: the clause tag as it was extracted from the OBO
     ///     header, stripped from trailing qualifiers and comment.
     ///
     /// Example:
@@ -135,10 +136,10 @@ impl AbstractClause {
         Err(PyNotImplementedError::new_err("BaseHeaderClause.raw_tag"))
     }
 
-    /// Get the raw value of the header clause.
+    /// Get the raw value of the clause.
     ///
     /// Returns:
-    ///     `str`: the header clause value as it was extracted from the OBO
+    ///     `str`: the clause value as it was extracted from the OBO
     ///     header, stripped from trailing qualifiers and comment.
     ///
     /// Example:
@@ -155,6 +156,34 @@ impl AbstractClause {
 
 /// An abstract entity clause.
 #[pyclass(subclass, extends=AbstractClause, module="fastobo.abc")]
-#[derive(Default, AbstractClass)]
-#[base(AbstractClause)]
-pub struct AbstractEntityClause {}
+#[derive(Debug)]
+pub struct AbstractEntityClause {
+    #[pyo3(set)]
+    pub(crate) qualifiers: Option<Py<QualifierList>>,
+    #[pyo3(set)]
+    pub(crate) comment: Option<String>,
+}
+
+impl AbstractClass for AbstractEntityClause {
+    fn initializer(py: Python) -> PyClassInitializer<Self> {
+        AbstractClause::initializer(py).add_subclass(Self {
+            qualifiers: None,
+            comment: None,
+        })
+    }
+}
+
+#[pymethods]
+impl AbstractEntityClause {
+    /// `QualifierList` or `None`: the end-of-line qualifiers for this clause.
+    #[getter]
+    pub fn get_qualifiers(&self) -> &Option<Py<QualifierList>> {
+        &self.qualifiers
+    }
+
+    /// `str` or `None`: the end-of-line comment for this clause.
+    #[getter]
+    pub fn get_comment(&self) -> &Option<String> {
+        &self.comment
+    }
+}

@@ -79,7 +79,7 @@ impl IntoPy<fastobo::ast::PropertyValue> for PropertyValue {
 pub struct AbstractPropertyValue {}
 
 impl AbstractClass for AbstractPropertyValue {
-    fn initializer() -> PyClassInitializer<Self> {
+    fn initializer(py: Python) -> PyClassInitializer<Self> {
         PyClassInitializer::from(Self {})
     }
 }
@@ -273,8 +273,8 @@ impl ResourcePropertyValue {
         Self::new(relation, value).into()
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ResourcePropertyValue(self.relation, self.value))
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        impl_repr_py!(slf, ResourcePropertyValue(slf.relation, slf.value))
     }
 
     fn __str__(&self) -> PyResult<String> {

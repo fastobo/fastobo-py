@@ -8,7 +8,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyString;
-use pyo3::AsPyPointer;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;

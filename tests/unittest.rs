@@ -10,39 +10,41 @@ use pyo3::types::PyModule;
 use pyo3::Python;
 
 pub fn main() -> PyResult<()> {
-    // get the relative path to the project folder
-    let folder = Path::new(file!()).parent().unwrap().parent().unwrap();
+    // prepare the Python interpreter
+    Python::initialize();
 
     // spawn a Python interpreter
-    pyo3::prepare_freethreaded_python();
-    Python::with_gil(|py| {
-        // insert the project folder in `sys.modules` so that
-        // the main module can be imported by Python
-        let sys = py.import("sys").unwrap();
-        sys.getattr("path")
-            .unwrap()
-            .downcast::<PyList>()
-            .unwrap()
-            .insert(0, folder)
-            .unwrap();
-
+    Python::attach(|py| {
         // create a Python module from our rust code with debug symbols
-        let module = PyModule::new(py, "fastobo").unwrap();
-        fastobo_py::py::init(py, &module).unwrap();
-        sys.getattr("modules")
-            .unwrap()
-            .downcast::<PyDict>()
-            .unwrap()
-            .set_item("fastobo", module)
-            .unwrap();
-
-        // run unittest on the tests
+        let module = PyModule::new(py, "fastobo")?;
+        fastobo_py::py::init(py, &module)?;
+        py.import("sys")?
+            .getattr("modules")?
+            .cast::<PyDict>()?
+            .set_item("fastobo", &module)?;
+        // patch `sys.path` to locate tests from the project folder
+        py.import("sys")?
+            .getattr("path")?
+            .cast::<PyList>()?
+            .insert(0, env!("CARGO_MANIFEST_DIR"))?;
+        // run tests with the unittest runner
         let kwargs = PyDict::new(py);
+        kwargs.set_item("verbosity", 2).unwrap();
         kwargs.set_item("exit", false).unwrap();
-        kwargs.set_item("verbosity", 2u8).unwrap();
-        py.import("unittest")
+        let prog = py
+            .import("unittest")
             .unwrap()
-            .call_method("TestProgram", ("tests",), Some(&kwargs))
-            .map(|_| ())
+            .call_method("main", ("tests",), Some(&kwargs))
+            .unwrap();
+        // check run was was successful
+        if !prog
+            .getattr("result")?
+            .call_method0("wasSuccessful")?
+            .extract::<bool>()?
+        {
+            panic!("some tests failed");
+        }
+
+        Ok(())
     })
 }

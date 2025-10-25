@@ -11,7 +11,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyString;
-use pyo3::AsPyPointer;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -80,7 +79,6 @@ impl IntoPy<fastobo::ast::TypedefFrame> for TypedefFrame {
             self.clauses
                 .iter()
                 .map(|f| f.clone_py(py).into_py(py))
-                .map(|c| fastobo::ast::Line::new().and_inner(c))
                 .collect(),
         )
     }
@@ -98,6 +96,7 @@ impl IntoPy<fastobo::ast::EntityFrame> for TypedefFrame {
 impl TypedefFrame {
     // FIXME: should accept any iterable.
     #[new]
+    #[pyo3(signature = (id, clauses = None))]
     fn __init__<'py>(
         id: Ident,
         clauses: Option<&Bound<'py, PyAny>>,
@@ -112,8 +111,8 @@ impl TypedefFrame {
         }
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, TypedefFrame(self.id))
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        impl_repr_py!(slf, TypedefFrame(slf.id))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -133,11 +132,11 @@ impl TypedefFrame {
         }
     }
 
-    fn __setitem__<'py>(&mut self, index: isize, elem: &Bound<'py, PyAny>) -> PyResult<()> {
+    fn __setitem__<'py>(&mut self, index: isize, item: &Bound<'py, PyAny>) -> PyResult<()> {
         if index as usize > self.clauses.len() {
             return Err(PyIndexError::new_err("list index out of range"));
         }
-        let clause = TypedefClause::extract_bound(elem)?;
+        let clause = item.extract::<TypedefClause>()?;
         self.clauses[index as usize] = clause;
         Ok(())
     }
@@ -156,7 +155,7 @@ impl TypedefFrame {
         let iterator = PyIterator::from_object(other)?;
         let mut new_clauses = self.clauses.clone_py(py);
         for item in iterator {
-            new_clauses.push(TypedefClause::extract_bound(&item?)?);
+            new_clauses.push(item?.extract::<TypedefClause>()?);
         }
 
         Py::new(py, Self::with_clauses(self.id.clone_py(py), new_clauses))

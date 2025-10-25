@@ -16,7 +16,6 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use pyo3::types::PyString;
-use pyo3::AsPyPointer;
 
 use fastobo::parser::Parser;
 use fastobo::parser::SequentialParser;
@@ -39,11 +38,16 @@ pub enum Handle {
 }
 
 impl Handle {
-    fn handle(&self) -> PyObject {
-        Python::with_gil(|py| match self {
-            Handle::FsFile(_, path) => path.display().to_string().to_object(py),
-            Handle::PyFile(f) => f.file().lock().unwrap().to_object(py),
-        })
+    fn handle<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        match self {
+            Handle::FsFile(_, path) => path
+                .display()
+                .to_string()
+                .into_pyobject(py)
+                .map(|b| b.into_any())
+                .map_err(PyErr::from),
+            Handle::PyFile(f) => Ok(f.file().lock().unwrap().bind(py).clone()),
+        }
     }
 }
 
@@ -213,14 +217,13 @@ impl FrameReader {
 
 #[pymethods]
 impl FrameReader {
-    fn __repr__(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            let fmt = PyString::new(py, "fastobo.iter({!r})").to_object(py);
-            fmt.call_method1(py, "format", (&self.inner.as_ref().get_ref().handle(),))
-        })
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        let py = slf.py();
+        let fmt = PyString::intern(py, "fastobo.iter({!r})");
+        fmt.call_method1("format", (slf.inner.as_ref().get_ref().handle(py)?,))
     }
 
-    fn __iter__(slf: PyRefMut<'_, Self>) -> PyResult<PyRefMut<'_, Self>> {
+    fn __iter__(slf: PyRefMut<Self>) -> PyResult<PyRefMut<Self>> {
         Ok(slf)
     }
 

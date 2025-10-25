@@ -12,7 +12,6 @@ use pyo3::gc::PyTraverseError;
 use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
-use pyo3::AsPyPointer;
 use pyo3::PyObject;
 
 // ---------------------------------------------------------------------------
@@ -175,7 +174,7 @@ impl Read for PyFileGILRead {
                         (&mut buf[..b.len()]).copy_from_slice(b);
                         Ok(b.len())
                     } else {
-                        let ty = obj.as_ref().get_type().name()?.to_string();
+                        let ty = obj.get_type().name()?.to_string();
                         let msg = format!("expected bytes, found {}", ty);
                         PyTypeError::new_err(msg).restore(py);
                         Err(IoError::new(

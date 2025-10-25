@@ -57,6 +57,7 @@ pub mod header;
 pub mod id;
 pub mod instance;
 pub mod pv;
+pub mod qual;
 pub mod syn;
 pub mod term;
 pub mod typedef;
@@ -116,7 +117,7 @@ fn iter<'py>(
 ) -> PyResult<FrameReader> {
     // get the path to the given file
     let pathlike = py
-        .import_bound(pyo3::intern!(py, "os"))?
+        .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     if let Ok(path) = pathlike {
         let decoded = path.downcast::<PyString>()?;
@@ -174,7 +175,7 @@ fn load<'py>(
     // extract either a path or a file-handle from the arguments
     let path: Option<String>;
     let pathlike = py
-        .import_bound(pyo3::intern!(py, "os"))?
+        .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     let b: Box<dyn BufRead> = if let Ok(p) = pathlike {
         let decoded = p.downcast::<PyString>()?;
@@ -334,7 +335,7 @@ fn loads<'py>(
 fn load_graph<'py>(py: Python<'py>, file: &Bound<'py, PyAny>) -> PyResult<OboDoc> {
     // load graph from a path or a file-handle
     let pathlike = py
-        .import_bound(pyo3::intern!(py, "os"))?
+        .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     let doc: GraphDocument = if let Ok(path) = pathlike {
         let decoded = path.downcast::<PyString>()?;
@@ -397,7 +398,7 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>) -> P
 
     // Write the document
     let pathlike = py
-        .import_bound(pyo3::intern!(py, "os"))?
+        .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     if let Ok(path) = pathlike {
         let decoded = path.downcast::<PyString>()?;
@@ -470,7 +471,7 @@ fn dump_owl<'py>(
 ) -> PyResult<()> {
     // get the path to the given file
     let pathlike = py
-        .import_bound(pyo3::intern!(py, "os"))?
+        .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     let mut b: Box<dyn Write> = if let Ok(path) = pathlike {
         let decoded = path.downcast::<PyString>()?;
@@ -527,6 +528,7 @@ pub fn init<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     add_submodule!(py, m, id);
     add_submodule!(py, m, instance);
     add_submodule!(py, m, pv);
+    add_submodule!(py, m, qual);
     add_submodule!(py, m, syn);
     add_submodule!(py, m, term);
     add_submodule!(py, m, typedef);

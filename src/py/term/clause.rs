@@ -16,7 +16,6 @@ use pyo3::types::PyDateTime;
 use pyo3::types::PyString;
 use pyo3::types::PyTimeAccess;
 use pyo3::types::PyTzInfo;
-use pyo3::AsPyPointer;
 use pyo3::PyTypeInfo;
 
 use fastobo::ast;
@@ -134,11 +133,50 @@ impl IntoPy<TermClause> for fastobo::ast::TermClause {
     }
 }
 
+impl IntoPy<TermClause> for fastobo::ast::Line<fastobo::ast::TermClause> {
+    fn into_py(mut self, py: Python) -> TermClause {
+        // extract end-of-line attributes
+        let qualifiers = self.qualifiers_mut().map(std::mem::take);
+        let comment = self
+            .comment_mut()
+            .map(|c| std::mem::replace(c, fastobo::ast::Comment::new("")));
+        // convert clause
+        let clause = self.into_inner().into_py(py);
+        // attach attributes
+        let base = clause.as_base(py);
+        if let Some(ql) = qualifiers {
+            base.as_super().borrow_mut().qualifiers = Some(Py::new(py, ql.into_py(py)).unwrap());
+        }
+        if let Some(c) = comment {
+            base.as_super().borrow_mut().comment = Some(c.into_string());
+        }
+        // return object
+        clause
+    }
+}
+
+impl IntoPy<fastobo::ast::Line<fastobo::ast::TermClause>> for &TermClause {
+    fn into_py(self, py: Python) -> fastobo::ast::Line<fastobo::ast::TermClause> {
+        let mut line = if let Some(ql) = &self.as_base(py).as_super().borrow().qualifiers {
+            let list = ql.bind(py).borrow();
+            let qualifiers = (&*list).into_py(py);
+            fastobo::ast::Line::with_qualifiers(qualifiers)
+        } else {
+            fastobo::ast::Line::new()
+        };
+        if let Some(c) = &self.as_base(py).as_super().borrow().comment {
+            line = line.and_comment(fastobo::ast::Comment::new(c));
+        }
+        let clause = self.into_py(py);
+        line.and_inner(clause)
+    }
+}
+
 // --- Base ------------------------------------------------------------------
 
 /// A term clause, appearing in an OBO term frame.
 #[pyclass(subclass, extends=AbstractEntityClause, module="fastobo.term")]
-#[derive(AbstractClass)]
+#[derive(Debug, Default, AbstractClass)]
 #[base(AbstractEntityClause)]
 pub struct BaseTermClause {}
 
@@ -183,24 +221,24 @@ impl IntoPy<fastobo::ast::TermClause> for IsAnonymousClause {
 #[pymethods]
 impl IsAnonymousClause {
     #[new]
-    fn __init__(anonymous: bool) -> PyClassInitializer<Self> {
-        Self::new(anonymous).into()
+    fn __init__(py: Python, anonymous: bool) -> PyClassInitializer<Self> {
+        Self::new(anonymous).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsAnonymousClause(self.anonymous))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsAnonymousClause(slf.anonymous))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.anonymous)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "is_anonymous").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "is_anonymous")
     }
 
     fn raw_value(&self) -> String {
@@ -248,16 +286,16 @@ impl IntoPy<fastobo::ast::TermClause> for NameClause {
 #[pymethods]
 impl NameClause {
     #[new]
-    fn __init__(name: String) -> PyClassInitializer<Self> {
-        Self::new(fastobo::ast::UnquotedString::new(name)).into()
+    fn __init__(py: Python, name: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(name)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, NameClause(self.name))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, NameClause(slf.name))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -275,8 +313,8 @@ impl NameClause {
         self.name = fastobo::ast::UnquotedString::new(name);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "name").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "name")
     }
 
     fn raw_value(&self) -> String {
@@ -329,16 +367,16 @@ impl IntoPy<fastobo::ast::TermClause> for NamespaceClause {
 #[pymethods]
 impl NamespaceClause {
     #[new]
-    fn __init__(namespace: Ident) -> PyClassInitializer<Self> {
-        Self::new(namespace).into()
+    fn __init__(py: Python, namespace: Ident) -> PyClassInitializer<Self> {
+        Self::new(namespace).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, NamespaceClause(self.namespace))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, NamespaceClause(slf.namespace))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -351,8 +389,8 @@ impl NamespaceClause {
         &self.namespace
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "namespace").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "namespace")
     }
 
     fn raw_value(&self) -> String {
@@ -404,16 +442,16 @@ impl IntoPy<fastobo::ast::TermClause> for AltIdClause {
 #[pymethods]
 impl AltIdClause {
     #[new]
-    fn __init__(alt_id: Ident) -> PyClassInitializer<Self> {
-        Self::new(alt_id).into()
+    fn __init__(py: Python, alt_id: Ident) -> PyClassInitializer<Self> {
+        Self::new(alt_id).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, AltIdClause(self.alt_id))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, AltIdClause(slf.alt_id))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -426,8 +464,8 @@ impl AltIdClause {
         &self.alt_id
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "alt_id").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "alt_id")
     }
 
     fn raw_value(&self) -> String {
@@ -505,16 +543,17 @@ impl DefClause {
         Ok(Self::new(def, Py::new(py, list)?).into())
     }
 
-    fn __repr__<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
-        if self.xrefs.bind(py).borrow().is_empty() {
-            impl_repr!(self, DefClause(self.definition))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        let py = slf.py();
+        if slf.xrefs.bind(py).borrow().is_empty() {
+            impl_repr_py!(slf, DefClause(slf.definition))
         } else {
-            impl_repr!(self, DefClause(self.definition, self.xrefs))
+            impl_repr_py!(slf, DefClause(slf.definition, slf.xrefs))
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -538,8 +577,8 @@ impl DefClause {
         self.xrefs.bind(py)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "def").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "def")
     }
 
     fn raw_value(&self) -> String {
@@ -587,16 +626,16 @@ impl IntoPy<fastobo::ast::TermClause> for CommentClause {
 #[pymethods]
 impl CommentClause {
     #[new]
-    fn __init__(comment: String) -> PyClassInitializer<Self> {
-        Self::new(fastobo::ast::UnquotedString::new(comment)).into()
+    fn __init__(py: Python, comment: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(comment)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CommentClause(self.comment))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, CommentClause(slf.comment))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -614,8 +653,8 @@ impl CommentClause {
         self.comment = fastobo::ast::UnquotedString::new(comment);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "comment").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "comment")
     }
 
     fn raw_value(&self) -> String {
@@ -667,16 +706,16 @@ impl IntoPy<fastobo::ast::TermClause> for SubsetClause {
 #[pymethods]
 impl SubsetClause {
     #[new]
-    fn __init__(subset: Ident) -> PyClassInitializer<Self> {
-        Self::new(subset).into()
+    fn __init__(py: Python, subset: Ident) -> PyClassInitializer<Self> {
+        Self::new(subset).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SubsetClause(self.subset))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, SubsetClause(slf.subset))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -689,8 +728,8 @@ impl SubsetClause {
         &self.subset
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "subset").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "subset")
     }
 
     fn raw_value(&self) -> String {
@@ -744,16 +783,16 @@ impl IntoPy<fastobo::ast::TermClause> for SynonymClause {
 #[pymethods]
 impl SynonymClause {
     #[new]
-    fn __init__(synonym: Py<Synonym>) -> PyClassInitializer<Self> {
-        Self::new(Python::with_gil(|py| synonym.clone_ref(py))).into()
+    fn __init__(py: Python, synonym: Py<Synonym>) -> PyClassInitializer<Self> {
+        Self::new(Python::with_gil(|py| synonym.clone_ref(py))).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, SynonymClause(self.synonym))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, SynonymClause(slf.synonym))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -766,8 +805,8 @@ impl SynonymClause {
         self.synonym.clone_py(py)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "synonym").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "synonym")
     }
 
     fn raw_value(&self) -> String {
@@ -837,24 +876,24 @@ impl IntoPy<XrefClause> for Xref {
 #[pymethods]
 impl XrefClause {
     #[new]
-    fn __init__(xref: Py<Xref>) -> PyClassInitializer<Self> {
-        Self::from(xref).into()
+    fn __init__(py: Python, xref: Py<Xref>) -> PyClassInitializer<Self> {
+        Self::from(xref).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, XrefClause(self.xref))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, XrefClause(slf.xref))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp_py!(self, other, op, self.xref)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "xref").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "xref")
     }
 
     fn raw_value(&self) -> String {
@@ -903,16 +942,16 @@ impl IntoPy<fastobo::ast::TermClause> for BuiltinClause {
 #[pymethods]
 impl BuiltinClause {
     #[new]
-    fn __init__(builtin: bool) -> PyClassInitializer<Self> {
-        Self::new(builtin).into()
+    fn __init__(py: Python, builtin: bool) -> PyClassInitializer<Self> {
+        Self::new(builtin).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, BuiltinClause(self.builtin))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, BuiltinClause(slf.builtin))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -925,8 +964,8 @@ impl BuiltinClause {
         self.builtin
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "builtin").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "builtin")
     }
 
     fn raw_value(&self) -> String {
@@ -985,16 +1024,16 @@ impl IntoPy<fastobo::ast::TermClause> for PropertyValueClause {
 #[pymethods]
 impl PropertyValueClause {
     #[new]
-    fn __init__(property_value: PropertyValue) -> PyClassInitializer<Self> {
-        Self::new(property_value).into()
+    fn __init__(py: Python, property_value: PropertyValue) -> PyClassInitializer<Self> {
+        Self::new(property_value).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, PropertyValueClause(self.inner))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, PropertyValueClause(slf.inner))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1007,8 +1046,8 @@ impl PropertyValueClause {
         &self.inner
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "property_value").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "property_value")
     }
 
     fn raw_value(&self) -> String {
@@ -1060,16 +1099,16 @@ impl IntoPy<fastobo::ast::TermClause> for IsAClause {
 #[pymethods]
 impl IsAClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsAClause(self.term))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsAClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1082,8 +1121,8 @@ impl IsAClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "is_a").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "is_a")
     }
 
     fn raw_value(&self) -> String {
@@ -1164,16 +1203,16 @@ impl IntoPy<fastobo::ast::TermClause> for IntersectionOfClause {
 impl IntersectionOfClause {
     #[new]
     #[pyo3(signature=(typedef, term))]
-    fn __init__(typedef: Option<Ident>, term: Ident) -> PyClassInitializer<Self> {
-        Self::new(typedef, term).into()
+    fn __init__(py: Python, typedef: Option<Ident>, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(typedef, term).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IntersectionOfClause(self.typedef, self.term))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IntersectionOfClause(slf.typedef, slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1192,8 +1231,8 @@ impl IntersectionOfClause {
         self.typedef.as_ref()
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "intersection_of").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "intersection_of")
     }
 
     fn raw_value(&self) -> String {
@@ -1248,16 +1287,16 @@ impl IntoPy<fastobo::ast::TermClause> for UnionOfClause {
 #[pymethods]
 impl UnionOfClause {
     #[new]
-    fn __init__(id: Ident) -> PyClassInitializer<Self> {
-        Self::new(id).into()
+    fn __init__(py: Python, id: Ident) -> PyClassInitializer<Self> {
+        Self::new(id).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, UnionOfClause(self.term))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, UnionOfClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1270,8 +1309,8 @@ impl UnionOfClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "union_of").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "union_of")
     }
 
     fn raw_value(&self) -> String {
@@ -1322,16 +1361,16 @@ impl IntoPy<fastobo::ast::TermClause> for EquivalentToClause {
 #[pymethods]
 impl EquivalentToClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, EquivalentToClause(self.term))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, EquivalentToClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1344,8 +1383,8 @@ impl EquivalentToClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "equivalent_to").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "equivalent_to")
     }
 
     fn raw_value(&self) -> String {
@@ -1397,16 +1436,16 @@ impl IntoPy<fastobo::ast::TermClause> for DisjointFromClause {
 #[pymethods]
 impl DisjointFromClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, DisjointFromClause(self.term))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, DisjointFromClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1419,8 +1458,8 @@ impl DisjointFromClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "disjoint_from").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "disjoint_from")
     }
 
     fn raw_value(&self) -> String {
@@ -1478,16 +1517,16 @@ impl IntoPy<fastobo::ast::TermClause> for RelationshipClause {
 #[pymethods]
 impl RelationshipClause {
     #[new]
-    fn __init__(typedef: Ident, term: Ident) -> PyClassInitializer<Self> {
-        Self::new(typedef, term).into()
+    fn __init__(py: Python, typedef: Ident, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(typedef, term).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, RelationshipClause(self.typedef, self.term))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, RelationshipClause(slf.typedef, slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1504,8 +1543,8 @@ impl RelationshipClause {
         Ok(self.term.clone_py(py))
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "relationship").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "relationship")
     }
 
     fn raw_value(&self) -> String {
@@ -1554,24 +1593,24 @@ impl IntoPy<fastobo::ast::TermClause> for IsObsoleteClause {
 #[pymethods]
 impl IsObsoleteClause {
     #[new]
-    fn __init__(obsolete: bool) -> PyClassInitializer<Self> {
-        Self::new(obsolete).into()
+    fn __init__(py: Python, obsolete: bool) -> PyClassInitializer<Self> {
+        Self::new(obsolete).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, IsObsoleteClause(self.obsolete))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, IsObsoleteClause(slf.obsolete))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
         impl_richcmp!(self, other, op, self.obsolete)
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "is_obsolete").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "is_obsolete")
     }
 
     fn raw_value(&self) -> String {
@@ -1623,16 +1662,16 @@ impl IntoPy<fastobo::ast::TermClause> for ReplacedByClause {
 #[pymethods]
 impl ReplacedByClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ReplacedByClause(self.term))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, ReplacedByClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1645,8 +1684,8 @@ impl ReplacedByClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "replaced_by").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "replaced_by")
     }
 
     fn raw_value(&self) -> String {
@@ -1697,16 +1736,16 @@ impl IntoPy<fastobo::ast::TermClause> for ConsiderClause {
 #[pymethods]
 impl ConsiderClause {
     #[new]
-    fn __init__(term: Ident) -> PyClassInitializer<Self> {
-        Self::new(term).into()
+    fn __init__(py: Python, term: Ident) -> PyClassInitializer<Self> {
+        Self::new(term).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, ConsiderClause(self.term))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, ConsiderClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1718,8 +1757,8 @@ impl ConsiderClause {
         &self.term
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "consider").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "consider")
     }
 
     fn raw_value(&self) -> String {
@@ -1768,16 +1807,16 @@ impl IntoPy<fastobo::ast::TermClause> for CreatedByClause {
 #[pymethods]
 impl CreatedByClause {
     #[new]
-    fn __init__(creator: String) -> PyClassInitializer<Self> {
-        Self::new(fastobo::ast::UnquotedString::new(creator)).into()
+    fn __init__(py: Python, creator: String) -> PyClassInitializer<Self> {
+        Self::new(fastobo::ast::UnquotedString::new(creator)).into_py(py)
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, CreatedByClause(self.creator))
+    fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
+        impl_repr_py!(slf, CreatedByClause(slf.creator))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1795,8 +1834,8 @@ impl CreatedByClause {
         self.creator = fastobo::ast::UnquotedString::new(creator);
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "created_by").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "created_by")
     }
 
     fn raw_value(&self) -> String {
@@ -1882,16 +1921,15 @@ impl CreationDateClause {
         }
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            let fmt = PyString::new(py, "CreationDateClause({!r})").to_object(py);
-            self.get_date(py)
-                .and_then(|dt| fmt.call_method1(py, "format", (dt,)))
-        })
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        let py = slf.py();
+        let fmt = PyString::intern(py, "CreationDateClause({!r})").into_any();
+        slf.get_date(py)
+            .and_then(|dt| fmt.call_method1("format", (dt,)))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1900,11 +1938,17 @@ impl CreationDateClause {
 
     #[getter]
     /// `datetime.datetime`: the date and time this term was created.
-    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
+    fn get_date<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         use fastobo::ast::CreationDate::*;
         match &self.date {
-            DateTime(dt) => Ok(isodatetime_to_datetime(py, dt)?.to_object(py)),
-            Date(d) => Ok(isodate_to_date(py, d)?.to_object(py)),
+            DateTime(dt) => isodatetime_to_datetime(py, dt)?
+                .into_pyobject(py)
+                .map_err(PyErr::from)
+                .map(|b| b.into_any()),
+            Date(d) => isodate_to_date(py, d)?
+                .into_pyobject(py)
+                .map_err(PyErr::from)
+                .map(|b| b.into_any()),
         }
     }
 
@@ -1926,8 +1970,8 @@ impl CreationDateClause {
         Ok(())
     }
 
-    fn raw_tag(slf: PyRef<'_, Self>) -> PyObject {
-        pyo3::intern!(slf.py(), "creation_date").to_object(slf.py())
+    fn raw_tag(slf: PyRef<Self>) -> Bound<PyString> {
+        PyString::intern(slf.py(), "creation_date")
     }
 
     fn raw_value(&self) -> String {

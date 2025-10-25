@@ -10,7 +10,6 @@ use pyo3::types::PyAny;
 use pyo3::types::PyIterator;
 use pyo3::types::PyList;
 use pyo3::types::PyString;
-use pyo3::AsPyPointer;
 use pyo3::PyTypeInfo;
 
 use super::super::abc::AbstractFrame;
@@ -88,14 +87,14 @@ impl HeaderFrame {
         let mut vec = Vec::new();
         if let Some(c) = clauses {
             for item in PyIterator::from_object(c)? {
-                vec.push(HeaderClause::extract_bound(&item?)?);
+                vec.push(item?.extract::<HeaderClause>()?);
             }
         }
         Ok(Self::new(vec).into())
     }
 
-    fn __repr__(&self) -> PyResult<PyObject> {
-        impl_repr!(self, HeaderFrame(self.clauses))
+    fn __repr__(slf: PyRef<Self>) -> PyResult<Bound<PyAny>> {
+        impl_repr_py!(slf, HeaderFrame(slf.clauses))
     }
 
     fn __str__(&self) -> PyResult<String> {
@@ -118,11 +117,11 @@ impl HeaderFrame {
         }
     }
 
-    fn __setitem__<'py>(&mut self, index: isize, elem: &Bound<'py, PyAny>) -> PyResult<()> {
+    fn __setitem__<'py>(&mut self, index: isize, item: &Bound<'py, PyAny>) -> PyResult<()> {
         if index as usize > self.clauses.len() {
             return Err(PyIndexError::new_err("list index out of range"));
         }
-        let clause = HeaderClause::extract_bound(elem)?;
+        let clause = item.extract::<HeaderClause>()?;
         self.clauses[index as usize] = clause;
         Ok(())
     }
@@ -141,7 +140,7 @@ impl HeaderFrame {
         let iterator = PyIterator::from_object(other)?;
         let mut new_clauses = self.clauses.clone_py(py);
         for item in iterator {
-            new_clauses.push(HeaderClause::extract_bound(&item?)?);
+            new_clauses.push(item?.extract::<HeaderClause>()?);
         }
 
         let init = PyClassInitializer::from(AbstractFrame {}).add_subclass(Self::new(new_clauses));

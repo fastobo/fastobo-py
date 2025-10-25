@@ -14,9 +14,9 @@ macro_rules! impl_richcmp {
         match $op {
             $crate::pyo3::class::basic::CompareOp::Eq => {
                 let py = $other.py();
-                let val = if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-                    let clause = clause.bind(py).borrow();
-                    $($self.$attr == clause.$attr)&&*
+                let val = if let Ok(ref clause) = $other.cast::<Self>() {
+                    let c = clause.borrow();
+                    $($self.$attr == c.$attr)&&*
                 } else {
                     false
                 };
@@ -33,9 +33,9 @@ macro_rules! impl_richcmp_py {
         match $op {
             $crate::pyo3::class::basic::CompareOp::Eq => {
                 let py = $other.py();
-                let val = if let Ok(ref clause) = $other.extract::<Py<Self>>() {
-                    let clause = clause.bind(py).borrow();
-                    $($self.$attr.eq_py(&clause.$attr, py))&&*
+                let val = if let Ok(ref clause) = $other.cast::<Self>() {
+                    let c = clause.borrow();
+                    $($self.$attr.eq_py(&c.$attr, py))&&*
                 } else {
                     false
                 };

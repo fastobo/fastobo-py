@@ -1,6 +1,11 @@
 [
     {
-        "name": "v0.13 (latest)",
+        "name": "v0.14 (latest)",
+        "version": "0.14.0",
+        "url": "https://fastobo.readthedocs.io/en/v0.14.0/"
+    },  
+    {
+        "name": "v0.13",
         "version": "0.13.0",
         "url": "https://fastobo.readthedocs.io/en/v0.13.0/"
     },

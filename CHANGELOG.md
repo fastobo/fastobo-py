@@ -6,7 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.14.0...HEAD
+
+## [v0.14.0] - 2025-10-25
+[v0.14.0]: https://github.com/fastobo/fastobo-py/compare/v0.13.0...v0.14.0
+### Changed
+- Bump `pyo3` to `v0.27.1`.
+- Bump `fastobo` to `v0.15.5`.
+- Use `Bound` API of `pyo3` while the GIL is held where applicable.
+### Added
+- Support for accessing the `qualifiers` and `comment` of any `AbstractEntityClause` ([#365](https://github.com/fastobo/fastobo-py/issues/365)).
 
 ## [v0.13.0] - 2025-02-14
 [v0.13.0]: https://github.com/fastobo/fastobo-py/compare/v0.12.3...v0.13.0

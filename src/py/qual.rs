@@ -42,7 +42,6 @@ pub fn init<'py>(_py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
 #[pyclass(module = "fastobo.qual")]
 #[derive(Debug, EqPy)]
 pub struct Qualifier {
-    #[pyo3(set)]
     key: Ident,
     value: fastobo::ast::QuotedString,
 }
@@ -121,6 +120,11 @@ impl Qualifier {
     fn get_key(&self) -> &Ident {
         &self.key
     }
+    
+    #[setter]
+    fn set_key(&mut self, key: Ident) {
+        self.key = key;
+    }
 
     /// `str`: the value of the qualifier.
     #[getter]
@@ -129,9 +133,8 @@ impl Qualifier {
     }
 
     #[setter]
-    fn set_value(&mut self, value: &str) -> PyResult<()> {
+    fn set_value(&mut self, value: &str) {
         self.value = fastobo::ast::QuotedString::new(value);
-        Ok(())
     }
 }
 

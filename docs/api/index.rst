@@ -14,6 +14,7 @@ Library Reference
    pv
    syn
    xref
+   qual
    exceptions
 
 
@@ -239,7 +240,7 @@ Qualifier (`fastobo.qual`)
 
 .. currentmodule:: fastobo.qual
 .. autosummary::
-    :nosignature:
+    :nosignatures:
 
     Qualifier
     QualifierList

@@ -6,7 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.14.1...HEAD
+
+## [v0.14.1] - 2025-10-25
+[v0.14.1]: https://github.com/fastobo/fastobo-py/compare/v0.14.0...v0.14.1
+### Fixed
+- Compilation of Python 3.14 wheels.
+- Documentation of `Qualifier` and `QualifierList`.
 
 ## [v0.14.0] - 2025-10-25
 [v0.14.0]: https://github.com/fastobo/fastobo-py/compare/v0.13.0...v0.14.0

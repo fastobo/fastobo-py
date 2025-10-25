@@ -56,6 +56,18 @@ macro_rules! impl_repr_py {
     })
 }
 
+macro_rules! impl_str_py {
+    ($self:ident, $cls:ident) => ({
+        let py = $self.py();
+        let line: fastobo::ast::Line::<fastobo::ast::$cls> = $cls::from($self).into_py(py);
+        let mut s = line.to_string();
+        if s.ends_with('\n') {
+            s.pop();
+        }
+        s
+    })
+}
+
 macro_rules! register {
     ($py:ident, $m:ident, $cls:ident, $module:expr, $metacls:ident) => {
         $py.import($module)?

@@ -223,8 +223,8 @@ impl IsAnonymousClause {
         impl_repr_py!(slf, IsAnonymousClause(slf.anonymous))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -288,8 +288,8 @@ impl NameClause {
         impl_repr_py!(slf, NameClause(slf.name))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -369,8 +369,8 @@ impl NamespaceClause {
         impl_repr_py!(slf, NamespaceClause(slf.namespace))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -444,8 +444,8 @@ impl AltIdClause {
         impl_repr_py!(slf, AltIdClause(slf.alt_id))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -546,8 +546,8 @@ impl DefClause {
         }
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -628,8 +628,8 @@ impl CommentClause {
         impl_repr_py!(slf, CommentClause(slf.comment))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -708,8 +708,8 @@ impl SubsetClause {
         impl_repr_py!(slf, SubsetClause(slf.subset))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -785,8 +785,8 @@ impl SynonymClause {
         impl_repr_py!(slf, SynonymClause(slf.synonym))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -878,8 +878,8 @@ impl XrefClause {
         impl_repr_py!(slf, XrefClause(slf.xref))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -944,8 +944,8 @@ impl BuiltinClause {
         impl_repr_py!(slf, BuiltinClause(slf.builtin))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1026,8 +1026,8 @@ impl PropertyValueClause {
         impl_repr_py!(slf, PropertyValueClause(slf.inner))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1102,9 +1102,7 @@ impl IsAClause {
     }
 
     fn __str__<'py>(slf: Bound<'py, Self>) -> String {
-        let py = slf.py();
-        let line: fastobo::ast::Line::<fastobo::ast::TermClause> = TermClause::from(slf).into_py(py);
-        line.to_string()
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1207,8 +1205,8 @@ impl IntersectionOfClause {
         impl_repr_py!(slf, IntersectionOfClause(slf.typedef, slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1291,8 +1289,8 @@ impl UnionOfClause {
         impl_repr_py!(slf, UnionOfClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1365,8 +1363,8 @@ impl EquivalentToClause {
         impl_repr_py!(slf, EquivalentToClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1440,8 +1438,8 @@ impl DisjointFromClause {
         impl_repr_py!(slf, DisjointFromClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1521,8 +1519,8 @@ impl RelationshipClause {
         impl_repr_py!(slf, RelationshipClause(slf.typedef, slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1597,8 +1595,8 @@ impl IsObsoleteClause {
         impl_repr_py!(slf, IsObsoleteClause(slf.obsolete))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1666,8 +1664,8 @@ impl ReplacedByClause {
         impl_repr_py!(slf, ReplacedByClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1740,8 +1738,8 @@ impl ConsiderClause {
         impl_repr_py!(slf, ConsiderClause(slf.term))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1811,8 +1809,8 @@ impl CreatedByClause {
         impl_repr_py!(slf, CreatedByClause(slf.creator))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
@@ -1924,8 +1922,8 @@ impl CreationDateClause {
             .and_then(|dt| fmt.call_method1("format", (dt,)))
     }
 
-    fn __str__(&self) -> PyResult<String> {
-        Ok(self.to_string())
+    fn __str__<'py>(slf: Bound<'py, Self>) -> String {
+        impl_str_py!(slf, TermClause)
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {

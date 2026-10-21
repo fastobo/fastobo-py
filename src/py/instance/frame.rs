@@ -50,8 +50,7 @@ impl ClonePy for InstanceFrame {
 
 impl Display for InstanceFrame {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let frame: fastobo::ast::InstanceFrame =
-            Python::attach(|py| self.clone_py(py).into_py(py));
+        let frame: fastobo::ast::InstanceFrame = Python::attach(|py| self.clone_py(py).into_py(py));
         frame.fmt(f)
     }
 }

@@ -120,7 +120,7 @@ impl Qualifier {
     fn get_key(&self) -> &Ident {
         &self.key
     }
-    
+
     #[setter]
     fn set_key(&mut self, key: Ident) {
         self.key = key;
@@ -232,8 +232,7 @@ impl QualifierList {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let frame: fastobo::ast::QualifierList =
-            Python::attach(|py| self.clone_py(py).into_py(py));
+        let frame: fastobo::ast::QualifierList = Python::attach(|py| self.clone_py(py).into_py(py));
         Ok(frame.to_string())
     }
 

@@ -55,8 +55,7 @@ impl ClonePy for TypedefFrame {
 
 impl Display for TypedefFrame {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let frame: fastobo::ast::TypedefFrame =
-            Python::attach(|py| self.clone_py(py).into_py(py));
+        let frame: fastobo::ast::TypedefFrame = Python::attach(|py| self.clone_py(py).into_py(py));
         frame.fmt(f)
     }
 }

@@ -95,9 +95,7 @@ pub fn isodatetime_to_datetime<'py>(
             .fraction()
             .map(|f| (f * 1000.0) as u32)
             .unwrap_or(0),
-        tz.as_ref()
-            .map(|obj| obj.cast::<PyTzInfo>())
-            .transpose()?,
+        tz.as_ref().map(|obj| obj.cast::<PyTzInfo>()).transpose()?,
     )
 }
 

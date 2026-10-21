@@ -48,10 +48,21 @@ macro_rules! impl_richcmp_py {
 
 macro_rules! impl_repr_py {
     ($self:ident, $cls:ident($($field:expr),*)) => ({
+        use pyo3::types::PyList;
+        use pyo3::types::PyString;
         let py = $self.py();
-        let args = &[
-            $((&$field).into_pyobject(py)?.as_any().repr()?.to_str()?,)*
-        ].join(", ");
+        let arglist = PyList::new(py, &[
+            $((&$field).into_pyobject(py)?.as_any().repr()?.str()?,)*
+        ])?;
+
+        let sep = PyString::intern(py, ", ");
+        let args = unsafe {
+            Bound::from_owned_ptr_or_err(
+                py,
+                pyo3::ffi::PyUnicode_Join(sep.as_ptr(), arglist.as_ptr())
+            )
+        }?;
+
         Ok(PyString::new(py, &format!("{}({})", stringify!($cls), args)).into_pyobject(py)?.into_any())
     })
 }

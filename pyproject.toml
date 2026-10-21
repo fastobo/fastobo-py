@@ -7,7 +7,7 @@ name = "fastobo"
 dynamic = ["version"]
 description = "Faultless AST for Open Biomedical Ontologies in Python."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 license = { file = "COPYING" }
 authors = [
   { name = "Martin Larralde", email = "martin.larralde@embl.de" },

@@ -503,6 +503,7 @@ fn dump_owl<'py>(
         match e {
             HornedError::IOError(e) => return Err(PyErr::from(e)),
             HornedError::ValidityError(_, _) => return Err(PyRuntimeError::new_err(e.to_string())),
+            HornedError::ImportError(_) => return Err(PyRuntimeError::new_err(e.to_string())),
             HornedError::CommandError(_) | HornedError::ParserError(_, _) => unreachable!(),
         }
     }

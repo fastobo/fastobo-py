@@ -141,7 +141,7 @@ impl ClonePy for Synonym {
 
 impl Display for Synonym {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let syn: fastobo::ast::Synonym = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let syn: fastobo::ast::Synonym = Python::attach(|py| self.clone_py(py).into_py(py));
         syn.fmt(f)
     }
 }
@@ -179,7 +179,7 @@ impl Synonym {
         ty: Option<Ident>,
         xrefs: Option<Bound<'py, PyAny>>,
     ) -> PyResult<Self> {
-        let xrefs = Python::with_gil(|py| {
+        let xrefs = Python::attach(|py| {
             let list = xrefs
                 .map(|x| XrefList::collect(py, &x))
                 .transpose()?
@@ -202,7 +202,7 @@ impl Synonym {
         Ok(self.to_string())
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(
             self,
             other,

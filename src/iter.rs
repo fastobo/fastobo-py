@@ -190,7 +190,7 @@ impl FrameReader {
             .map_err(Error::from)?
             .into_header()
             .unwrap();
-        let header = Python::with_gil(|py| Py::new(py, frame.into_py(py)))?;
+        let header = Python::attach(|py| Py::new(py, frame.into_py(py)))?;
         Ok(Self { inner, header })
     }
 
@@ -232,9 +232,9 @@ impl FrameReader {
             None => Ok(None),
             Some(Ok(frame)) => {
                 let entity = frame.into_entity().unwrap();
-                Ok(Some(Python::with_gil(|py| entity.into_py(py))))
+                Ok(Some(Python::attach(|py| entity.into_py(py))))
             }
-            Some(Err(e)) => Python::with_gil(|py| {
+            Some(Err(e)) => Python::attach(|py| {
                 if PyErr::occurred(py) {
                     Err(PyErr::fetch(py))
                 } else {

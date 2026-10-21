@@ -98,7 +98,7 @@ impl HeaderFrame {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let frame: obo::HeaderFrame = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let frame: obo::HeaderFrame = Python::attach(|py| self.clone_py(py).into_py(py));
         Ok(frame.to_string())
     }
 
@@ -108,7 +108,7 @@ impl HeaderFrame {
 
     fn __getitem__(&self, index: isize) -> PyResult<Py<BaseHeaderClause>> {
         if index < self.clauses.len() as isize {
-            Python::with_gil(|py| {
+            Python::attach(|py| {
                 let item = &self.clauses[index as usize];
                 Ok(item.into_pyobject(py)?.unbind())
             })

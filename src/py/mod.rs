@@ -120,7 +120,7 @@ fn iter<'py>(
         .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     if let Ok(path) = pathlike {
-        let decoded = path.downcast::<PyString>()?;
+        let decoded = path.cast::<PyString>()?;
         FrameReader::from_path(decoded.to_str()?, ordered, threads)
     } else {
         match FrameReader::from_handle(file, ordered, threads) {
@@ -178,7 +178,7 @@ fn load<'py>(
         .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     let b: Box<dyn BufRead> = if let Ok(p) = pathlike {
-        let decoded = p.downcast::<PyString>()?;
+        let decoded = p.cast::<PyString>()?;
         // get a buffered reader to the resources pointed by `path`
         let bf = match std::fs::File::open(decoded.to_str()?) {
             Ok(f) => std::io::BufReader::new(f),
@@ -203,7 +203,7 @@ fn load<'py>(
         // extract the path from the `name` attribute
         path = file
             .getattr("name")
-            .and_then(|n| match n.downcast::<PyString>() {
+            .and_then(|n| match n.cast::<PyString>() {
                 Ok(x) => Ok(x.to_str()?.to_string()),
                 Err(e) => Err(PyErr::from(e)),
             })
@@ -288,7 +288,7 @@ fn loads<'py>(
     let cursor = std::io::Cursor::new(document.to_str()?);
     let mut reader = InternalParser::with_thread_count(cursor, threads)?;
     reader.ordered(ordered);
-    // match py.allow_threads(|| reader.try_into_doc()) {
+    // match py.detach(|| reader.try_into_doc()) {
     match reader.try_into_doc() {
         Ok(doc) => Ok(doc.into_py(py)),
         Err(e) => Error::from(e).into(),
@@ -338,7 +338,7 @@ fn load_graph<'py>(py: Python<'py>, file: &Bound<'py, PyAny>) -> PyResult<OboDoc
         .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     let doc: GraphDocument = if let Ok(path) = pathlike {
-        let decoded = path.downcast::<PyString>()?;
+        let decoded = path.cast::<PyString>()?;
         fastobo_graphs::from_file(decoded.to_str()?)
             .map_err(|e| PyErr::from(GraphError::from(e)))?
     } else {
@@ -357,7 +357,7 @@ fn load_graph<'py>(py: Python<'py>, file: &Bound<'py, PyAny>) -> PyResult<OboDoc
 
     // Convert the graph to an OBO document
     let graph = doc.graphs.into_iter().next().unwrap();
-    // let doc = py.allow_threads(|| obo::OboDoc::from_graph(graph))
+    // let doc = py.detach(|| obo::OboDoc::from_graph(graph))
     let doc = obo::OboDoc::from_graph(graph).map_err(GraphError::from)?;
 
     // Convert the OBO document to a Python `OboDoc` class
@@ -391,7 +391,7 @@ fn load_graph<'py>(py: Python<'py>, file: &Bound<'py, PyAny>) -> PyResult<OboDoc
 fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>) -> PyResult<()> {
     // Convert OBO document to an OBO Graph document.
     let doc: obo::OboDoc = obj.clone_py(py).into_py(py);
-    // FIXME: let graph = py.allow_threads(|| doc.into_graph())
+    // FIXME: let graph = py.detach(|| doc.into_graph())
     let graph = doc
         .into_graph()
         .map_err(|e| PyErr::from(GraphError::from(e)))?;
@@ -401,7 +401,7 @@ fn dump_graph<'py>(py: Python<'py>, obj: &OboDoc, file: &Bound<'py, PyAny>) -> P
         .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     if let Ok(path) = pathlike {
-        let decoded = path.downcast::<PyString>()?;
+        let decoded = path.cast::<PyString>()?;
         fastobo_graphs::to_file(decoded.to_str()?, &graph)
             .map_err(|e| PyErr::from(GraphError::from(e)))
     } else {
@@ -474,7 +474,7 @@ fn dump_owl<'py>(
         .import(pyo3::intern!(py, "os"))?
         .call_method1(pyo3::intern!(py, "fsdecode"), (&file,));
     let mut b: Box<dyn Write> = if let Ok(path) = pathlike {
-        let decoded = path.downcast::<PyString>()?;
+        let decoded = path.cast::<PyString>()?;
         std::fs::File::create(decoded.to_str()?)
             .map(std::io::BufWriter::new)
             .map(Box::new)?

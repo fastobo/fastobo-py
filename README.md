@@ -67,6 +67,7 @@ The following people have contributed to this project:
 
 - Alex Henrie ([@alexhenrie](https://github.com/alexhenrie))
 - Patrick Kalita ([@pkalita-lbl](https://github.com/pkalita-lbl))
+- Damien Goutte-Gattat ([@gouttegd](https://github.com/gouttegd))
 
 
 ## About

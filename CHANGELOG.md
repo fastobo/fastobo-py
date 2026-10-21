@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.14.1...HEAD
+[Unreleased]: https://github.com/fastobo/fastobo-py/compare/v0.14.2...HEAD
+
+## [v0.14.2] - 2026-10-21
+[v0.14.2]: https://github.com/fastobo/fastobo-py/compare/v0.14.1...v0.14.2
+### Added
+- Support for compilation with Python Limited API 3.12.
+### Fixed
+- Compilation of Python 3.15 wheels ([#382](https://github.com/fastobo/fastobo-py/pull/382), by [gouttegd](https://github.com/gouttegd)).
 
 ## [v0.14.1] - 2025-10-25
 [v0.14.1]: https://github.com/fastobo/fastobo-py/compare/v0.14.0...v0.14.1

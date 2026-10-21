@@ -48,5 +48,7 @@ path = "./derive"
 
 [features]
 default = []
-extension-module = ["pyo3/extension-module", "pyo3/abi3-py312"]
+abi3 = ["pyo3/abi3-py312"]
+extension-module = ["pyo3/extension-module"]
 nightly = ["pyo3/nightly"]
+

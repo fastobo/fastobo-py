@@ -68,6 +68,10 @@ before-all = ["curl -sSf https://sh.rustup.rs | sh -s -- -y"]
 environment = { MACOSX_DEPLOYMENT_TARGET = "10.12" }
 
 [[tool.cibuildwheel.overrides]]
+select = "cp312*"
+config-settings = { "maturin.build-args" = "--features abi3" }
+
+[[tool.cibuildwheel.overrides]]
 select = "*-macosx_x86_64"
 inherit.before-all = "append"
 before-all = ["rustup target add x86_64-apple-darwin"]

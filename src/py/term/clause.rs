@@ -233,7 +233,7 @@ impl IsAnonymousClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp!(self, other, op, self.anonymous)
     }
 
@@ -298,7 +298,7 @@ impl NameClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp!(self, other, op, self.name)
     }
 
@@ -352,7 +352,7 @@ impl ClonePy for NamespaceClause {
 
 impl Display for NamespaceClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -379,7 +379,7 @@ impl NamespaceClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.namespace)
     }
 
@@ -428,7 +428,7 @@ impl ClonePy for AltIdClause {
 
 impl Display for AltIdClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -454,7 +454,7 @@ impl AltIdClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.alt_id)
     }
 
@@ -512,7 +512,7 @@ impl ClonePy for DefClause {
 
 impl Display for DefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -556,7 +556,7 @@ impl DefClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.definition && self.xrefs)
     }
 
@@ -638,7 +638,7 @@ impl CommentClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp!(self, other, op, self.comment)
     }
 
@@ -692,7 +692,7 @@ impl ClonePy for SubsetClause {
 
 impl Display for SubsetClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -718,7 +718,7 @@ impl SubsetClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.subset)
     }
 
@@ -767,7 +767,7 @@ impl ClonePy for SynonymClause {
 
 impl Display for SynonymClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -784,7 +784,7 @@ impl IntoPy<fastobo::ast::TermClause> for SynonymClause {
 impl SynonymClause {
     #[new]
     fn __init__(py: Python, synonym: Py<Synonym>) -> PyClassInitializer<Self> {
-        Self::new(Python::with_gil(|py| synonym.clone_ref(py))).into_py(py)
+        Self::new(Python::attach(|py| synonym.clone_ref(py))).into_py(py)
     }
 
     fn __repr__<'py>(slf: PyRef<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
@@ -795,7 +795,7 @@ impl SynonymClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.synonym)
     }
 
@@ -810,7 +810,7 @@ impl SynonymClause {
     }
 
     fn raw_value(&self) -> String {
-        Python::with_gil(|py| format!("{}", &*self.synonym.bind(py).borrow()))
+        Python::attach(|py| format!("{}", &*self.synonym.bind(py).borrow()))
     }
 }
 
@@ -845,7 +845,7 @@ impl ClonePy for XrefClause {
 
 impl Display for XrefClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -888,7 +888,7 @@ impl XrefClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.xref)
     }
 
@@ -897,7 +897,7 @@ impl XrefClause {
     }
 
     fn raw_value(&self) -> String {
-        Python::with_gil(|py| self.xref.bind(py).to_string())
+        Python::attach(|py| self.xref.bind(py).to_string())
     }
 }
 
@@ -954,7 +954,7 @@ impl BuiltinClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp!(self, other, op, self.builtin)
     }
 
@@ -1010,7 +1010,7 @@ impl ClonePy for PropertyValueClause {
 
 impl Display for PropertyValueClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1036,7 +1036,7 @@ impl PropertyValueClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.inner)
     }
 
@@ -1085,7 +1085,7 @@ impl ClonePy for IsAClause {
 
 impl Display for IsAClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1111,7 +1111,7 @@ impl IsAClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1185,7 +1185,7 @@ impl ClonePy for IntersectionOfClause {
 
 impl Display for IntersectionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1215,7 +1215,7 @@ impl IntersectionOfClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.typedef && self.term)
     }
 
@@ -1273,7 +1273,7 @@ impl ClonePy for UnionOfClause {
 
 impl Display for UnionOfClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1299,7 +1299,7 @@ impl UnionOfClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1347,7 +1347,7 @@ impl ClonePy for EquivalentToClause {
 
 impl Display for EquivalentToClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1373,7 +1373,7 @@ impl EquivalentToClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1422,7 +1422,7 @@ impl ClonePy for DisjointFromClause {
 
 impl Display for DisjointFromClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1448,7 +1448,7 @@ impl DisjointFromClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1500,7 +1500,7 @@ impl ClonePy for RelationshipClause {
 
 impl Display for RelationshipClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1529,7 +1529,7 @@ impl RelationshipClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.typedef && self.term)
     }
 
@@ -1605,7 +1605,7 @@ impl IsObsoleteClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp!(self, other, op, self.obsolete)
     }
 
@@ -1648,7 +1648,7 @@ impl ClonePy for ReplacedByClause {
 
 impl Display for ReplacedByClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1674,7 +1674,7 @@ impl ReplacedByClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1722,7 +1722,7 @@ impl ClonePy for ConsiderClause {
 
 impl Display for ConsiderClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1748,7 +1748,7 @@ impl ConsiderClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.term)
     }
 
@@ -1787,7 +1787,7 @@ impl CreatedByClause {
 
 impl Display for CreatedByClause {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let clause: fastobo::ast::TermClause = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let clause: fastobo::ast::TermClause = Python::attach(|py| self.clone_py(py).into_py(py));
         clause.fmt(f)
     }
 }
@@ -1819,7 +1819,7 @@ impl CreatedByClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp!(self, other, op, self.creator)
     }
 
@@ -1905,11 +1905,11 @@ impl CreationDateClause {
     #[new]
     fn __init__<'py>(date: &Bound<'py, PyAny>) -> PyResult<PyClassInitializer<Self>> {
         let py = date.py();
-        if let Ok(dt) = date.downcast::<PyDateTime>() {
+        if let Ok(dt) = date.cast::<PyDateTime>() {
             let date = datetime_to_isodatetime(py, dt).map(From::from)?;
             Ok(CreationDateClause::new(date).into())
         } else {
-            match date.downcast::<PyDate>() {
+            match date.cast::<PyDate>() {
                 Err(e) => {
                     raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
                 }
@@ -1932,7 +1932,7 @@ impl CreationDateClause {
         impl_str_py!(slf, TermClause)
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp!(self, other, op, self.date)
     }
 
@@ -1955,10 +1955,10 @@ impl CreationDateClause {
     #[setter]
     fn set_date<'py>(&mut self, datetime: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = datetime.py();
-        if let Ok(dt) = datetime.downcast::<PyDateTime>() {
+        if let Ok(dt) = datetime.cast::<PyDateTime>() {
             self.date = From::from(datetime_to_isodatetime(py, dt)?);
         } else {
-            match datetime.downcast::<PyDate>() {
+            match datetime.cast::<PyDate>() {
                 Err(e) => {
                     raise!(py, PyTypeError("expected datetime.date or datetime.datetime") from PyErr::from(e))
                 }

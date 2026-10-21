@@ -42,7 +42,7 @@ pub enum PropertyValue {
 
 impl Display for PropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        Python::with_gil(|py| match self {
+        Python::attach(|py| match self {
             PropertyValue::Literal(lpv) => lpv.bind(py).borrow().fmt(f),
             PropertyValue::Resource(rpv) => rpv.bind(py).borrow().fmt(f),
         })
@@ -117,7 +117,7 @@ impl ClonePy for LiteralPropertyValue {
 
 impl Display for LiteralPropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let pv: fastobo::ast::PropertyValue = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let pv: fastobo::ast::PropertyValue = Python::attach(|py| self.clone_py(py).into_py(py));
         pv.fmt(f)
     }
 }
@@ -156,7 +156,7 @@ impl LiteralPropertyValue {
         datatype: Bound<'py, PyAny>,
     ) -> PyResult<PyClassInitializer<Self>> {
         let r = relation.extract::<Ident>()?;
-        let v = if let Ok(s) = value.downcast::<PyString>() {
+        let v = if let Ok(s) = value.cast::<PyString>() {
             ast::QuotedString::new(s.to_str()?.to_string())
         } else {
             let n = value.get_type().name()?;
@@ -176,7 +176,7 @@ impl LiteralPropertyValue {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let pv: fastobo::ast::PropertyValue = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let pv: fastobo::ast::PropertyValue = Python::attach(|py| self.clone_py(py).into_py(py));
         Ok(pv.to_string())
     }
 
@@ -241,7 +241,7 @@ impl ClonePy for ResourcePropertyValue {
 
 impl Display for ResourcePropertyValue {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let pv: fastobo::ast::PropertyValue = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let pv: fastobo::ast::PropertyValue = Python::attach(|py| self.clone_py(py).into_py(py));
         pv.fmt(f)
     }
 }
@@ -278,7 +278,7 @@ impl ResourcePropertyValue {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let pv: fastobo::ast::PropertyValue = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let pv: fastobo::ast::PropertyValue = Python::attach(|py| self.clone_py(py).into_py(py));
         Ok(pv.to_string())
     }
 

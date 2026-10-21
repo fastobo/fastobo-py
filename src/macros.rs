@@ -91,7 +91,7 @@ macro_rules! add_submodule {
         // add the submodule to the `sys.modules` index
         $py.import("sys")?
             .getattr("modules")?
-            .downcast::<pyo3::types::PyDict>()?
+            .cast::<pyo3::types::PyDict>()?
             .set_item(concat!("fastobo.", stringify!($sub)), &module)?;
     }};
 }

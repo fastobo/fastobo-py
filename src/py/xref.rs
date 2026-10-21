@@ -75,7 +75,7 @@ impl ClonePy for Xref {
 
 impl Display for Xref {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let xref: fastobo::ast::Xref = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let xref: fastobo::ast::Xref = Python::attach(|py| self.clone_py(py).into_py(py));
         xref.fmt(f)
     }
 }
@@ -129,7 +129,7 @@ impl Xref {
         Ok(self.to_string())
     }
 
-    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<PyObject> {
+    fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<Py<PyAny>> {
         impl_richcmp_py!(self, other, op, self.id && self.desc)
     }
 
@@ -240,7 +240,7 @@ impl XrefList {
     #[pyo3(signature = (xrefs = None))]
     fn __init__<'py>(xrefs: Option<&Bound<'py, PyAny>>) -> PyResult<Self> {
         if let Some(x) = xrefs {
-            Python::with_gil(|py| Self::collect(py, x))
+            Python::attach(|py| Self::collect(py, x))
         } else {
             Ok(Self::new(Vec::new()))
         }
@@ -256,7 +256,7 @@ impl XrefList {
     }
 
     fn __str__(&self) -> PyResult<String> {
-        let frame: fastobo::ast::XrefList = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let frame: fastobo::ast::XrefList = Python::attach(|py| self.clone_py(py).into_py(py));
         Ok(frame.to_string())
     }
 
@@ -266,7 +266,7 @@ impl XrefList {
 
     fn __getitem__(&self, index: isize) -> PyResult<Py<Xref>> {
         if index < self.xrefs.len() as isize {
-            Python::with_gil(|py| Ok(self.xrefs[index as usize].clone_ref(py)))
+            Python::attach(|py| Ok(self.xrefs[index as usize].clone_ref(py)))
         } else {
             Err(PyIndexError::new_err("list index out of range"))
         }

@@ -12,7 +12,6 @@ use pyo3::gc::PyTraverseError;
 use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
-use pyo3::PyObject;
 
 // ---------------------------------------------------------------------------
 
@@ -47,7 +46,7 @@ pub struct PyFileRead<'py> {
 impl<'py> PyFileRead<'py> {
     pub fn from_ref(file: &Bound<'py, PyAny>) -> PyResult<PyFileRead<'py>> {
         let res = file.call_method1("read", (0,))?;
-        if res.downcast::<PyBytes>().is_ok() {
+        if res.cast::<PyBytes>().is_ok() {
             Ok(PyFileRead { file: file.clone() })
         } else {
             let ty = res.get_type().name()?.to_string();
@@ -64,7 +63,7 @@ impl<'p> Read for PyFileRead<'p> {
         match self.file.call_method1("read", (buf.len(),)) {
             Ok(obj) => {
                 // Check `fh.read` returned bytes, else raise a `TypeError`.
-                if let Ok(bytes) = obj.downcast::<PyBytes>() {
+                if let Ok(bytes) = obj.cast::<PyBytes>() {
                     let b = bytes.as_bytes();
                     (&mut buf[..b.len()]).copy_from_slice(b);
                     Ok(b.len())
@@ -137,13 +136,13 @@ impl<'py> Write for PyFileWrite<'py> {
 
 /// A wrapper for a Python file that can outlive the GIL.
 pub struct PyFileGILRead {
-    file: Mutex<PyObject>,
+    file: Mutex<Py<PyAny>>,
 }
 
 impl PyFileGILRead {
     pub fn from_ref<'py>(file: &Bound<'py, PyAny>) -> PyResult<PyFileGILRead> {
         let res = file.call_method1("read", (0,))?;
-        if res.downcast::<PyBytes>().is_ok() {
+        if res.cast::<PyBytes>().is_ok() {
             Ok(PyFileGILRead {
                 file: Mutex::new(file.clone().unbind()),
             })
@@ -156,20 +155,20 @@ impl PyFileGILRead {
         }
     }
 
-    pub fn file(&self) -> &Mutex<PyObject> {
+    pub fn file(&self) -> &Mutex<Py<PyAny>> {
         &self.file
     }
 }
 
 impl Read for PyFileGILRead {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, IoError> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let guard = self.file.lock().unwrap();
             let file = guard.bind(py);
             match file.call_method1("read", (buf.len(),)) {
                 Ok(obj) => {
                     // Check `fh.read` returned bytes, else raise a `TypeError`.
-                    if let Ok(bytes) = obj.downcast::<PyBytes>() {
+                    if let Ok(bytes) = obj.cast::<PyBytes>() {
                         let b = bytes.as_bytes();
                         (&mut buf[..b.len()]).copy_from_slice(b);
                         Ok(b.len())

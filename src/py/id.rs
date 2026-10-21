@@ -137,7 +137,7 @@ pub enum Ident {
 
 impl Display for Ident {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        Python::with_gil(|py| match self {
+        Python::attach(|py| match self {
             Ident::Unprefixed(id) => id.bind(py).borrow().fmt(f),
             Ident::Prefixed(id) => id.bind(py).borrow().fmt(f),
             Ident::Url(id) => id.bind(py).borrow().fmt(f),
@@ -307,7 +307,7 @@ impl PrefixedIdent {
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<bool> {
         let py = other.py();
-        if let Ok(r) = other.downcast::<PrefixedIdent>() {
+        if let Ok(r) = other.cast::<PrefixedIdent>() {
             let r = r.as_borrowed().borrow();
             let lp = self.inner.prefix();
             let ll = self.inner.local();
@@ -461,7 +461,7 @@ impl UnprefixedIdent {
     }
 
     fn __richcmp__<'py>(&self, other: &Bound<'py, PyAny>, op: CompareOp) -> PyResult<bool> {
-        if let Ok(u) = other.downcast::<UnprefixedIdent>() {
+        if let Ok(u) = other.cast::<UnprefixedIdent>() {
             let x = u.as_borrowed().borrow();
             match op {
                 CompareOp::Lt => Ok(self.inner < x.inner),
@@ -602,7 +602,7 @@ impl Url {
 
     /// Compare to another `Url` instance.
     fn __richcmp__<'py>(&self, other: Bound<'py, PyAny>, op: CompareOp) -> PyResult<bool> {
-        if let Ok(url) = other.downcast::<Url>() {
+        if let Ok(url) = other.cast::<Url>() {
             let x = url.as_borrowed().borrow();
             match op {
                 CompareOp::Lt => Ok(self < &*x),

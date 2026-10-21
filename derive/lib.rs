@@ -470,7 +470,7 @@ fn listlike_impl_methods(
         /// Return a shallow copy of the list.
         #[pyo3(text_signature = "(self)")]
         fn copy(&self) -> PyResult<Py<Self>> {
-            Python::with_gil(|py| {
+            Python::attach(|py| {
                 let copy = self.clone_py(py);
                 Py::new(py, copy)
             })

@@ -123,7 +123,7 @@ impl ClonePy for OboDoc {
 
 impl Display for OboDoc {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        let doc: fastobo::ast::OboDoc = Python::with_gil(|py| self.clone_py(py).into_py(py));
+        let doc: fastobo::ast::OboDoc = Python::attach(|py| self.clone_py(py).into_py(py));
         doc.fmt(f)
     }
 }
@@ -165,7 +165,7 @@ impl OboDoc {
         header: Option<&HeaderFrame>,
         entities: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<Self> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             // extract header
             let header = header
                 .map(|h| h.clone_py(py))
@@ -240,9 +240,9 @@ impl OboDoc {
     ///
     #[pyo3(text_signature = "(self, /)")]
     fn compact_ids(&self) -> PyResult<Self> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
-            py.allow_threads(|| fastobo::visit::IdCompactor::new().visit_doc(&mut doc));
+            py.detach(|| fastobo::visit::IdCompactor::new().visit_doc(&mut doc));
             Ok(doc.into_py(py))
         })
     }
@@ -277,9 +277,9 @@ impl OboDoc {
     ///
     #[pyo3(text_signature = "(self, /)")]
     fn decompact_ids(&self) -> PyResult<Self> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut doc: obo::OboDoc = self.clone_py(py).into_py(py);
-            py.allow_threads(|| fastobo::visit::IdDecompactor::new().visit_doc(&mut doc));
+            py.detach(|| fastobo::visit::IdDecompactor::new().visit_doc(&mut doc));
             Ok(doc.into_py(py))
         })
     }

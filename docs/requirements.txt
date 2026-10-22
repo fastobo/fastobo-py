@@ -11,4 +11,4 @@ sphinx-design
 pydata-sphinx-theme
 ipykernel >=5.3
 networkx >=2.5
-pygraphviz >=1.7
+pygraphviz >=2.0.4

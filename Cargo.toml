@@ -41,7 +41,7 @@ features = ["obo"]
 [dependencies.fastobo-owl]
 version = "0.3.2"
 [dependencies.horned-owl]
-version = "1.0"
+version = "4.0"
 [dependencies.fastobo-py-derive-internal]
 version = "0.14.2"
 path = "./derive"

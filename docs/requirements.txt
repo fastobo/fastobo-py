@@ -9,6 +9,6 @@ nbsphinx ~=0.8
 sphinxcontrib-jquery ~=4.1
 sphinx-design
 pydata-sphinx-theme
-ipykernel >=5.3
+ipykernel >=7.3.0
 networkx >=2.5
 pygraphviz >=1.7

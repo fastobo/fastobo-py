@@ -10,5 +10,5 @@ sphinxcontrib-jquery ~=4.1
 sphinx-design
 pydata-sphinx-theme
 ipykernel >=5.3
-networkx >=2.5
+networkx >=3.4.2
 pygraphviz >=1.7
